@@ -4,6 +4,13 @@
 node_modules/
 .agents/
 
+# IDE-specific local state
+.idea/
+.fleet/
+*.swp
+*.swo
+*~
+
 # Expo
 .expo/
 dist/
@@ -14,6 +21,7 @@ expo-env.d.ts
 .kotlin/
 *.orig.*
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
@@ -23,16 +31,27 @@ expo-env.d.ts
 .metro-health-check*
 
 # debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+*.log
+
+# caches and test output
+.cache/
+.oxlintcache
+coverage/
+*.lcov
 
 # macOS
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# Windows
+Thumbs.db
+Desktop.ini
+
+# environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
 
 # typescript
 *.tsbuildinfo

@@ -12,7 +12,8 @@ Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie za
 - NativeWind 5 preview,
 - Tailwind CSS 4,
 - Expo Router,
-- TypeScript 6.
+- TypeScript 7,
+- Oxlint i Oxfmt.
 
 NativeWind 5 pozostaje wersją przedprodukcyjną. Projekt korzysta z niej świadomie, aby pracować z integracją Tailwind CSS 4 i `react-native-css`.
 
@@ -39,7 +40,7 @@ NativeWind 5 pozostaje wersją przedprodukcyjną. Projekt korzysta z niej świad
 Wszystkie polecenia wykonujemy z katalogu głównego repozytorium:
 
 ```sh
-nub install
+nub run deps:install
 nub run dev
 ```
 
@@ -55,8 +56,16 @@ Kontrola jakości:
 
 ```sh
 nub run lint
+nub run format:check
 nub run typecheck
 nub run check
+```
+
+Automatyczne poprawki i formatowanie:
+
+```sh
+nub run lint:fix
+nub run format
 ```
 
 Nie używamy npm, pnpm, Yarn ani Bun do instalowania zależności lub uruchamiania skryptów projektu.

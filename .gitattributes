@@ -1,2 +1,6 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normalize text files to LF on every platform.
+* text=auto eol=lf
+
+# Keep native Windows command scripts compatible with cmd.exe.
+*.bat text eol=crlf
+*.cmd text eol=crlf

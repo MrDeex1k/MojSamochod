@@ -27,7 +27,7 @@ You receive limited permission to copy and modify the Materials solely as reason
 Requirements and environment details are documented in `README.md`. Use NUB for dependency and script commands:
 
 ```sh
-nub install
+nub run deps:install
 nub run dev
 nub run check
 ```
