@@ -1,0 +1,33 @@
+{
+  "name": "moje-auto",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "husky": "^9.1.7"
+  },
+  "scripts": {
+    "dev": "nub run --workspace @moje-auto/mobile dev",
+    "start": "nub run --workspace @moje-auto/mobile start",
+    "android": "nub run --workspace @moje-auto/mobile android",
+    "ios": "nub run --workspace @moje-auto/mobile ios",
+    "web": "nub run --workspace @moje-auto/mobile web",
+    "lint": "nub run --workspace @moje-auto/mobile lint",
+    "typecheck": "nub run --workspace @moje-auto/mobile typecheck",
+    "check": "nub run lint && nub run typecheck",
+    "prepare": "husky",
+    "commitlint": "commitlint"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "nub",
+      "version": "^0.7.5",
+      "onFail": "ignore"
+    }
+  },
+  "workspaces": [
+    "apps/*"
+  ]
+}

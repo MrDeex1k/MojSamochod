@@ -1,0 +1,1 @@
+nub exec commitlint --edit "$1"

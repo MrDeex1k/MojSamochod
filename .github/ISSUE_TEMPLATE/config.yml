@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ideas, feature proposals, and questions
+    url: https://github.com/MrDeex1k/MojSamochod/discussions
+    about: Start or join a GitHub Discussion before proposing a substantial change.
+  - name: Report a security vulnerability privately
+    url: https://github.com/MrDeex1k/MojSamochod/security/advisories/new
+    about: Do not disclose suspected vulnerabilities in a public issue.
