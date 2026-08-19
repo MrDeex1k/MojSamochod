@@ -4,6 +4,18 @@ Edukacyjna aplikacja mobilna do prowadzenia historii samochodu, rozwijana dla An
 
 Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie zawiera jeden pakiet: aplikację React Native z Expo i TypeScript.
 
+## Aktualny stos
+
+- Expo SDK 57,
+- React Native 0.86,
+- React 19.2,
+- NativeWind 5 preview,
+- Tailwind CSS 4,
+- Expo Router,
+- TypeScript 6.
+
+NativeWind 5 pozostaje wersją przedprodukcyjną. Projekt korzysta z niej świadomie, aby pracować z integracją Tailwind CSS 4 i `react-native-css`.
+
 ## Struktura
 
 ```text
