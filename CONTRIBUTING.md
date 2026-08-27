@@ -24,15 +24,15 @@ You receive limited permission to copy and modify the Materials solely as reason
 
 ## Development setup
 
-Requirements and environment details are documented in `README.md`. Use NUB for dependency and script commands:
+The application is developed with Xcode using Swift and SwiftUI for iOS and iPadOS. Swift dependencies are managed with Swift Package Manager.
+
+NUB is used only for the repository's Husky and commitlint tooling. Install it from the repository root with:
 
 ```sh
 nub run deps:install
-nub run dev
-nub run check
 ```
 
-Do not introduce npm, pnpm, Yarn, or Bun commands into the documented contributor workflow. NUB is the project's package manager and `nub.lock` is its only dependency lockfile.
+Do not introduce npm, pnpm, Yarn, or Bun commands into the contributor workflow. NUB is the project's only Node.js package manager, and `nub.lock` is its only Node.js dependency lockfile.
 
 ## Contribution workflow
 
@@ -40,9 +40,10 @@ Do not introduce npm, pnpm, Yarn, or Bun commands into the documented contributo
 2. Create a focused branch from the current `main` branch.
 3. Keep the change small and avoid unrelated refactors.
 4. Add or update tests and documentation where appropriate.
-5. Run `nub run check` before opening a pull request.
-6. Use Conventional Commits, for example `feat(mobile): add vehicle form`.
-7. Complete the pull request template and accept the CLA.
+5. Build the affected Xcode scheme and run the relevant tests.
+6. Test user-visible changes on the affected iPhone or iPad form factors.
+7. Use Conventional Commits, for example `feat(ios): add vehicle form`.
+8. Complete the pull request template and accept the CLA.
 
 Submitting a contribution does not guarantee review, acceptance, publication, or inclusion in a release. The Project Owner may close or decline any submission.
 
@@ -52,8 +53,8 @@ A pull request should explain:
 
 - the problem being solved;
 - the proposed behavior and implementation;
-- how it was tested on Android, iOS, or both;
-- any database, privacy, security, or compatibility implications;
+- the Xcode scheme, tests, simulators, and devices used for verification;
+- any persistence, migration, privacy, security, or compatibility implications;
 - screenshots or recordings for visible UI changes.
 
-Do not include secrets, production data, personal data, generated build artifacts, or third-party material without compatible permission.
+Do not include secrets, production data, personal data, generated build artifacts, signing material, or third-party material without compatible permission.

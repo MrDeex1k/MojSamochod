@@ -1,25 +1,35 @@
 # Project Instructions
 
-## Environment and Dependency Management
+## Project Scope
 
-- Respect the Node.js and NUB versions pinned by the repository. Do not change them unless the task explicitly includes a toolchain upgrade.
-- Use NUB exclusively to manage Node.js, dependencies, scripts, and project binaries.
-- Treat commands written for `npm`, `npx`, `pnpm`, `yarn`, or `bun` in documentation and skills as examples. Translate them into semantically equivalent NUB commands before execution.
-- Route every dependency installation or mutation through Socket Firewall (SFW). Use `nub run deps:install` for the standard project install and `nub exec sfw nub <command>` for operations such as `add`, `remove`, or `update`. Commands that only run already installed scripts or binaries do not require SFW.
+- Build Moje Auto as a native application for iOS and iPadOS using Swift and SwiftUI.
+- Keep the product local-first. Do not introduce a required backend, account system, cross-platform framework, Android application, or web application unless the task explicitly includes it.
+- Preserve user ownership of locally stored vehicle data and documents. Treat migrations, imports, exports, and deletion as data-safety-sensitive work.
+
+## Apple Development
+
+- Prefer Apple frameworks and platform conventions before adding third-party dependencies.
+- Manage Swift dependencies with Swift Package Manager and commit `Package.resolved` when it is generated for the application.
+- Do not commit Derived Data, build products, Xcode user state, signing certificates, provisioning profiles, API keys, or other secrets.
+- Before creating or modifying code, consult the current official Apple Developer Documentation for the relevant frameworks. Also use Context7 when the relevant third-party library or technology is available there.
+- Treat iPhone and iPad as supported form factors. Verify adaptive layouts and platform behavior on both when a change can affect them.
+
+## Repository Tooling
+
+- Node.js tooling exists only to install and run Husky and commitlint for Conventional Commits. Do not use Node.js as an application runtime without an explicit change in project scope.
+- Respect the Node.js and NUB versions pinned by the repository. Do not change them unless the task explicitly includes a tooling upgrade.
+- Use NUB exclusively for repository Node.js tooling. Translate commands written for `npm`, `npx`, `pnpm`, `yarn`, or `bun` into semantically equivalent NUB commands before execution.
+- Route every Node.js dependency installation or mutation through Socket Firewall (SFW). Use `nub run deps:install` for a standard install and `nub exec sfw nub <command>` for operations such as `add`, `remove`, or `update`.
 - Preserve the 24-hour dependency cooling period configured in `nub.jsonc`. Do not bypass SFW or the cooling period without explicit approval.
-- Pin direct dependencies and development dependencies to exact versions. Do not introduce `^`, `~`, or other version ranges.
-- Keep `nub.lock` synchronized with dependency manifests and commit it as the repository's only package-manager lockfile.
-- Use `nub run` for package scripts and `nub exec` for an installed local binary. Run temporarily downloaded tools through SFW with `nub exec sfw nub dlx <package>`. Preserve SFW when translating dependency commands; for example, translate `npx expo install ...` to `nub exec sfw nub exec expo install ...`.
-- For Expo and React Native packages, prefer versions supported by the active Expo SDK over the newest registry release.
-- Do not invoke another package manager or create its lockfile. If an equivalent NUB command cannot be confirmed, consult `nub help <command>` or the NUB documentation. Do not fall back to another package manager without explicit user approval.
+- Pin direct Node.js dependencies to exact versions and keep `nub.lock` synchronized as the repository's only Node.js lockfile.
+- Do not invoke another Node.js package manager or create its lockfile.
 
-## Code Verification
+## Verification
 
-- Run `nub run check` after code or configuration changes and before completing work or opening a pull request.
-- After creating or modifying React code, use React Doctor to verify it.
-- Run Expo Doctor in the Expo application workspace (`apps/mobile`) after changing dependencies, Expo configuration, native configuration, or the Expo SDK, and before opening a pull request or producing a release build. Invoke it through NUB and SFW in accordance with the dependency-management rules above.
-- Expo Doctor currently does not recognize `nub.lock`, and TypeScript 7 is an intentional project choice. Report related diagnostics, but do not create another lockfile, downgrade TypeScript, or suppress checks unless explicitly requested.
-- Before creating or modifying code, use Context7 to consult the current documentation for the technologies involved.
+- Build the affected Xcode scheme after Swift or project-configuration changes.
+- Run the relevant Swift tests after modifying application behavior, persistence, calculations, purchases, notifications, imports, exports, or migrations.
+- Test user-visible changes on an appropriate simulator or physical device. Include both iPhone and iPad verification when layout or navigation may differ.
+- Keep commit messages compatible with Conventional Commits and the repository's commitlint configuration.
 
 ## Language
 

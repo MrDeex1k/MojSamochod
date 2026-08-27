@@ -1,63 +1,54 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
-node_modules/
+# Repository-local agent resources
 .agents/
+
+# Node.js tooling
+node_modules/
+*.log
+
+# Xcode and Swift build output
+.build/
+.swiftpm/
+DerivedData/
+build/
+Packages/
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+*.hmap
+*.ipa
+*.xcarchive
+*.xcresult
+*.dSYM
+*.dSYM.zip
 
 # IDE-specific local state
 .idea/
 .fleet/
+.vscode/
 *.swp
 *.swo
 *~
 
-# Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
-
-# Native
-.kotlin/
-*.orig.*
+# Apple signing material and secrets
+*.cer
 *.jks
 *.keystore
+*.mobileprovision
 *.p8
 *.p12
-*.key
-*.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug
-*.log
-
-# caches and test output
-.cache/
-.oxlintcache
-coverage/
-*.lcov
-
-# macOS
-.DS_Store
 *.pem
+*.provisionprofile
+*.key
 
-# Windows
-Thumbs.db
-Desktop.ini
-
-# environment and secrets
+# Environment and secrets
 .env
 .env.*
 !.env.example
 !.env.*.example
 
-# typescript
-*.tsbuildinfo
-
-app-example
-
-# generated native folders
-/apps/mobile/ios
-/apps/mobile/android
+# Operating systems
+.DS_Store
+Thumbs.db
+Desktop.ini
