@@ -32,10 +32,8 @@ body:
       label: Platform
       multiple: true
       options:
-        - Android
         - iPhone
         - iPad
-        - Web
     validations:
       required: true
   - type: input

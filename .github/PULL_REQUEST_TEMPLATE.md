@@ -4,8 +4,9 @@ Describe the problem and the proposed change.
 
 ## Verification
 
-- [ ] `nub run check` passes.
-- [ ] I tested the affected platform or explained why platform testing is not applicable.
+- [ ] The affected Xcode scheme builds successfully.
+- [ ] Relevant automated tests pass.
+- [ ] I tested the affected iPhone or iPad form factor, or explained why device testing is not applicable.
 - [ ] I added or updated tests and documentation where appropriate.
 - [ ] I did not include secrets, personal data, or unauthorized third-party material.
 

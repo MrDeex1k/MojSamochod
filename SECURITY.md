@@ -33,16 +33,16 @@ If active testing beyond your own local environment would be required, request w
 
 ## Current system and scope
 
-The current repository contains an Expo React Native application for Android, iOS, and iPadOS. The policy covers only code, configuration, and behavior present in this repository.
+The current repository contains the foundation for a native Swift and SwiftUI application for iOS and iPadOS. The policy covers only code, configuration, and behavior present in this repository.
 
 In scope:
 
 - original application code and configuration in this repository;
 - application-controlled local storage and data handling implemented by the Project;
-- build or update configuration that could expose users or signing material;
+- build, signing, entitlement, or update configuration that could expose users or signing material;
 - release artifacts produced from this repository.
 
-Third-party services, Expo infrastructure, GitHub, app stores, operating systems, devices, and dependencies are outside the Project's control. Vulnerabilities in those products should be reported to their respective maintainers, unless the finding concerns an insecure integration introduced by this Project.
+Third-party services, Apple infrastructure, GitHub, the App Store, operating systems, devices, and dependencies are outside the Project's control. Vulnerabilities in those products should be reported to their respective maintainers, unless the finding concerns an insecure integration introduced by this Project.
 
 ## Threat model and trust boundaries
 
@@ -53,7 +53,7 @@ Untrusted input includes user-entered values, imported files, deep links, and da
 The principal trust boundaries are:
 
 - the mobile interface and local application storage;
-- application code and operating-system services;
+- application code, the app sandbox, and operating-system services;
 - development, build, signing, and deployment environments.
 
 ## Security invariants

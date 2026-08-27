@@ -1,102 +1,77 @@
 # Moje Auto
 
-Edukacyjna aplikacja mobilna do prowadzenia historii samochodu, rozwijana dla Androida, iOS oraz iPadOS.
+Moje Auto is a local-first vehicle management application for iPhone and iPad. It is being developed as a native Apple-platform project using Swift and SwiftUI.
 
-Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie zawiera jeden pakiet: aplikację React Native z Expo i TypeScript.
+The repository is publicly visible for review and evaluation, but it is not open source. See [LICENSE](LICENSE) before using any material from this project.
 
-## Aktualny stos
+## Product scope
 
-- Expo SDK 57,
-- React Native 0.86,
-- React 19.2,
-- NativeWind 5 preview,
-- Tailwind CSS 4,
-- Expo Router,
-- TypeScript 7,
-- Oxlint i Oxfmt.
+The application is intended to support:
 
-NativeWind 5 pozostaje wersją przedprodukcyjną. Projekt korzysta z niej świadomie, aby pracować z integracją Tailwind CSS 4 i `react-native-css`.
+- one vehicle in the free tier;
+- maintenance, replacement, inspection, and repair records;
+- costs, mileage, notes, and attachments associated with vehicle records;
+- fuel entries and average fuel-consumption calculations;
+- local reminders for insurance and technical inspections;
+- monthly and annual Premium purchases through the App Store;
+- additional vehicles and device synchronization as Premium capabilities.
 
-## Struktura
+The first implementation is focused on reliable offline operation. Synchronization is not required for the core application to function.
 
-```text
-.
-├── apps/
-│   └── mobile/       # aplikacja React Native + Expo
-├── .github/          # szablony zgłoszeń i pull requestów
-├── package.json      # skrypty główne i konfiguracja workspace
-└── nub.lock          # lockfile zależności NUB
-```
+## Technical direction
 
-## Wymagania
+- Swift and SwiftUI;
+- iOS and iPadOS;
+- SwiftData for local persistence;
+- Swift Package Manager for Swift dependencies;
+- StoreKit for in-app purchases;
+- UserNotifications for local reminders;
+- XCTest or Swift Testing for automated verification.
 
-- NUB 0.7.5 lub zgodny,
-- Node.js 24.18.0, przypięty w `.node-version`,
-- Xcode do uruchamiania aplikacji na urządzeniach Apple,
-- Android Studio, Android SDK i JDK 17 do uruchamiania aplikacji na Androidzie.
+The native Xcode application project has not yet been added to this foundation branch.
 
-## Uruchomienie
+## Repository tooling
 
-Wszystkie polecenia wykonujemy z katalogu głównego repozytorium:
+Husky and commitlint remain as small, application-independent development tools that enforce Conventional Commits. Node.js is not part of the application runtime.
+
+Requirements for repository tooling:
+
+- Node.js 24.18.0, pinned in `.node-version`;
+- NUB 0.7.5 or a compatible version.
+
+Install the commit tooling from the repository root:
 
 ```sh
 nub run deps:install
-nub run dev
 ```
 
-Po uruchomieniu Expo można wybrać platformę w terminalu albo skorzystać z dedykowanych poleceń:
+Do not use npm, pnpm, Yarn, or Bun in the repository workflow. NUB is the only Node.js package manager used by the project, and `nub.lock` is its only Node.js dependency lockfile.
 
-```sh
-nub run ios
-nub run android
-nub run web
-```
+## Commits
 
-Kontrola jakości:
-
-```sh
-nub run lint
-nub run format:check
-nub run typecheck
-nub run check
-```
-
-Automatyczne poprawki i formatowanie:
-
-```sh
-nub run lint:fix
-nub run format
-```
-
-Nie używamy npm, pnpm, Yarn ani Bun do instalowania zależności lub uruchamiania skryptów projektu.
-
-## Commity
-
-Husky i commitlint wymagają formatu Conventional Commits:
+Commit messages follow Conventional Commits:
 
 ```text
-typ(opcjonalny-zakres): krótki opis
+type(optional-scope): short description
 ```
 
-Przykłady:
+Examples:
 
 ```text
-feat(mobile): add vehicle form
-fix(mobile): preserve odometer value
+feat(ios): add vehicle form
+fix(ios): preserve odometer value
 docs: update development setup
 chore(repo): update tooling
 ```
 
-## Współpraca i bezpieczeństwo
+## Collaboration and security
 
-- Błędy: [GitHub Issues](https://github.com/MrDeex1k/MojSamochod/issues)
-- Pomysły i pytania: [GitHub Discussions](https://github.com/MrDeex1k/MojSamochod/discussions)
-- Podatności: [GitHub Private Vulnerability Reporting](https://github.com/MrDeex1k/MojSamochod/security/advisories/new)
+- Bugs: [GitHub Issues](https://github.com/MrDeex1k/MojSamochod/issues)
+- Ideas and questions: [GitHub Discussions](https://github.com/MrDeex1k/MojSamochod/discussions)
+- Vulnerabilities: [GitHub Private Vulnerability Reporting](https://github.com/MrDeex1k/MojSamochod/security/advisories/new)
 
-Przed przesłaniem zmian przeczytaj `CONTRIBUTING.md` oraz `CLA.md`. Zasad bezpieczeństwa dotyczących zgłoszeń należy szukać w `SECURITY.md`.
+Read [CONTRIBUTING.md](CONTRIBUTING.md), [CLA.md](CLA.md), and [SECURITY.md](SECURITY.md) before contributing or reporting a security issue.
 
-## Licencja
+## License
 
-Repozytorium jest publicznie widoczne, ale nie jest projektem open source. Szczegółowe warunki znajdują się w `LICENSE`.
-
-Copyright © 2026 Jakub Batycki. All rights reserved.
+Copyright © 2026 Jakub Batycki. All rights reserved. See [LICENSE](LICENSE) for the complete terms.

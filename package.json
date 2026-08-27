@@ -3,21 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "UNLICENSED",
-  "workspaces": [
-    "apps/*"
-  ],
   "scripts": {
-    "dev": "nub run --workspace @moje-auto/mobile dev",
-    "start": "nub run --workspace @moje-auto/mobile start",
-    "android": "nub run --workspace @moje-auto/mobile android",
-    "ios": "nub run --workspace @moje-auto/mobile ios",
-    "web": "nub run --workspace @moje-auto/mobile web",
-    "lint": "oxlint . --deny-warnings",
-    "lint:fix": "oxlint . --fix --deny-warnings",
-    "format": "oxfmt .",
-    "format:check": "oxfmt . --check",
-    "typecheck": "nub run --workspace @moje-auto/mobile typecheck",
-    "check": "nub run lint && nub run format:check && nub run typecheck",
     "deps:install": "nubx -y sfw@2.0.6 nub install",
     "prepare": "husky",
     "commitlint": "commitlint"
@@ -26,12 +12,7 @@
     "@commitlint/cli": "21.2.2",
     "@commitlint/config-conventional": "21.2.2",
     "husky": "9.1.7",
-    "oxfmt": "0.64.0",
-    "oxlint": "1.79.0",
     "sfw": "2.0.6"
-  },
-  "overrides": {
-    "lightningcss": "1.30.1"
   },
   "devEngines": {
     "packageManager": {
