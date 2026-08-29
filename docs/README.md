@@ -64,6 +64,8 @@ include accounts, cloud storage, background synchronization, or a real-time sync
 
 ## Documentation map
 
+- [Vehicle history domain model](./domain-model.md) — approved entities, value types, invariants,
+  lifecycle rules, and product decisions for the first vertical slice.
 - [Technology](./technology.md) — platforms, current stack, tooling, and planned native
   capabilities.
 - [Product scope and screen map](./product-scope.md) — explicit MVP and target-product boundaries,
