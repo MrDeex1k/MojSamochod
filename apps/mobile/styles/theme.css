@@ -1,0 +1,73 @@
+:root {
+  --palette-graphite-950: #121212;
+  --palette-graphite-900: #171a18;
+  --palette-forest-900: #1c221d;
+  --palette-forest-800: #252d27;
+  --palette-forest-700: #343d35;
+  --palette-racing-green-500: #72b48e;
+  --palette-racing-green-400: #8ac5a2;
+  --palette-ivory-50: #f2f0e8;
+  --palette-sage-300: #aab0a7;
+  --palette-ink-950: #0d1b13;
+  --palette-danger-400: #ef8f8f;
+  --palette-warning-400: #e6bd6a;
+  --palette-success-400: #79c99e;
+
+  --theme-color-canvas: var(--palette-graphite-950);
+  --theme-color-surface: var(--palette-forest-900);
+  --theme-color-surface-strong: var(--palette-forest-800);
+  --theme-color-surface-muted: var(--palette-graphite-900);
+  --theme-color-text-primary: var(--palette-ivory-50);
+  --theme-color-text-secondary: var(--palette-sage-300);
+  --theme-color-accent: var(--palette-racing-green-500);
+  --theme-color-accent-pressed: var(--palette-racing-green-400);
+  --theme-color-on-accent: var(--palette-ink-950);
+  --theme-color-divider: var(--palette-forest-700);
+  --theme-color-danger: var(--palette-danger-400);
+  --theme-color-warning: var(--palette-warning-400);
+  --theme-color-success: var(--palette-success-400);
+
+  --theme-duration-fast: 120ms;
+  --theme-duration-standard: 200ms;
+  --theme-duration-deliberate: 280ms;
+  --theme-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@theme {
+  --color-canvas: var(--theme-color-canvas);
+  --color-surface: var(--theme-color-surface);
+  --color-surface-strong: var(--theme-color-surface-strong);
+  --color-surface-muted: var(--theme-color-surface-muted);
+  --color-primary: var(--theme-color-text-primary);
+  --color-secondary: var(--theme-color-text-secondary);
+  --color-accent: var(--theme-color-accent);
+  --color-accent-pressed: var(--theme-color-accent-pressed);
+  --color-on-accent: var(--theme-color-on-accent);
+  --color-divider: var(--theme-color-divider);
+  --color-danger: var(--theme-color-danger);
+  --color-warning: var(--theme-color-warning);
+  --color-success: var(--theme-color-success);
+
+  --text-display: 32px;
+  --text-display--line-height: 40px;
+  --text-title: 24px;
+  --text-title--line-height: 32px;
+  --text-heading: 18px;
+  --text-heading--line-height: 24px;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-label: 14px;
+  --text-label--line-height: 20px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+
+  --spacing-screen: 24px;
+  --spacing-section: 32px;
+  --spacing-content: 16px;
+  --spacing-control: 12px;
+  --spacing-compact: 8px;
+
+  --radius-panel: 24px;
+  --radius-control: 14px;
+  --radius-compact: 10px;
+}

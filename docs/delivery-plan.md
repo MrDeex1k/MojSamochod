@@ -37,15 +37,20 @@ initial visual direction have been approved.
 
 ## Phase 1 — Application and design-system foundation
 
+**Status:** Implemented on `feat/application-foundation`; final documentation and integration into
+`main` are pending. The current implementation includes the semantic dark theme, reusable UI and
+application-state primitives, the adaptive phone/tablet shell, orientation guards, Jest and React
+Native Testing Library conventions, and native verification on the four representative targets.
+
 ### Steps
 
 1. Replace the placeholder screen with the minimum Expo Router structure required by the first
    workflow.
 2. Create `apps/mobile/styles/theme.css` as the single source of primitive palette values and
-   semantic light/dark aliases, then introduce semantic tokens for typography, spacing, radii, and
-   motion.
+   semantic dark-appearance aliases, then introduce semantic tokens for typography, spacing, radii,
+   and motion.
 3. Create reusable primitives only when demanded by a real screen.
-4. Add light, dark, safe-area, keyboard, loading, empty, and error-state foundations.
+4. Add dark-appearance, safe-area, keyboard, loading, empty, and error-state foundations.
 5. Establish unit-test and component-test conventions before domain logic expands.
 6. Verify adaptive behavior on a representative iPhone, iPad, Android phone, and Android tablet
    emulator.
@@ -57,6 +62,8 @@ initial visual direction have been approved.
 - Quality checks and simulator smoke tests pass.
 
 ## Phase 2 — Local persistence foundation
+
+**Status:** Not started. This is the next implementation phase after Phase 1 is integrated.
 
 ### Steps
 
@@ -220,7 +227,8 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Merge the approved Phase 0 documentation, then begin Phase 1 on a dedicated feature branch. The
-first implementation slice should establish the semantic theme tokens and the minimum Expo Router
-structure needed to render the first-vehicle setup and vehicle workspace. Add reusable primitives
-only when those two real screens require them. Local database integration remains part of Phase 2.
+Finish and integrate the Phase 1 branch, then create a dedicated Phase 2 branch from the updated
+`main`. Begin with a short `expo-sqlite` compatibility spike for Expo SDK 57 and agree the stable
+identifier strategy, first schema version, migration boundary, repository interfaces, and minimum
+export format before implementing persistence. The detailed working status is recorded in
+[Current Project Status](./current-status.md).

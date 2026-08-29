@@ -82,8 +82,8 @@ space with decorative cards.
 - Establish a compact type scale with clear distinction between vehicle identity, section headings,
   values, labels, and metadata.
 - Use an 8-point spacing rhythm with smaller optical adjustments where necessary.
-- Use the dark appearance as the default product presentation. Keep light-mode mappings in the
-  reusable design tokens so the product can support it without redesigning components.
+- Use the dark appearance as the only product presentation in the current scope. Light appearance
+  is deferred and must not complicate the initial component API.
 - Preserve strong contrast and do not communicate category or state by color alone.
 - Keep touch targets at least 44 points on Apple platforms and 48 density-independent pixels on
   Android.
@@ -95,17 +95,17 @@ near-black graphite (`#121212`) rather than pure black. Slightly lighter, subtly
 provide hierarchy without making the interface feel grey. Green is the single brand accent used for
 primary actions, active navigation, selection, focus, and essential current state.
 
-| Role           | Light appearance | Dark appearance |
-| -------------- | ---------------- | --------------- |
-| Canvas         | `#F4F1E8`        | `#121212`       |
-| Surface        | `#EAE6DA`        | `#1C221D`       |
-| Strong surface | `#DDD7C8`        | `#252D27`       |
-| Primary text   | `#1B1D1A`        | `#F2F0E8`       |
-| Secondary text | `#60655E`        | `#AAB0A7`       |
-| Accent         | `#1F5A43`        | `#72B48E`       |
-| Pressed accent | `#174735`        | `#8AC5A2`       |
-| Text on accent | `#FFFFFF`        | `#0D1B13`       |
-| Divider        | `#D5D0C4`        | `#343D35`       |
+| Role           | Dark appearance |
+| -------------- | --------------- |
+| Canvas         | `#121212`       |
+| Surface        | `#1C221D`       |
+| Strong surface | `#252D27`       |
+| Primary text   | `#F2F0E8`       |
+| Secondary text | `#AAB0A7`       |
+| Accent         | `#72B48E`       |
+| Pressed accent | `#8AC5A2`       |
+| Text on accent | `#0D1B13`       |
+| Divider        | `#343D35`       |
 
 Warning, overdue, destructive, and success colors are semantic state colors rather than additional
 brand accents. Their final values must be contrast-tested, and they must always be paired with text,
@@ -121,8 +121,7 @@ The theme file must contain two layers:
 1. **Primitive palette tokens** describe raw values, for example `racing-green-700`, `ivory-50`, or
    `graphite-950`. Raw palette tokens may only be referenced inside the theme definition.
 2. **Semantic aliases** describe purpose, for example `canvas`, `surface`, `text-primary`, `accent`,
-   `on-accent`, `warning`, or `danger`. Light and dark appearances map those same aliases to
-   different primitive values.
+   `on-accent`, `warning`, or `danger`. The current aliases map to the approved dark palette.
 
 Application components must use semantic utilities backed by those aliases, such as `bg-canvas`,
 `bg-surface`, `text-primary`, or `bg-accent`. They must not contain hexadecimal, RGB, HSL, or raw
@@ -174,5 +173,5 @@ into a collage or use thumbnails where a filename, date, amount, and relation sc
 - Does the layout remain useful without decorative shadows and gradients?
 - Do iPadOS and Android tablets use additional space for context rather than enlarged phone chrome?
 - Does every animation clarify entry, continuity, or state change?
-- Do light mode, dark mode, large text, empty states, errors, and offline behavior remain coherent?
+- Do dark mode, large text, empty states, errors, and offline behavior remain coherent?
 - Do components use semantic color aliases without embedding raw color values?
