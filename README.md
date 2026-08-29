@@ -4,6 +4,14 @@ Edukacyjna aplikacja mobilna do prowadzenia historii samochodu, rozwijana dla An
 
 Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie zawiera jeden pakiet: aplikację React Native z Expo i TypeScript.
 
+## Dokumentacja produktu
+
+- [Założenia produktu](./docs/README.md)
+- [Zakres MVP i mapa ekranów](./docs/product-scope.md)
+- [Technologie i architektura](./docs/technology.md)
+- [Kierunek designu](./docs/design-direction.md)
+- [Fazy realizacji](./docs/delivery-plan.md)
+
 ## Aktualny stos
 
 - Expo SDK 57,
