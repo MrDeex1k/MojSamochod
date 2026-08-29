@@ -73,19 +73,52 @@ local database and document storage
 This boundary is important for testable fuel calculations, safe data migrations, entitlement
 checks, and later synchronization.
 
+## Localization and language strategy
+
+The application must be localization-ready before the first production screen is implemented.
+Polish is the first complete product language and English is the fallback and next complete
+localization. User-facing copy must use stable translation keys instead of being embedded directly
+in React components.
+
+Localization has separate responsibilities that must not be collapsed into one mechanism:
+
+| Responsibility                 | Planned approach                                                                                                                                            |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Device language and region     | Read locale preferences through `expo-localization`.                                                                                                        |
+| Application translations       | Use a JavaScript i18n library selected during Phase 1; keep translation catalogs outside screens.                                                           |
+| Per-application language       | Declare supported locales through the `expo-localization` config plugin so iOS and Android system settings can select the app language.                     |
+| Dates, numbers, and currencies | Format values at the presentation boundary with locale-aware `Intl` APIs.                                                                                   |
+| Units                          | Keep distance, volume, and other unit preferences explicit; language or region may provide an initial default but must not silently overwrite user choices. |
+| Native platform strings        | Localize application names, permission descriptions, and other native resources through Expo/native configuration.                                          |
+| Store metadata                 | Manage localized descriptions, keywords, release notes, screenshots, and product information separately in App Store Connect and Google Play Console.       |
+
+Changing the interface language must not modify persisted domain data. Vehicle details, notes,
+document names, and other user-authored content remain exactly as entered. Historical monetary
+amounts retain their recorded currency, and changing locale affects formatting rather than value.
+
+The initial application should normally follow the per-app language selected in the operating
+system. A custom in-app language selector is not required until product testing demonstrates a need
+that the platform setting does not cover.
+
+The translation-library choice remains open until Phase 1. The selected library must support
+fallbacks, interpolation, plural rules, typed or statically verifiable keys, and testing without a
+native runtime. Adding it must follow the repository's Expo compatibility, exact-version, NUB, and
+Socket Firewall requirements.
+
 ## Planned capabilities and open selections
 
 The following capabilities are part of the product direction but are not installed or implemented
 yet. A short technical spike should confirm each choice before it becomes a production dependency.
 
-| Capability              | Planned direction                                                                 | Decision still required                                                          |
-| ----------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Structured local data   | Embedded SQLite database, preferably through an Expo-supported module             | Schema, migration runner, repository API, backup behavior.                       |
-| Invoices and documents  | App-managed local file storage with metadata and relations stored in the database | File import API, size limits, supported formats, orphan cleanup, export.         |
-| Reminders               | Local notifications scheduled from stored deadlines                               | Permission flow, rescheduling rules, timezone and overdue behavior.              |
-| Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records               | Full-tank rules, partial fills, units, rounding, invalid sequences.              |
-| Purchases               | Monthly and annual App Store and Google Play subscriptions                        | Purchase library, products, entitlement model, restore flow, receipt validation. |
-| Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code       | Serverless transport, identity, encryption, conflicts, retries, and recovery.    |
+| Capability              | Planned direction                                                                      | Decision still required                                                                      |
+| ----------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Structured local data   | Embedded SQLite database, preferably through an Expo-supported module                  | Schema, migration runner, repository API, backup behavior.                                   |
+| Invoices and documents  | App-managed local file storage with metadata and relations stored in the database      | File import API, size limits, supported formats, orphan cleanup, export.                     |
+| Reminders               | Local notifications scheduled from stored deadlines                                    | Permission flow, rescheduling rules, timezone and overdue behavior.                          |
+| Localization            | `expo-localization`, external translation catalogs, and locale-aware `Intl` formatting | Translation library, catalog structure, supported locale identifiers, and fallback behavior. |
+| Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records                    | Full-tank rules, partial fills, units, rounding, invalid sequences.                          |
+| Purchases               | Monthly and annual App Store and Google Play subscriptions                             | Purchase library, products, entitlement model, restore flow, receipt validation.             |
+| Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code            | Serverless transport, identity, encryption, conflicts, retries, and recovery.                |
 
 No new library should be selected only because it is popular. It must support the active Expo SDK,
 pass the repository's SFW policy, and demonstrate a clear maintenance and platform-compatibility
