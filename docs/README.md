@@ -13,9 +13,9 @@ vehicle in one place. It should help a driver answer three questions quickly:
 2. What did it cost and which documents confirm it?
 3. What needs attention next?
 
-The application is intended for Android, iOS, and iPadOS. A web application is not part of the
-product scope. Web support exposed by Expo may be used during development, but it is not a release
-target unless the product scope changes explicitly.
+The application is intended for Android phones and tablets, iPhone, and iPad. A web application is
+not part of the product scope. Web support exposed by Expo may be used during development, but it is
+not a release target unless the product scope changes explicitly.
 
 ## Product principles
 
@@ -66,6 +66,8 @@ include accounts, cloud storage, background synchronization, or a real-time sync
 
 - [Vehicle history domain model](./domain-model.md) — approved entities, value types, invariants,
   lifecycle rules, and product decisions for the first vertical slice.
+- [First vehicle user flow](./first-vehicle-user-flow.md) — approved Polish working document covering
+  first-run, vehicle setup, history-entry behavior, and phone/tablet wireframes.
 - [Technology](./technology.md) — platforms, current stack, tooling, and planned native
   capabilities.
 - [Product scope and screen map](./product-scope.md) — explicit MVP and target-product boundaries,

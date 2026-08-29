@@ -6,8 +6,9 @@ Build Moje Auto as a sequence of complete vertical slices. The first meaningful 
 large navigation shell; it is one vehicle persisted locally with one history entry that survives an
 application restart and can be viewed, edited, and deleted safely.
 
-Each phase should finish with working software on iOS and Android. iPad validation is required as
-soon as navigation or layout becomes more than a single placeholder screen.
+Each phase should finish with working software on iOS and Android. iPad and Android tablet
+validation is required as soon as navigation or layout becomes more than a single placeholder
+screen.
 
 Phases 0 through 7 deliver the MVP: the complete local-first free application for one vehicle.
 Phases 8 and 9 extend that stable MVP into the target product with monthly or annual Premium,
@@ -16,13 +17,16 @@ screen inventory are defined in [Product Scope and Screen Map](./product-scope.m
 
 ## Phase 0 — Product and domain decisions
 
+**Status:** Complete. The domain model, first vehicle flow, responsive phone/tablet behavior, and
+initial visual direction have been approved.
+
 ### Steps
 
 1. Define the minimum vehicle fields and distinguish required data from optional metadata.
 2. Define entry fields shared by inspection, replacement, and repair records.
 3. Define money, mileage, date, currency, distance, and fuel-unit rules.
 4. Define deletion, archive, export, and document-retention expectations.
-5. Sketch the primary user journeys and low-fidelity phone and iPad information architecture.
+5. Sketch the primary user journeys and low-fidelity phone and tablet information architecture.
 6. Record unresolved decisions instead of hiding them in implementation details.
 
 ### Exit criteria
@@ -43,7 +47,8 @@ screen inventory are defined in [Product Scope and Screen Map](./product-scope.m
 3. Create reusable primitives only when demanded by a real screen.
 4. Add light, dark, safe-area, keyboard, loading, empty, and error-state foundations.
 5. Establish unit-test and component-test conventions before domain logic expands.
-6. Verify adaptive behavior on a representative iPhone, iPad, and Android emulator.
+6. Verify adaptive behavior on a representative iPhone, iPad, Android phone, and Android tablet
+   emulator.
 
 ### Exit criteria
 
@@ -83,7 +88,7 @@ screen inventory are defined in [Product Scope and Screen Map](./product-scope.m
 
 - A user can manage one vehicle and its complete basic history offline.
 - Money and mileage rules are covered by automated tests.
-- The workflow passes iPhone, iPad, and Android emulator verification.
+- The workflow passes iPhone, iPad, Android phone, and Android tablet emulator verification.
 
 ## Phase 4 — Documents and invoices
 
@@ -208,12 +213,14 @@ review the scope instead of introducing remote infrastructure implicitly.
 3. Add the smallest complete implementation and avoid speculative abstractions.
 4. Add automated tests in proportion to business and migration risk.
 5. Run `nub run check`; also run Expo Doctor or React Doctor when required by `AGENTS.md`.
-6. Verify user-visible behavior on the relevant iPhone, iPad, and Android targets.
+6. Verify user-visible behavior on the relevant iPhone, iPad, Android phone, and Android tablet
+   targets.
 7. Update these documents when a decision changes.
 8. Commit using Conventional Commits and keep unrelated phases in separate changes.
 
 ## Recommended next step
 
-Begin Phase 0 with the vehicle and history-entry domain model. The first concrete design artifact
-should be a low-fidelity vehicle workspace plus the add-entry flow on phone and iPad. Do not add a
-database package until those fields, identifiers, units, and migration expectations are explicit.
+Merge the approved Phase 0 documentation, then begin Phase 1 on a dedicated feature branch. The
+first implementation slice should establish the semantic theme tokens and the minimum Expo Router
+structure needed to render the first-vehicle setup and vehicle workspace. Add reusable primitives
+only when those two real screens require them. Local database integration remains part of Phase 2.
