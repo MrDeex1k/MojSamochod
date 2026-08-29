@@ -32,6 +32,7 @@ versions.
 | Animation runtime     | React Native Reanimated 4.5.1 and React Native Worklets 0.10.1           | Performant native-thread interaction and motion where justified.  |
 | Gestures              | React Native Gesture Handler 2.32.0                                      | Platform-aware touch interactions.                                |
 | System appearance     | Expo System UI 57.0.3                                                    | Applies the dark interface style consistently on Android.         |
+| Unit/component tests  | Jest 29.7.0, Jest Expo 57.0.5, React Native Testing Library 14.0.1       | Tests pure logic and user-visible component behavior.             |
 
 NativeWind 5 is intentionally a preview dependency. Its compatibility with the active Expo SDK
 must be rechecked before SDK upgrades and before a production release.
@@ -50,14 +51,24 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
 
 - Node.js 24.18.0 is pinned in `.node-version`.
 - NUB 0.8.0 is the only Node.js package manager and script runner used by the repository.
+- NUB uses the hoisted `node_modules` layout required by the NativeWind 5 and React Native CSS
+  Metro resolver.
 - Socket Firewall protects dependency mutations and enforces a 24-hour dependency cooling period.
 - Direct dependencies use exact versions; `nub.lock` is the only committed Node.js lockfile.
 - Oxlint provides static linting and Oxfmt provides formatting.
 - Husky and commitlint enforce Conventional Commits.
-- `nub run check` is the standard local quality gate: lint, formatting check, and TypeScript
-  validation.
+- `nub run check` is the standard local quality gate: lint, formatting check, TypeScript
+  validation, and Jest tests.
+- Tests are colocated with source files and prefer accessible roles, labels, and user interactions
+  over implementation details.
 - Expo Doctor is required after Expo, native configuration, or dependency changes. React Doctor is
   required after React component changes.
+
+React Doctor is currently blocked before analysis by SFW because the temporary tool installation
+resolves `fastq@1.20.2`, whose trust evidence is weaker than the trusted `fastq@1.20.0` release. The
+repository pins `fastq@1.20.0`, but that does not override the isolated dependency graph created by
+`nub dlx`. Do not disable the trust policy to make this diagnostic pass; retry after the upstream
+dependency or its provenance changes.
 
 ## Local-first architecture
 
@@ -91,7 +102,7 @@ Localization has separate responsibilities that must not be collapsed into one m
 | Responsibility                 | Planned approach                                                                                                                                            |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Device language and region     | Read locale preferences through `expo-localization`.                                                                                                        |
-| Application translations       | Use a JavaScript i18n library selected during Phase 1; keep translation catalogs outside screens.                                                           |
+| Application translations       | Select a JavaScript i18n library before Phase 3; keep translation catalogs outside screens.                                                                 |
 | Per-application language       | Declare supported locales through the `expo-localization` config plugin so iOS and Android system settings can select the app language.                     |
 | Dates, numbers, and currencies | Format values at the presentation boundary with locale-aware `Intl` APIs.                                                                                   |
 | Units                          | Keep distance, volume, and other unit preferences explicit; language or region may provide an initial default but must not silently overwrite user choices. |
@@ -106,10 +117,10 @@ The initial application should normally follow the per-app language selected in 
 system. A custom in-app language selector is not required until product testing demonstrates a need
 that the platform setting does not cover.
 
-The translation-library choice remains open until Phase 1. The selected library must support
-fallbacks, interpolation, plural rules, typed or statically verifiable keys, and testing without a
-native runtime. Adding it must follow the repository's Expo compatibility, exact-version, NUB, and
-Socket Firewall requirements.
+The translation-library choice remains open and must be resolved before production copy is added in
+Phase 3. The selected library must support fallbacks, interpolation, plural rules, typed or
+statically verifiable keys, and testing without a native runtime. Adding it must follow the
+repository's Expo compatibility, exact-version, NUB, and Socket Firewall requirements.
 
 ## Planned capabilities and open selections
 

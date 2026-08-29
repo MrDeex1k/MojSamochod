@@ -48,26 +48,26 @@
   --color-warning: var(--theme-color-warning);
   --color-success: var(--theme-color-success);
 
-  --text-display: 2rem;
-  --text-display--line-height: 2.5rem;
-  --text-title: 1.5rem;
-  --text-title--line-height: 2rem;
-  --text-heading: 1.125rem;
-  --text-heading--line-height: 1.5rem;
-  --text-body: 1rem;
-  --text-body--line-height: 1.5rem;
-  --text-label: 0.875rem;
-  --text-label--line-height: 1.25rem;
-  --text-caption: 0.75rem;
-  --text-caption--line-height: 1rem;
+  --text-display: 32px;
+  --text-display--line-height: 40px;
+  --text-title: 24px;
+  --text-title--line-height: 32px;
+  --text-heading: 18px;
+  --text-heading--line-height: 24px;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-label: 14px;
+  --text-label--line-height: 20px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
 
-  --spacing-screen: 1.5rem;
-  --spacing-section: 2rem;
-  --spacing-content: 1rem;
-  --spacing-control: 0.75rem;
-  --spacing-compact: 0.5rem;
+  --spacing-screen: 24px;
+  --spacing-section: 32px;
+  --spacing-content: 16px;
+  --spacing-control: 12px;
+  --spacing-compact: 8px;
 
-  --radius-panel: 1.5rem;
-  --radius-control: 0.875rem;
-  --radius-compact: 0.625rem;
+  --radius-panel: 24px;
+  --radius-control: 14px;
+  --radius-compact: 10px;
 }

@@ -8,6 +8,7 @@ export function LoadingState({ className, label, ...props }: LoadingStateProps) 
   return (
     <View className={`items-center gap-content ${className ?? ""}`} {...props}>
       <ActivityIndicator
+        accessible
         accessibilityLabel={label}
         accessibilityRole="progressbar"
         className="text-accent"

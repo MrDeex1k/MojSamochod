@@ -19,10 +19,17 @@
 - After creating or modifying React code, use React Doctor to verify it.
 - Run Expo Doctor in the Expo application workspace (`apps/mobile`) after changing dependencies, Expo configuration, native configuration, or the Expo SDK, and before opening a pull request or producing a release build. Invoke it through NUB and SFW in accordance with the dependency-management rules above.
 - Expo Doctor currently does not recognize `nub.lock`, and TypeScript 7 is an intentional project choice. Report related diagnostics, but do not create another lockfile, downgrade TypeScript, or suppress checks unless explicitly requested.
+- If SFW blocks a diagnostic because of a supply-chain trust failure, do not weaken the trust policy or add an exception without explicit approval. Report which diagnostic could not run and complete the remaining verification.
 - Before creating or modifying code, use Context7 to consult the current documentation for the technologies involved.
+
+## Native Application Verification
+
+- Treat native iOS and Android simulators, emulators, or physical devices as the source of truth for user-visible mobile behavior. Expo Web and browser automation do not replace native verification unless the user explicitly requests the development web surface.
+- After changing React Native layout or interaction behavior, verify the affected form factors on relevant native Apple and Android targets. Include both iPadOS and Android tablets whenever adaptive tablet behavior may differ from phone behavior.
 
 ## Language
 
 - Respond in the language used by the user unless they explicitly request another language.
 - Write source code, identifiers, technical comments, repository documentation, and commit messages in English unless the user explicitly requests otherwise.
+- Write temporary working documents, phase-status notes, and decision drafts in Polish. Keep durable target documentation in English unless the user explicitly requests another language.
 - User-facing application content may use the product's selected locale and is not required to be in English.
