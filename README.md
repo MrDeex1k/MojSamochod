@@ -40,7 +40,7 @@ NativeWind 5 pozostaje wersją przedprodukcyjną. Projekt korzysta z niej świad
 
 ## Wymagania
 
-- NUB 0.7.5 lub zgodny,
+- NUB 0.8.0,
 - Node.js 24.18.0, przypięty w `.node-version`,
 - Xcode do uruchamiania aplikacji na urządzeniach Apple,
 - Android Studio, Android SDK i JDK 17 do uruchamiania aplikacji na Androidzie.

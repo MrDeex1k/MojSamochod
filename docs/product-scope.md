@@ -34,8 +34,9 @@ the agreed boundary for the current delivery plan.
   denied.
 - Persist all core data in an embedded local database and app-managed document storage.
 - Provide local data export and a documented recovery path before production release.
-- Support Android phones and tablets, iPhone, and adaptive tablet layouts.
-- Support light and dark appearances, accessibility settings, and locale-aware units and values.
+- Support Android phones and tablets, iPhone, and adaptive tablet layouts. Phone layouts target
+  portrait orientation and tablet layouts target landscape orientation.
+- Support the dark appearance, accessibility settings, and locale-aware units and values.
 
 ### Excluded
 
@@ -95,7 +96,7 @@ functional scope.
 1. **Vehicle** — selected vehicle, immediate status, history, costs, and documents.
 2. **Fuel** — refuelling history, consumption summary, and add action.
 3. **Reminders** — upcoming and overdue insurance and inspection deadlines.
-4. **Settings** — appearance, units, data management, privacy, and help.
+4. **Settings** — units, data management, privacy, and help.
 
 On iPad and Android tablets, the same information architecture should use a sidebar and list-detail
 presentation where it adds context. Tablets should not introduce different product concepts.
@@ -107,7 +108,7 @@ or modals on phones and contextual panels on tablets.
 
 | Surface                   | Responsibility                                                                                                  | Suggested presentation                                                  |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Launch and initialization | Open the database, run migrations, restore appearance, and route safely.                                        | Native splash followed by the correct application state.                |
+| Launch and initialization | Open the database, run migrations, initialize the dark theme, and route safely.                                 | Native splash followed by the correct application state.                |
 | First vehicle setup       | Explain the minimum value and create the first vehicle.                                                         | Focused first-run flow without marketing slides.                        |
 | Vehicle workspace         | Identify the vehicle, show mileage, nearest deadline, recent history, costs, documents, and primary add action. | Main destination; list-detail capable on tablets.                       |
 | Vehicle editor            | Create or edit vehicle identity, optional photo, mileage, and deadlines.                                        | Focused form.                                                           |
@@ -120,7 +121,7 @@ or modals on phones and contextual panels on tablets.
 | Refuelling editor         | Record date, odometer, quantity, total or unit price, and full or partial fill state.                           | Focused form.                                                           |
 | Reminders workspace       | Show upcoming, overdue, and unavailable notification states.                                                    | Main destination.                                                       |
 | Reminder editor           | Create or edit insurance and technical-inspection deadlines and notification preferences.                       | Focused form.                                                           |
-| Settings                  | Configure appearance, units, locale-sensitive preferences, privacy, and help.                                   | Main destination with grouped plain lists.                              |
+| Settings                  | Configure units, locale-sensitive preferences, privacy, and help.                                               | Main destination with grouped plain lists.                              |
 | Data management           | Export data and documents, inspect storage, and perform explicitly confirmed destructive actions.               | Secondary settings screen.                                              |
 
 ## Additional target-product screens and surfaces

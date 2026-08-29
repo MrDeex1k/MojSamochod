@@ -42,10 +42,10 @@ initial visual direction have been approved.
 1. Replace the placeholder screen with the minimum Expo Router structure required by the first
    workflow.
 2. Create `apps/mobile/styles/theme.css` as the single source of primitive palette values and
-   semantic light/dark aliases, then introduce semantic tokens for typography, spacing, radii, and
-   motion.
+   semantic dark-appearance aliases, then introduce semantic tokens for typography, spacing, radii,
+   and motion.
 3. Create reusable primitives only when demanded by a real screen.
-4. Add light, dark, safe-area, keyboard, loading, empty, and error-state foundations.
+4. Add dark-appearance, safe-area, keyboard, loading, empty, and error-state foundations.
 5. Establish unit-test and component-test conventions before domain logic expands.
 6. Verify adaptive behavior on a representative iPhone, iPad, Android phone, and Android tablet
    emulator.

@@ -10,41 +10,46 @@
 | Android tablets | Supported        | Adaptive layouts must be verified independently from Android phone layouts.                   |
 | Web             | Development only | It is not a product release target.                                                           |
 
+The supported presentation is portrait on phones and landscape on tablets. Expo's static
+`orientation` setting cannot express a different lock per device class, so the application uses
+`default` to make tablet landscape available. The adaptive application shell must enforce or guard
+the supported presentation when it is introduced; phone landscape and tablet portrait are not
+current layout targets.
+
 ## Current application stack
 
 The application currently lives in `apps/mobile` inside a lightweight NUB workspace. Direct
 dependencies are pinned exactly; the manifest and `nub.lock` are the source of truth for full
 versions.
 
-| Area                  | Current choice                                               | Role                                                              |
-| --------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
-| Application framework | Expo SDK 57                                                  | Cross-platform runtime, native modules, and development workflow. |
-| UI runtime            | React Native 0.86 and React 19.2                             | Shared Android phone/tablet, iOS, and iPadOS application code.    |
-| Language              | TypeScript 7                                                 | Static typing for application and domain code.                    |
-| Navigation            | Expo Router                                                  | File-based navigation and typed routes.                           |
-| Styling               | NativeWind 5 preview, Tailwind CSS 4, and `react-native-css` | Shared utility styling and CSS interoperability.                  |
-| Animation runtime     | React Native Reanimated and Worklets                         | Performant native-thread interaction and motion where justified.  |
-| Gestures              | React Native Gesture Handler                                 | Platform-aware touch interactions.                                |
+| Area                  | Current choice                                                           | Role                                                              |
+| --------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| Application framework | Expo SDK 57 (`expo` 57.0.18)                                             | Cross-platform runtime, native modules, and development workflow. |
+| UI runtime            | React Native 0.86.3 and React 19.2.3                                     | Shared Android phone/tablet, iOS, and iPadOS application code.    |
+| Language              | TypeScript 7.0.2                                                         | Static typing for application and domain code.                    |
+| Navigation            | Expo Router 57.0.17                                                      | File-based navigation and typed routes.                           |
+| Styling               | NativeWind 5.0.0-preview.4, Tailwind CSS 4.3.3, `react-native-css` 3.0.7 | Shared utility styling and CSS interoperability.                  |
+| Animation runtime     | React Native Reanimated 4.5.1 and React Native Worklets 0.10.1           | Performant native-thread interaction and motion where justified.  |
+| Gestures              | React Native Gesture Handler 2.32.0                                      | Platform-aware touch interactions.                                |
+| System appearance     | Expo System UI 57.0.3                                                    | Applies the dark interface style consistently on Android.         |
 
 NativeWind 5 is intentionally a preview dependency. Its compatibility with the active Expo SDK
 must be rechecked before SDK upgrades and before a production release.
 
 ## Theme source of truth
 
-The planned theme source of truth is `apps/mobile/styles/theme.css`, imported once by
-`apps/mobile/global.css`. It will expose semantic Tailwind and NativeWind color aliases for both
-light and dark appearances. Components must consume semantic names instead of raw palette values or
-hard-coded colors so that a palette change remains centralized.
+The theme source of truth is `apps/mobile/styles/theme.css`, imported once by
+`apps/mobile/global.css`. It exposes semantic Tailwind and NativeWind aliases for the dark product
+appearance. Components must consume semantic names instead of raw palette values or hard-coded
+colors so that a palette change remains centralized. Light appearance is outside the current scope.
 
 The agreed racing-green, warm-ivory, and graphite palette and its alias rules are defined in
-[Design Direction](./design-direction.md#color-token-architecture). The dedicated theme file will be
-introduced with the design-system foundation; it does not exist in the current placeholder
-application yet.
+[Design Direction](./design-direction.md#color-token-architecture).
 
 ## Current repository tooling
 
 - Node.js 24.18.0 is pinned in `.node-version`.
-- NUB 0.7.5 is the only Node.js package manager and script runner used by the repository.
+- NUB 0.8.0 is the only Node.js package manager and script runner used by the repository.
 - Socket Firewall protects dependency mutations and enforces a 24-hour dependency cooling period.
 - Direct dependencies use exact versions; `nub.lock` is the only committed Node.js lockfile.
 - Oxlint provides static linting and Oxfmt provides formatting.
