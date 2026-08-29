@@ -71,9 +71,9 @@ The add action should be prominent but should not compete with navigation. If us
 shows that the timeline already provides adequate access to fuel and reminders, reduce the number of
 top-level destinations rather than preserving an unnecessary tab.
 
-On iPad, adapt navigation to a sidebar or split view and use the additional width for list-detail
-context. Do not stretch the phone layout into a wide centered column or fill space with decorative
-cards.
+On iPadOS and Android tablets, adapt navigation to a sidebar or split view and use the additional
+width for list-detail context. Do not stretch the phone layout into a wide centered column or fill
+space with decorative cards.
 
 ## Typography, color, and spacing
 
@@ -82,28 +82,30 @@ cards.
 - Establish a compact type scale with clear distinction between vehicle identity, section headings,
   values, labels, and metadata.
 - Use an 8-point spacing rhythm with smaller optical adjustments where necessary.
-- Support light and dark appearances from the first reusable design tokens.
+- Use the dark appearance as the default product presentation. Keep light-mode mappings in the
+  reusable design tokens so the product can support it without redesigning components.
 - Preserve strong contrast and do not communicate category or state by color alone.
 - Keep touch targets at least 44 points on Apple platforms and 48 density-independent pixels on
   Android.
 
 ### Agreed color direction
 
-The brand palette combines racing green with warm ivory and graphite. The interface should remain
-mostly neutral; green is the single brand accent used for primary actions, active navigation,
-selection, focus, and essential current state.
+The brand palette combines racing green with warm ivory and graphite. The default canvas is a
+near-black graphite (`#121212`) rather than pure black. Slightly lighter, subtly green-tinted surfaces
+provide hierarchy without making the interface feel grey. Green is the single brand accent used for
+primary actions, active navigation, selection, focus, and essential current state.
 
 | Role           | Light appearance | Dark appearance |
 | -------------- | ---------------- | --------------- |
-| Canvas         | `#F4F1E8`        | `#111410`       |
-| Surface        | `#EAE6DA`        | `#181D18`       |
-| Strong surface | `#DDD7C8`        | `#222A23`       |
+| Canvas         | `#F4F1E8`        | `#121212`       |
+| Surface        | `#EAE6DA`        | `#1C221D`       |
+| Strong surface | `#DDD7C8`        | `#252D27`       |
 | Primary text   | `#1B1D1A`        | `#F2F0E8`       |
 | Secondary text | `#60655E`        | `#AAB0A7`       |
 | Accent         | `#1F5A43`        | `#72B48E`       |
 | Pressed accent | `#174735`        | `#8AC5A2`       |
 | Text on accent | `#FFFFFF`        | `#0D1B13`       |
-| Divider        | `#D5D0C4`        | `#2D352E`       |
+| Divider        | `#D5D0C4`        | `#343D35`       |
 
 Warning, overdue, destructive, and success colors are semantic state colors rather than additional
 brand accents. Their final values must be contrast-tested, and they must always be paired with text,
@@ -170,7 +172,7 @@ into a collage or use thumbnails where a filename, date, amount, and relation sc
 - Can headings, values, and status labels be scanned without reading body copy?
 - Has every card earned its container through interaction or grouping semantics?
 - Does the layout remain useful without decorative shadows and gradients?
-- Does iPad use additional space for context rather than enlarged phone chrome?
+- Do iPadOS and Android tablets use additional space for context rather than enlarged phone chrome?
 - Does every animation clarify entry, continuity, or state change?
 - Do light mode, dark mode, large text, empty states, errors, and offline behavior remain coherent?
 - Do components use semantic color aliases without embedding raw color values?

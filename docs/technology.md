@@ -2,12 +2,13 @@
 
 ## Platform targets
 
-| Target  | Status           | Notes                                                                                         |
-| ------- | ---------------- | --------------------------------------------------------------------------------------------- |
-| iOS     | Supported        | Simulator and physical-device development are available.                                      |
-| iPadOS  | Supported        | Adaptive layouts must be verified independently from iPhone layouts.                          |
-| Android | Supported        | Emulator-based development is available; physical-device testing remains a later requirement. |
-| Web     | Development only | It is not a product release target.                                                           |
+| Target          | Status           | Notes                                                                                         |
+| --------------- | ---------------- | --------------------------------------------------------------------------------------------- |
+| iOS             | Supported        | Simulator and physical-device development are available.                                      |
+| iPadOS          | Supported        | Adaptive layouts must be verified independently from iPhone layouts.                          |
+| Android phones  | Supported        | Emulator-based development is available; physical-device testing remains a later requirement. |
+| Android tablets | Supported        | Adaptive layouts must be verified independently from Android phone layouts.                   |
+| Web             | Development only | It is not a product release target.                                                           |
 
 ## Current application stack
 
@@ -18,7 +19,7 @@ versions.
 | Area                  | Current choice                                               | Role                                                              |
 | --------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
 | Application framework | Expo SDK 57                                                  | Cross-platform runtime, native modules, and development workflow. |
-| UI runtime            | React Native 0.86 and React 19.2                             | Shared Android, iOS, and iPadOS application code.                 |
+| UI runtime            | React Native 0.86 and React 19.2                             | Shared Android phone/tablet, iOS, and iPadOS application code.    |
 | Language              | TypeScript 7                                                 | Static typing for application and domain code.                    |
 | Navigation            | Expo Router                                                  | File-based navigation and typed routes.                           |
 | Styling               | NativeWind 5 preview, Tailwind CSS 4, and `react-native-css` | Shared utility styling and CSS interoperability.                  |
@@ -149,8 +150,9 @@ Every user-visible feature should be verified on:
 - a representative iPhone simulator,
 - an iPad simulator when layout or navigation can differ,
 - an Android phone emulator,
+- an Android tablet emulator when layout or navigation can differ,
 - a physical iPhone during milestone and release testing,
-- a physical Android device before public Android distribution.
+- a physical Android phone and a representative Android tablet before public Android distribution.
 
 Automated tests should prioritize domain calculations, validation, migrations, repository behavior,
 premium gating, and synchronization conflict resolution.

@@ -34,7 +34,7 @@ the agreed boundary for the current delivery plan.
   denied.
 - Persist all core data in an embedded local database and app-managed document storage.
 - Provide local data export and a documented recovery path before production release.
-- Support Android phones, iPhone, and adaptive iPad layouts.
+- Support Android phones and tablets, iPhone, and adaptive tablet layouts.
 - Support light and dark appearances, accessibility settings, and locale-aware units and values.
 
 ### Excluded
@@ -97,23 +97,23 @@ functional scope.
 3. **Reminders** — upcoming and overdue insurance and inspection deadlines.
 4. **Settings** — appearance, units, data management, privacy, and help.
 
-On iPad, the same information architecture should use a sidebar and list-detail presentation where
-it adds context. iPad should not introduce different product concepts.
+On iPad and Android tablets, the same information architecture should use a sidebar and list-detail
+presentation where it adds context. Tablets should not introduce different product concepts.
 
 ## MVP screens and surfaces
 
 Not every item below needs to be a permanent full-screen route. Focused creation tasks may be sheets
-or modals on phones and contextual panels on iPad.
+or modals on phones and contextual panels on tablets.
 
 | Surface                   | Responsibility                                                                                                  | Suggested presentation                                                  |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | Launch and initialization | Open the database, run migrations, restore appearance, and route safely.                                        | Native splash followed by the correct application state.                |
 | First vehicle setup       | Explain the minimum value and create the first vehicle.                                                         | Focused first-run flow without marketing slides.                        |
-| Vehicle workspace         | Identify the vehicle, show mileage, nearest deadline, recent history, costs, documents, and primary add action. | Main destination; list-detail capable on iPad.                          |
+| Vehicle workspace         | Identify the vehicle, show mileage, nearest deadline, recent history, costs, documents, and primary add action. | Main destination; list-detail capable on tablets.                       |
 | Vehicle editor            | Create or edit vehicle identity, optional photo, mileage, and deadlines.                                        | Focused form.                                                           |
 | History timeline          | Scan inspection, replacement, and repair entries chronologically.                                               | Part of the vehicle workspace or a secondary list when history grows.   |
 | History entry editor      | Create or edit an inspection, replacement, or repair with relevant fields only.                                 | Sheet, modal, or full-screen form depending on platform and complexity. |
-| History entry details     | Review all entry information, related amount, document, edit action, and safe deletion.                         | Secondary screen or iPad detail pane.                                   |
+| History entry details     | Review all entry information, related amount, document, edit action, and safe deletion.                         | Secondary screen or tablet detail pane.                                 |
 | Vehicle documents         | Scan invoices and files related to the vehicle and its entries.                                                 | Secondary list from the vehicle workspace.                              |
 | Document preview          | Preview metadata and supported content; export, replace, reassign, or delete the file.                          | Full-screen preview or platform document surface.                       |
 | Fuel workspace            | Show consumption summary, refuelling history, data sufficiency, and add action.                                 | Main destination.                                                       |

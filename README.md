@@ -1,6 +1,6 @@
 # Moje Auto
 
-Edukacyjna aplikacja mobilna do prowadzenia historii samochodu, rozwijana dla Androida, iOS oraz iPadOS.
+Edukacyjna aplikacja mobilna do prowadzenia historii samochodu, rozwijana dla telefonów i tabletów z Androidem oraz urządzeń z iOS i iPadOS.
 
 Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie zawiera jeden pakiet: aplikację React Native z Expo i TypeScript.
 
@@ -8,6 +8,7 @@ Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie za
 
 - [Założenia produktu](./docs/README.md)
 - [Model domenowy historii pojazdu](./docs/domain-model.md)
+- [Przepływ pierwszego pojazdu](./docs/first-vehicle-user-flow.md)
 - [Zakres MVP i mapa ekranów](./docs/product-scope.md)
 - [Technologie i architektura](./docs/technology.md)
 - [Kierunek designu](./docs/design-direction.md)
