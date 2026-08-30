@@ -26,6 +26,7 @@
 
 - Treat native iOS and Android simulators, emulators, or physical devices as the source of truth for user-visible mobile behavior. Expo Web and browser automation do not replace native verification unless the user explicitly requests the development web surface.
 - After changing React Native layout or interaction behavior, verify the affected form factors on relevant native Apple and Android targets. Include both iPadOS and Android tablets whenever adaptive tablet behavior may differ from phone behavior.
+- When native text or controls become unexpectedly tall, inspect the accessibility layout before changing component dimensions. With the current NativeWind/React Native CSS preview stack, custom typography tokens must use unitless `line-height` ratios; length-based values such as `px` or `rem` can produce extremely large native line boxes. Keep theme lengths in `rem`, do not introduce viewport units such as `vh` or `vw`, and preserve the regression coverage in `apps/mobile/styles/theme.test.ts`.
 
 ## Language
 
