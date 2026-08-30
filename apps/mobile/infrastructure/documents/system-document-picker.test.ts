@@ -27,7 +27,7 @@ describe("SystemDocumentPicker", () => {
       kind: "selected",
     });
     expect(mockGetDocumentAsync).toHaveBeenCalledWith({
-      copyToCacheDirectory: true,
+      copyToCacheDirectory: false,
       multiple: false,
       type: ["application/pdf", "image/jpeg", "image/png"],
     });

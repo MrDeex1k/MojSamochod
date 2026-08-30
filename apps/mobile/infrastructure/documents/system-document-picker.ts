@@ -24,7 +24,7 @@ export interface DocumentFilePicker {
 export class SystemDocumentPicker implements DocumentFilePicker {
   async pick(): Promise<DocumentPickResult> {
     const result = await DocumentPicker.getDocumentAsync({
-      copyToCacheDirectory: true,
+      copyToCacheDirectory: false,
       multiple: false,
       type: [...supportedDocumentMimeTypes],
     });
