@@ -17,8 +17,9 @@ Uzupełnia model domenowy, ale nie zmienia zatwierdzonych reguł produktu.
   schematu.
 - Ekrany nie importują klienta Drizzle. Dostęp do danych przechodzi przez przypadki użycia i
   interfejsy repozytoriów.
-- Dokładne wersje pakietów zostaną wybrane przez sprawdzenie zgodności z Expo SDK 57 i zainstalowane
-  przez NUB oraz SFW.
+- Pierwszy sprawdzony zestaw używa `expo-sqlite` 57.0.2, `expo-crypto` 57.0.2, Drizzle ORM 0.45.2,
+  Drizzle Kit 0.31.10 oraz `uuid` 14.0.2. Pakiety są przypięte dokładnie i instalowane przez NUB oraz
+  SFW.
 
 ## Identyfikatory i czas
 

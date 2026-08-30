@@ -65,10 +65,9 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Sprawdzić zgodność Drizzle ORM i `expo-sqlite` z Expo SDK 57 oraz przypiąć dokładne wersje.
-2. Wygenerować i przejrzeć pierwszą migrację schematu opartą na UUIDv7 i `occurredAt` w UTC.
-3. Zaimplementować i przetestować lokalne CRUD dla pojazdu oraz wpisów historii bez wykonywania
+1. Wygenerować i przejrzeć pierwszą migrację schematu opartą na UUIDv7 i `occurredAt` w UTC.
+2. Zaimplementować i przetestować lokalne CRUD dla pojazdu oraz wpisów historii bez wykonywania
    zapytań bazodanowych bezpośrednio w ekranach.
-4. Dodać wersjonowany eksport JSON bez danych binarnych.
-5. Zaprojektować kontrakt `ObjectStorage`, którego lokalna implementacja powstanie ze zdjęciami w
+3. Dodać wersjonowany eksport JSON bez danych binarnych.
+4. Zaprojektować kontrakt `ObjectStorage`, którego lokalna implementacja powstanie ze zdjęciami w
    Fazie 3.

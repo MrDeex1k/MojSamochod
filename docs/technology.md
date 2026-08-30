@@ -33,6 +33,9 @@ versions.
 | Gestures              | React Native Gesture Handler 2.32.0                                      | Platform-aware touch interactions.                                |
 | System appearance     | Expo System UI 57.0.3                                                    | Applies the dark interface style consistently on Android.         |
 | Unit/component tests  | Jest 29.7.0, Jest Expo 57.0.5, React Native Testing Library 14.0.1       | Tests pure logic and user-visible component behavior.             |
+| Local database        | Expo SQLite 57.0.2 and Drizzle ORM 0.45.2                                | Persistent SQLite access and typed queries.                       |
+| Database migrations   | Drizzle Kit 0.31.10                                                      | Generates reviewable SQL migrations bundled with the application. |
+| Record identifiers    | UUID 14.0.2 and Expo Crypto 57.0.2                                       | UUIDv7 generation backed by native secure randomness.             |
 
 NativeWind 5 is intentionally a preview dependency. Its compatibility with the active Expo SDK
 must be rechecked before SDK upgrades and before a production release.
