@@ -129,8 +129,8 @@ yet. A short technical spike should confirm each choice before it becomes a prod
 
 | Capability              | Planned direction                                                                      | Decision still required                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Structured local data   | Embedded SQLite database, preferably through an Expo-supported module                  | Schema, migration runner, repository API, backup behavior.                                   |
-| Invoices and documents  | App-managed local file storage with metadata and relations stored in the database      | File import API, size limits, supported formats, orphan cleanup, export.                     |
+| Structured local data   | Drizzle ORM over the Expo SDK 57-compatible `expo-sqlite` package                      | Exact package versions and generated first schema.                                           |
+| Invoices and documents  | `ObjectStorage` backed by app-managed files with metadata and relations in SQLite      | File import API, size limits, supported formats, orphan cleanup, export.                     |
 | Reminders               | Local notifications scheduled from stored deadlines                                    | Permission flow, rescheduling rules, timezone and overdue behavior.                          |
 | Localization            | `expo-localization`, external translation catalogs, and locale-aware `Intl` formatting | Translation library, catalog structure, supported locale identifiers, and fallback behavior. |
 | Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records                    | Full-tank rules, partial fills, units, rounding, invalid sequences.                          |
@@ -150,6 +150,8 @@ explicit product-scope decision.
 ## Data safety requirements
 
 - Use explicit, versioned database migrations from the first persisted schema.
+- Use UUIDv7 for stable record identity, but store `createdAt`, `updatedAt`, and history-entry
+  `occurredAt` independently as UTC timestamps. Never derive domain time from an identifier.
 - Never delete vehicle records or documents implicitly during an upgrade.
 - Store money in minor currency units rather than floating-point values.
 - Store normalized timestamps and preserve the user's timezone where deadline semantics require it.
@@ -158,6 +160,12 @@ explicit product-scope decision.
   files safely.
 - Define export and restore behavior before calling the local-first data model production-ready.
 - Synchronization must not be added until stable identifiers and conflict rules exist.
+
+Binary vehicle photos and documents must live in app-managed file storage rather than SQLite BLOB
+columns. SQLite stores their stable identifiers, storage keys, MIME types, original names, sizes,
+SHA-256 digests, relations, and timestamps. Phase 2 defines the `ObjectStorage` contract and exports
+vehicle-history data as versioned JSON without binaries; the first local file implementation is
+part of Phase 3.
 
 ## Verification matrix
 

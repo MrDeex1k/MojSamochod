@@ -148,8 +148,8 @@ dodaniem dokumentów, kosztów zbiorczych i tankowań nie tworzy dla nich atrap 
 
 ### Historia z wpisami
 
-- Wpisy są ułożone malejąco według daty zdarzenia.
-- Wiersz pokazuje typ, główny przedmiot, datę oraz opcjonalnie przebieg i koszt.
+- Wpisy są ułożone malejąco według daty i godziny zdarzenia.
+- Wiersz pokazuje typ, główny przedmiot, datę i godzinę oraz opcjonalnie przebieg i koszt.
 - Brak kosztu lub przebiegu nie jest wyświetlany jako zero.
 - Dotknięcie całego wiersza otwiera szczegóły.
 
@@ -170,12 +170,17 @@ Po utworzeniu wpisu typ jest niezmienny.
 
 | Pole                 | Zachowanie                                                                                 |
 | -------------------- | ------------------------------------------------------------------------------------------ |
-| Data zdarzenia       | Wymagana, domyślnie dzisiaj, bez możliwości wyboru przyszłej daty.                         |
+| Data zdarzenia       | Wymagana, domyślnie bieżąca data UTC.                                                      |
+| Godzina (UTC)        | Wymagana, domyślnie bieżąca godzina UTC, wybierana z dokładnością do minuty.               |
 | Bieżący licznik      | Opcjonalny, w jednostce pojazdu.                                                           |
 | Koszt całkowity      | Opcjonalny; zero i brak wartości pozostają rozróżnione.                                    |
 | Waluta               | Pokazywana przy koszcie, domyślnie według ustawień regionalnych, zapisywana razem z kwotą. |
 | Warsztat/usługodawca | Opcjonalny.                                                                                |
 | Notatki              | Opcjonalne, wielowierszowe.                                                                |
+
+Kontrolki daty i godziny tworzą razem jeden znacznik `occurredAt` zapisany w UTC jako ISO 8601.
+Formularz jasno oznacza strefę UTC i odrzuca wynik późniejszy niż bieżący czas UTC. UUIDv7 wpisu
+nie jest używany do ustalenia czasu zdarzenia ani momentu utworzenia rekordu.
 
 ### Pola zależne od typu
 
@@ -208,7 +213,8 @@ Po utworzeniu wpisu typ jest niezmienny.
 ### Szczegóły
 
 - Nagłówek identyfikuje typ i główny przedmiot wpisu.
-- Data, przebieg, koszt, usługodawca, szczegóły typu i notatki są pokazane w spokojnej liście.
+- Data i godzina UTC, przebieg, koszt, usługodawca, szczegóły typu i notatki są pokazane w spokojnej
+  liście.
 - Nieobecne dane są pomijane zamiast wypełniane etykietą przy każdym polu.
 - Główna akcja to `Edytuj`; `Usuń wpis` pozostaje działaniem destrukcyjnym o niższej ekspozycji.
 - `Edytuj` zajmuje pełną dostępną szerokość. `Usuń wpis` znajduje się pod nim, ma połowę tej
@@ -310,6 +316,8 @@ Jeżeli wersja nie istnieje, pod zdjęciem pozostają tylko marka i model wyrów
 │ [ Olej silnikowy___________] │
 │ Data *                       │
 │ [ 29.08.2026______________] │
+│ Godzina (UTC) *              │
+│ [ 14:30___________________] │
 │ Bieżący licznik              │
 │ [ 85 140______________] km   │
 │ Aktualny przebieg zostanie   │
@@ -332,7 +340,7 @@ Jeżeli wersja nie istnieje, pod zdjęciem pozostają tylko marka i model wyrów
 │ Wymiana                      │
 │ Olej silnikowy               │
 │ ──────────────────────────── │
-│ Data              29.08.2026 │
+│ Data i czas   29.08.2026 14:30│
 │ Przebieg            85 140 km│
 │ Koszt             430,00 PLN │
 │ Warsztat          Auto Serwis│
@@ -359,8 +367,8 @@ wersję oraz aktualny przebieg. Nie jest zastępowana przez historię, formularz
 │ ┌─────────────────────┐ │                                             │
 │ │    zdjęcie auta     │ │ Historia                                   │
 │ └─────────────────────┘ │ ─────────────────────────────────────────── │
-│ B4 Momentum             │ Wymiana oleju       29.08 · 430,00 PLN     │
-│ 84 320 km               │ Przegląd techniczny 14.06 · zaliczony      │
+│ B4 Momentum             │ Wymiana oleju  29.08 14:30 · 430,00 PLN   │
+│ 84 320 km               │ Przegląd       14.06 09:15 · zaliczony    │
 └─────────────────────────┴─────────────────────────────────────────────┘
 ```
 
@@ -374,7 +382,7 @@ miejsce i jest prawą kartą układu.
 │ Moje Auto                                                             │
 ├───────────────────┬───────────────────────┬───────────────────────────┤
 │ Volvo V60         │ [ + Dodaj wpis ]      │ Wymiana oleju             │
-│ ┌───────────────┐ │ Historia              │ 29.08.2026 · 85 140 km   │
+│ ┌───────────────┐ │ Historia              │ 29.08.2026 14:30 UTC     │
 │ │ zdjęcie auta  │ │ ───────────────────── │                           │
 │ └───────────────┘ │ Wymiana oleju         │ Koszt        430,00 PLN  │
 │ B4 Momentum       │ Przegląd techniczny   │ Warsztat     Auto Serwis │
@@ -425,6 +433,8 @@ ale pozostaje widoczna dla zachowania kontekstu.
     powiększać układ telefonu.
 12. Przepływ jest wykonalny z dużym tekstem, czytnikiem ekranu i bez rozróżniania elementów wyłącznie
     kolorem.
+13. Formularz pozwala wybrać datę oraz godzinę UTC zdarzenia i zapisuje je bez utraty informacji w
+    jednym polu `occurredAt`.
 
 ## Zatwierdzone decyzje UX
 
@@ -440,3 +450,5 @@ ale pozostaje widoczna dla zachowania kontekstu.
    stałej karty pojazdu.
 9. Domyślny wygląd aplikacji używa grafitowego tła `#121212` zamiast zupełnej czerni. Delikatnie
    jaśniejsze powierzchnie kart i pól zachowują czytelną hierarchię.
+10. Formularz wpisu pokazuje osobne pola `Data` i `Godzina (UTC)`, które są zapisywane jako jeden
+    znacznik `occurredAt` w UTC.

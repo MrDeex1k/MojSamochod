@@ -66,6 +66,8 @@ include accounts, cloud storage, background synchronization, or a real-time sync
 
 - [Current project status](./current-status.md) — Polish working summary of the active phase,
   implemented foundation, known limitations, and immediate next step.
+- [Local persistence architecture](./local-persistence-architecture.md) — approved Polish working
+  document for Drizzle, UUIDv7, UTC event timestamps, migrations, managed files, and export.
 - [Vehicle history domain model](./domain-model.md) — approved entities, value types, invariants,
   lifecycle rules, and product decisions for the first vertical slice.
 - [First vehicle user flow](./first-vehicle-user-flow.md) — approved Polish working document covering

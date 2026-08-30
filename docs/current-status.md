@@ -8,9 +8,9 @@ opisywanego etapu.
 
 - Faza 0, czyli ustalenie zakresu produktu, modelu domenowego, pierwszego przepływu użytkownika i
   kierunku wizualnego, jest zakończona.
-- Fundament aplikacji z fazy 1 jest zaimplementowany na branchu `feat/application-foundation`, ale
-  nie został jeszcze zintegrowany z `main`.
-- Kolejną fazą po domknięciu obecnego brancha jest faza 2: lokalna persystencja danych.
+- Fundament aplikacji z fazy 1 został zintegrowany z `main`.
+- Faza 2, czyli lokalna persystencja danych, jest rozpoczęta na branchu
+  `feat/local-persistence-foundation`.
 - Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Nie zapisuje jeszcze pojazdu ani
   wpisów historii.
 
@@ -65,10 +65,10 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Zatwierdzić i zintegrować końcowe zmiany fazy 1.
-2. Utworzyć branch dla fazy 2 z aktualnego `main`.
-3. Wykonać krótki spike dotyczący `expo-sqlite`, oparty na wersji zgodnej z Expo SDK 57.
-4. Przed implementacją ustalić identyfikatory, pierwszą wersję schematu, sposób migracji, granice
-   repozytoriów i minimalny format eksportu.
-5. Zaimplementować i przetestować lokalne CRUD dla pojazdu oraz wpisów historii bez wykonywania
+1. Sprawdzić zgodność Drizzle ORM i `expo-sqlite` z Expo SDK 57 oraz przypiąć dokładne wersje.
+2. Wygenerować i przejrzeć pierwszą migrację schematu opartą na UUIDv7 i `occurredAt` w UTC.
+3. Zaimplementować i przetestować lokalne CRUD dla pojazdu oraz wpisów historii bez wykonywania
    zapytań bazodanowych bezpośrednio w ekranach.
+4. Dodać wersjonowany eksport JSON bez danych binarnych.
+5. Zaprojektować kontrakt `ObjectStorage`, którego lokalna implementacja powstanie ze zdjęciami w
+   Fazie 3.

@@ -63,11 +63,12 @@ Native Testing Library conventions, and native verification on the four represen
 
 ## Phase 2 — Local persistence foundation
 
-**Status:** Not started. This is the next implementation phase after Phase 1 is integrated.
+**Status:** In progress on `feat/local-persistence-foundation`. Drizzle ORM, UUIDv7, the first JSON
+export boundary, and the managed-file architecture have been approved.
 
 ### Steps
 
-1. Evaluate and select the Expo-compatible embedded SQLite integration.
+1. Integrate Drizzle ORM with the Expo SDK 57-compatible `expo-sqlite` package.
 2. Define stable identifiers, schema versioning, migrations, and repository interfaces.
 3. Implement transactional create, read, update, and delete behavior for vehicles and entries.
 4. Add seed or fixture data for development without coupling production behavior to it.
@@ -87,7 +88,7 @@ Native Testing Library conventions, and native verification on the four represen
 1. Implement onboarding and creation of the first vehicle.
 2. Build the vehicle workspace with current mileage and chronological history.
 3. Add inspection, replacement, and repair entry flows.
-4. Support entry details, date, mileage, amount, notes, edit, and safe deletion.
+4. Support entry details, UTC date and time, mileage, amount, notes, edit, and safe deletion.
 5. Enforce one free vehicle in the domain or entitlement boundary rather than only hiding UI.
 6. Test validation, empty states, interruptions, and restart persistence.
 
@@ -227,8 +228,7 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Finish and integrate the Phase 1 branch, then create a dedicated Phase 2 branch from the updated
-`main`. Begin with a short `expo-sqlite` compatibility spike for Expo SDK 57 and agree the stable
-identifier strategy, first schema version, migration boundary, repository interfaces, and minimum
-export format before implementing persistence. The detailed working status is recorded in
-[Current Project Status](./current-status.md).
+Complete the Drizzle and `expo-sqlite` compatibility spike for Expo SDK 57, pin the accepted
+dependencies through NUB and SFW, and implement the first versioned schema. UUIDv7 identity,
+`occurredAt` UTC timestamps, repository boundaries, managed-file metadata, and the JSON-only Phase 2
+export are defined in [Local Persistence Architecture](./local-persistence-architecture.md).
