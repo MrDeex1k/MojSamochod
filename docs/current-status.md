@@ -11,8 +11,9 @@ opisywanego etapu.
 - Fundament aplikacji z fazy 1 został zintegrowany z `main`.
 - Faza 2, czyli lokalna persystencja danych, jest rozpoczęta na branchu
   `feat/local-persistence-foundation`.
-- Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Pierwszy schemat oraz migracja są
-  gotowe, ale aplikacja nie otwiera jeszcze bazy i nie zapisuje pojazdu ani wpisów historii.
+- Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Przy starcie otwiera lokalną bazę,
+  wykonuje migracje i dopiero potem udostępnia nawigację, ale nie zapisuje jeszcze pojazdu ani wpisów
+  historii.
 
 ## Zaimplementowany fundament
 
@@ -43,16 +44,19 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 4 zestawy i 15 testów komponentów oraz układu adaptacyjnego.
+- Aktualny zestaw zawiera 6 zestawów i 20 testów komponentów, układu adaptacyjnego oraz inicjalizacji
+  bazy.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
+- React Doctor dla zmian inicjalizacji bazy kończy się wynikiem 100/100.
+- Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
+- Pierwszy start bazy i ponowne uruchomienie z już zastosowaną migracją zostały sprawdzone natywnie
+  na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet. Na obu urządzeniach iOS potwierdzono
+  również plik `moje_auto.db`, tryb WAL, komplet tabel i jeden rekord migracji.
 - Fundament był sprawdzany natywnie na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet.
   Ostatnia zmiana proporcji zdjęcia została dodatkowo sprawdzona na obu tabletach.
 
 ## Znane ograniczenia i dług techniczny
 
-- React Doctor uruchamiany przez SFW nie kończy obecnie analizy. Jego tymczasowa instalacja wymaga
-  `fastq@1.20.2`, które SFW blokuje jako obniżenie poziomu zaufania względem `fastq@1.20.0`.
-  Zabezpieczenie nie zostało wyłączone ani ominięte.
 - Expo Doctor zgłasza dwa oczekiwane odstępstwa: nie rozpoznaje `nub.lock`, a TypeScript 7 jest
   świadomym wyborem projektu. Nie należy z tego powodu tworzyć innego lockfile'a ani obniżać
   TypeScriptu.
@@ -65,7 +69,7 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Dodać inicjalizację bazy, wykonywanie migracji przy starcie oraz jawny stan błędu migracji.
+1. Zaimplementować modele domenowe, generator UUIDv7 i wstrzykiwany zegar.
 2. Zaimplementować i przetestować lokalne CRUD dla pojazdu oraz wpisów historii bez wykonywania
    zapytań bazodanowych bezpośrednio w ekranach.
 3. Dodać wersjonowany eksport JSON bez danych binarnych.

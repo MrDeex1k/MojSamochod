@@ -67,12 +67,6 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
 - Expo Doctor is required after Expo, native configuration, or dependency changes. React Doctor is
   required after React component changes.
 
-React Doctor is currently blocked before analysis by SFW because the temporary tool installation
-resolves `fastq@1.20.2`, whose trust evidence is weaker than the trusted `fastq@1.20.0` release. The
-repository pins `fastq@1.20.0`, but that does not override the isolated dependency graph created by
-`nub dlx`. Do not disable the trust policy to make this diagnostic pass; retry after the upstream
-dependency or its provenance changes.
-
 ## Local-first architecture
 
 The application should be split into layers so that presentation code does not own storage or

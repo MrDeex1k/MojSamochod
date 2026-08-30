@@ -67,6 +67,10 @@ Kolumna odwołania do zdjęcia pojazdu zostanie dodana razem z metadanymi zarzą
   proponowanych domyślnie przez Drizzle Kit.
 - Migracje są dołączane do aplikacji i wykonywane przed udostępnieniem edytowalnego interfejsu.
 - Nieudana migracja prowadzi do jawnego stanu błędu i nie jest interpretowana jako brak danych.
+- Aplikacja otwiera bazę `moje_auto.db` asynchronicznie, włącza tryb WAL i egzekwowanie kluczy
+  obcych, a następnie wykonuje oczekujące migracje. Podczas inicjalizacji pokazuje stan ładowania;
+  po błędzie zachowuje plik bazy, nie pokazuje technicznych szczegółów użytkownikowi i pozwala
+  ponowić operację.
 - Utworzenie albo aktualizacja wpisu wraz ze zmianą aktualnego przebiegu pojazdu jest jedną
   transakcją.
 - Usuwanie jest trwałe. Wpisy pojazdu mogą korzystać z relacji `ON DELETE CASCADE`, ale usunięcie
