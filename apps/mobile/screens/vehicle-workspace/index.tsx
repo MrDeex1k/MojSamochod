@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -13,6 +12,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
 import { EntryForm } from "./entry-form";

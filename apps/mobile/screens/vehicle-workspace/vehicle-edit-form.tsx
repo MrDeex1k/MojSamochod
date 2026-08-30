@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
@@ -7,6 +6,7 @@ import type { ManagedFileCoordinator } from "@/application/storage/managed-file-
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
 import { TextField } from "@/components/ui/text-field";
 import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";

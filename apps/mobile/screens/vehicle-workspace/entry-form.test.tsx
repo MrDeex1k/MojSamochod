@@ -5,6 +5,7 @@ jest.mock("@react-native-community/datetimepicker", () => () => null);
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import { repositorySuccess } from "@/application/repositories/repository-result";
+import { createHistoryEntry } from "@/domain/history/history-entry";
 import { createVehicle } from "@/domain/vehicle/vehicle";
 
 import { EntryForm } from "./entry-form";
@@ -23,6 +24,19 @@ const vehicleResult = createVehicle(
   },
 );
 if (!vehicleResult.ok) throw new Error("Invalid vehicle fixture");
+const repairResult = createHistoryEntry(
+  {
+    details: { subject: "Brake system" },
+    occurredAt: now.toISOString(),
+    type: "repair",
+    vehicleId: vehicleResult.value.id,
+  },
+  {
+    clock: { now: () => now },
+    idGenerator: { generate: () => "018f47e2-7b30-7b80-99c0-81b80d9a57ce" },
+  },
+);
+if (!repairResult.ok) throw new Error("Invalid repair fixture");
 
 describe("EntryForm", () => {
   it("creates a replacement with UTC time and optional common values", async () => {
@@ -79,6 +93,25 @@ describe("EntryForm", () => {
 
     expect(screen.getByText("This field is required.")).toBeOnTheScreen();
     expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  it("uses an edit-specific title for an existing entry", async () => {
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <EntryForm
+          clock={{ now: () => now }}
+          entry={repairResult.value}
+          historyEntries={historyRepository()}
+          idGenerator={{ generate: () => "018f47e2-7b30-7b80-99c0-81b80d9a57ce" }}
+          onCancel={jest.fn()}
+          onSaved={jest.fn()}
+          type="repair"
+          vehicle={vehicleResult.value}
+        />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByRole("header", { name: "Edit repair" })).toBeOnTheScreen();
   });
 });
 

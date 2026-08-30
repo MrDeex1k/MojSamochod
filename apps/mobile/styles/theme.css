@@ -33,7 +33,7 @@
   --theme-easing-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
-@theme {
+@theme inline {
   --color-canvas: var(--theme-color-canvas);
   --color-surface: var(--theme-color-surface);
   --color-surface-strong: var(--theme-color-surface-strong);
@@ -48,26 +48,26 @@
   --color-warning: var(--theme-color-warning);
   --color-success: var(--theme-color-success);
 
-  --text-display: 32px;
-  --text-display--line-height: 40px;
-  --text-title: 24px;
-  --text-title--line-height: 32px;
-  --text-heading: 18px;
-  --text-heading--line-height: 24px;
-  --text-body: 16px;
-  --text-body--line-height: 24px;
-  --text-label: 14px;
-  --text-label--line-height: 20px;
-  --text-caption: 12px;
-  --text-caption--line-height: 16px;
+  --text-display: 2.285714rem;
+  --text-display--line-height: 1.25;
+  --text-title: 1.714286rem;
+  --text-title--line-height: 1.333333;
+  --text-heading: 1.285714rem;
+  --text-heading--line-height: 1.333333;
+  --text-body: 1.142857rem;
+  --text-body--line-height: 1.5;
+  --text-label: 1rem;
+  --text-label--line-height: 1.428571;
+  --text-caption: 0.857143rem;
+  --text-caption--line-height: 1.333333;
 
-  --spacing-screen: 24px;
-  --spacing-section: 32px;
-  --spacing-content: 16px;
-  --spacing-control: 12px;
-  --spacing-compact: 8px;
+  --spacing-screen: 1.714286rem;
+  --spacing-section: 2.285714rem;
+  --spacing-content: 1.142857rem;
+  --spacing-control: 0.857143rem;
+  --spacing-compact: 0.571429rem;
 
-  --radius-panel: 24px;
-  --radius-control: 14px;
-  --radius-compact: 10px;
+  --radius-panel: 1.714286rem;
+  --radius-control: 1rem;
+  --radius-compact: 0.714286rem;
 }

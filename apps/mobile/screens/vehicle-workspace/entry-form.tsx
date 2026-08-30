@@ -131,7 +131,7 @@ export function EntryForm({
   const content = (
     <Card className={embedded ? "h-full" : undefined}>
       <Text accessibilityRole="header" className="text-title font-bold text-primary">
-        {t(`entryForm.title.${type}`)}
+        {t(`entryForm.${entry ? "editTitle" : "title"}.${type}`)}
       </Text>
       <TypeSpecificFields
         description={description}

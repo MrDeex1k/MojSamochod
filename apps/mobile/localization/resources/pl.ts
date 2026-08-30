@@ -18,6 +18,11 @@ export const pl = {
     discardTitle: "Odrzucić ten wpis?",
     dateLabel: "Data zdarzenia",
     descriptionLabel: "Opis",
+    editTitle: {
+      inspection: "Edytuj przegląd",
+      repair: "Edytuj naprawę",
+      replacement: "Edytuj wymianę",
+    },
     futureError: "Data i godzina zdarzenia nie mogą być w przyszłości.",
     inspectionKindLabel: "Rodzaj przeglądu",
     inspectionKinds: { diagnostic: "Diagnostyczny", other: "Inny", technical: "Techniczny" },

@@ -1,5 +1,4 @@
 import { getLocales } from "expo-localization";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
@@ -11,6 +10,7 @@ import { SupportedOrientation } from "@/components/layout/supported-orientation"
 import { useApplicationServices } from "@/components/providers/application-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
 import { TextField } from "@/components/ui/text-field";
 import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";

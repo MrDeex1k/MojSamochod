@@ -17,6 +17,11 @@ export const en = {
     discardTitle: "Discard this entry?",
     dateLabel: "Event date",
     descriptionLabel: "Description",
+    editTitle: {
+      inspection: "Edit inspection",
+      repair: "Edit repair",
+      replacement: "Edit replacement",
+    },
     futureError: "The event date and time cannot be in the future.",
     inspectionKindLabel: "Inspection kind",
     inspectionKinds: { diagnostic: "Diagnostic", other: "Other", technical: "Technical" },
