@@ -12,8 +12,8 @@ opisywanego etapu.
 - Faza 2, czyli lokalna persystencja danych, jest rozpoczęta na branchu
   `feat/local-persistence-foundation`.
 - Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Przy starcie otwiera lokalną bazę,
-  wykonuje migracje i dopiero potem udostępnia nawigację, ale nie zapisuje jeszcze pojazdu ani wpisów
-  historii.
+  wykonuje migracje i dopiero potem udostępnia nawigację. Warstwa repozytoriów potrafi już zapisywać
+  pojazd i wpisy historii, ale ekrany zostaną z nią połączone dopiero w Fazie 3.
 
 ## Zaimplementowany fundament
 
@@ -44,8 +44,8 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 10 zestawów i 38 testów komponentów, układu adaptacyjnego, inicjalizacji
-  bazy oraz domeny.
+- Aktualny zestaw zawiera 12 zestawów i 49 testów komponentów, układu adaptacyjnego, inicjalizacji
+  bazy, domeny, mapperów rekordów oraz zachowania repozytoriów.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
 - React Doctor dla zmian inicjalizacji bazy kończy się wynikiem 100/100.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
@@ -54,6 +54,19 @@ opisywanego etapu.
   również plik `moje_auto.db`, tryb WAL, komplet tabel i jeden rekord migracji.
 - Fundament był sprawdzany natywnie na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet.
   Ostatnia zmiana proporcji zdjęcia została dodatkowo sprawdzona na obu tabletach.
+
+### Domena i persystencja
+
+- Interfejsy repozytorium pojazdu i historii są oddzielone od Drizzle oraz zwracają typowane wyniki:
+  konflikt, brak rekordu, uszkodzone dane, niedostępny magazyn albo nieobsługiwana operacja.
+- Produkcyjna implementacja Drizzle zapewnia CRUD pojazdu oraz wpisów przeglądu, wymiany i naprawy.
+- Utworzenie lub aktualizacja wpisu, jego szczegółów i ewentualne podniesienie aktualnego przebiegu
+  odbywają się w jednej transakcji. Edycja i usunięcie wpisu nie obniżają przebiegu pojazdu.
+- Rekordy odczytane z SQLite są ponownie sprawdzane względem kontraktu domenowego. Nieprawidłowy
+  identyfikator, czas, kwota lub brak właściwego rekordu szczegółów daje błąd `corrupt-data` zamiast
+  niepełnego modelu domenowego.
+- Zdjęcie pojazdu jest jawnie odrzucane jako `unsupported`, dopóki w Fazie 3 nie powstanie
+  implementacja zarządzanych plików; repozytorium nie gubi tej wartości po cichu.
 
 ## Znane ograniczenia i dług techniczny
 
@@ -69,9 +82,9 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Zdefiniować interfejsy repozytoriów i typowane błędy warstwy pamięci.
-2. Zaimplementować i przetestować transakcyjne CRUD dla pojazdu oraz wpisów historii bez wykonywania
-   zapytań bazodanowych bezpośrednio w ekranach.
+1. Dodać deterministyczne fixture'y deweloperskie bez łączenia ich z zachowaniem produkcyjnym.
+2. Rozszerzyć testy o awarię migracji, przerwaną transakcję i trwałość danych po ponownym otwarciu
+   aplikacji.
 3. Dodać wersjonowany eksport JSON bez danych binarnych.
 4. Zaprojektować kontrakt `ObjectStorage`, którego lokalna implementacja powstanie ze zdjęciami w
    Fazie 3.
