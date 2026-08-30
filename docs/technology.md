@@ -33,6 +33,9 @@ versions.
 | Gestures              | React Native Gesture Handler 2.32.0                                      | Platform-aware touch interactions.                                |
 | System appearance     | Expo System UI 57.0.3                                                    | Applies the dark interface style consistently on Android.         |
 | Unit/component tests  | Jest 29.7.0, Jest Expo 57.0.5, React Native Testing Library 14.0.1       | Tests pure logic and user-visible component behavior.             |
+| Local database        | Expo SQLite 57.0.2 and Drizzle ORM 0.45.2                                | Persistent SQLite access and typed queries.                       |
+| Database migrations   | Drizzle Kit 0.31.10                                                      | Generates reviewable SQL migrations bundled with the application. |
+| Record identifiers    | UUID 14.0.2 and Expo Crypto 57.0.2                                       | UUIDv7 generation backed by native secure randomness.             |
 
 NativeWind 5 is intentionally a preview dependency. Its compatibility with the active Expo SDK
 must be rechecked before SDK upgrades and before a production release.
@@ -58,17 +61,11 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
 - Oxlint provides static linting and Oxfmt provides formatting.
 - Husky and commitlint enforce Conventional Commits.
 - `nub run check` is the standard local quality gate: lint, formatting check, TypeScript
-  validation, and Jest tests.
+  validation, consistency of Drizzle migrations, and Jest tests.
 - Tests are colocated with source files and prefer accessible roles, labels, and user interactions
   over implementation details.
 - Expo Doctor is required after Expo, native configuration, or dependency changes. React Doctor is
   required after React component changes.
-
-React Doctor is currently blocked before analysis by SFW because the temporary tool installation
-resolves `fastq@1.20.2`, whose trust evidence is weaker than the trusted `fastq@1.20.0` release. The
-repository pins `fastq@1.20.0`, but that does not override the isolated dependency graph created by
-`nub dlx`. Do not disable the trust policy to make this diagnostic pass; retry after the upstream
-dependency or its provenance changes.
 
 ## Local-first architecture
 
@@ -129,8 +126,8 @@ yet. A short technical spike should confirm each choice before it becomes a prod
 
 | Capability              | Planned direction                                                                      | Decision still required                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Structured local data   | Embedded SQLite database, preferably through an Expo-supported module                  | Schema, migration runner, repository API, backup behavior.                                   |
-| Invoices and documents  | App-managed local file storage with metadata and relations stored in the database      | File import API, size limits, supported formats, orphan cleanup, export.                     |
+| Structured local data   | Drizzle ORM over Expo SQLite with a committed, generated initial migration             | Database bootstrap, repositories, transactional CRUD, and versioned JSON export.             |
+| Invoices and documents  | `ObjectStorage` backed by app-managed files with metadata and relations in SQLite      | File import API, size limits, supported formats, orphan cleanup, export.                     |
 | Reminders               | Local notifications scheduled from stored deadlines                                    | Permission flow, rescheduling rules, timezone and overdue behavior.                          |
 | Localization            | `expo-localization`, external translation catalogs, and locale-aware `Intl` formatting | Translation library, catalog structure, supported locale identifiers, and fallback behavior. |
 | Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records                    | Full-tank rules, partial fills, units, rounding, invalid sequences.                          |
@@ -150,6 +147,8 @@ explicit product-scope decision.
 ## Data safety requirements
 
 - Use explicit, versioned database migrations from the first persisted schema.
+- Use UUIDv7 for stable record identity, but store `createdAt`, `updatedAt`, and history-entry
+  `occurredAt` independently as UTC timestamps. Never derive domain time from an identifier.
 - Never delete vehicle records or documents implicitly during an upgrade.
 - Store money in minor currency units rather than floating-point values.
 - Store normalized timestamps and preserve the user's timezone where deadline semantics require it.
@@ -158,6 +157,12 @@ explicit product-scope decision.
   files safely.
 - Define export and restore behavior before calling the local-first data model production-ready.
 - Synchronization must not be added until stable identifiers and conflict rules exist.
+
+Binary vehicle photos and documents must live in app-managed file storage rather than SQLite BLOB
+columns. SQLite stores their stable identifiers, storage keys, MIME types, original names, sizes,
+SHA-256 digests, relations, and timestamps. Phase 2 defines the `ObjectStorage` contract and exports
+vehicle-history data as versioned JSON without binaries; the first local file implementation is
+part of Phase 3.
 
 ## Verification matrix
 

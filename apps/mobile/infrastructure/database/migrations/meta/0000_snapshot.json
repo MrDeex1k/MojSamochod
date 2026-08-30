@@ -1,0 +1,494 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "8fb2f66f-c3ba-4e9b-b9f6-4cd313c02da7",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "history_entries": {
+      "name": "history_entries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vehicle_id": {
+          "name": "vehicle_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "odometer_metres": {
+          "name": "odometer_metres",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cost_minor_units": {
+          "name": "cost_minor_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cost_currency": {
+          "name": "cost_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "service_provider": {
+          "name": "service_provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "history_entries_id_type_unique": {
+          "name": "history_entries_id_type_unique",
+          "columns": ["id", "type"],
+          "isUnique": true
+        },
+        "history_entries_vehicle_timeline_index": {
+          "name": "history_entries_vehicle_timeline_index",
+          "columns": ["vehicle_id", "occurred_at", "created_at", "id"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "history_entries_vehicle_id_vehicles_id_fk": {
+          "name": "history_entries_vehicle_id_vehicles_id_fk",
+          "tableFrom": "history_entries",
+          "tableTo": "vehicles",
+          "columnsFrom": ["vehicle_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "history_entries_type": {
+          "name": "history_entries_type",
+          "value": "\"history_entries\".\"type\" in ('inspection', 'replacement', 'repair')"
+        },
+        "history_entries_odometer_range": {
+          "name": "history_entries_odometer_range",
+          "value": "\"history_entries\".\"odometer_metres\" is null or \"history_entries\".\"odometer_metres\" between 0 and 9007199254740991"
+        },
+        "history_entries_cost_pair": {
+          "name": "history_entries_cost_pair",
+          "value": "(\"history_entries\".\"cost_minor_units\" is null and \"history_entries\".\"cost_currency\" is null) or (\"history_entries\".\"cost_minor_units\" is not null and \"history_entries\".\"cost_currency\" is not null)"
+        },
+        "history_entries_cost_range": {
+          "name": "history_entries_cost_range",
+          "value": "\"history_entries\".\"cost_minor_units\" is null or \"history_entries\".\"cost_minor_units\" between 0 and 9007199254740991"
+        },
+        "history_entries_currency_length": {
+          "name": "history_entries_currency_length",
+          "value": "\"history_entries\".\"cost_currency\" is null or length(\"history_entries\".\"cost_currency\") = 3"
+        },
+        "history_entries_service_provider_length": {
+          "name": "history_entries_service_provider_length",
+          "value": "\"history_entries\".\"service_provider\" is null or length(\"history_entries\".\"service_provider\") <= 120"
+        },
+        "history_entries_notes_length": {
+          "name": "history_entries_notes_length",
+          "value": "\"history_entries\".\"notes\" is null or length(\"history_entries\".\"notes\") <= 5000"
+        }
+      }
+    },
+    "inspection_details": {
+      "name": "inspection_details",
+      "columns": {
+        "history_entry_id": {
+          "name": "history_entry_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entry_type": {
+          "name": "entry_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'inspection'"
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result": {
+          "name": "result",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "inspection_details_entry_foreign_key": {
+          "name": "inspection_details_entry_foreign_key",
+          "tableFrom": "inspection_details",
+          "tableTo": "history_entries",
+          "columnsFrom": ["history_entry_id", "entry_type"],
+          "columnsTo": ["id", "type"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "inspection_details_entry_type": {
+          "name": "inspection_details_entry_type",
+          "value": "\"inspection_details\".\"entry_type\" = 'inspection'"
+        },
+        "inspection_details_kind": {
+          "name": "inspection_details_kind",
+          "value": "\"inspection_details\".\"kind\" in ('technical', 'diagnostic', 'other')"
+        },
+        "inspection_details_result": {
+          "name": "inspection_details_result",
+          "value": "\"inspection_details\".\"result\" in ('passed', 'failed', 'conditional', 'not-recorded')"
+        },
+        "inspection_details_description_length": {
+          "name": "inspection_details_description_length",
+          "value": "\"inspection_details\".\"description\" is null or length(\"inspection_details\".\"description\") <= 200"
+        }
+      }
+    },
+    "repair_details": {
+      "name": "repair_details",
+      "columns": {
+        "history_entry_id": {
+          "name": "history_entry_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entry_type": {
+          "name": "entry_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'repair'"
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "repair_details_entry_foreign_key": {
+          "name": "repair_details_entry_foreign_key",
+          "tableFrom": "repair_details",
+          "tableTo": "history_entries",
+          "columnsFrom": ["history_entry_id", "entry_type"],
+          "columnsTo": ["id", "type"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "repair_details_entry_type": {
+          "name": "repair_details_entry_type",
+          "value": "\"repair_details\".\"entry_type\" = 'repair'"
+        },
+        "repair_details_subject_length": {
+          "name": "repair_details_subject_length",
+          "value": "length(trim(\"repair_details\".\"subject\")) between 1 and 120"
+        },
+        "repair_details_description_length": {
+          "name": "repair_details_description_length",
+          "value": "\"repair_details\".\"description\" is null or length(\"repair_details\".\"description\") <= 500"
+        }
+      }
+    },
+    "replacement_details": {
+      "name": "replacement_details",
+      "columns": {
+        "history_entry_id": {
+          "name": "history_entry_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entry_type": {
+          "name": "entry_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'replacement'"
+        },
+        "item": {
+          "name": "item",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "manufacturer": {
+          "name": "manufacturer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "part_number": {
+          "name": "part_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "replacement_details_entry_foreign_key": {
+          "name": "replacement_details_entry_foreign_key",
+          "tableFrom": "replacement_details",
+          "tableTo": "history_entries",
+          "columnsFrom": ["history_entry_id", "entry_type"],
+          "columnsTo": ["id", "type"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "replacement_details_entry_type": {
+          "name": "replacement_details_entry_type",
+          "value": "\"replacement_details\".\"entry_type\" = 'replacement'"
+        },
+        "replacement_details_item_length": {
+          "name": "replacement_details_item_length",
+          "value": "length(trim(\"replacement_details\".\"item\")) between 1 and 120"
+        },
+        "replacement_details_manufacturer_length": {
+          "name": "replacement_details_manufacturer_length",
+          "value": "\"replacement_details\".\"manufacturer\" is null or length(\"replacement_details\".\"manufacturer\") <= 100"
+        },
+        "replacement_details_part_number_length": {
+          "name": "replacement_details_part_number_length",
+          "value": "\"replacement_details\".\"part_number\" is null or length(\"replacement_details\".\"part_number\") <= 100"
+        }
+      }
+    },
+    "vehicles": {
+      "name": "vehicles",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "make": {
+          "name": "make",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "variant": {
+          "name": "variant",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "manufacture_year": {
+          "name": "manufacture_year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "registration_number": {
+          "name": "registration_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "vin": {
+          "name": "vin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "initial_odometer_metres": {
+          "name": "initial_odometer_metres",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "current_odometer_metres": {
+          "name": "current_odometer_metres",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "distance_unit_preference": {
+          "name": "distance_unit_preference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "vehicles_make_length": {
+          "name": "vehicles_make_length",
+          "value": "length(trim(\"vehicles\".\"make\")) between 1 and 80"
+        },
+        "vehicles_model_length": {
+          "name": "vehicles_model_length",
+          "value": "length(trim(\"vehicles\".\"model\")) between 1 and 80"
+        },
+        "vehicles_variant_length": {
+          "name": "vehicles_variant_length",
+          "value": "\"vehicles\".\"variant\" is null or length(\"vehicles\".\"variant\") <= 100"
+        },
+        "vehicles_manufacture_year_range": {
+          "name": "vehicles_manufacture_year_range",
+          "value": "\"vehicles\".\"manufacture_year\" is null or \"vehicles\".\"manufacture_year\" between 1000 and 9999"
+        },
+        "vehicles_registration_number_length": {
+          "name": "vehicles_registration_number_length",
+          "value": "\"vehicles\".\"registration_number\" is null or length(\"vehicles\".\"registration_number\") <= 20"
+        },
+        "vehicles_vin_length": {
+          "name": "vehicles_vin_length",
+          "value": "\"vehicles\".\"vin\" is null or length(\"vehicles\".\"vin\") = 17"
+        },
+        "vehicles_initial_odometer_range": {
+          "name": "vehicles_initial_odometer_range",
+          "value": "\"vehicles\".\"initial_odometer_metres\" is null or \"vehicles\".\"initial_odometer_metres\" between 0 and 9007199254740991"
+        },
+        "vehicles_current_odometer_range": {
+          "name": "vehicles_current_odometer_range",
+          "value": "\"vehicles\".\"current_odometer_metres\" is null or \"vehicles\".\"current_odometer_metres\" between 0 and 9007199254740991"
+        },
+        "vehicles_distance_unit": {
+          "name": "vehicles_distance_unit",
+          "value": "\"vehicles\".\"distance_unit_preference\" in ('kilometres', 'miles')"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

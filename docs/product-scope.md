@@ -25,7 +25,7 @@ the agreed boundary for the current delivery plan.
 - Store essential vehicle details, current mileage, insurance deadline, and technical-inspection
   deadline.
 - Create inspection, replacement, and repair history entries.
-- Record dates, mileage, notes, monetary amounts, and relevant entry details.
+- Record event date and UTC time, mileage, notes, monetary amounts, and relevant entry details.
 - Attach invoices or other documents to the vehicle or a specific history entry.
 - Import, preview, export, replace, and safely delete managed documents.
 - Record refuelling events and calculate average fuel consumption from valid records.
@@ -113,7 +113,7 @@ or modals on phones and contextual panels on tablets.
 | Vehicle workspace         | Identify the vehicle, show mileage, nearest deadline, recent history, costs, documents, and primary add action. | Main destination; list-detail capable on tablets.                       |
 | Vehicle editor            | Create or edit vehicle identity, optional photo, mileage, and deadlines.                                        | Focused form.                                                           |
 | History timeline          | Scan inspection, replacement, and repair entries chronologically.                                               | Part of the vehicle workspace or a secondary list when history grows.   |
-| History entry editor      | Create or edit an inspection, replacement, or repair with relevant fields only.                                 | Sheet, modal, or full-screen form depending on platform and complexity. |
+| History entry editor      | Create or edit an inspection, replacement, or repair with UTC event date and time plus relevant fields.         | Sheet, modal, or full-screen form depending on platform and complexity. |
 | History entry details     | Review all entry information, related amount, document, edit action, and safe deletion.                         | Secondary screen or tablet detail pane.                                 |
 | Vehicle documents         | Scan invoices and files related to the vehicle and its entries.                                                 | Secondary list from the vehicle workspace.                              |
 | Document preview          | Preview metadata and supported content; export, replace, reassign, or delete the file.                          | Full-screen preview or platform document surface.                       |

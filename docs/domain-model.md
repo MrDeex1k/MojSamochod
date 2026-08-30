@@ -6,7 +6,8 @@
 
 **Faza realizacji:** Faza 0 — decyzje produktowe i domenowe
 
-**Status implementacji:** niezaimplementowany
+**Status implementacji:** modele, typy wartości i walidacja zaimplementowane; przypadki użycia oraz
+repozytoria pozostają w realizacji
 
 Ten dokument definiuje pierwszy model domenowy bezpłatnego, lokalnego przepływu historii pojazdu.
 Przekłada uzgodniony zakres produktu na jednoznaczne dane, reguły walidacji i cykl życia, zanim
@@ -32,7 +33,7 @@ tankowania, przypomnienia, pojazdy Premium, eksport oraz synchronizację.
 Celowo odłożone zostają:
 
 - tabele bazy danych, indeksy oraz wybór mechanizmu migracji;
-- konkretna implementacja UUID lub pakiet SQLite;
+- dokładne wersje zatwierdzonych bibliotek persystencji;
 - szczegóły cyklu życia plików dokumentów poza zachowaniem przy usuwaniu wpisu;
 - reguły obliczania zużycia paliwa;
 - planowanie powiadomień;
@@ -61,12 +62,13 @@ Celowo odłożone zostają:
 
 - Każdy utrwalany agregat i encja otrzymuje nieprzezroczysty, globalnie unikalny identyfikator w
   chwili utworzenia.
-- Identyfikatory nie kodują numeru wiersza bazy danych, danych pojazdu, znacznika czasu ani etykiety
-  widocznej dla użytkownika.
+- Identyfikatory nie kodują numeru wiersza bazy danych, danych pojazdu ani etykiety widocznej dla
+  użytkownika.
 - Identyfikator nie zmienia się przy edycji, eksporcie, imporcie ani synchronizacji rekordu.
-- Po technicznym rozpoznaniu implementacja może używać UUIDv7 albo równoważnego globalnie unikalnego
-  formatu, ale interfejsy domenowe udostępniają typowane wartości `VehicleId`, `HistoryEntryId` i
-  `DocumentId`, a nie surowe ciągi znaków.
+- Implementacja używa UUIDv7, ale interfejsy domenowe udostępniają typowane wartości `VehicleId`,
+  `HistoryEntryId` i `DocumentId`, a nie surowe ciągi znaków.
+- Część czasowa UUIDv7 nie jest źródłem czasu domenowego. Kod nie odczytuje z identyfikatora momentu
+  utworzenia, czasu zdarzenia ani kolejności historii; służą do tego osobne pola.
 
 Globalnie unikalne identyfikatory są wymagane od pierwszego schematu, aby późniejszy eksport, import
 i synchronizacja między urządzeniami nie wymagały przepisywania tożsamości rekordów.
@@ -83,15 +85,17 @@ i synchronizacja między urządzeniami nie wymagały przepisywania tożsamości 
 
 ### Daty kalendarzowe i znaczniki czasu
 
-- Zdarzenie historii pojazdu używa wymaganej daty kalendarzowej w formacie `YYYY-MM-DD`, bez strefy
-  czasowej. Naprawa zapisana jako wykonana 15 marca musi pozostać 15 marca po zmianie strefy
-  czasowej.
+- Zdarzenie historii pojazdu używa wymaganego znacznika czasu `occurredAt` w UTC. Jest zapisywany w
+  jednym polu jako tekst ISO 8601, na przykład `2026-08-30T14:30:00.000Z`.
+- Formularz pokazuje osobne kontrolki `Data` i `Godzina (UTC)`, ale warstwa aplikacyjna łączy je w
+  jedno `occurredAt`. W pierwszym przekroju użytkownik wybiera czas z dokładnością do minuty, a
+  sekundy i milisekundy są zapisywane jako zero.
 - Terminy również używają dat kalendarzowych; ich późniejszy harmonogram powiadomień może dodatkowo
   przechowywać strefę czasową i lokalną godzinę powiadomienia.
 - Metadane rekordu używają znaczników czasu UTC w polach `createdAt` i `updatedAt`.
-- Zegar urządzenia nie jest zaufanym źródłem kolejności zdarzeń domenowych; historia jest sortowana
-  przede wszystkim według daty zdarzenia.
-- Data zdarzenia w przyszłości jest odrzucana w pierwszym przekroju funkcjonalnym. Planowanie
+- UUIDv7 nie zastępuje żadnego z tych pól czasu i nie jest używany do ustalania ich wartości.
+- Historia jest sortowana przede wszystkim według `occurredAt`.
+- Czas zdarzenia w przyszłości względem bieżącego czasu UTC jest odrzucany. Planowanie
   przyszłego serwisu należy do przypomnień, a nie do zakończonej historii pojazdu.
 
 ### Odległość i wskazania drogomierza
@@ -191,7 +195,7 @@ przeglądu.
 | `id`              | Systemowo | Stabilny `HistoryEntryId`.                                           |
 | `vehicleId`       | Systemowo | Identyfikator pojazdu będącego właścicielem wpisu.                   |
 | `type`            | Tak       | `inspection`, `replacement` albo `repair`; niezmienne po utworzeniu. |
-| `occurredOn`      | Tak       | Data kalendarzowa, która nie przypada w przyszłości.                 |
+| `occurredAt`      | Tak       | Znacznik czasu zdarzenia UTC, który nie przypada w przyszłości.      |
 | `odometerMetres`  | Nie       | Bieżący nieujemny odczyt podany przez użytkownika przy wpisie.       |
 | `cost`            | Nie       | Jedna wartość `Money` reprezentująca koszt całkowity.                |
 | `serviceProvider` | Nie       | Nazwa warsztatu, stacji lub usługodawcy; najwyżej 120 znaków.        |
@@ -241,16 +245,16 @@ mogą być zapisywane w notatkach i dokumentach.
 ### Niezmienniki historii
 
 1. Wpis zawsze należy do dokładnie jednego istniejącego pojazdu.
-2. Muszą być obecne co najmniej wymagane pole zależne od typu oraz `occurredOn`.
+2. Muszą być obecne co najmniej wymagane pole zależne od typu oraz `occurredAt`.
 3. Wpisy można tworzyć i edytować poza kolejnością chronologiczną.
 4. Przebieg wpisu niższy niż aktualny przebieg pojazdu jest prawidłowy dla danych historycznych.
 5. Jeżeli aktualny przebieg pojazdu jest nieznany albo przebieg wpisu jest od niego wyższy, zapis
    wpisu aktualizuje również aktualny przebieg po poinformowaniu użytkownika w formularzu.
 6. Edycja ani usunięcie wpisu nigdy nie obniżają automatycznie aktualnego przebiegu pojazdu.
-7. Odczyt niespójny z sąsiednimi wpisami według daty powoduje możliwe do zignorowania ostrzeżenie, a
-   nie błąd blokujący. Wymiana, przekręcenie i korekta drogomierza wymagają późniejszego, jawnego
-   modelu.
-8. Historia jest sortowana malejąco według `occurredOn`, następnie malejąco według `createdAt`, a na
+7. Odczyt niespójny z sąsiednimi wpisami według czasu zdarzenia powoduje możliwe do zignorowania
+   ostrzeżenie, a nie błąd blokujący. Wymiana, przekręcenie i korekta drogomierza wymagają
+   późniejszego, jawnego modelu.
+8. Historia jest sortowana malejąco według `occurredAt`, następnie malejąco według `createdAt`, a na
    końcu według stabilnego `id`, aby zagwarantować deterministyczny wynik.
 9. Koszt nie jest wymagany i nie wpływa na prawidłowość wpisu.
 
@@ -336,7 +340,7 @@ zachowania można wykazać testami automatycznymi:
 1. Prawidłowy pojazd jest tworzony ze stabilnym identyfikatorem i zachowany po ponownym
    zainicjalizowaniu repozytorium.
 2. Drugi bezpłatny pojazd jest odrzucany na granicy przypadku użycia.
-3. Wymagane pola pojazdu, VIN, rok, odległość, limity tekstu, pieniądze i daty kalendarzowe są
+3. Wymagane pola pojazdu, VIN, rok, odległość, limity tekstu, pieniądze i znaczniki czasu są
    walidowane bez cichego zmieniania prawidłowych danych.
 4. Pojazd można utworzyć bez licznika początkowego, a podany licznik początkowy inicjalizuje aktualny
    przebieg bez utraty własnej wartości historycznej.
@@ -347,7 +351,7 @@ zachowania można wykazać testami automatycznymi:
 8. Pierwszy podany przebieg wpisu lub wyższy przebieg wpisu aktualizuje bieżący przebieg pojazdu w
    ramach tej samej pomyślnej operacji.
 9. Edycja ani usunięcie wpisu nie obniżają bieżącego przebiegu.
-10. Wpisy z tą samą datą mają deterministyczną kolejność.
+10. Wpisy z tym samym `occurredAt` mają deterministyczną kolejność.
 11. Wartości pieniężne przechodzą zapis i odczyt dokładnie w najmniejszych jednostkach oraz zachowują
     walutę.
 12. Usunięcie wpisu odłącza powiązane dokumenty bez usuwania zarządzanych plików.
@@ -372,7 +376,8 @@ Poniższe decyzje zostały zatwierdzone jako bazowy model domenowy Fazy 0.
 5. **Niższy lub niespójny odczyt:** dane historyczne są dozwolone z ostrzeżeniem zamiast blokady.
 6. **Przebieg wpisu:** jest opcjonalny, aby można było dodać stare faktury i zdarzenia z nieznanym
    przebiegiem.
-7. **Data zdarzenia:** jest wymagana i nie może przypadać w przyszłości.
+7. **Data i godzina zdarzenia:** są wymagane, reprezentują czas UTC i są zapisywane razem w polu
+   `occurredAt`; zdarzenie nie może przypadać w przyszłości.
 8. **Typ wpisu:** jest niezmienny po utworzeniu; początkowo korekta błędnego typu wymaga ponownego
    utworzenia wpisu.
 9. **Wynik przeglądu:** jest wymagany, ale `not-recorded` stanowi dopuszczalną wartość.

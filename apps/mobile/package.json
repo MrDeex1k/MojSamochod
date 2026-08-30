@@ -8,6 +8,8 @@
     "dev": "expo start",
     "start": "expo start",
     "android": "expo start --android",
+    "db:check": "drizzle-kit check --config drizzle.config.ts",
+    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --runInBand",
@@ -15,11 +17,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "drizzle-orm": "0.45.2",
     "expo": "57.0.18",
     "expo-constants": "57.0.16",
+    "expo-crypto": "57.0.2",
     "expo-linking": "57.0.8",
     "expo-router": "57.0.17",
     "expo-splash-screen": "57.0.8",
+    "expo-sqlite": "57.0.2",
     "expo-status-bar": "57.0.1",
     "expo-system-ui": "57.0.3",
     "nativewind": "5.0.0-preview.4",
@@ -32,13 +37,17 @@
     "react-native-safe-area-context": "5.7.0",
     "react-native-screens": "4.26.0",
     "react-native-web": "0.21.2",
-    "react-native-worklets": "0.10.1"
+    "react-native-worklets": "0.10.1",
+    "uuid": "14.0.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/react-native": "14.0.1",
     "@types/jest": "29.5.14",
+    "@types/node": "26.2.0",
     "@types/react": "19.2.18",
+    "babel-plugin-inline-import": "3.0.0",
+    "drizzle-kit": "0.31.10",
     "jest": "29.7.0",
     "jest-expo": "57.0.5",
     "postcss": "8.5.26",

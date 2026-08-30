@@ -8,11 +8,12 @@ opisywanego etapu.
 
 - Faza 0, czyli ustalenie zakresu produktu, modelu domenowego, pierwszego przepływu użytkownika i
   kierunku wizualnego, jest zakończona.
-- Fundament aplikacji z fazy 1 jest zaimplementowany na branchu `feat/application-foundation`, ale
-  nie został jeszcze zintegrowany z `main`.
-- Kolejną fazą po domknięciu obecnego brancha jest faza 2: lokalna persystencja danych.
-- Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Nie zapisuje jeszcze pojazdu ani
-  wpisów historii.
+- Fundament aplikacji z fazy 1 został zintegrowany z `main`.
+- Faza 2, czyli lokalna persystencja danych, jest zakończona na branchu
+  `feat/local-persistence-foundation` i gotowa do przeglądu oraz integracji.
+- Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Przy starcie otwiera lokalną bazę,
+  wykonuje migracje i dopiero potem udostępnia nawigację. Warstwa repozytoriów potrafi już zapisywać
+  pojazd i wpisy historii, ale ekrany zostaną z nią połączone dopiero w Fazie 3.
 
 ## Zaimplementowany fundament
 
@@ -43,16 +44,45 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 4 zestawy i 15 testów komponentów oraz układu adaptacyjnego.
+- Aktualny zestaw zawiera 16 zestawów i 76 testów komponentów, układu adaptacyjnego, inicjalizacji
+  bazy, domeny, mapperów rekordów, zachowania repozytoriów, trwałości SQLite, eksportu oraz
+  zarządzanych plików.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
+- React Doctor dla zmian inicjalizacji bazy kończy się wynikiem 100/100.
+- Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
+- Pierwszy start bazy i ponowne uruchomienie z już zastosowaną migracją zostały sprawdzone natywnie
+  na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet. Na obu urządzeniach iOS potwierdzono
+  również plik `moje_auto.db`, tryb WAL, komplet tabel i jeden rekord migracji.
 - Fundament był sprawdzany natywnie na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet.
   Ostatnia zmiana proporcji zdjęcia została dodatkowo sprawdzona na obu tabletach.
 
+### Domena i persystencja
+
+- Interfejsy repozytorium pojazdu i historii są oddzielone od Drizzle oraz zwracają typowane wyniki:
+  konflikt, brak rekordu, uszkodzone dane, niedostępny magazyn albo nieobsługiwana operacja.
+- Produkcyjna implementacja Drizzle zapewnia CRUD pojazdu oraz wpisów przeglądu, wymiany i naprawy.
+- Utworzenie lub aktualizacja wpisu, jego szczegółów i ewentualne podniesienie aktualnego przebiegu
+  odbywają się w jednej transakcji. Edycja i usunięcie wpisu nie obniżają przebiegu pojazdu.
+- Rekordy odczytane z SQLite są ponownie sprawdzane względem kontraktu domenowego. Nieprawidłowy
+  identyfikator, czas, kwota lub brak właściwego rekordu szczegółów daje błąd `corrupt-data` zamiast
+  niepełnego modelu domenowego.
+- Zdjęcie pojazdu jest jawnie odrzucane jako `unsupported`, dopóki w Fazie 3 nie powstanie
+  implementacja zarządzanych plików; repozytorium nie gubi tej wartości po cichu.
+- Deterministyczny fixture deweloperski zawiera pojazd oraz po jednym wpisie przeglądu, wymiany i
+  naprawy. Nie jest importowany przez produkcyjny proces startu aplikacji.
+- Testy na rzeczywistym pliku SQLite potwierdzają trwałość danych po zamknięciu i ponownym otwarciu,
+  pełny rollback przerwanego zapisu oraz odrzucanie rekordów łamiących ograniczenia schematu.
+- Błąd migracji zamyka połączenie i pozostaje błędem źródłowym również wtedy, gdy samo zamknięcie
+  połączenia także się nie powiedzie.
+- Eksport `moje-auto-vehicle-history` w wersji 1 tworzy czytelny JSON pojazdu i historii, także dla
+  pustej bazy. Format jest niezależny od schematu Drizzle, nie zawiera zdjęć ani innych plików
+  binarnych i ma osobną dokumentację kompatybilności.
+- Kontrakt `ObjectStorage` rozdziela etapowanie, trwałe zatwierdzenie, odrzucenie, usunięcie i eksport
+  obiektu. Metadane definiują rozmiar, SHA-256 i bezpieczny względny klucz magazynu, a dokumentacja
+  opisuje odzyskiwanie po przerwaniu operacji między SQLite i systemem plików.
+
 ## Znane ograniczenia i dług techniczny
 
-- React Doctor uruchamiany przez SFW nie kończy obecnie analizy. Jego tymczasowa instalacja wymaga
-  `fastq@1.20.2`, które SFW blokuje jako obniżenie poziomu zaufania względem `fastq@1.20.0`.
-  Zabezpieczenie nie zostało wyłączone ani ominięte.
 - Expo Doctor zgłasza dwa oczekiwane odstępstwa: nie rozpoznaje `nub.lock`, a TypeScript 7 jest
   świadomym wyborem projektu. Nie należy z tego powodu tworzyć innego lockfile'a ani obniżać
   TypeScriptu.
@@ -65,10 +95,10 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Zatwierdzić i zintegrować końcowe zmiany fazy 1.
-2. Utworzyć branch dla fazy 2 z aktualnego `main`.
-3. Wykonać krótki spike dotyczący `expo-sqlite`, oparty na wersji zgodnej z Expo SDK 57.
-4. Przed implementacją ustalić identyfikatory, pierwszą wersję schematu, sposób migracji, granice
-   repozytoriów i minimalny format eksportu.
-5. Zaimplementować i przetestować lokalne CRUD dla pojazdu oraz wpisów historii bez wykonywania
-   zapytań bazodanowych bezpośrednio w ekranach.
+Po integracji brancha rozpocząć Fazę 3 na nowym branchu:
+
+1. Wybrać i skonfigurować bibliotekę i18n przed utrwaleniem produkcyjnych tekstów.
+2. Zaimplementować onboarding i zapis pierwszego pojazdu przez istniejące repozytorium.
+3. Zbudować przestrzeń pojazdu i historię, a następnie formularze przeglądu, wymiany i naprawy.
+4. Zaimplementować lokalny `ObjectStorage` wraz ze zdjęciem pojazdu i mechanizmem uzgadniania
+   przerwanych operacji.
