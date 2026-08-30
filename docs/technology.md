@@ -120,20 +120,23 @@ back to English. Translation resources stay outside screens and tests can select
 deterministically. Locale-sensitive numbers, currencies, and dates use `Intl`; changing locale never
 changes stored domain values.
 
+Phase 3 also uses `expo-image-picker` for gallery-only selection, `expo-image-manipulator` for square
+JPEG processing, `expo-image` for native rendering, `expo-file-system` for private managed storage,
+and `@react-native-community/datetimepicker` for separate native date and UTC-time controls. Direct
+dependencies are pinned to Expo SDK-compatible versions in the application manifest.
+
 ## Planned capabilities and open selections
 
 The following capabilities are part of the product direction but are not installed or implemented
 yet. A short technical spike should confirm each choice before it becomes a production dependency.
 
-| Capability              | Planned direction                                                                      | Decision still required                                                                      |
-| ----------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Structured local data   | Drizzle ORM over Expo SQLite with a committed, generated initial migration             | Database bootstrap, repositories, transactional CRUD, and versioned JSON export.             |
-| Invoices and documents  | `ObjectStorage` backed by app-managed files with metadata and relations in SQLite      | File import API, size limits, supported formats, orphan cleanup, export.                     |
-| Reminders               | Local notifications scheduled from stored deadlines                                    | Permission flow, rescheduling rules, timezone and overdue behavior.                          |
-| Localization            | `expo-localization`, external translation catalogs, and locale-aware `Intl` formatting | Translation library, catalog structure, supported locale identifiers, and fallback behavior. |
-| Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records                    | Full-tank rules, partial fills, units, rounding, invalid sequences.                          |
-| Purchases               | Monthly and annual App Store and Google Play subscriptions                             | Purchase library, products, entitlement model, restore flow, receipt validation.             |
-| Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code            | Serverless transport, identity, encryption, conflicts, retries, and recovery.                |
+| Capability              | Planned direction                                                                 | Decision still required                                                          |
+| ----------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Invoices and documents  | `ObjectStorage` backed by app-managed files with metadata and relations in SQLite | File import API, size limits, supported formats, orphan cleanup, export.         |
+| Reminders               | Local notifications scheduled from stored deadlines                               | Permission flow, rescheduling rules, timezone and overdue behavior.              |
+| Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records               | Full-tank rules, partial fills, units, rounding, invalid sequences.              |
+| Purchases               | Monthly and annual App Store and Google Play subscriptions                        | Purchase library, products, entitlement model, restore flow, receipt validation. |
+| Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code       | Serverless transport, identity, encryption, conflicts, retries, and recovery.    |
 
 No new library should be selected only because it is popular. It must support the active Expo SDK,
 pass the repository's SFW policy, and demonstrate a clear maintenance and platform-compatibility

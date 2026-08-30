@@ -10,11 +10,11 @@ opisywanego etapu.
   kierunku wizualnego, jest zakończona.
 - Fundament aplikacji z fazy 1 został zintegrowany z `main`.
 - Faza 2, czyli lokalna persystencja danych, została zintegrowana z `main`.
-- Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, jest rozpoczęta na branchu
-  `feat/vehicle-history-slice`.
-- Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Przy starcie otwiera lokalną bazę,
-  wykonuje migracje i dopiero potem udostępnia nawigację. Warstwa repozytoriów potrafi już zapisywać
-  pojazd i wpisy historii, ale ekrany zostaną z nią połączone dopiero w Fazie 3.
+- Implementacja Fazy 3 na branchu `feat/vehicle-history-slice` jest zakończona do etapu automatycznej
+  weryfikacji. Przed zamknięciem fazy pozostaje test pełnego przepływu na czterech natywnych
+  urządzeniach testowych.
+- Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
+  kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
 ## Zaimplementowany fundament
 
@@ -22,6 +22,12 @@ opisywanego etapu.
 
 - Aplikacja korzysta z Expo Router i ma minimalne trasy dla dodawania pierwszego pojazdu oraz
   przestrzeni pojazdu.
+- Onboarding zapisuje wymagane i opcjonalne dane pojazdu, licznik początkowy oraz opcjonalne zdjęcie
+  wybrane wyłącznie z galerii. Limit jednego pojazdu jest egzekwowany przez repozytorium.
+- Przestrzeń pojazdu pokazuje rzeczywiste dane, aktualny przebieg i chronologiczną historię. Obsługuje
+  tworzenie, szczegóły, edycję i bezpieczne usuwanie przeglądów, wymian i napraw.
+- Formularz wpisu ma osobne natywne kontrolki daty oraz godziny UTC, które zapisują jeden znacznik
+  `occurredAt` z dokładnością do minuty. Po zapisie aplikacja wraca do historii.
 - Główny layout zapewnia `SafeAreaProvider`, ciemny pasek stanu i wspólny import stylów.
 - Telefon jest obecnie obsługiwany w pionie, a tablet w poziomie. Pozostałe układy pokazują
   komunikat proszący o obrócenie urządzenia.
@@ -45,12 +51,14 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 17 zestawów i 82 testy komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 24 zestawy i 106 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, zachowania repozytoriów, trwałości SQLite, eksportu,
   zarządzanych plików oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
-- React Doctor dla zmian inicjalizacji bazy kończy się wynikiem 100/100.
+- React Doctor 0.9.12 dla zmian na branchu kończy się wynikiem 96/100 bez wykrytych problemów.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
+- Po implementacji Fazy 3 bundle'e Hermes zostały ponownie poprawnie wygenerowane osobno dla iOS i
+  Androida, wraz z nowymi modułami zdjęć, systemu plików i selektora daty oraz czasu.
 - Pierwszy start bazy i ponowne uruchomienie z już zastosowaną migracją zostały sprawdzone natywnie
   na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet. Na obu urządzeniach iOS potwierdzono
   również plik `moje_auto.db`, tryb WAL, komplet tabel i jeden rekord migracji.
@@ -67,8 +75,9 @@ opisywanego etapu.
 - Rekordy odczytane z SQLite są ponownie sprawdzane względem kontraktu domenowego. Nieprawidłowy
   identyfikator, czas, kwota lub brak właściwego rekordu szczegółów daje błąd `corrupt-data` zamiast
   niepełnego modelu domenowego.
-- Zdjęcie pojazdu jest jawnie odrzucane jako `unsupported`, dopóki w Fazie 3 nie powstanie
-  implementacja zarządzanych plików; repozytorium nie gubi tej wartości po cichu.
+- Zdjęcia pojazdu są kadrowane do proporcji `1:1`, przetwarzane do JPEG, ograniczane do 2048 px i
+  5 MB, a następnie przechowywane w prywatnym magazynie aplikacji. SQLite przechowuje wyłącznie
+  metadane i stabilną relację z pojazdem.
 - Deterministyczny fixture deweloperski zawiera pojazd oraz po jednym wpisie przeglądu, wymiany i
   naprawy. Nie jest importowany przez produkcyjny proces startu aplikacji.
 - Testy na rzeczywistym pliku SQLite potwierdzają trwałość danych po zamknięciu i ponownym otwarciu,
@@ -81,6 +90,8 @@ opisywanego etapu.
 - Kontrakt `ObjectStorage` rozdziela etapowanie, trwałe zatwierdzenie, odrzucenie, usunięcie i eksport
   obiektu. Metadane definiują rozmiar, SHA-256 i bezpieczny względny klucz magazynu, a dokumentacja
   opisuje odzyskiwanie po przerwaniu operacji między SQLite i systemem plików.
+- Uzgadnianie przy starcie kończy oczekujące zapisy i usunięcia oraz usuwa osierocone pliki stagingu
+  i niepowiązane zdjęcia. Test ponownego otwarcia potwierdza trwałość relacji zdjęcia i wpisu historii.
 
 ## Znane ograniczenia i dług techniczny
 
@@ -96,7 +107,6 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Zaimplementować lokalny `ObjectStorage` wraz ze zdjęciem wybieranym wyłącznie z galerii i
-   mechanizmem uzgadniania przerwanych operacji.
-2. Zaimplementować onboarding i zapis pierwszego pojazdu przez istniejące repozytorium.
-3. Zbudować przestrzeń pojazdu i historię, a następnie formularze przeglądu, wymiany i naprawy.
+Wykonać etap 8: natywny test pełnego przepływu na iPhonie, iPadzie, telefonie z Androidem i tablecie
+z Androidem. Test ma objąć onboarding ze zdjęciem, ponowne uruchomienie, utworzenie wszystkich typów
+wpisów, szczegóły, edycję, usunięcie oraz układy właściwe dla telefonu i tabletu.
