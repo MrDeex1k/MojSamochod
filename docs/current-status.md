@@ -44,8 +44,8 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 6 zestawów i 20 testów komponentów, układu adaptacyjnego oraz inicjalizacji
-  bazy.
+- Aktualny zestaw zawiera 10 zestawów i 38 testów komponentów, układu adaptacyjnego, inicjalizacji
+  bazy oraz domeny.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
 - React Doctor dla zmian inicjalizacji bazy kończy się wynikiem 100/100.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
@@ -69,8 +69,8 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Zaimplementować modele domenowe, generator UUIDv7 i wstrzykiwany zegar.
-2. Zaimplementować i przetestować lokalne CRUD dla pojazdu oraz wpisów historii bez wykonywania
+1. Zdefiniować interfejsy repozytoriów i typowane błędy warstwy pamięci.
+2. Zaimplementować i przetestować transakcyjne CRUD dla pojazdu oraz wpisów historii bez wykonywania
    zapytań bazodanowych bezpośrednio w ekranach.
 3. Dodać wersjonowany eksport JSON bez danych binarnych.
 4. Zaprojektować kontrakt `ObjectStorage`, którego lokalna implementacja powstanie ze zdjęciami w

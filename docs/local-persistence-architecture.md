@@ -105,6 +105,9 @@ manifestem JSON oraz katalogiem obiektów, bez umieszczania binarnej zawartości
 - Repozytoria zwracają modele domenowe i typowane błędy.
 - UUIDv7 generuje dedykowany `IdGenerator`, dzięki czemu testy mogą używać deterministycznych
   identyfikatorów.
+- Produkcyjny generator przekazuje implementacji UUIDv7 16 bajtów z natywnego,
+  kryptograficznie bezpiecznego `expo-crypto.getRandomValues`; nie korzysta z deweloperskiego
+  fallbacku `Math.random`.
 - Zegar jest wstrzykiwany przez interfejs, aby walidacja przyszłego `occurredAt` i metadanych czasu
   była deterministyczna w testach.
 - Zapytania historii sortują malejąco po `occurredAt`, następnie po `createdAt`, a na końcu po `id`.

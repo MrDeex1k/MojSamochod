@@ -6,7 +6,8 @@
 
 **Faza realizacji:** Faza 0 — decyzje produktowe i domenowe
 
-**Status implementacji:** niezaimplementowany
+**Status implementacji:** modele, typy wartości i walidacja zaimplementowane; przypadki użycia oraz
+repozytoria pozostają w realizacji
 
 Ten dokument definiuje pierwszy model domenowy bezpłatnego, lokalnego przepływu historii pojazdu.
 Przekłada uzgodniony zakres produktu na jednoznaczne dane, reguły walidacji i cykl życia, zanim
