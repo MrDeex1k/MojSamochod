@@ -64,6 +64,12 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
   validation, consistency of Drizzle migrations, and Jest tests.
 - Tests are colocated with source files and prefer accessible roles, labels, and user interactions
   over implementation details.
+- NativeWind theme lengths use `rem` values, while custom line heights remain unitless ratios. This
+  avoids oversized native text boxes caused by length-based custom line-height tokens in the current
+  NativeWind 5 and React Native CSS preview stack.
+- Third-party components do not receive NativeWind `className` behavior automatically. The shared
+  `expo-image` adapter maps `className` to the native `style` prop instead of relying on unsupported
+  passthrough.
 - Expo Doctor is required after Expo, native configuration, or dependency changes. React Doctor is
   required after React component changes.
 

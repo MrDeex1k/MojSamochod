@@ -10,9 +10,8 @@ opisywanego etapu.
   kierunku wizualnego, jest zakończona.
 - Fundament aplikacji z fazy 1 został zintegrowany z `main`.
 - Faza 2, czyli lokalna persystencja danych, została zintegrowana z `main`.
-- Implementacja Fazy 3 na branchu `feat/vehicle-history-slice` jest zakończona do etapu automatycznej
-  weryfikacji. Przed zamknięciem fazy pozostaje test pełnego przepływu na czterech natywnych
-  urządzeniach testowych.
+- Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, jest zaimplementowana i zweryfikowana
+  na branchu `feat/vehicle-history-slice`.
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -40,6 +39,8 @@ opisywanego etapu.
 - Centralna paleta oraz semantyczne tokeny znajdują się w `apps/mobile/styles/theme.css`.
 - Dostępne są podstawowe komponenty: `Button`, `Card`, `TextField` i przewijalny `Screen`
   uwzględniający safe area oraz klawiaturę.
+- `expo-image` korzysta ze wspólnego adaptera NativeWind, dzięki czemu klasy wymiarów, proporcji i
+  zaokrągleń są przekazywane do natywnego `style` również dla komponentu zewnętrznej biblioteki.
 - Dostępne są wspólne stany: pusty, ładowania i błędu.
 - Układ tabletu ma stałą kartę pojazdu po lewej oraz elastyczny obszar treści. Trzecia karta jest
   renderowana dopiero po przekazaniu szczegółów.
@@ -51,7 +52,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 24 zestawy i 106 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 25 zestawów i 108 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, zachowania repozytoriów, trwałości SQLite, eksportu,
   zarządzanych plików oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -64,6 +65,11 @@ opisywanego etapu.
   również plik `moje_auto.db`, tryb WAL, komplet tabel i jeden rekord migracji.
 - Fundament był sprawdzany natywnie na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet.
   Ostatnia zmiana proporcji zdjęcia została dodatkowo sprawdzona na obu tabletach.
+- Końcowa weryfikacja Fazy 3 na tych samych czterech urządzeniach potwierdziła prawidłowe proporcje
+  formularzy, zdjęcie `1:1` po wyborze z galerii oraz układy telefonu i tabletu. Na iPhonie wykonano
+  pełny przepływ: ponowne uruchomienie z zachowaniem danych, dodanie trzech typów wpisów, szczegóły,
+  wejście w edycję, odrzucenie zmian i potwierdzone usunięcie wpisu. Przepływ zdjęcia sprawdzono na
+  obu systemach mobilnych z plikami testowymi dostarczonymi w katalogu roboczym.
 
 ### Domena i persystencja
 
@@ -104,9 +110,11 @@ opisywanego etapu.
 - Interfejs korzysta z polskiego lub angielskiego katalogu na podstawie języka systemowego.
   Nieobsługiwane języki korzystają z angielskiego fallbacku.
 - Web pozostaje wyłącznie możliwością deweloperską Expo i nie jest platformą testową ani docelową.
+- Systemowy ekran kadrowania zdjęcia w Expo Go na iOS pokazuje część tekstów po angielsku mimo
+  polskiego locale symulatora. Lokalizację natywnych tekstów trzeba potwierdzić w docelowym buildzie,
+  ponieważ interfejs Expo Go nie jest konfigurowany przez zasoby natywne aplikacji.
 
 ## Następny krok
 
-Wykonać etap 8: natywny test pełnego przepływu na iPhonie, iPadzie, telefonie z Androidem i tablecie
-z Androidem. Test ma objąć onboarding ze zdjęciem, ponowne uruchomienie, utworzenie wszystkich typów
-wpisów, szczegóły, edycję, usunięcie oraz układy właściwe dla telefonu i tabletu.
+Przygotować pull request zamykający Fazę 3. Po integracji z `main` rozpocząć Fazę 4 dotyczącą
+dokumentów i faktur na osobnym branchu.

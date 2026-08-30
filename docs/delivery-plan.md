@@ -84,9 +84,9 @@ and the managed-file boundary are implemented and documented.
 
 ## Phase 3 — First complete vehicle-history slice
 
-**Status:** Implementation and automated verification are complete on `feat/vehicle-history-slice`.
-Native verification on iPhone, iPad, Android phone, and Android tablet remains before the phase can
-be closed. Polish and English localization uses an English fallback; vehicle photos are gallery-only.
+**Status:** Implemented and verified on `feat/vehicle-history-slice`; integration into `main` is
+pending. Automated checks and native verification cover iPhone, iPad, Android phone, and Android
+tablet. Polish and English localization uses an English fallback; vehicle photos are gallery-only.
 
 ### Steps
 
