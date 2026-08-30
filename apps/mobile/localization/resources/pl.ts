@@ -117,6 +117,12 @@ export const pl = {
     errorTitle: "Pliki są niedostępne",
     loading: "Przygotowywanie lokalnych plików",
   },
+  vehicleEdit: {
+    cancel: "Anuluj",
+    error: "Nie udało się zaktualizować pojazdu. Zmiany pozostają w formularzu.",
+    save: "Zapisz pojazd",
+    title: "Edytuj pojazd",
+  },
   workspace: {
     addEntry: "Dodaj wpis",
     addFirstEntry: "Dodaj pierwszy wpis",

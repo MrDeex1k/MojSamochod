@@ -18,6 +18,7 @@ import { useAppTranslation } from "@/localization/use-app-translation";
 import { EntryForm } from "./entry-form";
 import { EntryDetail } from "./entry-detail";
 import { EntryTypeSelection } from "./entry-type-selection";
+import { VehicleEditForm } from "./vehicle-edit-form";
 
 type WorkspaceData = Readonly<{
   entries: readonly HistoryEntry[];
@@ -29,7 +30,8 @@ type WorkspaceMode =
   | Readonly<{ entry: HistoryEntry; kind: "detail" }>
   | Readonly<{ entry?: HistoryEntry; kind: "form"; type: HistoryEntry["type"] }>
   | Readonly<{ kind: "history" }>
-  | Readonly<{ kind: "select-type" }>;
+  | Readonly<{ kind: "select-type" }>
+  | Readonly<{ kind: "vehicle-form" }>;
 
 type VehicleWorkspaceViewProps = WorkspaceData &
   Readonly<{
@@ -38,6 +40,7 @@ type VehicleWorkspaceViewProps = WorkspaceData &
     onCancelFlow: () => void;
     onChooseType: (type: HistoryEntry["type"]) => void;
     onEditEntry: (entry: HistoryEntry) => void;
+    onEditVehicle: () => void;
     onSaved: () => void;
     onSelectEntry: (entry: HistoryEntry) => void;
     services: ApplicationServices;
@@ -97,6 +100,7 @@ export function VehicleWorkspaceScreen() {
       onCancelFlow={() => setMode({ kind: "history" })}
       onChooseType={(type) => setMode({ kind: "form", type })}
       onEditEntry={(entry) => setMode({ entry, kind: "form", type: entry.type })}
+      onEditVehicle={() => setMode({ kind: "vehicle-form" })}
       onSaved={() => {
         setMode({ kind: "history" });
         setState({ status: "loading" });
@@ -115,6 +119,7 @@ export function VehicleWorkspaceView({
   onCancelFlow,
   onChooseType,
   onEditEntry,
+  onEditVehicle,
   onSaved,
   onSelectEntry,
   photoUri,
@@ -122,7 +127,15 @@ export function VehicleWorkspaceView({
   vehicle,
 }: VehicleWorkspaceViewProps) {
   const phone =
-    mode.kind === "select-type" ? (
+    mode.kind === "vehicle-form" ? (
+      <VehicleEditForm
+        {...services}
+        existingPhotoUri={photoUri}
+        onCancel={onCancelFlow}
+        onSaved={onSaved}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "select-type" ? (
       <EntryTypeSelection onCancel={onCancelFlow} onSelect={onChooseType} />
     ) : mode.kind === "form" ? (
       <EntryForm
@@ -146,6 +159,7 @@ export function VehicleWorkspaceView({
       <PhoneWorkspace
         entries={entries}
         onAddEntry={onAddEntry}
+        onEditVehicle={onEditVehicle}
         onSelectEntry={onSelectEntry}
         photoUri={photoUri}
         vehicle={vehicle}
@@ -153,7 +167,16 @@ export function VehicleWorkspaceView({
     );
 
   const primaryPane =
-    mode.kind === "select-type" ? (
+    mode.kind === "vehicle-form" ? (
+      <VehicleEditForm
+        {...services}
+        embedded
+        existingPhotoUri={photoUri}
+        onCancel={onCancelFlow}
+        onSaved={onSaved}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "select-type" ? (
       <EntryTypeSelection embedded onCancel={onCancelFlow} onSelect={onChooseType} />
     ) : mode.kind === "form" ? (
       <EntryForm
@@ -187,7 +210,9 @@ export function VehicleWorkspaceView({
       detailPane={detailPane}
       phone={phone}
       primaryPane={primaryPane}
-      vehiclePane={<VehicleSummary photoUri={photoUri} tablet vehicle={vehicle} />}
+      vehiclePane={
+        <VehicleSummary onEdit={onEditVehicle} photoUri={photoUri} tablet vehicle={vehicle} />
+      }
     />
   );
 }
@@ -195,7 +220,7 @@ export function VehicleWorkspaceView({
 function PhoneWorkspace(
   props: Pick<
     VehicleWorkspaceViewProps,
-    "entries" | "onAddEntry" | "onSelectEntry" | "photoUri" | "vehicle"
+    "entries" | "onAddEntry" | "onEditVehicle" | "onSelectEntry" | "photoUri" | "vehicle"
   >,
 ) {
   const { t } = useAppTranslation();
@@ -209,6 +234,11 @@ function PhoneWorkspace(
           onAddEntry={props.onAddEntry}
           onSelectEntry={props.onSelectEntry}
         />
+        <Button
+          label={t("workspace.editVehicle")}
+          onPress={props.onEditVehicle}
+          variant="secondary"
+        />
       </View>
     </Screen>
   );
@@ -216,9 +246,13 @@ function PhoneWorkspace(
 
 function VehicleSummary({
   photoUri,
+  onEdit,
   tablet = false,
   vehicle,
-}: Pick<VehicleWorkspaceViewProps, "photoUri" | "vehicle"> & { tablet?: boolean }) {
+}: Pick<VehicleWorkspaceViewProps, "photoUri" | "vehicle"> & {
+  onEdit?: () => void;
+  tablet?: boolean;
+}) {
   const { t, i18n } = useAppTranslation();
   const mileage = formatDistance(vehicle, i18n.language);
   const photoDescription = t("workspace.photoDescription", {
@@ -260,6 +294,9 @@ function VehicleSummary({
           <Text className="text-heading font-semibold text-primary">
             {mileage ?? t("workspace.mileage")}
           </Text>
+          {onEdit ? (
+            <Button label={t("workspace.editVehicle")} onPress={onEdit} variant="secondary" />
+          ) : null}
         </View>
       ) : (
         <View className="flex-row items-start justify-between gap-content">

@@ -89,6 +89,25 @@ export function createVehicle(
   });
 }
 
+export function updateVehicle(
+  existing: Vehicle,
+  input: CreateVehicleInput,
+  clock: Clock,
+): ValidationResult<Vehicle> {
+  const validated = createVehicle(input, {
+    clock,
+    idGenerator: { generate: () => existing.id },
+  });
+  return validated.ok
+    ? valid({
+        ...validated.value,
+        createdAt: existing.createdAt,
+        currentOdometerMetres: existing.currentOdometerMetres,
+        id: existing.id,
+      })
+    : validated;
+}
+
 function collect<T>(result: ValidationResult<T>, issues: ValidationIssue[]): T | undefined {
   if (!result.ok) {
     issues.push(...result.issues);

@@ -47,8 +47,7 @@ export function EntryForm({
   vehicle,
 }: EntryFormProps) {
   const { t, i18n } = useAppTranslation();
-  const initialDate = new Date(entry?.occurredAt ?? clock.now());
-  const [occurredAt, setOccurredAt] = useState(initialDate);
+  const [occurredAt, setOccurredAt] = useState(() => new Date(entry?.occurredAt ?? clock.now()));
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
   const [odometer, setOdometer] = useState(() => formatInitialOdometer(entry, vehicle));
   const [cost, setCost] = useState(() => (entry?.cost ? String(entry.cost.minorUnits / 100) : ""));
@@ -57,7 +56,7 @@ export function EntryForm({
   );
   const [serviceProvider, setServiceProvider] = useState(entry?.serviceProvider ?? "");
   const [notes, setNotes] = useState(entry?.notes ?? "");
-  const [description, setDescription] = useState(entryDescription(entry));
+  const [description, setDescription] = useState(() => entryDescription(entry));
   const [item, setItem] = useState(entry?.type === "replacement" ? entry.details.item : "");
   const [manufacturer, setManufacturer] = useState(
     entry?.type === "replacement" ? (entry.details.manufacturer ?? "") : "",

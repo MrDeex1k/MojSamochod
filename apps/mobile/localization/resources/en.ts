@@ -114,6 +114,12 @@ export const en = {
     errorTitle: "Files are unavailable",
     loading: "Preparing local files",
   },
+  vehicleEdit: {
+    cancel: "Cancel",
+    error: "The vehicle could not be updated. Your changes remain in the form.",
+    save: "Save vehicle",
+    title: "Edit vehicle",
+  },
   workspace: {
     addEntry: "Add entry",
     addFirstEntry: "Add first entry",
