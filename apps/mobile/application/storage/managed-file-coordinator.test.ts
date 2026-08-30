@@ -163,6 +163,7 @@ function storageFake(events: string[]): ObjectStorage {
       return objectStorageSuccess(undefined);
     },
     listStagedKeys: async () => objectStorageSuccess([]),
+    getUri: () => objectStorageSuccess("file:///managed/photo.jpg"),
     stage: async () => {
       events.push("storage.stage");
       return objectStorageSuccess(staged);

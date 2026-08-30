@@ -110,4 +110,8 @@ class MemoryDriver implements ObjectStorageDriver {
     if (!value) throw new Error("Missing file");
     return value;
   }
+
+  uri(key: string): string {
+    return `file:///managed-objects/${key}`;
+  }
 }

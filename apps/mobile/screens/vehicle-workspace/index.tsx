@@ -1,90 +1,433 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { Redirect } from "expo-router";
+import { useEffect, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
+import type { ApplicationServices } from "@/components/providers/application-provider";
+import type { HistoryEntry } from "@/domain/history/history-entry";
+import type { Vehicle } from "@/domain/vehicle/vehicle";
 import { AdaptiveWorkspace } from "@/components/layout/adaptive-workspace";
 import { Screen } from "@/components/layout/screen";
+import { useApplicationServices } from "@/components/providers/application-provider";
+import { ErrorState } from "@/components/states/error-state";
+import { LoadingState } from "@/components/states/loading-state";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
-function VehicleSummaryPlaceholder() {
+import { EntryForm } from "./entry-form";
+import { EntryDetail } from "./entry-detail";
+import { EntryTypeSelection } from "./entry-type-selection";
+
+type WorkspaceData = Readonly<{
+  entries: readonly HistoryEntry[];
+  photoUri: string | null;
+  vehicle: Vehicle;
+}>;
+
+type WorkspaceMode =
+  | Readonly<{ entry: HistoryEntry; kind: "detail" }>
+  | Readonly<{ entry?: HistoryEntry; kind: "form"; type: HistoryEntry["type"] }>
+  | Readonly<{ kind: "history" }>
+  | Readonly<{ kind: "select-type" }>;
+
+type VehicleWorkspaceViewProps = WorkspaceData &
+  Readonly<{
+    mode: WorkspaceMode;
+    onAddEntry: () => void;
+    onCancelFlow: () => void;
+    onChooseType: (type: HistoryEntry["type"]) => void;
+    onEditEntry: (entry: HistoryEntry) => void;
+    onSaved: () => void;
+    onSelectEntry: (entry: HistoryEntry) => void;
+    services: ApplicationServices;
+  }>;
+
+export function VehicleWorkspaceScreen() {
+  const services = useApplicationServices();
   const { t } = useAppTranslation();
+  const [attempt, setAttempt] = useState(0);
+  const [mode, setMode] = useState<WorkspaceMode>({ kind: "history" });
+  const [state, setState] = useState<
+    | Readonly<{ data: WorkspaceData; status: "ready" }>
+    | Readonly<{ status: "error" }>
+    | Readonly<{ status: "loading" }>
+    | Readonly<{ status: "missing" }>
+  >({ status: "loading" });
 
-  return (
-    <Card style={styles.fullHeightCard}>
-      <Text style={styles.title}>{t("workspace.makeAndModel")}</Text>
-      <View className="rounded-control bg-surface-muted" style={styles.photoPlaceholder}>
-        <Text style={styles.secondaryText}>{t("workspace.photo")}</Text>
-      </View>
-      <Text style={styles.secondaryText}>{t("workspace.variant")}</Text>
-      <Text selectable style={styles.mileage}>
-        {t("workspace.mileage")}
-      </Text>
-    </Card>
-  );
-}
+  useEffect(() => {
+    let active = true;
+    void loadWorkspace(services).then((result) => {
+      if (active) setState(result);
+    });
+    return () => {
+      active = false;
+    };
+  }, [attempt, services]);
 
-function HistoryPlaceholder({ tablet = false }: { tablet?: boolean }) {
-  const { t } = useAppTranslation();
-  const content = (
-    <View style={styles.emptyState}>
-      <Text style={styles.title}>{t("workspace.noEntries")}</Text>
-      <Text selectable style={styles.secondaryText}>
-        {t("workspace.historyDescription")}
-      </Text>
-    </View>
-  );
-
-  if (tablet) {
-    return <Card style={[styles.fullHeightCard, styles.centeredCard]}>{content}</Card>;
+  if (state.status === "missing") return <Redirect href="/" />;
+  if (state.status === "error") {
+    return (
+      <Screen contentClassName="items-center justify-center">
+        <ErrorState
+          actionLabel={t("database.errorAction")}
+          description={t("workspace.errorDescription")}
+          onAction={() => {
+            setState({ status: "loading" });
+            setAttempt((value) => value + 1);
+          }}
+          title={t("workspace.errorTitle")}
+        />
+      </Screen>
+    );
+  }
+  if (state.status === "loading") {
+    return (
+      <Screen contentClassName="items-center justify-center">
+        <LoadingState label={t("workspace.loading")} />
+      </Screen>
+    );
   }
 
   return (
-    <Screen contentClassName="justify-center">
-      <Card>{content}</Card>
+    <VehicleWorkspaceView
+      {...state.data}
+      mode={mode}
+      onAddEntry={() => setMode({ kind: "select-type" })}
+      onCancelFlow={() => setMode({ kind: "history" })}
+      onChooseType={(type) => setMode({ kind: "form", type })}
+      onEditEntry={(entry) => setMode({ entry, kind: "form", type: entry.type })}
+      onSaved={() => {
+        setMode({ kind: "history" });
+        setState({ status: "loading" });
+        setAttempt((value) => value + 1);
+      }}
+      onSelectEntry={(entry) => setMode({ entry, kind: "detail" })}
+      services={services}
+    />
+  );
+}
+
+export function VehicleWorkspaceView({
+  entries,
+  mode,
+  onAddEntry,
+  onCancelFlow,
+  onChooseType,
+  onEditEntry,
+  onSaved,
+  onSelectEntry,
+  photoUri,
+  services,
+  vehicle,
+}: VehicleWorkspaceViewProps) {
+  const phone =
+    mode.kind === "select-type" ? (
+      <EntryTypeSelection onCancel={onCancelFlow} onSelect={onChooseType} />
+    ) : mode.kind === "form" ? (
+      <EntryForm
+        {...services}
+        entry={mode.entry}
+        onCancel={onCancelFlow}
+        onSaved={onSaved}
+        type={mode.type}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "detail" ? (
+      <EntryDetail
+        entry={mode.entry}
+        historyEntries={services.historyEntries}
+        onBack={onCancelFlow}
+        onDeleted={onSaved}
+        onEdit={() => onEditEntry(mode.entry)}
+        vehicle={vehicle}
+      />
+    ) : (
+      <PhoneWorkspace
+        entries={entries}
+        onAddEntry={onAddEntry}
+        onSelectEntry={onSelectEntry}
+        photoUri={photoUri}
+        vehicle={vehicle}
+      />
+    );
+
+  const primaryPane =
+    mode.kind === "select-type" ? (
+      <EntryTypeSelection embedded onCancel={onCancelFlow} onSelect={onChooseType} />
+    ) : mode.kind === "form" ? (
+      <EntryForm
+        {...services}
+        embedded
+        entry={mode.entry}
+        onCancel={onCancelFlow}
+        onSaved={onSaved}
+        type={mode.type}
+        vehicle={vehicle}
+      />
+    ) : (
+      <HistoryCard entries={entries} onAddEntry={onAddEntry} onSelectEntry={onSelectEntry} />
+    );
+
+  const detailPane =
+    mode.kind === "detail" ? (
+      <EntryDetail
+        embedded
+        entry={mode.entry}
+        historyEntries={services.historyEntries}
+        onBack={onCancelFlow}
+        onDeleted={onSaved}
+        onEdit={() => onEditEntry(mode.entry)}
+        vehicle={vehicle}
+      />
+    ) : undefined;
+
+  return (
+    <AdaptiveWorkspace
+      detailPane={detailPane}
+      phone={phone}
+      primaryPane={primaryPane}
+      vehiclePane={<VehicleSummary photoUri={photoUri} tablet vehicle={vehicle} />}
+    />
+  );
+}
+
+function PhoneWorkspace(
+  props: Pick<
+    VehicleWorkspaceViewProps,
+    "entries" | "onAddEntry" | "onSelectEntry" | "photoUri" | "vehicle"
+  >,
+) {
+  const { t } = useAppTranslation();
+  return (
+    <Screen>
+      <View className="gap-content">
+        <VehicleSummary {...props} />
+        <Button label={`+ ${t("workspace.addEntry")}`} onPress={props.onAddEntry} />
+        <HistoryContent
+          entries={props.entries}
+          onAddEntry={props.onAddEntry}
+          onSelectEntry={props.onSelectEntry}
+        />
+      </View>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  fullHeightCard: {
-    flex: 1,
-  },
-  centeredCard: {
-    justifyContent: "center",
-  },
-  emptyState: {
-    gap: 8,
-  },
-  title: {
-    color: "#f2f0e8",
-    fontSize: 24,
-    fontWeight: "700",
-    lineHeight: 32,
-  },
-  secondaryText: {
-    color: "#aab0a7",
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  photoPlaceholder: {
-    width: "100%",
-    aspectRatio: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  mileage: {
-    color: "#f2f0e8",
-    fontSize: 18,
-    fontWeight: "600",
-    lineHeight: 24,
-  },
-});
+function VehicleSummary({
+  photoUri,
+  tablet = false,
+  vehicle,
+}: Pick<VehicleWorkspaceViewProps, "photoUri" | "vehicle"> & { tablet?: boolean }) {
+  const { t, i18n } = useAppTranslation();
+  const mileage = formatDistance(vehicle, i18n.language);
+  const photoDescription = t("workspace.photoDescription", {
+    make: vehicle.make,
+    model: vehicle.model,
+  });
 
-export function VehicleWorkspaceScreen() {
   return (
-    <AdaptiveWorkspace
-      phone={<HistoryPlaceholder />}
-      primaryPane={<HistoryPlaceholder tablet />}
-      vehiclePane={<VehicleSummaryPlaceholder />}
-    />
+    <Card className={tablet ? "h-full" : undefined}>
+      {tablet ? (
+        <Text accessibilityRole="header" className="text-title font-bold text-primary">
+          {vehicle.make} {vehicle.model}
+        </Text>
+      ) : null}
+      <View className="relative aspect-square w-full overflow-hidden rounded-control bg-surface-muted">
+        {photoUri ? (
+          <Image
+            accessibilityLabel={photoDescription}
+            className="h-full w-full"
+            contentFit="cover"
+            source={{ uri: photoUri }}
+          />
+        ) : (
+          <View className="h-full w-full items-center justify-center">
+            <Text className="text-body text-secondary">{t("workspace.photo")}</Text>
+          </View>
+        )}
+        {!tablet && mileage ? (
+          <View className="absolute right-compact top-compact rounded-compact bg-canvas/80 px-control py-compact">
+            <Text className="text-body font-semibold text-primary">{mileage}</Text>
+          </View>
+        ) : null}
+      </View>
+      {tablet ? (
+        <View className="gap-compact">
+          {vehicle.variant ? (
+            <Text className="text-body text-secondary">{vehicle.variant}</Text>
+          ) : null}
+          <Text className="text-heading font-semibold text-primary">
+            {mileage ?? t("workspace.mileage")}
+          </Text>
+        </View>
+      ) : (
+        <View className="flex-row items-start justify-between gap-content">
+          <Text accessibilityRole="header" className="flex-1 text-title font-bold text-primary">
+            {vehicle.make} {vehicle.model}
+          </Text>
+          {vehicle.variant ? (
+            <Text className="max-w-[45%] text-right text-body text-secondary">
+              {vehicle.variant}
+            </Text>
+          ) : null}
+        </View>
+      )}
+    </Card>
   );
+}
+
+function HistoryCard({
+  entries,
+  onAddEntry,
+  onSelectEntry,
+}: Pick<VehicleWorkspaceViewProps, "entries" | "onAddEntry" | "onSelectEntry">) {
+  const { t } = useAppTranslation();
+  return (
+    <Card className="h-full">
+      <ScrollView contentContainerClassName="gap-content">
+        <Button label={`+ ${t("workspace.addEntry")}`} onPress={onAddEntry} />
+        <HistoryContent entries={entries} onAddEntry={onAddEntry} onSelectEntry={onSelectEntry} />
+      </ScrollView>
+    </Card>
+  );
+}
+
+function HistoryContent({
+  entries,
+  onAddEntry,
+  onSelectEntry,
+}: Pick<VehicleWorkspaceViewProps, "entries" | "onAddEntry" | "onSelectEntry">) {
+  const { t } = useAppTranslation();
+  return (
+    <View className="gap-content">
+      <Text accessibilityRole="header" className="text-title font-bold text-primary">
+        {t("workspace.historyTitle")}
+      </Text>
+      {entries.length === 0 ? (
+        <View className="gap-content">
+          <View className="gap-compact">
+            <Text className="text-heading font-semibold text-primary">
+              {t("workspace.noEntries")}
+            </Text>
+            <Text className="text-body text-secondary">{t("workspace.historyDescription")}</Text>
+          </View>
+          <Button label={t("workspace.addFirstEntry")} onPress={onAddEntry} variant="secondary" />
+        </View>
+      ) : (
+        <View>
+          {entries.map((entry) => (
+            <HistoryRow entry={entry} key={entry.id} onPress={() => onSelectEntry(entry)} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function HistoryRow({ entry, onPress }: Readonly<{ entry: HistoryEntry; onPress: () => void }>) {
+  const { t, i18n } = useAppTranslation();
+  const title = `${t(`workspace.entryType.${entry.type}`)} — ${entrySubject(entry)}`;
+  return (
+    <Pressable
+      accessibilityLabel={title}
+      accessibilityRole="button"
+      className="gap-compact border-b border-divider py-control active:opacity-70"
+      onPress={onPress}
+    >
+      <View className="flex-row justify-between gap-content">
+        <Text className="flex-1 text-body font-semibold text-primary">{title}</Text>
+        <Text className="text-caption text-secondary">
+          {formatOccurredAt(entry, i18n.language)}
+        </Text>
+      </View>
+      <View className="flex-row gap-content">
+        {entry.odometerMetres === undefined ? null : (
+          <Text className="text-caption text-secondary">
+            {numberFormatter(i18n.language).format(entry.odometerMetres / 1000)} km
+          </Text>
+        )}
+        {entry.cost ? (
+          <Text className="text-caption text-secondary">
+            {currencyFormatter(i18n.language, entry.cost.currency).format(
+              entry.cost.minorUnits / 100,
+            )}
+          </Text>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+}
+
+function entrySubject(entry: HistoryEntry): string {
+  if (entry.type === "replacement") return entry.details.item;
+  if (entry.type === "repair") return entry.details.subject;
+  return entry.details.description ?? entry.details.kind;
+}
+
+function formatOccurredAt(entry: HistoryEntry, locale: string): string {
+  return dateTimeFormatter(locale).format(new Date(entry.occurredAt));
+}
+
+function formatDistance(vehicle: Vehicle, locale: string): string | null {
+  if (vehicle.currentOdometerMetres === undefined) return null;
+  const divisor = vehicle.distanceUnitPreference === "kilometres" ? 1000 : 1609.344;
+  const unit = vehicle.distanceUnitPreference === "kilometres" ? "km" : "mi";
+  return `${numberFormatter(locale).format(Math.round(vehicle.currentOdometerMetres / divisor))} ${unit}`;
+}
+
+const numberFormatters = new Map<string, Intl.NumberFormat>();
+const currencyFormatters = new Map<string, Intl.NumberFormat>();
+const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function numberFormatter(locale: string): Intl.NumberFormat {
+  const existing = numberFormatters.get(locale);
+  if (existing) return existing;
+  const formatter = new Intl.NumberFormat(locale);
+  numberFormatters.set(locale, formatter);
+  return formatter;
+}
+
+function currencyFormatter(locale: string, currency: string): Intl.NumberFormat {
+  const key = `${locale}:${currency}`;
+  const existing = currencyFormatters.get(key);
+  if (existing) return existing;
+  const formatter = new Intl.NumberFormat(locale, { currency, style: "currency" });
+  currencyFormatters.set(key, formatter);
+  return formatter;
+}
+
+function dateTimeFormatter(locale: string): Intl.DateTimeFormat {
+  const existing = dateTimeFormatters.get(locale);
+  if (existing) return existing;
+  const formatter = new Intl.DateTimeFormat(locale, {
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+    minute: "2-digit",
+    month: "2-digit",
+    timeZone: "UTC",
+    year: "numeric",
+  });
+  dateTimeFormatters.set(locale, formatter);
+  return formatter;
+}
+
+async function loadWorkspace(
+  services: ApplicationServices,
+): Promise<
+  Readonly<{ data: WorkspaceData; status: "ready" }> | Readonly<{ status: "error" | "missing" }>
+> {
+  const vehicleResult = await services.vehicles.get();
+  if (!vehicleResult.ok) return { status: "error" };
+  if (!vehicleResult.value) return { status: "missing" };
+  const vehicle = vehicleResult.value;
+  const entriesResult = await services.historyEntries.list(vehicle.id);
+  if (!entriesResult.ok) return { status: "error" };
+  let photoUri: string | null = null;
+  if (vehicle.photoReference) {
+    const photoResult = await services.managedFiles.getReadyUri(vehicle.photoReference);
+    if (photoResult.ok) photoUri = photoResult.value;
+  }
+  return { data: { entries: entriesResult.value, photoUri, vehicle }, status: "ready" };
 }

@@ -53,6 +53,9 @@ export interface ObjectStorage {
   /** Removes a durable object. Missing objects are treated as successfully deleted. */
   delete(storageKey: StorageObjectKey): Promise<ObjectStorageResult<void>>;
 
+  /** Resolves a durable object to a private local URI suitable for native rendering. */
+  getUri(storageKey: StorageObjectKey): ObjectStorageResult<string>;
+
   /** Copies a durable object to a caller-provided URI for sharing or archive creation. */
   copyTo(storageKey: StorageObjectKey, destinationUri: string): Promise<ObjectStorageResult<void>>;
 }

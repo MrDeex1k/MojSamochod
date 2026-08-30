@@ -50,6 +50,16 @@ export class ManagedFileCoordinator {
     return this.commit(staged.value, source, timestamp);
   }
 
+  async getReadyUri(id: ManagedFileId): Promise<RepositoryResult<string | null>> {
+    const metadata = await this.repository.getReady(id);
+    if (!metadata.ok) return metadata;
+    if (!metadata.value) return { ok: true, value: null };
+    const uri = this.storage.getUri(metadata.value.storageKey);
+    return uri.ok
+      ? { ok: true, value: uri.value }
+      : storageFailure(uri.error, "managedFile.getReadyUri");
+  }
+
   async reconcile(): Promise<RepositoryResult<void>> {
     const pending = await this.repository.listRecoverable();
     if (!pending.ok) return pending;

@@ -23,6 +23,7 @@ export interface ObjectStorageDriver {
   list(prefix: string): readonly string[];
   move(fromKey: string, toKey: string): Promise<void>;
   read(key: string): Promise<Uint8Array<ArrayBuffer>>;
+  uri(key: string): string;
 }
 
 export class LocalObjectStorage implements ObjectStorage {
@@ -107,6 +108,12 @@ export class LocalObjectStorage implements ObjectStorage {
     return this.remove(storageKey, "objectStorage.delete");
   }
 
+  getUri(storageKey: Parameters<ObjectStorage["getUri"]>[0]): ObjectStorageResult<string> {
+    return this.driver.exists(storageKey)
+      ? objectStorageSuccess(this.driver.uri(storageKey))
+      : objectStorageFailure("not-found", "objectStorage.getUri");
+  }
+
   async copyTo(
     storageKey: Parameters<ObjectStorage["copyTo"]>[0],
     destinationUri: string,
@@ -166,6 +173,10 @@ export class ExpoFileSystemDriver implements ObjectStorageDriver {
 
   read(key: string): Promise<Uint8Array<ArrayBuffer>> {
     return this.file(key).bytes();
+  }
+
+  uri(key: string): string {
+    return this.file(key).uri;
   }
 
   private file(key: string): File {
