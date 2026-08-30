@@ -9,8 +9,8 @@ opisywanego etapu.
 - Faza 0, czyli ustalenie zakresu produktu, modelu domenowego, pierwszego przepływu użytkownika i
   kierunku wizualnego, jest zakończona.
 - Fundament aplikacji z fazy 1 został zintegrowany z `main`.
-- Faza 2, czyli lokalna persystencja danych, jest rozpoczęta na branchu
-  `feat/local-persistence-foundation`.
+- Faza 2, czyli lokalna persystencja danych, jest zakończona na branchu
+  `feat/local-persistence-foundation` i gotowa do przeglądu oraz integracji.
 - Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Przy starcie otwiera lokalną bazę,
   wykonuje migracje i dopiero potem udostępnia nawigację. Warstwa repozytoriów potrafi już zapisywać
   pojazd i wpisy historii, ale ekrany zostaną z nią połączone dopiero w Fazie 3.
@@ -44,8 +44,9 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 14 zestawów i 55 testów komponentów, układu adaptacyjnego, inicjalizacji
-  bazy, domeny, mapperów rekordów, zachowania repozytoriów i trwałości SQLite.
+- Aktualny zestaw zawiera 16 zestawów i 76 testów komponentów, układu adaptacyjnego, inicjalizacji
+  bazy, domeny, mapperów rekordów, zachowania repozytoriów, trwałości SQLite, eksportu oraz
+  zarządzanych plików.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
 - React Doctor dla zmian inicjalizacji bazy kończy się wynikiem 100/100.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
@@ -73,6 +74,12 @@ opisywanego etapu.
   pełny rollback przerwanego zapisu oraz odrzucanie rekordów łamiących ograniczenia schematu.
 - Błąd migracji zamyka połączenie i pozostaje błędem źródłowym również wtedy, gdy samo zamknięcie
   połączenia także się nie powiedzie.
+- Eksport `moje-auto-vehicle-history` w wersji 1 tworzy czytelny JSON pojazdu i historii, także dla
+  pustej bazy. Format jest niezależny od schematu Drizzle, nie zawiera zdjęć ani innych plików
+  binarnych i ma osobną dokumentację kompatybilności.
+- Kontrakt `ObjectStorage` rozdziela etapowanie, trwałe zatwierdzenie, odrzucenie, usunięcie i eksport
+  obiektu. Metadane definiują rozmiar, SHA-256 i bezpieczny względny klucz magazynu, a dokumentacja
+  opisuje odzyskiwanie po przerwaniu operacji między SQLite i systemem plików.
 
 ## Znane ograniczenia i dług techniczny
 
@@ -88,6 +95,10 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Dodać wersjonowany eksport JSON bez danych binarnych.
-2. Zaprojektować kontrakt `ObjectStorage`, którego lokalna implementacja powstanie ze zdjęciami w
-   Fazie 3.
+Po integracji brancha rozpocząć Fazę 3 na nowym branchu:
+
+1. Wybrać i skonfigurować bibliotekę i18n przed utrwaleniem produkcyjnych tekstów.
+2. Zaimplementować onboarding i zapis pierwszego pojazdu przez istniejące repozytorium.
+3. Zbudować przestrzeń pojazdu i historię, a następnie formularze przeglądu, wymiany i naprawy.
+4. Zaimplementować lokalny `ObjectStorage` wraz ze zdjęciem pojazdu i mechanizmem uzgadniania
+   przerwanych operacji.

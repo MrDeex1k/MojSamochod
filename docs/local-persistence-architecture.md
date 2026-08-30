@@ -2,9 +2,9 @@
 
 ## Status dokumentu
 
-**Status:** zatwierdzony kierunek techniczny
+**Status:** zrealizowany fundament techniczny
 
-**Faza realizacji:** Faza 2 — fundament lokalnej persystencji
+**Faza realizacji:** Faza 2 — zakończona
 
 Ten dokument jest roboczym opisem decyzji wdrożeniowych dla pierwszej wersji lokalnej bazy danych.
 Uzupełnia model domenowy, ale nie zmienia zatwierdzonych reguł produktu.

@@ -63,8 +63,9 @@ Native Testing Library conventions, and native verification on the four represen
 
 ## Phase 2 — Local persistence foundation
 
-**Status:** In progress on `feat/local-persistence-foundation`. Drizzle ORM, UUIDv7, the first JSON
-export boundary, and the managed-file architecture have been approved.
+**Status:** Complete on `feat/local-persistence-foundation`; ready for review and integration.
+Drizzle ORM, UUIDv7, transactional repositories, persistence resilience, the version 1 JSON export,
+and the managed-file boundary are implemented and documented.
 
 ### Steps
 
