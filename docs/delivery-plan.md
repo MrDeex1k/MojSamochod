@@ -84,6 +84,9 @@ and the managed-file boundary are implemented and documented.
 
 ## Phase 3 — First complete vehicle-history slice
 
+**Status:** In progress on `feat/vehicle-history-slice`. Polish and English localization with an
+English fallback is configured; vehicle photos are gallery-only.
+
 ### Steps
 
 1. Implement onboarding and creation of the first vehicle.

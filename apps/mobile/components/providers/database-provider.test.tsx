@@ -33,7 +33,7 @@ describe("DatabaseProvider", () => {
       </DatabaseProvider>,
     );
 
-    expect(screen.getByRole("progressbar", { name: "Przygotowywanie danych" })).toBeOnTheScreen();
+    expect(screen.getByRole("progressbar", { name: "Preparing data" })).toBeOnTheScreen();
     expect(screen.queryByText("Vehicle history")).not.toBeOnTheScreen();
   });
 
@@ -48,11 +48,12 @@ describe("DatabaseProvider", () => {
 
     expect(await screen.findByText("Vehicle history")).toBeOnTheScreen();
 
-    view.unmount();
+    await view.unmount();
     await waitFor(() => expect(handle.close).toHaveBeenCalledTimes(1));
   });
 
   it("shows a recoverable error and retries initialization", async () => {
+    const user = userEvent.setup();
     const handle = createDatabaseHandle();
     const initialize = jest
       .fn<Promise<DatabaseHandle>, []>()
@@ -68,7 +69,7 @@ describe("DatabaseProvider", () => {
     expect(await screen.findByRole("alert")).toBeOnTheScreen();
     expect(screen.queryByText("Migration failed")).not.toBeOnTheScreen();
 
-    await userEvent.press(screen.getByRole("button", { name: "Spróbuj ponownie" }));
+    await user.press(screen.getByRole("button", { name: "Try again" }));
 
     expect(await screen.findByText("Vehicle history")).toBeOnTheScreen();
     expect(initialize).toHaveBeenCalledTimes(2);

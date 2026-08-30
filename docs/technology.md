@@ -99,7 +99,7 @@ Localization has separate responsibilities that must not be collapsed into one m
 | Responsibility                 | Planned approach                                                                                                                                            |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Device language and region     | Read locale preferences through `expo-localization`.                                                                                                        |
-| Application translations       | Select a JavaScript i18n library before Phase 3; keep translation catalogs outside screens.                                                                 |
+| Application translations       | Use `i18next`, `react-i18next`, and `expo-localization`; keep Polish and English catalogs outside screens and fall back to English.                         |
 | Per-application language       | Declare supported locales through the `expo-localization` config plugin so iOS and Android system settings can select the app language.                     |
 | Dates, numbers, and currencies | Format values at the presentation boundary with locale-aware `Intl` APIs.                                                                                   |
 | Units                          | Keep distance, volume, and other unit preferences explicit; language or region may provide an initial default but must not silently overwrite user choices. |
@@ -114,10 +114,11 @@ The initial application should normally follow the per-app language selected in 
 system. A custom in-app language selector is not required until product testing demonstrates a need
 that the platform setting does not cover.
 
-The translation-library choice remains open and must be resolved before production copy is added in
-Phase 3. The selected library must support fallbacks, interpolation, plural rules, typed or
-statically verifiable keys, and testing without a native runtime. Adding it must follow the
-repository's Expo compatibility, exact-version, NUB, and Socket Firewall requirements.
+Phase 3 uses `i18next`, `react-i18next`, and `expo-localization`. Polish and English catalogs are
+bundled with the application, the system locale selects between them, and unsupported locales fall
+back to English. Translation resources stay outside screens and tests can select a locale
+deterministically. Locale-sensitive numbers, currencies, and dates use `Intl`; changing locale never
+changes stored domain values.
 
 ## Planned capabilities and open selections
 

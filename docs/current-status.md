@@ -9,8 +9,9 @@ opisywanego etapu.
 - Faza 0, czyli ustalenie zakresu produktu, modelu domenowego, pierwszego przepływu użytkownika i
   kierunku wizualnego, jest zakończona.
 - Fundament aplikacji z fazy 1 został zintegrowany z `main`.
-- Faza 2, czyli lokalna persystencja danych, jest zakończona na branchu
-  `feat/local-persistence-foundation` i gotowa do przeglądu oraz integracji.
+- Faza 2, czyli lokalna persystencja danych, została zintegrowana z `main`.
+- Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, jest rozpoczęta na branchu
+  `feat/vehicle-history-slice`.
 - Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Przy starcie otwiera lokalną bazę,
   wykonuje migracje i dopiero potem udostępnia nawigację. Warstwa repozytoriów potrafi już zapisywać
   pojazd i wpisy historii, ale ekrany zostaną z nią połączone dopiero w Fazie 3.
@@ -44,9 +45,9 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 16 zestawów i 76 testów komponentów, układu adaptacyjnego, inicjalizacji
-  bazy, domeny, mapperów rekordów, zachowania repozytoriów, trwałości SQLite, eksportu oraz
-  zarządzanych plików.
+- Aktualny zestaw zawiera 17 zestawów i 82 testy komponentów, układu adaptacyjnego, inicjalizacji
+  bazy, domeny, mapperów rekordów, zachowania repozytoriów, trwałości SQLite, eksportu,
+  zarządzanych plików oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
 - React Doctor dla zmian inicjalizacji bazy kończy się wynikiem 100/100.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
@@ -89,16 +90,13 @@ opisywanego etapu.
 - Część stylów krytycznych dla natywnego układu tabletu używa obecnie `StyleSheet` i surowych
   wartości kolorów. Przed budową ekranów produkcyjnych należy przywrócić zasadę jednego źródła
   kolorów albo wyodrębnić współdzielone tokeny dostępne również dla `StyleSheet`.
-- Teksty widoczne na ekranach fundamentowych są wpisane bezpośrednio w komponentach. Biblioteka i18n
-  nie została jeszcze wybrana; trzeba ją wprowadzić przed utrwaleniem produkcyjnych tekstów fazy 3.
+- Interfejs korzysta z polskiego lub angielskiego katalogu na podstawie języka systemowego.
+  Nieobsługiwane języki korzystają z angielskiego fallbacku.
 - Web pozostaje wyłącznie możliwością deweloperską Expo i nie jest platformą testową ani docelową.
 
 ## Następny krok
 
-Po integracji brancha rozpocząć Fazę 3 na nowym branchu:
-
-1. Wybrać i skonfigurować bibliotekę i18n przed utrwaleniem produkcyjnych tekstów.
+1. Zaimplementować lokalny `ObjectStorage` wraz ze zdjęciem wybieranym wyłącznie z galerii i
+   mechanizmem uzgadniania przerwanych operacji.
 2. Zaimplementować onboarding i zapis pierwszego pojazdu przez istniejące repozytorium.
 3. Zbudować przestrzeń pojazdu i historię, a następnie formularze przeglądu, wymiany i naprawy.
-4. Zaimplementować lokalny `ObjectStorage` wraz ze zdjęciem pojazdu i mechanizmem uzgadniania
-   przerwanych operacji.

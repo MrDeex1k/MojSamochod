@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Screen } from "@/components/layout/screen";
 import { EmptyState } from "@/components/states/empty-state";
+import { useAppTranslation } from "@/localization/use-app-translation";
 
 const TABLET_MIN_SHORTEST_SIDE = 600;
 
@@ -39,6 +40,7 @@ export function AdaptiveWorkspace({
   primaryPane,
   vehiclePane,
 }: AdaptiveWorkspaceProps) {
+  const { t } = useAppTranslation();
   const { height, width } = useWindowDimensions();
   const layout = resolveWindowLayout(width, height);
 
@@ -52,10 +54,10 @@ export function AdaptiveWorkspace({
         <EmptyState
           description={
             layout === "phone-landscape"
-              ? "Widok telefonu jest obecnie przygotowany do pracy w pionie."
-              : "Widok tabletu jest obecnie przygotowany do pracy w poziomie."
+              ? t("orientation.phoneDescription")
+              : t("orientation.tabletDescription")
           }
-          title="Obróć urządzenie"
+          title={t("orientation.title")}
         />
       </Screen>
     );

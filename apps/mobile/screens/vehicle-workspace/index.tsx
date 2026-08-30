@@ -3,28 +3,32 @@ import { StyleSheet, Text, View } from "react-native";
 import { AdaptiveWorkspace } from "@/components/layout/adaptive-workspace";
 import { Screen } from "@/components/layout/screen";
 import { Card } from "@/components/ui/card";
+import { useAppTranslation } from "@/localization/use-app-translation";
 
 function VehicleSummaryPlaceholder() {
+  const { t } = useAppTranslation();
+
   return (
     <Card style={styles.fullHeightCard}>
-      <Text style={styles.title}>Marka + Model</Text>
+      <Text style={styles.title}>{t("workspace.makeAndModel")}</Text>
       <View className="rounded-control bg-surface-muted" style={styles.photoPlaceholder}>
-        <Text style={styles.secondaryText}>Zdjęcie pojazdu</Text>
+        <Text style={styles.secondaryText}>{t("workspace.photo")}</Text>
       </View>
-      <Text style={styles.secondaryText}>Wersja pojazdu</Text>
+      <Text style={styles.secondaryText}>{t("workspace.variant")}</Text>
       <Text selectable style={styles.mileage}>
-        Przebieg
+        {t("workspace.mileage")}
       </Text>
     </Card>
   );
 }
 
 function HistoryPlaceholder({ tablet = false }: { tablet?: boolean }) {
+  const { t } = useAppTranslation();
   const content = (
     <View style={styles.emptyState}>
-      <Text style={styles.title}>Brak wpisów</Text>
+      <Text style={styles.title}>{t("workspace.noEntries")}</Text>
       <Text selectable style={styles.secondaryText}>
-        W tym miejscu pojawi się chronologiczna historia pojazdu.
+        {t("workspace.historyDescription")}
       </Text>
     </View>
   );
