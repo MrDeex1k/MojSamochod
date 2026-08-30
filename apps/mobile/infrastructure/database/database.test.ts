@@ -62,4 +62,13 @@ describe("initializeDatabase", () => {
     await expect(initializeDatabase()).rejects.toThrow("Migration failed");
     expect(mockCloseAsync).toHaveBeenCalledTimes(1);
   });
+
+  it("preserves the migration error when closing the failed connection also fails", async () => {
+    const migrationError = new Error("Migration failed");
+    mockMigrate.mockRejectedValue(migrationError);
+    mockCloseAsync.mockRejectedValue(new Error("Close failed"));
+
+    await expect(initializeDatabase()).rejects.toBe(migrationError);
+    expect(mockCloseAsync).toHaveBeenCalledTimes(1);
+  });
 });

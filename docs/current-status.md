@@ -44,8 +44,8 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 12 zestawów i 49 testów komponentów, układu adaptacyjnego, inicjalizacji
-  bazy, domeny, mapperów rekordów oraz zachowania repozytoriów.
+- Aktualny zestaw zawiera 14 zestawów i 55 testów komponentów, układu adaptacyjnego, inicjalizacji
+  bazy, domeny, mapperów rekordów, zachowania repozytoriów i trwałości SQLite.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
 - React Doctor dla zmian inicjalizacji bazy kończy się wynikiem 100/100.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
@@ -67,6 +67,12 @@ opisywanego etapu.
   niepełnego modelu domenowego.
 - Zdjęcie pojazdu jest jawnie odrzucane jako `unsupported`, dopóki w Fazie 3 nie powstanie
   implementacja zarządzanych plików; repozytorium nie gubi tej wartości po cichu.
+- Deterministyczny fixture deweloperski zawiera pojazd oraz po jednym wpisie przeglądu, wymiany i
+  naprawy. Nie jest importowany przez produkcyjny proces startu aplikacji.
+- Testy na rzeczywistym pliku SQLite potwierdzają trwałość danych po zamknięciu i ponownym otwarciu,
+  pełny rollback przerwanego zapisu oraz odrzucanie rekordów łamiących ograniczenia schematu.
+- Błąd migracji zamyka połączenie i pozostaje błędem źródłowym również wtedy, gdy samo zamknięcie
+  połączenia także się nie powiedzie.
 
 ## Znane ograniczenia i dług techniczny
 
@@ -82,9 +88,6 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Dodać deterministyczne fixture'y deweloperskie bez łączenia ich z zachowaniem produkcyjnym.
-2. Rozszerzyć testy o awarię migracji, przerwaną transakcję i trwałość danych po ponownym otwarciu
-   aplikacji.
-3. Dodać wersjonowany eksport JSON bez danych binarnych.
-4. Zaprojektować kontrakt `ObjectStorage`, którego lokalna implementacja powstanie ze zdjęciami w
+1. Dodać wersjonowany eksport JSON bez danych binarnych.
+2. Zaprojektować kontrakt `ObjectStorage`, którego lokalna implementacja powstanie ze zdjęciami w
    Fazie 3.
