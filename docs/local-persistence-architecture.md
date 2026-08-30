@@ -46,13 +46,25 @@ Pierwsza wersja schematu obejmuje:
 - klucze obce, indeksy i ograniczenia potrzebne do zachowania niezmienników;
 - tabelę migracji używaną przez Drizzle.
 
+Schemat jest zdefiniowany w `apps/mobile/infrastructure/database/schema.ts`, a pierwsza migracja
+znajduje się w `apps/mobile/infrastructure/database/migrations`. Ograniczenia SQLite zabezpieczają
+dozwolone typy wpisów, nieujemne odległości i kwoty, kompletność pary kwota–waluta oraz maksymalne
+długości pól. Złożone klucze obce nie pozwalają połączyć szczegółów przeglądu, wymiany lub naprawy z
+wpisem innego typu. Utworzenie wspólnego rekordu i dokładnie jednego rekordu szczegółów pozostaje
+niezmiennikiem transakcyjnym repozytorium.
+
 Nie powstają jeszcze puste tabele dokumentów, tankowań, przypomnień, subskrypcji ani synchronizacji.
 Limit jednego bezpłatnego pojazdu jest egzekwowany przez przypadek użycia, a nie przez konstrukcję
 schematu, aby późniejsze Premium nie wymagało przebudowy tożsamości danych.
+Kolumna odwołania do zdjęcia pojazdu zostanie dodana razem z metadanymi zarządzanych plików w Fazie
+3; pierwszy schemat nie przechowuje ścieżki, której cykl życia nie jest jeszcze obsługiwany.
 
 ## Migracje i transakcje
 
 - Każda zmiana schematu otrzymuje wygenerowaną, wersjonowaną migrację SQL.
+- Migracje generujemy z krótką, opisową nazwą w języku angielskim zapisaną w `snake_case`, na
+  przykład `nub run db:generate --name add_managed_files`. Nie akceptujemy losowych nazw
+  proponowanych domyślnie przez Drizzle Kit.
 - Migracje są dołączane do aplikacji i wykonywane przed udostępnieniem edytowalnego interfejsu.
 - Nieudana migracja prowadzi do jawnego stanu błędu i nie jest interpretowana jako brak danych.
 - Utworzenie albo aktualizacja wpisu wraz ze zmianą aktualnego przebiegu pojazdu jest jedną

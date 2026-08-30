@@ -61,7 +61,7 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
 - Oxlint provides static linting and Oxfmt provides formatting.
 - Husky and commitlint enforce Conventional Commits.
 - `nub run check` is the standard local quality gate: lint, formatting check, TypeScript
-  validation, and Jest tests.
+  validation, consistency of Drizzle migrations, and Jest tests.
 - Tests are colocated with source files and prefer accessible roles, labels, and user interactions
   over implementation details.
 - Expo Doctor is required after Expo, native configuration, or dependency changes. React Doctor is
@@ -132,7 +132,7 @@ yet. A short technical spike should confirm each choice before it becomes a prod
 
 | Capability              | Planned direction                                                                      | Decision still required                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Structured local data   | Drizzle ORM over the Expo SDK 57-compatible `expo-sqlite` package                      | Exact package versions and generated first schema.                                           |
+| Structured local data   | Drizzle ORM over Expo SQLite with a committed, generated initial migration             | Database bootstrap, repositories, transactional CRUD, and versioned JSON export.             |
 | Invoices and documents  | `ObjectStorage` backed by app-managed files with metadata and relations in SQLite      | File import API, size limits, supported formats, orphan cleanup, export.                     |
 | Reminders               | Local notifications scheduled from stored deadlines                                    | Permission flow, rescheduling rules, timezone and overdue behavior.                          |
 | Localization            | `expo-localization`, external translation catalogs, and locale-aware `Intl` formatting | Translation library, catalog structure, supported locale identifiers, and fallback behavior. |

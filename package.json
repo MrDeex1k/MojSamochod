@@ -10,6 +10,8 @@
     "dev": "nub run --workspace @moje-auto/mobile dev",
     "start": "nub run --workspace @moje-auto/mobile start",
     "android": "nub run --workspace @moje-auto/mobile android",
+    "db:check": "nub run --workspace @moje-auto/mobile db:check",
+    "db:generate": "nub run --workspace @moje-auto/mobile db:generate",
     "ios": "nub run --workspace @moje-auto/mobile ios",
     "web": "nub run --workspace @moje-auto/mobile web",
     "lint": "oxlint . --deny-warnings",
@@ -18,7 +20,7 @@
     "format:check": "oxfmt . --check",
     "test": "nub run --workspace @moje-auto/mobile test",
     "typecheck": "nub run --workspace @moje-auto/mobile typecheck",
-    "check": "nub run lint && nub run format:check && nub run typecheck && nub run test",
+    "check": "nub run lint && nub run format:check && nub run typecheck && nub run db:check && nub run test",
     "deps:install": "nubx -y sfw@2.0.6 nub install",
     "prepare": "husky",
     "commitlint": "commitlint"

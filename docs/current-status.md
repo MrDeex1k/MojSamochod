@@ -11,8 +11,8 @@ opisywanego etapu.
 - Fundament aplikacji z fazy 1 został zintegrowany z `main`.
 - Faza 2, czyli lokalna persystencja danych, jest rozpoczęta na branchu
   `feat/local-persistence-foundation`.
-- Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Nie zapisuje jeszcze pojazdu ani
-  wpisów historii.
+- Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Pierwszy schemat oraz migracja są
+  gotowe, ale aplikacja nie otwiera jeszcze bazy i nie zapisuje pojazdu ani wpisów historii.
 
 ## Zaimplementowany fundament
 
@@ -65,7 +65,7 @@ opisywanego etapu.
 
 ## Następny krok
 
-1. Wygenerować i przejrzeć pierwszą migrację schematu opartą na UUIDv7 i `occurredAt` w UTC.
+1. Dodać inicjalizację bazy, wykonywanie migracji przy starcie oraz jawny stan błędu migracji.
 2. Zaimplementować i przetestować lokalne CRUD dla pojazdu oraz wpisów historii bez wykonywania
    zapytań bazodanowych bezpośrednio w ekranach.
 3. Dodać wersjonowany eksport JSON bez danych binarnych.
