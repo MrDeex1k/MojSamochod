@@ -11,7 +11,7 @@ export type Sha256Digest = string & { readonly [sha256DigestBrand]: true };
 export type StorageObjectKey = string & { readonly [storageObjectKeyBrand]: true };
 export type ManagedFileKind = "vehicle-photo" | "document";
 
-export type ManagedFileMetadata = Readonly<{
+type ManagedFileMetadataCommon = Readonly<{
   byteSize: ByteSize;
   createdAt: UtcTimestamp;
   id: ManagedFileId;
@@ -19,9 +19,31 @@ export type ManagedFileMetadata = Readonly<{
   mimeType: string;
   originalName: string;
   sha256: Sha256Digest;
-  storageKey: StorageObjectKey;
   updatedAt: UtcTimestamp;
 }>;
+
+export type StagedManagedFileMetadata = ManagedFileMetadataCommon &
+  Readonly<{
+    stagingKey: string;
+    status: "staged";
+  }>;
+
+export type ReadyManagedFileMetadata = ManagedFileMetadataCommon &
+  Readonly<{
+    status: "ready";
+    storageKey: StorageObjectKey;
+  }>;
+
+export type DeletingManagedFileMetadata = ManagedFileMetadataCommon &
+  Readonly<{
+    status: "deleting";
+    storageKey: StorageObjectKey;
+  }>;
+
+export type ManagedFileMetadata =
+  | StagedManagedFileMetadata
+  | ReadyManagedFileMetadata
+  | DeletingManagedFileMetadata;
 
 export function byteSize(value: number): ValidationResult<ByteSize> {
   return Number.isSafeInteger(value) && value >= 0

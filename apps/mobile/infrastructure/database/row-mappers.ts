@@ -6,6 +6,7 @@ import type {
 } from "@/domain/history/history-entry";
 import {
   historyEntryIdFromUuidV7,
+  managedFileIdFromUuidV7,
   vehicleIdFromUuidV7,
   type HistoryEntryId,
   type VehicleId,
@@ -82,7 +83,9 @@ export function mapVehicleRow(row: VehicleRow): Vehicle {
     make,
     manufactureYear: row.manufactureYear ?? undefined,
     model,
-    photoReference: undefined,
+    photoReference: row.photoReference
+      ? mapManagedFileId(row.photoReference, "photoReference")
+      : undefined,
     registrationNumber,
     updatedAt: expectValue(utcTimestamp(row.updatedAt, "updatedAt"), "updatedAt"),
     variant,
@@ -211,6 +214,14 @@ function mapVehicleId(value: string, field: string): VehicleId {
 function mapHistoryEntryId(value: string, field: string): HistoryEntryId {
   try {
     return historyEntryIdFromUuidV7(value);
+  } catch {
+    throw new CorruptStoredDataError(field);
+  }
+}
+
+function mapManagedFileId(value: string, field: string) {
+  try {
+    return managedFileIdFromUuidV7(value);
   } catch {
     throw new CorruptStoredDataError(field);
   }

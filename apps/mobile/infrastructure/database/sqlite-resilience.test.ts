@@ -5,10 +5,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-const migrationSql = readFileSync(
-  join(__dirname, "migrations", "0000_create_vehicle_history_schema.sql"),
-  "utf8",
-).replaceAll("--> statement-breakpoint", "");
+const migrationSql = [
+  "0000_create_vehicle_history_schema.sql",
+  "0001_add_managed_vehicle_photos.sql",
+]
+  .map((fileName) => readFileSync(join(__dirname, "migrations", fileName), "utf8"))
+  .join("\n")
+  .replaceAll("--> statement-breakpoint", "");
 const temporaryDirectories: string[] = [];
 
 afterEach(() => {
@@ -91,10 +94,24 @@ describe("SQLite persistence resilience", () => {
     expect(database.prepare("SELECT count(*) AS count FROM vehicles").get()).toEqual({ count: 0 });
     database.close();
   });
+
+  it("sets a deleted managed photo reference to null without deleting the vehicle", () => {
+    const database = openMigratedDatabase(createTemporaryDatabasePath());
+    insertManagedPhoto(database);
+    insertVehicle(database, managedFileId);
+
+    database.prepare("DELETE FROM managed_files WHERE id = ?").run(managedFileId);
+
+    expect(
+      database.prepare("SELECT photo_reference FROM vehicles WHERE id = ?").get(vehicleId),
+    ).toEqual({ photo_reference: null });
+    database.close();
+  });
 });
 
 const vehicleId = "018f47e2-7b2f-7cc8-98c4-dc0c0c07398f";
 const entryId = "018f47e2-7b30-7b80-99c0-81b80d9a57ce";
+const managedFileId = "018f47e2-7b31-7658-b336-34613389d00f";
 const timestamp = "2026-08-30T10:15:00.000Z";
 
 function createTemporaryDatabasePath(): string {
@@ -110,13 +127,24 @@ function openMigratedDatabase(databasePath: string): DatabaseSync {
   return database;
 }
 
-function insertVehicle(database: DatabaseSync): void {
+function insertVehicle(database: DatabaseSync, photoReference: string | null = null): void {
   database
     .prepare(
       `INSERT INTO vehicles
         (id, make, model, initial_odometer_metres, current_odometer_metres,
-         distance_unit_preference, created_at, updated_at)
-       VALUES (?, 'Volvo', 'V60', 82000000, 82000000, 'kilometres', ?, ?)`,
+         distance_unit_preference, photo_reference, created_at, updated_at)
+       VALUES (?, 'Volvo', 'V60', 82000000, 82000000, 'kilometres', ?, ?, ?)`,
     )
-    .run(vehicleId, timestamp, timestamp);
+    .run(vehicleId, photoReference, timestamp, timestamp);
+}
+
+function insertManagedPhoto(database: DatabaseSync): void {
+  database
+    .prepare(
+      `INSERT INTO managed_files
+        (id, kind, status, storage_key, mime_type, original_name, byte_size, sha256,
+         created_at, updated_at)
+       VALUES (?, 'vehicle-photo', 'ready', ?, 'image/jpeg', 'vehicle.jpg', 3, ?, ?, ?)`,
+    )
+    .run(managedFileId, `objects/${managedFileId}.jpg`, "ab".repeat(32), timestamp, timestamp);
 }

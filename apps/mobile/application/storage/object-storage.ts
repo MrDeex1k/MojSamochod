@@ -47,6 +47,9 @@ export interface ObjectStorage {
   /** Removes an uncommitted object. Missing staging objects are treated as successfully discarded. */
   discard(stagingKey: StagedObjectKey): Promise<ObjectStorageResult<void>>;
 
+  /** Lists private staging objects so reconciliation can remove copies without database metadata. */
+  listStagedKeys(): Promise<ObjectStorageResult<readonly StagedObjectKey[]>>;
+
   /** Removes a durable object. Missing objects are treated as successfully deleted. */
   delete(storageKey: StorageObjectKey): Promise<ObjectStorageResult<void>>;
 

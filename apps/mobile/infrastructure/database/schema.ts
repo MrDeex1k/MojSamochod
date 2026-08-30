@@ -9,6 +9,43 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+export const managedFiles = sqliteTable(
+  "managed_files",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind", { enum: ["vehicle-photo", "document"] }).notNull(),
+    status: text("status", { enum: ["staged", "ready", "deleting"] }).notNull(),
+    stagingKey: text("staging_key"),
+    storageKey: text("storage_key"),
+    mimeType: text("mime_type").notNull(),
+    originalName: text("original_name").notNull(),
+    byteSize: integer("byte_size").notNull(),
+    sha256: text("sha256").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("managed_files_staging_key_unique").on(table.stagingKey),
+    uniqueIndex("managed_files_storage_key_unique").on(table.storageKey),
+    check("managed_files_kind", sql`${table.kind} in ('vehicle-photo', 'document')`),
+    check("managed_files_status", sql`${table.status} in ('staged', 'ready', 'deleting')`),
+    check("managed_files_mime_type_length", sql`length(trim(${table.mimeType})) between 1 and 120`),
+    check(
+      "managed_files_original_name_length",
+      sql`length(trim(${table.originalName})) between 1 and 255`,
+    ),
+    check("managed_files_byte_size", sql`${table.byteSize} between 0 and 9007199254740991`),
+    check(
+      "managed_files_sha256",
+      sql`length(${table.sha256}) = 64 and lower(${table.sha256}) = ${table.sha256}`,
+    ),
+    check(
+      "managed_files_location_state",
+      sql`(${table.status} = 'staged' and ${table.stagingKey} is not null and ${table.storageKey} is null) or (${table.status} in ('ready', 'deleting') and ${table.stagingKey} is null and ${table.storageKey} is not null)`,
+    ),
+  ],
+);
+
 export const vehicles = sqliteTable(
   "vehicles",
   {
@@ -19,6 +56,9 @@ export const vehicles = sqliteTable(
     manufactureYear: integer("manufacture_year"),
     registrationNumber: text("registration_number"),
     vin: text("vin"),
+    photoReference: text("photo_reference").references(() => managedFiles.id, {
+      onDelete: "set null",
+    }),
     initialOdometerMetres: integer("initial_odometer_metres"),
     currentOdometerMetres: integer("current_odometer_metres"),
     distanceUnitPreference: text("distance_unit_preference", {
@@ -28,6 +68,7 @@ export const vehicles = sqliteTable(
     updatedAt: text("updated_at").notNull(),
   },
   (table) => [
+    uniqueIndex("vehicles_photo_reference_unique").on(table.photoReference),
     check("vehicles_make_length", sql`length(trim(${table.make})) between 1 and 80`),
     check("vehicles_model_length", sql`length(trim(${table.model})) between 1 and 80`),
     check(

@@ -38,21 +38,6 @@ if (!entryResult.ok) throw new Error("Invalid history test fixture");
 const entry = entryResult.value;
 
 describe("DrizzleVehicleHistoryRepository", () => {
-  it("rejects vehicle photos until managed-file persistence is implemented", async () => {
-    const database = {} as AppDatabase;
-    const repository: VehicleRepository = new DrizzleVehicleHistoryRepository(database);
-
-    const result = await repository.create({
-      ...vehicle,
-      photoReference: "018f47e2-7b31-7658-b336-34613389d00f" as never,
-    });
-
-    expect(result).toMatchObject({
-      error: { kind: "unsupported", operation: "vehicle.create" },
-      ok: false,
-    });
-  });
-
   it("creates the common entry, its details, and mileage update in one transaction", async () => {
     const insertedTables: unknown[] = [];
     const updatedTables: unknown[] = [];

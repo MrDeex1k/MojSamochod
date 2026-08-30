@@ -13,6 +13,7 @@ const vehicleRow = {
   make: "Volvo",
   manufactureYear: 2020,
   model: "V60",
+  photoReference: null,
   registrationNumber: "WA 12345",
   updatedAt: timestamp,
   variant: "B4",
