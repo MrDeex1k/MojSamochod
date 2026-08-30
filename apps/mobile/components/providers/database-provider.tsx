@@ -8,6 +8,7 @@ import {
   type AppDatabase,
   type DatabaseHandle,
 } from "@/infrastructure/database/database";
+import { useAppTranslation } from "@/localization/use-app-translation";
 
 type DatabaseProviderProps = PropsWithChildren<{
   initialize?: () => Promise<DatabaseHandle>;
@@ -24,6 +25,7 @@ export function DatabaseProvider({
   children,
   initialize = initializeDatabase,
 }: DatabaseProviderProps) {
+  const { t } = useAppTranslation();
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<DatabaseState>({ status: "loading" });
 
@@ -59,7 +61,7 @@ export function DatabaseProvider({
   if (state.status === "loading") {
     return (
       <Screen contentClassName="items-center justify-center">
-        <LoadingState label="Przygotowywanie danych" />
+        <LoadingState label={t("database.loading")} />
       </Screen>
     );
   }
@@ -68,13 +70,13 @@ export function DatabaseProvider({
     return (
       <Screen contentClassName="items-center justify-center">
         <ErrorState
-          actionLabel="Spróbuj ponownie"
-          description="Nie udało się przygotować lokalnej bazy danych. Twoje dane nie zostały usunięte."
+          actionLabel={t("database.errorAction")}
+          description={t("database.errorDescription")}
           onAction={() => {
             setState({ status: "loading" });
             setAttempt((currentAttempt) => currentAttempt + 1);
           }}
-          title="Nie można uruchomić aplikacji"
+          title={t("database.errorTitle")}
         />
       </Screen>
     );

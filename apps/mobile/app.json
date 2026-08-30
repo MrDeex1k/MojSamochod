@@ -7,6 +7,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "mojeauto",
     "userInterfaceStyle": "dark",
+    "locales": {
+      "en": "./locales/en.json",
+      "pl": "./locales/pl.json"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -25,6 +29,21 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["en", "pl"],
+            "android": ["en", "pl"]
+          }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow My Car to select a vehicle photo from your library."
+        }
+      ],
       [
         "expo-splash-screen",
         {

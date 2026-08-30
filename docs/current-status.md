@@ -9,11 +9,11 @@ opisywanego etapu.
 - Faza 0, czyli ustalenie zakresu produktu, modelu domenowego, pierwszego przepływu użytkownika i
   kierunku wizualnego, jest zakończona.
 - Fundament aplikacji z fazy 1 został zintegrowany z `main`.
-- Faza 2, czyli lokalna persystencja danych, jest zakończona na branchu
-  `feat/local-persistence-foundation` i gotowa do przeglądu oraz integracji.
-- Aplikacja nadal pokazuje ekrany fundamentowe i placeholdery. Przy starcie otwiera lokalną bazę,
-  wykonuje migracje i dopiero potem udostępnia nawigację. Warstwa repozytoriów potrafi już zapisywać
-  pojazd i wpisy historii, ale ekrany zostaną z nią połączone dopiero w Fazie 3.
+- Faza 2, czyli lokalna persystencja danych, została zintegrowana z `main`.
+- Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, jest zaimplementowana i zweryfikowana
+  na branchu `feat/vehicle-history-slice`.
+- Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
+  kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
 ## Zaimplementowany fundament
 
@@ -21,6 +21,12 @@ opisywanego etapu.
 
 - Aplikacja korzysta z Expo Router i ma minimalne trasy dla dodawania pierwszego pojazdu oraz
   przestrzeni pojazdu.
+- Onboarding zapisuje wymagane i opcjonalne dane pojazdu, licznik początkowy oraz opcjonalne zdjęcie
+  wybrane wyłącznie z galerii. Limit jednego pojazdu jest egzekwowany przez repozytorium.
+- Przestrzeń pojazdu pokazuje rzeczywiste dane, aktualny przebieg i chronologiczną historię. Obsługuje
+  tworzenie, szczegóły, edycję i bezpieczne usuwanie przeglądów, wymian i napraw.
+- Formularz wpisu ma osobne natywne kontrolki daty oraz godziny UTC, które zapisują jeden znacznik
+  `occurredAt` z dokładnością do minuty. Po zapisie aplikacja wraca do historii.
 - Główny layout zapewnia `SafeAreaProvider`, ciemny pasek stanu i wspólny import stylów.
 - Telefon jest obecnie obsługiwany w pionie, a tablet w poziomie. Pozostałe układy pokazują
   komunikat proszący o obrócenie urządzenia.
@@ -33,6 +39,8 @@ opisywanego etapu.
 - Centralna paleta oraz semantyczne tokeny znajdują się w `apps/mobile/styles/theme.css`.
 - Dostępne są podstawowe komponenty: `Button`, `Card`, `TextField` i przewijalny `Screen`
   uwzględniający safe area oraz klawiaturę.
+- `expo-image` korzysta ze wspólnego adaptera NativeWind, dzięki czemu klasy wymiarów, proporcji i
+  zaokrągleń są przekazywane do natywnego `style` również dla komponentu zewnętrznej biblioteki.
 - Dostępne są wspólne stany: pusty, ładowania i błędu.
 - Układ tabletu ma stałą kartę pojazdu po lewej oraz elastyczny obszar treści. Trzecia karta jest
   renderowana dopiero po przekazaniu szczegółów.
@@ -44,17 +52,24 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 16 zestawów i 76 testów komponentów, układu adaptacyjnego, inicjalizacji
-  bazy, domeny, mapperów rekordów, zachowania repozytoriów, trwałości SQLite, eksportu oraz
-  zarządzanych plików.
+- Aktualny zestaw zawiera 25 zestawów i 108 testów komponentów, układu adaptacyjnego, inicjalizacji
+  bazy, domeny, mapperów rekordów, zachowania repozytoriów, trwałości SQLite, eksportu,
+  zarządzanych plików oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
-- React Doctor dla zmian inicjalizacji bazy kończy się wynikiem 100/100.
+- React Doctor 0.9.12 dla zmian na branchu kończy się wynikiem 96/100 bez wykrytych problemów.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
+- Po implementacji Fazy 3 bundle'e Hermes zostały ponownie poprawnie wygenerowane osobno dla iOS i
+  Androida, wraz z nowymi modułami zdjęć, systemu plików i selektora daty oraz czasu.
 - Pierwszy start bazy i ponowne uruchomienie z już zastosowaną migracją zostały sprawdzone natywnie
   na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet. Na obu urządzeniach iOS potwierdzono
   również plik `moje_auto.db`, tryb WAL, komplet tabel i jeden rekord migracji.
 - Fundament był sprawdzany natywnie na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet.
   Ostatnia zmiana proporcji zdjęcia została dodatkowo sprawdzona na obu tabletach.
+- Końcowa weryfikacja Fazy 3 na tych samych czterech urządzeniach potwierdziła prawidłowe proporcje
+  formularzy, zdjęcie `1:1` po wyborze z galerii oraz układy telefonu i tabletu. Na iPhonie wykonano
+  pełny przepływ: ponowne uruchomienie z zachowaniem danych, dodanie trzech typów wpisów, szczegóły,
+  wejście w edycję, odrzucenie zmian i potwierdzone usunięcie wpisu. Przepływ zdjęcia sprawdzono na
+  obu systemach mobilnych z plikami testowymi dostarczonymi w katalogu roboczym.
 
 ### Domena i persystencja
 
@@ -66,8 +81,9 @@ opisywanego etapu.
 - Rekordy odczytane z SQLite są ponownie sprawdzane względem kontraktu domenowego. Nieprawidłowy
   identyfikator, czas, kwota lub brak właściwego rekordu szczegółów daje błąd `corrupt-data` zamiast
   niepełnego modelu domenowego.
-- Zdjęcie pojazdu jest jawnie odrzucane jako `unsupported`, dopóki w Fazie 3 nie powstanie
-  implementacja zarządzanych plików; repozytorium nie gubi tej wartości po cichu.
+- Zdjęcia pojazdu są kadrowane do proporcji `1:1`, przetwarzane do JPEG, ograniczane do 2048 px i
+  5 MB, a następnie przechowywane w prywatnym magazynie aplikacji. SQLite przechowuje wyłącznie
+  metadane i stabilną relację z pojazdem.
 - Deterministyczny fixture deweloperski zawiera pojazd oraz po jednym wpisie przeglądu, wymiany i
   naprawy. Nie jest importowany przez produkcyjny proces startu aplikacji.
 - Testy na rzeczywistym pliku SQLite potwierdzają trwałość danych po zamknięciu i ponownym otwarciu,
@@ -80,6 +96,8 @@ opisywanego etapu.
 - Kontrakt `ObjectStorage` rozdziela etapowanie, trwałe zatwierdzenie, odrzucenie, usunięcie i eksport
   obiektu. Metadane definiują rozmiar, SHA-256 i bezpieczny względny klucz magazynu, a dokumentacja
   opisuje odzyskiwanie po przerwaniu operacji między SQLite i systemem plików.
+- Uzgadnianie przy starcie kończy oczekujące zapisy i usunięcia oraz usuwa osierocone pliki stagingu
+  i niepowiązane zdjęcia. Test ponownego otwarcia potwierdza trwałość relacji zdjęcia i wpisu historii.
 
 ## Znane ograniczenia i dług techniczny
 
@@ -89,16 +107,14 @@ opisywanego etapu.
 - Część stylów krytycznych dla natywnego układu tabletu używa obecnie `StyleSheet` i surowych
   wartości kolorów. Przed budową ekranów produkcyjnych należy przywrócić zasadę jednego źródła
   kolorów albo wyodrębnić współdzielone tokeny dostępne również dla `StyleSheet`.
-- Teksty widoczne na ekranach fundamentowych są wpisane bezpośrednio w komponentach. Biblioteka i18n
-  nie została jeszcze wybrana; trzeba ją wprowadzić przed utrwaleniem produkcyjnych tekstów fazy 3.
+- Interfejs korzysta z polskiego lub angielskiego katalogu na podstawie języka systemowego.
+  Nieobsługiwane języki korzystają z angielskiego fallbacku.
 - Web pozostaje wyłącznie możliwością deweloperską Expo i nie jest platformą testową ani docelową.
+- Systemowy ekran kadrowania zdjęcia w Expo Go na iOS pokazuje część tekstów po angielsku mimo
+  polskiego locale symulatora. Lokalizację natywnych tekstów trzeba potwierdzić w docelowym buildzie,
+  ponieważ interfejs Expo Go nie jest konfigurowany przez zasoby natywne aplikacji.
 
 ## Następny krok
 
-Po integracji brancha rozpocząć Fazę 3 na nowym branchu:
-
-1. Wybrać i skonfigurować bibliotekę i18n przed utrwaleniem produkcyjnych tekstów.
-2. Zaimplementować onboarding i zapis pierwszego pojazdu przez istniejące repozytorium.
-3. Zbudować przestrzeń pojazdu i historię, a następnie formularze przeglądu, wymiany i naprawy.
-4. Zaimplementować lokalny `ObjectStorage` wraz ze zdjęciem pojazdu i mechanizmem uzgadniania
-   przerwanych operacji.
+Przygotować pull request zamykający Fazę 3. Po integracji z `main` rozpocząć Fazę 4 dotyczącą
+dokumentów i faktur na osobnym branchu.

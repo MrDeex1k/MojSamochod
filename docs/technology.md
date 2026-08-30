@@ -64,6 +64,12 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
   validation, consistency of Drizzle migrations, and Jest tests.
 - Tests are colocated with source files and prefer accessible roles, labels, and user interactions
   over implementation details.
+- NativeWind theme lengths use `rem` values, while custom line heights remain unitless ratios. This
+  avoids oversized native text boxes caused by length-based custom line-height tokens in the current
+  NativeWind 5 and React Native CSS preview stack.
+- Third-party components do not receive NativeWind `className` behavior automatically. The shared
+  `expo-image` adapter maps `className` to the native `style` prop instead of relying on unsupported
+  passthrough.
 - Expo Doctor is required after Expo, native configuration, or dependency changes. React Doctor is
   required after React component changes.
 
@@ -99,7 +105,7 @@ Localization has separate responsibilities that must not be collapsed into one m
 | Responsibility                 | Planned approach                                                                                                                                            |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Device language and region     | Read locale preferences through `expo-localization`.                                                                                                        |
-| Application translations       | Select a JavaScript i18n library before Phase 3; keep translation catalogs outside screens.                                                                 |
+| Application translations       | Use `i18next`, `react-i18next`, and `expo-localization`; keep Polish and English catalogs outside screens and fall back to English.                         |
 | Per-application language       | Declare supported locales through the `expo-localization` config plugin so iOS and Android system settings can select the app language.                     |
 | Dates, numbers, and currencies | Format values at the presentation boundary with locale-aware `Intl` APIs.                                                                                   |
 | Units                          | Keep distance, volume, and other unit preferences explicit; language or region may provide an initial default but must not silently overwrite user choices. |
@@ -114,25 +120,29 @@ The initial application should normally follow the per-app language selected in 
 system. A custom in-app language selector is not required until product testing demonstrates a need
 that the platform setting does not cover.
 
-The translation-library choice remains open and must be resolved before production copy is added in
-Phase 3. The selected library must support fallbacks, interpolation, plural rules, typed or
-statically verifiable keys, and testing without a native runtime. Adding it must follow the
-repository's Expo compatibility, exact-version, NUB, and Socket Firewall requirements.
+Phase 3 uses `i18next`, `react-i18next`, and `expo-localization`. Polish and English catalogs are
+bundled with the application, the system locale selects between them, and unsupported locales fall
+back to English. Translation resources stay outside screens and tests can select a locale
+deterministically. Locale-sensitive numbers, currencies, and dates use `Intl`; changing locale never
+changes stored domain values.
+
+Phase 3 also uses `expo-image-picker` for gallery-only selection, `expo-image-manipulator` for square
+JPEG processing, `expo-image` for native rendering, `expo-file-system` for private managed storage,
+and `@react-native-community/datetimepicker` for separate native date and UTC-time controls. Direct
+dependencies are pinned to Expo SDK-compatible versions in the application manifest.
 
 ## Planned capabilities and open selections
 
 The following capabilities are part of the product direction but are not installed or implemented
 yet. A short technical spike should confirm each choice before it becomes a production dependency.
 
-| Capability              | Planned direction                                                                      | Decision still required                                                                      |
-| ----------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Structured local data   | Drizzle ORM over Expo SQLite with a committed, generated initial migration             | Database bootstrap, repositories, transactional CRUD, and versioned JSON export.             |
-| Invoices and documents  | `ObjectStorage` backed by app-managed files with metadata and relations in SQLite      | File import API, size limits, supported formats, orphan cleanup, export.                     |
-| Reminders               | Local notifications scheduled from stored deadlines                                    | Permission flow, rescheduling rules, timezone and overdue behavior.                          |
-| Localization            | `expo-localization`, external translation catalogs, and locale-aware `Intl` formatting | Translation library, catalog structure, supported locale identifiers, and fallback behavior. |
-| Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records                    | Full-tank rules, partial fills, units, rounding, invalid sequences.                          |
-| Purchases               | Monthly and annual App Store and Google Play subscriptions                             | Purchase library, products, entitlement model, restore flow, receipt validation.             |
-| Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code            | Serverless transport, identity, encryption, conflicts, retries, and recovery.                |
+| Capability              | Planned direction                                                                 | Decision still required                                                          |
+| ----------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Invoices and documents  | `ObjectStorage` backed by app-managed files with metadata and relations in SQLite | File import API, size limits, supported formats, orphan cleanup, export.         |
+| Reminders               | Local notifications scheduled from stored deadlines                               | Permission flow, rescheduling rules, timezone and overdue behavior.              |
+| Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records               | Full-tank rules, partial fills, units, rounding, invalid sequences.              |
+| Purchases               | Monthly and annual App Store and Google Play subscriptions                        | Purchase library, products, entitlement model, restore flow, receipt validation. |
+| Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code       | Serverless transport, identity, encryption, conflicts, retries, and recovery.    |
 
 No new library should be selected only because it is popular. It must support the active Expo SDK,
 pass the repository's SFW policy, and demonstrate a clear maintenance and platform-compatibility

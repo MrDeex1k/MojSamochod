@@ -1,5 +1,5 @@
 import type { Clock, IdGenerator } from "../shared/ports";
-import { createVehicle } from "./vehicle";
+import { createVehicle, updateVehicle } from "./vehicle";
 
 const now = new Date("2026-08-30T14:30:00.000Z");
 const generatedId = "01941f29-7c00-73e4-a310-744d2167fc5b";
@@ -103,5 +103,42 @@ describe("createVehicle", () => {
         { clock: { now: () => now }, idGenerator: { generate: () => "not-a-uuid" } },
       ),
     ).toThrow("Expected a canonical lowercase UUIDv7 identifier");
+  });
+});
+
+describe("updateVehicle", () => {
+  it("preserves identity, creation time, and the entry-controlled current odometer", () => {
+    const created = createVehicle(
+      {
+        distanceUnitPreference: "kilometres",
+        initialOdometerMetres: 80_000,
+        make: "Volvo",
+        model: "V60",
+      },
+      dependencies(),
+    );
+    if (!created.ok) throw new Error("Invalid vehicle fixture");
+
+    const result = updateVehicle(
+      created.value,
+      {
+        distanceUnitPreference: "kilometres",
+        initialOdometerMetres: 70_000,
+        make: "Volvo",
+        model: "V60 Cross Country",
+      },
+      { now: () => new Date("2026-08-31T10:15:00.000Z") },
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        createdAt: created.value.createdAt,
+        currentOdometerMetres: 80_000,
+        id: created.value.id,
+        initialOdometerMetres: 70_000,
+        model: "V60 Cross Country",
+      },
+    });
   });
 });

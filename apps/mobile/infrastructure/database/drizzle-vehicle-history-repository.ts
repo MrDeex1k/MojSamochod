@@ -82,17 +82,10 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
 
   private async createVehicle(vehicle: Vehicle): Promise<RepositoryResult<void>> {
     const operation = "vehicle.create";
-    const unsupported = rejectPhotoReference(vehicle, operation);
-    if (unsupported) return unsupported;
 
     try {
       return this.database.transaction((transaction) => {
-        const existing = transaction
-          .select({ id: vehicles.id })
-          .from(vehicles)
-          .where(eq(vehicles.id, vehicle.id))
-          .limit(1)
-          .get();
+        const existing = transaction.select({ id: vehicles.id }).from(vehicles).limit(1).get();
         if (existing) return repositoryFailure("conflict", operation);
 
         transaction.insert(vehicles).values(vehicleValues(vehicle)).run();
@@ -129,8 +122,6 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
 
   private async updateVehicle(vehicle: Vehicle): Promise<RepositoryResult<void>> {
     const operation = "vehicle.update";
-    const unsupported = rejectPhotoReference(vehicle, operation);
-    if (unsupported) return unsupported;
 
     try {
       const result = this.database
@@ -273,6 +264,7 @@ function vehicleMutableValues(vehicle: Vehicle) {
     make: vehicle.make,
     manufactureYear: vehicle.manufactureYear ?? null,
     model: vehicle.model,
+    photoReference: vehicle.photoReference ?? null,
     registrationNumber: vehicle.registrationNumber ?? null,
     updatedAt: vehicle.updatedAt,
     variant: vehicle.variant ?? null,
@@ -396,13 +388,6 @@ function advanceVehicleOdometer(transaction: DatabaseTransaction, entry: History
       ),
     )
     .run();
-}
-
-function rejectPhotoReference(
-  vehicle: Vehicle,
-  operation: string,
-): RepositoryResult<void> | undefined {
-  return vehicle.photoReference ? repositoryFailure("unsupported", operation) : undefined;
 }
 
 function mapFailure<T>(operation: string, error: unknown): RepositoryResult<T> {

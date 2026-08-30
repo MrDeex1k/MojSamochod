@@ -143,6 +143,24 @@ export function createHistoryEntry(
   }
 }
 
+export function updateHistoryEntry(
+  existing: HistoryEntry,
+  input: CreateHistoryEntryInput,
+  clock: Clock,
+): ValidationResult<HistoryEntry> {
+  if (input.type !== existing.type) {
+    return invalid([{ code: "invalid-format", field: "type" }]);
+  }
+
+  const validated = createHistoryEntry(input, {
+    clock,
+    idGenerator: { generate: () => existing.id },
+  });
+  return validated.ok
+    ? valid({ ...validated.value, createdAt: existing.createdAt, id: existing.id })
+    : validated;
+}
+
 export function compareHistoryEntriesNewestFirst(left: HistoryEntry, right: HistoryEntry): number {
   return (
     right.occurredAt.localeCompare(left.occurredAt) ||

@@ -5,6 +5,7 @@ import {
   advancedCurrentOdometer,
   compareHistoryEntriesNewestFirst,
   createHistoryEntry,
+  updateHistoryEntry,
   type CreateHistoryEntryInput,
   type HistoryEntry,
 } from "./history-entry";
@@ -147,6 +148,30 @@ describe("createHistoryEntry", () => {
 });
 
 describe("history rules", () => {
+  it("updates editable values while preserving identity, creation time, and type", () => {
+    const existing = historyEntry(generatedId, "2026-08-29T12:00:00.000Z");
+    const result = updateHistoryEntry(
+      existing,
+      {
+        details: { subject: "Updated repair" },
+        occurredAt: "2026-08-30T12:00:00.000Z",
+        type: "repair",
+        vehicleId,
+      },
+      dependencies().clock,
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        createdAt: existing.createdAt,
+        id: existing.id,
+        type: existing.type,
+        updatedAt: now.toISOString(),
+      },
+    });
+  });
+
   it("advances only an unknown or lower current odometer", () => {
     const lower = metres(100, "odometer");
     const higher = metres(200, "odometer");

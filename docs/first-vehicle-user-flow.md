@@ -95,6 +95,8 @@ widoczne, aby użytkownik od razu znał dostępny zakres danych.
 ### 2. Zdjęcie
 
 - Użytkownik może wybrać najwyżej jedno zdjęcie.
+- Zdjęcie jest wybierane wyłącznie z galerii urządzenia; Faza 3 nie udostępnia robienia zdjęcia
+  aparatem z poziomu aplikacji.
 - Pole jest opcjonalne i nigdy nie blokuje utworzenia pojazdu.
 - Po wybraniu widoczny jest podgląd oraz akcje `Zmień` i `Usuń`.
 - Nieudany import zachowuje wszystkie dane formularza i pozwala ponowić wybór albo kontynuować bez

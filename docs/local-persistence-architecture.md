@@ -88,10 +88,9 @@ Metadane zarządzanego pliku będą obejmować co najmniej stabilny `ManagedFile
 rodzaj, MIME type, oryginalną nazwę, rozmiar, sumę SHA-256 oraz znaczniki czasu. Pojazd lub dokument
 odwołuje się do stabilnego identyfikatora, a nie do ścieżki źródłowej użytkownika.
 
-W Fazie 2 definiujemy kontrakt `ObjectStorage` i granicę transakcji między metadanymi a plikiem, ale
-nie implementujemy jeszcze importu danych binarnych. Lokalna implementacja powstanie w Fazie 3 wraz
-ze zdjęciem pojazdu. Ta sama granica może w przyszłości otrzymać inną implementację, ale obecny
-zakres nie wprowadza S3, Cloudflare R2 ani innej chmury.
+Faza 3 implementuje lokalny `ObjectStorage` i koordynację metadanych ze zdjęciem pojazdu. Ta sama
+granica może w przyszłości otrzymać inną implementację, ale obecny zakres nie wprowadza S3,
+Cloudflare R2 ani innej chmury.
 
 Kontrakt rozdziela `stage`, `commit`, `discard`, `delete` oraz `copyTo`. Etapowanie kopiuje zewnętrzny
 URI do prywatnego obszaru tymczasowego i wylicza rozmiar oraz SHA-256. `commit` przenosi obiekt do
@@ -99,19 +98,21 @@ trwałego magazynu i musi być idempotentny dla tego samego obiektu. `discard` o
 idempotentne: brak wskazanego obiektu oznacza powodzenie. `copyTo` udostępnia kontrolowaną drogę do
 późniejszego eksportu bez ujawniania wewnętrznej ścieżki magazynu.
 
-SQLite i system plików nie tworzą wspólnej transakcji ACID. Faza 3 wdroży więc koordynację w dwóch
-etapach:
+SQLite i system plików nie tworzą wspólnej transakcji ACID. Koordynacja działa więc w dwóch etapach:
 
 1. plik trafia do stagingu i otrzymuje sumę SHA-256;
-2. transakcja SQLite zapisuje metadane w stanie oczekującym oraz relację;
+2. SQLite zapisuje metadane w stanie oczekującym;
 3. `ObjectStorage.commit` utrwala plik;
-4. druga krótka transakcja oznacza metadane jako gotowe.
+4. krótka operacja SQLite oznacza metadane jako gotowe;
+5. zapis pojazdu tworzy relację do gotowego pliku, a niepowodzenie uruchamia jego odtwarzalne
+   usunięcie.
 
 Przerwanie procesu pozostawia stan możliwy do naprawienia, a nie gotowy rekord wskazujący na
-nieistniejący plik. Procedura uzgadniania przy starcie usunie osierocony staging albo dokończy stan
-oczekujący. Usuwanie działa analogicznie: najpierw oznaczenie metadanych, potem idempotentne usunięcie
-obiektu, a na końcu usunięcie rekordu. Surowe klucze magazynu są nieprzezroczyste, względne i nie
-mogą zawierać segmentów `.` lub `..`, ścieżek absolutnych ani separatorów systemowych.
+nieistniejący plik. Procedura uzgadniania przy starcie usuwa osierocony staging, kończy stan
+oczekujący, ponawia rozpoczęte usunięcie oraz usuwa gotowe zdjęcie pojazdu bez relacji. Usuwanie
+działa analogicznie: najpierw oznaczenie metadanych, potem idempotentne usunięcie obiektu, a na końcu
+usunięcie rekordu. Surowe klucze magazynu są nieprzezroczyste, względne i nie mogą zawierać segmentów
+`.` lub `..`, ścieżek absolutnych ani separatorów systemowych.
 
 ## Eksport
 
