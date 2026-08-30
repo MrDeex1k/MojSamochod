@@ -55,8 +55,10 @@ export class VehicleDocumentService {
   async delete(vehicleId: VehicleId, documentId: DocumentId): Promise<RepositoryResult<void>> {
     const deleted = await this.repository.delete(vehicleId, documentId);
     if (!deleted.ok) return deleted;
-    const removed = await this.managedFiles.remove(deleted.value.fileReference);
-    return removed.ok ? repositorySuccess(undefined) : removed;
+    // Metadata deletion is the user-visible operation. If binary cleanup is interrupted,
+    // reconciliation removes the now-unreferenced managed file on the next application start.
+    await this.managedFiles.remove(deleted.value.fileReference);
+    return repositorySuccess(undefined);
   }
 
   get(vehicleId: VehicleId, documentId: DocumentId) {
