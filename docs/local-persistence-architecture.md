@@ -93,6 +93,26 @@ nie implementujemy jeszcze importu danych binarnych. Lokalna implementacja powst
 ze zdjęciem pojazdu. Ta sama granica może w przyszłości otrzymać inną implementację, ale obecny
 zakres nie wprowadza S3, Cloudflare R2 ani innej chmury.
 
+Kontrakt rozdziela `stage`, `commit`, `discard`, `delete` oraz `copyTo`. Etapowanie kopiuje zewnętrzny
+URI do prywatnego obszaru tymczasowego i wylicza rozmiar oraz SHA-256. `commit` przenosi obiekt do
+trwałego magazynu i musi być idempotentny dla tego samego obiektu. `discard` oraz `delete` również są
+idempotentne: brak wskazanego obiektu oznacza powodzenie. `copyTo` udostępnia kontrolowaną drogę do
+późniejszego eksportu bez ujawniania wewnętrznej ścieżki magazynu.
+
+SQLite i system plików nie tworzą wspólnej transakcji ACID. Faza 3 wdroży więc koordynację w dwóch
+etapach:
+
+1. plik trafia do stagingu i otrzymuje sumę SHA-256;
+2. transakcja SQLite zapisuje metadane w stanie oczekującym oraz relację;
+3. `ObjectStorage.commit` utrwala plik;
+4. druga krótka transakcja oznacza metadane jako gotowe.
+
+Przerwanie procesu pozostawia stan możliwy do naprawienia, a nie gotowy rekord wskazujący na
+nieistniejący plik. Procedura uzgadniania przy starcie usunie osierocony staging albo dokończy stan
+oczekujący. Usuwanie działa analogicznie: najpierw oznaczenie metadanych, potem idempotentne usunięcie
+obiektu, a na końcu usunięcie rekordu. Surowe klucze magazynu są nieprzezroczyste, względne i nie
+mogą zawierać segmentów `.` lub `..`, ścieżek absolutnych ani separatorów systemowych.
+
 ## Eksport
 
 Faza 2 dostarcza wersjonowany, eksportowalny JSON zawierający pojazd i historię. Nie zawiera on
