@@ -1,13 +1,18 @@
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import type { RepositoryResult } from "@/application/repositories/repository-result";
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
+import type { ManagedFileRepository } from "@/application/repositories/managed-file-repository";
+import type { VehicleDocumentRepository } from "@/application/repositories/vehicle-document-repository";
+import { repositoryFailure } from "@/application/repositories/repository-result";
+import type { VehicleDocument } from "@/domain/documents/vehicle-document";
+import type { ReadyManagedFileMetadata } from "@/domain/files/managed-file";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { Clock } from "@/domain/shared/ports";
 import { utcTimestampFromDate } from "@/domain/shared/value-objects";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 
 export const vehicleHistoryExportFormat = "moje-auto-vehicle-history";
-export const vehicleHistoryExportVersion = 1;
+export const vehicleHistoryExportVersion = 2;
 
 type ExportMoneyV1 = Readonly<{
   currency: string;
@@ -69,9 +74,28 @@ type ExportVehicleV1 = Readonly<{
   vin: string | null;
 }>;
 
-export type VehicleHistoryExportV1 = Readonly<{
+type ExportDocumentV2 = Readonly<{
+  amount: ExportMoneyV1 | null;
+  createdAt: string;
+  documentDate: string | null;
+  file: Readonly<{
+    byteSize: number;
+    mimeType: string;
+    originalName: string;
+    sha256: string;
+  }>;
+  historyEntryId: string | null;
+  id: string;
+  name: string;
+  notes: string | null;
+  updatedAt: string;
+  vehicleId: string;
+}>;
+
+export type VehicleHistoryExportV2 = Readonly<{
   binaryFilesIncluded: false;
   data: Readonly<{
+    documents: readonly ExportDocumentV2[];
     historyEntries: readonly ExportHistoryEntryV1[];
     vehicle: ExportVehicleV1 | null;
   }>;
@@ -83,12 +107,14 @@ export type VehicleHistoryExportV1 = Readonly<{
 export type CreateVehicleHistoryExportDependencies = Readonly<{
   clock: Clock;
   historyEntryRepository: HistoryEntryRepository;
+  managedFileRepository: ManagedFileRepository;
+  vehicleDocumentRepository: VehicleDocumentRepository;
   vehicleRepository: VehicleRepository;
 }>;
 
 export async function createVehicleHistoryExport(
   dependencies: CreateVehicleHistoryExportDependencies,
-): Promise<RepositoryResult<VehicleHistoryExportV1>> {
+): Promise<RepositoryResult<VehicleHistoryExportV2>> {
   const vehicleResult = await dependencies.vehicleRepository.get();
   if (!vehicleResult.ok) return vehicleResult;
 
@@ -96,20 +122,32 @@ export async function createVehicleHistoryExport(
   if (!vehicle) {
     return {
       ok: true,
-      value: buildExport(dependencies.clock, null, []),
+      value: buildExport(dependencies.clock, null, [], []),
     };
   }
 
   const historyResult = await dependencies.historyEntryRepository.list(vehicle.id);
   if (!historyResult.ok) return historyResult;
 
+  const documentsResult = await dependencies.vehicleDocumentRepository.list(vehicle.id);
+  if (!documentsResult.ok) return documentsResult;
+  const exportedDocuments: ExportDocumentV2[] = [];
+  for (const document of documentsResult.value) {
+    const file = await dependencies.managedFileRepository.getReady(document.fileReference);
+    if (!file.ok) return file;
+    if (!file.value) {
+      return repositoryFailure("corrupt-data", "vehicleHistoryExport.documentFile");
+    }
+    exportedDocuments.push(mapDocument(document, file.value));
+  }
+
   return {
     ok: true,
-    value: buildExport(dependencies.clock, vehicle, historyResult.value),
+    value: buildExport(dependencies.clock, vehicle, historyResult.value, exportedDocuments),
   };
 }
 
-export function serializeVehicleHistoryExport(value: VehicleHistoryExportV1): string {
+export function serializeVehicleHistoryExport(value: VehicleHistoryExportV2): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
@@ -117,16 +155,40 @@ function buildExport(
   clock: Clock,
   vehicle: Vehicle | null,
   historyEntries: readonly HistoryEntry[],
-): VehicleHistoryExportV1 {
+  documents: readonly ExportDocumentV2[],
+): VehicleHistoryExportV2 {
   return {
     binaryFilesIncluded: false,
     data: {
+      documents,
       historyEntries: historyEntries.map(mapHistoryEntry),
       vehicle: vehicle ? mapVehicle(vehicle) : null,
     },
     exportedAt: utcTimestampFromDate(clock.now()),
     format: vehicleHistoryExportFormat,
     formatVersion: vehicleHistoryExportVersion,
+  };
+}
+
+function mapDocument(document: VehicleDocument, file: ReadyManagedFileMetadata): ExportDocumentV2 {
+  return {
+    amount: document.amount
+      ? { currency: document.amount.currency, minorUnits: document.amount.minorUnits }
+      : null,
+    createdAt: document.createdAt,
+    documentDate: document.documentDate ?? null,
+    file: {
+      byteSize: file.byteSize,
+      mimeType: file.mimeType,
+      originalName: file.originalName,
+      sha256: file.sha256,
+    },
+    historyEntryId: document.historyEntryId ?? null,
+    id: document.id,
+    name: document.name,
+    notes: document.notes ?? null,
+    updatedAt: document.updatedAt,
+    vehicleId: document.vehicleId,
   };
 }
 

@@ -138,9 +138,10 @@ function repositoryFake(events: string[]): ManagedFileRepository {
       events.push("repository.delete");
       return repositorySuccess(undefined);
     },
+    findReadyBySha256: async () => repositorySuccess(null),
     getReady: async () => repositorySuccess(null),
     listRecoverable: async () => repositorySuccess([]),
-    listUnreferencedVehiclePhotos: async () => repositorySuccess([]),
+    listUnreferencedReadyFiles: async () => repositorySuccess([]),
     markDeleting: async () => repositorySuccess(undefined),
     markReady: async () => {
       events.push("repository.markReady");
@@ -150,7 +151,13 @@ function repositoryFake(events: string[]): ManagedFileRepository {
 }
 
 function storageFake(events: string[]): ObjectStorage {
-  const staged: StagedObject = { byteSize: size, managedFileId: id, sha256: hash, stagingKey };
+  const staged: StagedObject = {
+    byteSize: size,
+    extension: "jpg",
+    managedFileId: id,
+    sha256: hash,
+    stagingKey,
+  };
   return {
     commit: async () => {
       events.push("storage.commit");

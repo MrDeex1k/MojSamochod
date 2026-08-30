@@ -11,7 +11,7 @@ import {
 const exportedAt = new Date("2026-08-30T18:30:00.000Z");
 
 describe("vehicle history export", () => {
-  it("exports domain data as the documented version 1 format", async () => {
+  it("exports domain data as the documented version 2 format", async () => {
     const fixture = createDevelopmentVehicleHistoryFixture();
     const dependencies = {
       clock: { now: () => exportedAt },
@@ -22,6 +22,8 @@ describe("vehicle history export", () => {
         list: jest.fn().mockResolvedValue(repositorySuccess(fixture.entries)),
         update: jest.fn(),
       },
+      managedFileRepository: managedFilesFake(),
+      vehicleDocumentRepository: documentsFake(),
       vehicleRepository: {
         create: jest.fn(),
         delete: jest.fn(),
@@ -49,6 +51,7 @@ describe("vehicle history export", () => {
       model: "V60",
     });
     expect(result.value.data.historyEntries).toHaveLength(3);
+    expect(result.value.data.documents).toEqual([]);
     expect(JSON.stringify(result.value)).not.toContain("photoReference");
     expect(dependencies.historyEntryRepository.list).toHaveBeenCalledWith(fixture.vehicle.id);
   });
@@ -65,6 +68,8 @@ describe("vehicle history export", () => {
         list: historyList,
         update: jest.fn(),
       },
+      managedFileRepository: managedFilesFake(),
+      vehicleDocumentRepository: documentsFake(),
       vehicleRepository: {
         create: jest.fn(),
         delete: jest.fn(),
@@ -77,7 +82,7 @@ describe("vehicle history export", () => {
       ok: true,
       value: {
         binaryFilesIncluded: false,
-        data: { historyEntries: [], vehicle: null },
+        data: { documents: [], historyEntries: [], vehicle: null },
         exportedAt: exportedAt.toISOString(),
         format: vehicleHistoryExportFormat,
         formatVersion: vehicleHistoryExportVersion,
@@ -98,6 +103,8 @@ describe("vehicle history export", () => {
         list: jest.fn(),
         update: jest.fn(),
       },
+      managedFileRepository: managedFilesFake(),
+      vehicleDocumentRepository: documentsFake(),
       vehicleRepository: {
         create: jest.fn(),
         delete: jest.fn(),
@@ -120,6 +127,8 @@ describe("vehicle history export", () => {
         list: jest.fn().mockResolvedValue(repositorySuccess(fixture.entries)),
         update: jest.fn(),
       },
+      managedFileRepository: managedFilesFake(),
+      vehicleDocumentRepository: documentsFake(),
       vehicleRepository: {
         create: jest.fn(),
         delete: jest.fn(),
@@ -135,3 +144,27 @@ describe("vehicle history export", () => {
     expect(JSON.parse(serialized)).toEqual(result.value);
   });
 });
+
+function documentsFake() {
+  return {
+    create: jest.fn(),
+    delete: jest.fn(),
+    get: jest.fn(),
+    getByFile: jest.fn(),
+    list: jest.fn().mockResolvedValue(repositorySuccess([])),
+    update: jest.fn(),
+  };
+}
+
+function managedFilesFake() {
+  return {
+    createStaged: jest.fn(),
+    delete: jest.fn(),
+    findReadyBySha256: jest.fn(),
+    getReady: jest.fn(),
+    listRecoverable: jest.fn(),
+    listUnreferencedReadyFiles: jest.fn(),
+    markDeleting: jest.fn(),
+    markReady: jest.fn(),
+  };
+}

@@ -2,6 +2,8 @@ import { CryptoDigestAlgorithm, digest } from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 
 import {
+  maximumDocumentBytes,
+  maximumVehiclePhotoBytes,
   objectStorageFailure,
   objectStorageSuccess,
   type ObjectStorage,
@@ -13,7 +15,7 @@ import {
 import { byteSize, sha256Digest, storageObjectKey } from "@/domain/files/managed-file";
 import type { ManagedFileId } from "@/domain/shared/identifiers";
 
-export const maximumVehiclePhotoBytes = 5 * 1024 * 1024;
+export { maximumDocumentBytes, maximumVehiclePhotoBytes };
 
 export interface ObjectStorageDriver {
   copyFrom(sourceUri: string, key: string): Promise<void>;
@@ -30,16 +32,18 @@ export class LocalObjectStorage implements ObjectStorage {
   constructor(private readonly driver: ObjectStorageDriver = new ExpoFileSystemDriver()) {}
 
   async stage(input: {
+    extension: StagedObject["extension"];
     managedFileId: ManagedFileId;
+    maximumBytes: number;
     sourceUri: string;
   }): Promise<ObjectStorageResult<StagedObject>> {
     const operation = "objectStorage.stage";
-    const stagingKey = `staging/${input.managedFileId}.jpg` as StagedObjectKey;
+    const stagingKey = `staging/${input.managedFileId}.${input.extension}` as StagedObjectKey;
 
     try {
       await this.driver.copyFrom(input.sourceUri, stagingKey);
       const bytes = await this.driver.read(stagingKey);
-      if (bytes.byteLength > maximumVehiclePhotoBytes) {
+      if (bytes.byteLength > input.maximumBytes) {
         await this.driver.delete(stagingKey);
         return objectStorageFailure("invalid-source", operation);
       }
@@ -53,6 +57,7 @@ export class LocalObjectStorage implements ObjectStorage {
 
       return objectStorageSuccess({
         byteSize: size.value,
+        extension: input.extension,
         managedFileId: input.managedFileId,
         sha256: hash.value,
         stagingKey,
@@ -65,7 +70,9 @@ export class LocalObjectStorage implements ObjectStorage {
 
   async commit(stagedObject: StagedObject): Promise<ObjectStorageResult<StoredObject>> {
     const operation = "objectStorage.commit";
-    const keyResult = storageObjectKey(`objects/${stagedObject.managedFileId}.jpg`);
+    const keyResult = storageObjectKey(
+      `objects/${stagedObject.managedFileId}.${stagedObject.extension}`,
+    );
     if (!keyResult.ok) return objectStorageFailure("integrity-failure", operation);
 
     try {
