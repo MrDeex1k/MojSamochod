@@ -47,7 +47,9 @@ export function EntryForm({
   vehicle,
 }: EntryFormProps) {
   const { t, i18n } = useAppTranslation();
-  const [occurredAt, setOccurredAt] = useState(() => new Date(entry?.occurredAt ?? clock.now()));
+  const [occurredAt, setOccurredAt] = useState(() =>
+    toUtcMinute(new Date(entry?.occurredAt ?? clock.now())),
+  );
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
   const [odometer, setOdometer] = useState(() => formatInitialOdometer(entry, vehicle));
   const [cost, setCost] = useState(() => (entry?.cost ? String(entry.cost.minorUnits / 100) : ""));
@@ -372,6 +374,7 @@ function parseCost(value: string, currency: string) {
 
 function parseOdometer(value: string, vehicle: Vehicle): number | undefined {
   if (value.trim() === "") return undefined;
+  if (!/^\d+$/.test(value.trim())) return Number.NaN;
   const numeric = Number(value);
   return vehicle.distanceUnitPreference === "miles"
     ? Math.round(numeric * 1609.344)
@@ -426,6 +429,8 @@ function handleDateTimeChange(
           selected.getUTCDate(),
           current.getUTCHours(),
           current.getUTCMinutes(),
+          0,
+          0,
         ),
       ),
     );
@@ -439,7 +444,21 @@ function handleDateTimeChange(
         current.getUTCDate(),
         selected.getUTCHours(),
         selected.getUTCMinutes(),
+        0,
+        0,
       ),
+    ),
+  );
+}
+
+function toUtcMinute(value: Date): Date {
+  return new Date(
+    Date.UTC(
+      value.getUTCFullYear(),
+      value.getUTCMonth(),
+      value.getUTCDate(),
+      value.getUTCHours(),
+      value.getUTCMinutes(),
     ),
   );
 }

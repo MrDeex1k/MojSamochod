@@ -269,6 +269,7 @@ async function persistVehicleUpdate({
 
 function parseOdometer(value: string, unit: DistanceUnit): number | undefined {
   if (!value.trim()) return undefined;
+  if (!/^\d+$/.test(value.trim())) return Number.NaN;
   const numeric = Number(value);
   return unit === "miles" ? Math.round(numeric * 1609.344) : numeric * 1000;
 }

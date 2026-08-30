@@ -189,7 +189,12 @@ export function VehicleWorkspaceView({
         vehicle={vehicle}
       />
     ) : (
-      <HistoryCard entries={entries} onAddEntry={onAddEntry} onSelectEntry={onSelectEntry} />
+      <HistoryCard
+        entries={entries}
+        onAddEntry={onAddEntry}
+        onSelectEntry={onSelectEntry}
+        vehicle={vehicle}
+      />
     );
 
   const detailPane =
@@ -233,6 +238,7 @@ function PhoneWorkspace(
           entries={props.entries}
           onAddEntry={props.onAddEntry}
           onSelectEntry={props.onSelectEntry}
+          vehicle={props.vehicle}
         />
         <Button
           label={t("workspace.editVehicle")}
@@ -292,7 +298,7 @@ function VehicleSummary({
             <Text className="text-body text-secondary">{vehicle.variant}</Text>
           ) : null}
           <Text className="text-heading font-semibold text-primary">
-            {mileage ?? t("workspace.mileage")}
+            {mileage ?? t("workspace.noMileage")}
           </Text>
           {onEdit ? (
             <Button label={t("workspace.editVehicle")} onPress={onEdit} variant="secondary" />
@@ -318,13 +324,19 @@ function HistoryCard({
   entries,
   onAddEntry,
   onSelectEntry,
-}: Pick<VehicleWorkspaceViewProps, "entries" | "onAddEntry" | "onSelectEntry">) {
+  vehicle,
+}: Pick<VehicleWorkspaceViewProps, "entries" | "onAddEntry" | "onSelectEntry" | "vehicle">) {
   const { t } = useAppTranslation();
   return (
     <Card className="h-full">
       <ScrollView contentContainerClassName="gap-content">
         <Button label={`+ ${t("workspace.addEntry")}`} onPress={onAddEntry} />
-        <HistoryContent entries={entries} onAddEntry={onAddEntry} onSelectEntry={onSelectEntry} />
+        <HistoryContent
+          entries={entries}
+          onAddEntry={onAddEntry}
+          onSelectEntry={onSelectEntry}
+          vehicle={vehicle}
+        />
       </ScrollView>
     </Card>
   );
@@ -334,7 +346,8 @@ function HistoryContent({
   entries,
   onAddEntry,
   onSelectEntry,
-}: Pick<VehicleWorkspaceViewProps, "entries" | "onAddEntry" | "onSelectEntry">) {
+  vehicle,
+}: Pick<VehicleWorkspaceViewProps, "entries" | "onAddEntry" | "onSelectEntry" | "vehicle">) {
   const { t } = useAppTranslation();
   return (
     <View className="gap-content">
@@ -354,7 +367,12 @@ function HistoryContent({
       ) : (
         <View>
           {entries.map((entry) => (
-            <HistoryRow entry={entry} key={entry.id} onPress={() => onSelectEntry(entry)} />
+            <HistoryRow
+              entry={entry}
+              key={entry.id}
+              onPress={() => onSelectEntry(entry)}
+              vehicle={vehicle}
+            />
           ))}
         </View>
       )}
@@ -362,9 +380,13 @@ function HistoryContent({
   );
 }
 
-function HistoryRow({ entry, onPress }: Readonly<{ entry: HistoryEntry; onPress: () => void }>) {
+function HistoryRow({
+  entry,
+  onPress,
+  vehicle,
+}: Readonly<{ entry: HistoryEntry; onPress: () => void; vehicle: Vehicle }>) {
   const { t, i18n } = useAppTranslation();
-  const title = `${t(`workspace.entryType.${entry.type}`)} — ${entrySubject(entry)}`;
+  const title = `${t(`workspace.entryType.${entry.type}`)} — ${entrySubject(entry, t)}`;
   return (
     <Pressable
       accessibilityLabel={title}
@@ -381,7 +403,7 @@ function HistoryRow({ entry, onPress }: Readonly<{ entry: HistoryEntry; onPress:
       <View className="flex-row gap-content">
         {entry.odometerMetres === undefined ? null : (
           <Text className="text-caption text-secondary">
-            {numberFormatter(i18n.language).format(entry.odometerMetres / 1000)} km
+            {formatEntryDistance(entry.odometerMetres, vehicle, i18n.language)}
           </Text>
         )}
         {entry.cost ? (
@@ -396,10 +418,16 @@ function HistoryRow({ entry, onPress }: Readonly<{ entry: HistoryEntry; onPress:
   );
 }
 
-function entrySubject(entry: HistoryEntry): string {
+function entrySubject(entry: HistoryEntry, t: (key: string) => string): string {
   if (entry.type === "replacement") return entry.details.item;
   if (entry.type === "repair") return entry.details.subject;
-  return entry.details.description ?? entry.details.kind;
+  return entry.details.description ?? t(`entryForm.inspectionKinds.${entry.details.kind}`);
+}
+
+function formatEntryDistance(metres: number, vehicle: Vehicle, locale: string): string {
+  const divisor = vehicle.distanceUnitPreference === "kilometres" ? 1000 : 1609.344;
+  const unit = vehicle.distanceUnitPreference === "kilometres" ? "km" : "mi";
+  return `${numberFormatter(locale).format(Math.round(metres / divisor))} ${unit}`;
 }
 
 function formatOccurredAt(entry: HistoryEntry, locale: string): string {

@@ -136,6 +136,7 @@ export const en = {
     loading: "Loading vehicle history",
     makeAndModel: "Make + Model",
     mileage: "Mileage",
+    noMileage: "No reading",
     noEntries: "No entries",
     photo: "Vehicle photo",
     photoDescription: "Photo of {{make}} {{model}}",

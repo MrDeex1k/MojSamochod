@@ -7,6 +7,7 @@ import { Text, View } from "react-native";
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
 import type { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { Screen } from "@/components/layout/screen";
+import { SupportedOrientation } from "@/components/layout/supported-orientation";
 import { useApplicationServices } from "@/components/providers/application-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -36,7 +37,11 @@ type SelectedPhoto = Extract<VehiclePhotoSelectionResult, { kind: "selected" }>;
 export function FirstVehicleSetupScreen() {
   const router = useRouter();
   const services = useApplicationServices();
-  return <CreateFirstVehicleForm {...services} onCreated={() => router.replace("/vehicle")} />;
+  return (
+    <SupportedOrientation>
+      <CreateFirstVehicleForm {...services} onCreated={() => router.replace("/vehicle")} />
+    </SupportedOrientation>
+  );
 }
 
 export function CreateFirstVehicleForm({
@@ -247,6 +252,7 @@ function parseOptionalInteger(value: string): number | undefined {
 
 function parseDistance(value: string, unit: DistanceUnit): number | undefined {
   if (value.trim() === "") return undefined;
+  if (!/^\d+$/.test(value.trim())) return Number.NaN;
   const numeric = Number(value);
   return unit === "miles" ? Math.round(numeric * 1609.344) : numeric * 1000;
 }

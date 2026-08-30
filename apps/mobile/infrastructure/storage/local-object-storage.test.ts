@@ -68,6 +68,22 @@ describe("LocalObjectStorage", () => {
       value: undefined,
     });
   });
+
+  it("resolves a committed photo after the storage service is recreated", async () => {
+    const driver = new MemoryDriver(new Uint8Array([1, 2, 3]));
+    const firstStorage = new LocalObjectStorage(driver);
+    const staged = await firstStorage.stage({ managedFileId, sourceUri: "file:///selected.jpg" });
+    if (!staged.ok) throw new Error("Expected staged object");
+    const committed = await firstStorage.commit(staged.value);
+    if (!committed.ok) throw new Error("Expected committed object");
+
+    const reopenedStorage = new LocalObjectStorage(driver);
+
+    expect(reopenedStorage.getUri(committed.value.storageKey)).toEqual({
+      ok: true,
+      value: `file:///managed-objects/objects/${managedFileId}.jpg`,
+    });
+  });
 });
 
 class MemoryDriver implements ObjectStorageDriver {

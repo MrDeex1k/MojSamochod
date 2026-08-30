@@ -107,6 +107,46 @@ describe("SQLite persistence resilience", () => {
     ).toEqual({ photo_reference: null });
     database.close();
   });
+
+  it("keeps the vehicle photo relation and history after reopening", () => {
+    const databasePath = createTemporaryDatabasePath();
+    const database = openMigratedDatabase(databasePath);
+    insertManagedPhoto(database);
+    insertVehicle(database, managedFileId);
+    database
+      .prepare(
+        `INSERT INTO history_entries
+          (id, vehicle_id, type, occurred_at, odometer_metres, created_at, updated_at)
+         VALUES (?, ?, 'replacement', ?, 85000000, ?, ?)`,
+      )
+      .run(entryId, vehicleId, timestamp, timestamp, timestamp);
+    database
+      .prepare(
+        `INSERT INTO replacement_details (history_entry_id, entry_type, item)
+         VALUES (?, 'replacement', 'Engine oil')`,
+      )
+      .run(entryId);
+    database.close();
+
+    const reopened = new DatabaseSync(databasePath);
+    reopened.exec("PRAGMA foreign_keys = ON;");
+    expect(
+      reopened
+        .prepare(
+          `SELECT vehicles.photo_reference, history_entries.occurred_at, replacement_details.item
+           FROM vehicles
+           JOIN history_entries ON history_entries.vehicle_id = vehicles.id
+           JOIN replacement_details ON replacement_details.history_entry_id = history_entries.id
+           WHERE vehicles.id = ?`,
+        )
+        .get(vehicleId),
+    ).toEqual({
+      item: "Engine oil",
+      occurred_at: timestamp,
+      photo_reference: managedFileId,
+    });
+    reopened.close();
+  });
 });
 
 const vehicleId = "018f47e2-7b2f-7cc8-98c4-dc0c0c07398f";

@@ -29,7 +29,7 @@ export function EntryDetail({
   const { t, i18n } = useAppTranslation();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(false);
-  const subject = entrySubject(entry);
+  const subject = entrySubject(entry, t);
 
   const confirmDelete = () => {
     Alert.alert(
@@ -161,10 +161,10 @@ function TypeDetails({ entry }: Readonly<{ entry: HistoryEntry }>) {
   ) : null;
 }
 
-function entrySubject(entry: HistoryEntry): string {
+function entrySubject(entry: HistoryEntry, t: (key: string) => string): string {
   if (entry.type === "replacement") return entry.details.item;
   if (entry.type === "repair") return entry.details.subject;
-  return entry.details.description ?? entry.details.kind;
+  return entry.details.description ?? t(`entryForm.inspectionKinds.${entry.details.kind}`);
 }
 
 const dates = new Map<string, Intl.DateTimeFormat>();

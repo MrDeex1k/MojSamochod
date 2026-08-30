@@ -139,6 +139,7 @@ export const pl = {
     loading: "Wczytywanie historii pojazdu",
     makeAndModel: "Marka + Model",
     mileage: "Przebieg",
+    noMileage: "Brak odczytu",
     noEntries: "Brak wpisów",
     photo: "Zdjęcie pojazdu",
     photoDescription: "Zdjęcie pojazdu {{make}} {{model}}",
