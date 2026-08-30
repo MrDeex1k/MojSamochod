@@ -140,6 +140,7 @@ function repositoryFake(events: string[]): ManagedFileRepository {
     },
     getReady: async () => repositorySuccess(null),
     listRecoverable: async () => repositorySuccess([]),
+    listUnreferencedVehiclePhotos: async () => repositorySuccess([]),
     markDeleting: async () => repositorySuccess(undefined),
     markReady: async () => {
       events.push("repository.markReady");

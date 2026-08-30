@@ -54,11 +54,10 @@ export class ManagedFileCoordinator {
     const pending = await this.repository.listRecoverable();
     if (!pending.ok) return pending;
 
-    const trackedStagingKeys = new Set(
-      pending.value
-        .filter((metadata) => metadata.status === "staged")
-        .map((metadata) => metadata.stagingKey),
-    );
+    const trackedStagingKeys = new Set<string>();
+    for (const metadata of pending.value) {
+      if (metadata.status === "staged") trackedStagingKeys.add(metadata.stagingKey);
+    }
     const stagedKeys = await this.storage.listStagedKeys();
     if (!stagedKeys.ok) return storageFailure(stagedKeys.error, "managedFile.reconcile");
     for (const stagingKey of stagedKeys.value) {
@@ -99,7 +98,29 @@ export class ManagedFileCoordinator {
       if (!ready.ok) return ready;
     }
 
+    const unreferencedPhotos = await this.repository.listUnreferencedVehiclePhotos();
+    if (!unreferencedPhotos.ok) return unreferencedPhotos;
+    for (const metadata of unreferencedPhotos.value) {
+      const removed = await this.remove(metadata.id);
+      if (!removed.ok) return removed;
+    }
+
     return { ok: true, value: undefined };
+  }
+
+  async remove(id: ManagedFileId): Promise<RepositoryResult<void>> {
+    const metadata = await this.repository.getReady(id);
+    if (!metadata.ok) return metadata;
+    if (!metadata.value) return { ok: true, value: undefined };
+
+    const deleting = await this.repository.markDeleting(id, utcTimestampFromDate(this.clock.now()));
+    if (!deleting.ok) return deleting;
+    const removed = await this.storage.delete(metadata.value.storageKey);
+    if (!removed.ok) return storageFailure(removed.error, "managedFile.remove");
+    const deleted = await this.repository.delete(id);
+    return !deleted.ok && deleted.error.kind === "not-found"
+      ? { ok: true, value: undefined }
+      : deleted;
   }
 
   private async commit(

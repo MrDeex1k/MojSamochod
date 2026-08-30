@@ -1,4 +1,4 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 
 import type { ManagedFileRepository } from "@/application/repositories/managed-file-repository";
 import {
@@ -20,7 +20,7 @@ import { managedFileIdFromUuidV7, type ManagedFileId } from "@/domain/shared/ide
 import { utcTimestamp, type UtcTimestamp } from "@/domain/shared/value-objects";
 
 import type { AppDatabase } from "./database";
-import { managedFiles } from "./schema";
+import { managedFiles, vehicles } from "./schema";
 
 type ManagedFileRow = typeof managedFiles.$inferSelect;
 
@@ -99,6 +99,32 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
           (value): value is DeletingManagedFileMetadata | StagedManagedFileMetadata =>
             value.status !== "ready",
         ),
+      );
+    } catch (error) {
+      return repositoryFailure("corrupt-data", operation, error);
+    }
+  }
+
+  async listUnreferencedVehiclePhotos(): Promise<
+    RepositoryResult<readonly ReadyManagedFileMetadata[]>
+  > {
+    const operation = "managedFile.listUnreferencedVehiclePhotos";
+    try {
+      const metadata = this.database
+        .select({ managedFile: managedFiles })
+        .from(managedFiles)
+        .leftJoin(vehicles, eq(vehicles.photoReference, managedFiles.id))
+        .where(
+          and(
+            eq(managedFiles.kind, "vehicle-photo"),
+            eq(managedFiles.status, "ready"),
+            isNull(vehicles.id),
+          ),
+        )
+        .all()
+        .map(({ managedFile }) => mapManagedFileRow(managedFile));
+      return repositorySuccess(
+        metadata.filter((value): value is ReadyManagedFileMetadata => value.status === "ready"),
       );
     } catch (error) {
       return repositoryFailure("corrupt-data", operation, error);

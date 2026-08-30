@@ -38,6 +38,37 @@ if (!entryResult.ok) throw new Error("Invalid history test fixture");
 const entry = entryResult.value;
 
 describe("DrizzleVehicleHistoryRepository", () => {
+  it("creates the first vehicle", async () => {
+    const transaction = {
+      insert: jest.fn(() => mutationBuilder(1)),
+      select: jest.fn().mockReturnValue(selectOne(undefined)),
+    };
+    const database = {
+      transaction: jest.fn((callback: (value: unknown) => unknown) => callback(transaction)),
+    } as unknown as AppDatabase;
+    const repository: VehicleRepository = new DrizzleVehicleHistoryRepository(database);
+
+    await expect(repository.create(vehicle)).resolves.toEqual({ ok: true, value: undefined });
+    expect(transaction.insert).toHaveBeenCalledTimes(1);
+  });
+
+  it("enforces the one-vehicle entitlement regardless of the new identifier", async () => {
+    const transaction = {
+      insert: jest.fn(),
+      select: jest.fn().mockReturnValue(selectOne({ id: "another-vehicle" })),
+    };
+    const database = {
+      transaction: jest.fn((callback: (value: unknown) => unknown) => callback(transaction)),
+    } as unknown as AppDatabase;
+    const repository: VehicleRepository = new DrizzleVehicleHistoryRepository(database);
+
+    await expect(repository.create(vehicle)).resolves.toMatchObject({
+      error: { kind: "conflict", operation: "vehicle.create" },
+      ok: false,
+    });
+    expect(transaction.insert).not.toHaveBeenCalled();
+  });
+
   it("creates the common entry, its details, and mileage update in one transaction", async () => {
     const insertedTables: unknown[] = [];
     const updatedTables: unknown[] = [];

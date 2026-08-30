@@ -85,12 +85,7 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
 
     try {
       return this.database.transaction((transaction) => {
-        const existing = transaction
-          .select({ id: vehicles.id })
-          .from(vehicles)
-          .where(eq(vehicles.id, vehicle.id))
-          .limit(1)
-          .get();
+        const existing = transaction.select({ id: vehicles.id }).from(vehicles).limit(1).get();
         if (existing) return repositoryFailure("conflict", operation);
 
         transaction.insert(vehicles).values(vehicleValues(vehicle)).run();

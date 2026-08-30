@@ -1,30 +1,307 @@
+import { getLocales } from "expo-localization";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Text } from "react-native";
+import { useState } from "react";
+import { Text, View } from "react-native";
 
+import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
+import type { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { Screen } from "@/components/layout/screen";
+import { useApplicationServices } from "@/components/providers/application-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { TextField } from "@/components/ui/text-field";
+import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
+import type { Clock, IdGenerator } from "@/domain/shared/ports";
+import type { ValidationIssue } from "@/domain/shared/result";
+import { createVehicle, type DistanceUnit, type Vehicle } from "@/domain/vehicle/vehicle";
+import type {
+  VehiclePhotoPicker,
+  VehiclePhotoSelectionResult,
+} from "@/infrastructure/media/gallery-vehicle-photo-picker";
 import { useAppTranslation } from "@/localization/use-app-translation";
+
+type CreateFirstVehicleFormProps = Readonly<{
+  clock: Clock;
+  idGenerator: IdGenerator;
+  managedFiles: Pick<ManagedFileCoordinator, "import" | "remove">;
+  onCreated: () => void;
+  photoPicker: VehiclePhotoPicker;
+  vehicles: VehicleRepository;
+}>;
+
+type FieldErrors = Partial<Record<string, string>>;
+type SelectedPhoto = Extract<VehiclePhotoSelectionResult, { kind: "selected" }>;
 
 export function FirstVehicleSetupScreen() {
   const router = useRouter();
+  const services = useApplicationServices();
+  return <CreateFirstVehicleForm {...services} onCreated={() => router.replace("/vehicle")} />;
+}
+
+export function CreateFirstVehicleForm({
+  clock,
+  idGenerator,
+  managedFiles,
+  onCreated,
+  photoPicker,
+  vehicles,
+}: CreateFirstVehicleFormProps) {
   const { t } = useAppTranslation();
+  const [make, setMake] = useState("");
+  const [model, setModel] = useState("");
+  const [variant, setVariant] = useState("");
+  const [manufactureYear, setManufactureYear] = useState("");
+  const [registrationNumber, setRegistrationNumber] = useState("");
+  const [vin, setVin] = useState("");
+  const [initialOdometer, setInitialOdometer] = useState("");
+  const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>(defaultDistanceUnit);
+  const [photo, setPhoto] = useState<SelectedPhoto | null>(null);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const selectPhoto = async () => {
+    setFormError(null);
+    const result = await photoPicker.select();
+    if (result.kind === "selected") setPhoto(result);
+    if (result.kind === "denied") setFormError(t("firstVehicle.photoDenied"));
+    if (result.kind === "unavailable") setFormError(t("firstVehicle.photoError"));
+  };
+
+  const save = async () => {
+    if (saving) return;
+    setFormError(null);
+    const photoId = photo ? managedFileIdFromUuidV7(idGenerator.generate()) : undefined;
+    const result = createVehicle(
+      {
+        distanceUnitPreference: distanceUnit,
+        initialOdometerMetres: parseDistance(initialOdometer, distanceUnit),
+        make,
+        manufactureYear: parseOptionalInteger(manufactureYear),
+        model,
+        photoReference: photoId,
+        registrationNumber,
+        variant,
+        vin,
+      },
+      { clock, idGenerator },
+    );
+    if (!result.ok) {
+      setErrors(mapValidationIssues(result.issues, t));
+      return;
+    }
+
+    setErrors({});
+    setSaving(true);
+    const outcome = await persistFirstVehicle({
+      managedFiles,
+      photo,
+      vehicle: result.value,
+      vehicles,
+    }).finally(() => setSaving(false));
+    if (outcome === "photo-error") setFormError(t("firstVehicle.photoError"));
+    if (outcome === "vehicle-error") setFormError(t("firstVehicle.genericError"));
+    if (outcome === "created") onCreated();
+  };
 
   return (
-    <Screen contentClassName="items-center justify-center">
-      <Card className="w-full max-w-md">
+    <Screen contentClassName="items-center">
+      <Card className="w-full max-w-2xl">
         <Text className="text-label font-semibold uppercase tracking-widest text-accent">
           {t("common.appName")}
         </Text>
-        <Text className="text-display font-bold text-primary">{t("firstVehicle.title")}</Text>
+        <Text accessibilityRole="header" className="text-display font-bold text-primary">
+          {t("firstVehicle.title")}
+        </Text>
         <Text className="text-body text-secondary">{t("firstVehicle.description")}</Text>
-        <TextField
-          label={t("firstVehicle.makeLabel")}
-          placeholder={t("firstVehicle.makePlaceholder")}
-        />
-        <Button label={t("firstVehicle.nextAction")} onPress={() => router.push("/vehicle")} />
+
+        <View className="gap-content">
+          <TextField
+            autoCapitalize="words"
+            error={errors.make}
+            label={t("firstVehicle.makeLabel")}
+            onChangeText={setMake}
+            placeholder={t("firstVehicle.makePlaceholder")}
+            returnKeyType="next"
+            value={make}
+          />
+          <TextField
+            autoCapitalize="words"
+            error={errors.model}
+            label={t("firstVehicle.modelLabel")}
+            onChangeText={setModel}
+            placeholder={t("firstVehicle.modelPlaceholder")}
+            returnKeyType="next"
+            value={model}
+          />
+          <TextField
+            label={t("firstVehicle.variantLabel")}
+            onChangeText={setVariant}
+            value={variant}
+          />
+          <TextField
+            error={errors.manufactureYear}
+            keyboardType="number-pad"
+            label={t("firstVehicle.manufactureYearLabel")}
+            onChangeText={setManufactureYear}
+            value={manufactureYear}
+          />
+          <TextField
+            autoCapitalize="characters"
+            label={t("firstVehicle.registrationNumberLabel")}
+            onChangeText={setRegistrationNumber}
+            value={registrationNumber}
+          />
+          <TextField
+            autoCapitalize="characters"
+            autoCorrect={false}
+            error={errors.vin}
+            label={t("firstVehicle.vinLabel")}
+            maxLength={17}
+            onChangeText={setVin}
+            value={vin}
+          />
+        </View>
+
+        <View className="gap-compact">
+          <Text className="text-heading font-semibold text-primary">
+            {t("firstVehicle.photoLabel")}
+          </Text>
+          {photo ? (
+            <Image
+              accessibilityLabel={t("firstVehicle.photoLabel")}
+              className="aspect-square w-full rounded-control bg-surface-muted"
+              contentFit="cover"
+              source={{ uri: photo.uri }}
+            />
+          ) : null}
+          <View className="flex-row gap-compact">
+            <Button
+              className="flex-1"
+              label={photo ? t("firstVehicle.photoChangeAction") : t("firstVehicle.photoAction")}
+              onPress={() => void selectPhoto()}
+              variant="secondary"
+            />
+            {photo ? (
+              <Button
+                className="flex-1"
+                label={t("firstVehicle.photoRemoveAction")}
+                onPress={() => setPhoto(null)}
+                variant="danger"
+              />
+            ) : null}
+          </View>
+        </View>
+
+        <View className="gap-content">
+          <Text className="text-heading font-semibold text-primary">
+            {t("firstVehicle.initialOdometerLabel")}
+          </Text>
+          <Text className="text-body text-secondary">
+            {t("firstVehicle.initialOdometerHelper")}
+          </Text>
+          <Text className="text-label font-semibold text-primary">
+            {t("firstVehicle.distanceUnitLabel")}
+          </Text>
+          <View className="flex-row gap-compact">
+            <Button
+              className="flex-1"
+              label="km"
+              onPress={() => setDistanceUnit("kilometres")}
+              variant={distanceUnit === "kilometres" ? "primary" : "secondary"}
+            />
+            <Button
+              className="flex-1"
+              label="mi"
+              onPress={() => setDistanceUnit("miles")}
+              variant={distanceUnit === "miles" ? "primary" : "secondary"}
+            />
+          </View>
+          <TextField
+            error={errors.initialOdometerMetres}
+            keyboardType="number-pad"
+            label={t("firstVehicle.initialOdometerLabel")}
+            onChangeText={setInitialOdometer}
+            value={initialOdometer}
+          />
+        </View>
+
+        {formError ? (
+          <Text accessibilityLiveRegion="polite" className="text-body text-danger">
+            {formError}
+          </Text>
+        ) : null}
+        <Button disabled={saving} label={t("firstVehicle.addAction")} onPress={() => void save()} />
       </Card>
     </Screen>
   );
+}
+
+const defaultDistanceUnit: DistanceUnit =
+  getLocales()[0]?.measurementSystem === "us" ? "miles" : "kilometres";
+
+function parseOptionalInteger(value: string): number | undefined {
+  return value.trim() === "" ? undefined : Number(value);
+}
+
+function parseDistance(value: string, unit: DistanceUnit): number | undefined {
+  if (value.trim() === "") return undefined;
+  const numeric = Number(value);
+  return unit === "miles" ? Math.round(numeric * 1609.344) : numeric * 1000;
+}
+
+function mapValidationIssues(
+  issues: readonly ValidationIssue[],
+  t: (key: string) => string,
+): FieldErrors {
+  return Object.fromEntries(
+    issues.map((issue) => {
+      if (issue.field === "vin") return [issue.field, t("firstVehicle.vinError")];
+      if (issue.field === "manufactureYear") return [issue.field, t("firstVehicle.yearError")];
+      if (issue.field === "initialOdometerMetres") {
+        return [issue.field, t("firstVehicle.invalidNumberError")];
+      }
+      return [issue.field, t("firstVehicle.requiredError")];
+    }),
+  );
+}
+
+async function persistFirstVehicle({
+  managedFiles,
+  photo,
+  vehicle,
+  vehicles,
+}: Readonly<{
+  managedFiles: Pick<ManagedFileCoordinator, "import" | "remove">;
+  photo: SelectedPhoto | null;
+  vehicle: Vehicle;
+  vehicles: VehicleRepository;
+}>): Promise<"created" | "photo-error" | "vehicle-error"> {
+  let importedPhoto = false;
+  try {
+    if (photo && vehicle.photoReference) {
+      const imported = await managedFiles.import({
+        kind: "vehicle-photo",
+        managedFileId: vehicle.photoReference,
+        mimeType: photo.mimeType,
+        originalName: photo.originalName,
+        sourceUri: photo.uri,
+      });
+      if (!imported.ok) return "photo-error";
+      importedPhoto = true;
+    }
+
+    const created = await vehicles.create(vehicle);
+    if (created.ok) return "created";
+  } catch {
+    // A native storage or database exception is exposed as a retryable form error below.
+  }
+
+  try {
+    if (importedPhoto && vehicle.photoReference) await managedFiles.remove(vehicle.photoReference);
+  } catch {
+    // Startup reconciliation removes a ready vehicle photo left without a vehicle reference.
+  }
+  return "vehicle-error";
 }

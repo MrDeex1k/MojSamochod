@@ -13,6 +13,7 @@ export interface ManagedFileRepository {
   createStaged(metadata: StagedManagedFileMetadata): Promise<RepositoryResult<void>>;
   delete(id: ManagedFileId): Promise<RepositoryResult<void>>;
   getReady(id: ManagedFileId): Promise<RepositoryResult<ReadyManagedFileMetadata | null>>;
+  listUnreferencedVehiclePhotos(): Promise<RepositoryResult<readonly ReadyManagedFileMetadata[]>>;
   listRecoverable(): Promise<
     RepositoryResult<readonly (DeletingManagedFileMetadata | StagedManagedFileMetadata)[]>
   >;
