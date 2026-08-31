@@ -14,6 +14,7 @@ import type {
   DocumentFilePicker,
   PickedDocument,
 } from "@/infrastructure/documents/system-document-picker";
+import { formatCurrencyInputMinorUnits, parseCurrencyInput } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
 export function DocumentForm({
@@ -35,12 +36,18 @@ export function DocumentForm({
   picker: DocumentFilePicker;
   vehicle: Vehicle;
 }>) {
-  const { t } = useAppTranslation();
+  const { i18n, t } = useAppTranslation();
   const [file, setFile] = useState<PickedDocument | null>(null);
   const [name, setName] = useState(document?.name ?? "");
   const [date, setDate] = useState(document?.documentDate ?? "");
   const [amount, setAmount] = useState(
-    document?.amount ? String(document.amount.minorUnits / 100) : "",
+    document?.amount
+      ? formatCurrencyInputMinorUnits(
+          document.amount.minorUnits,
+          document.amount.currency,
+          i18n.language,
+        )
+      : "",
   );
   const [currency, setCurrency] = useState(
     document?.amount?.currency ?? getLocales()[0]?.currencyCode ?? "USD",
@@ -83,8 +90,8 @@ export function DocumentForm({
       setFileError(t("documents.fileRequired"));
       return;
     }
-    const parsedAmount = parseAmount(amount, currency);
-    if (!parsedAmount.ok) {
+    const parsedAmount = parseCurrencyInput(amount, currency, i18n.language);
+    if (parsedAmount.kind === "invalid") {
       setAmountError(t("documents.invalidAmount"));
       return;
     }
@@ -94,7 +101,10 @@ export function DocumentForm({
     setSaving(true);
     const selectedEntry = entries.find((entry) => entry.id === entryId);
     const metadata = {
-      amount: parsedAmount.value,
+      amount:
+        parsedAmount.kind === "value"
+          ? { currency, minorUnits: parsedAmount.minorUnits }
+          : undefined,
       documentDate: date,
       historyEntryId: selectedEntry?.id,
       name,
@@ -227,16 +237,6 @@ function RelationOption({
       <Text className="text-body text-primary">{label}</Text>
     </Pressable>
   );
-}
-
-function parseAmount(value: string, currency: string) {
-  if (!value.trim()) return { ok: true as const, value: undefined };
-  const normalized = value.trim().replace(",", ".");
-  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return { ok: false as const };
-  return {
-    ok: true as const,
-    value: { currency, minorUnits: Math.round(Number(normalized) * 100) },
-  };
 }
 
 function withoutExtension(value: string): string {

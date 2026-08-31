@@ -18,6 +18,7 @@ import {
   inspectionDetails,
   repairDetails,
   replacementDetails,
+  vehicleDocuments,
   vehicles,
 } from "./schema";
 
@@ -175,13 +176,27 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
     const operation = "historyEntry.delete";
 
     try {
-      const result = this.database
-        .delete(historyEntries)
-        .where(and(eq(historyEntries.vehicleId, vehicleId), eq(historyEntries.id, entryId)))
-        .run();
-      return result.changes === 0
-        ? repositoryFailure("not-found", operation)
-        : repositorySuccess(undefined);
+      return this.database.transaction((transaction) => {
+        const entry = transaction
+          .select({ id: historyEntries.id })
+          .from(historyEntries)
+          .where(and(eq(historyEntries.vehicleId, vehicleId), eq(historyEntries.id, entryId)))
+          .limit(1)
+          .get();
+        if (!entry) return repositoryFailure("not-found", operation);
+        transaction
+          .update(vehicleDocuments)
+          .set({ historyEntryId: null })
+          .where(
+            and(
+              eq(vehicleDocuments.vehicleId, vehicleId),
+              eq(vehicleDocuments.historyEntryId, entryId),
+            ),
+          )
+          .run();
+        transaction.delete(historyEntries).where(eq(historyEntries.id, entryId)).run();
+        return repositorySuccess(undefined);
+      });
     } catch (error) {
       return mapFailure(operation, error);
     }

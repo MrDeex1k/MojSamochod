@@ -17,13 +17,49 @@ export function formatCurrencyMinorUnits(
   currency: string,
   locale: string,
 ): string {
-  const key = `${locale}:${currency}`;
-  let formatter = currencyFormatters.get(key);
-  if (!formatter) {
-    formatter = new Intl.NumberFormat(locale, { currency, style: "currency" });
-    currencyFormatters.set(key, formatter);
-  }
-  return formatter.format(minorUnits / 100);
+  const formatter = getCurrencyFormatter(currency, locale);
+  const fractionDigits = formatter.resolvedOptions().maximumFractionDigits ?? 2;
+  return formatter.format(minorUnits / 10 ** fractionDigits);
+}
+
+export function formatCurrencyInputMinorUnits(
+  minorUnits: number,
+  currency: string,
+  locale: string,
+): string {
+  const fractionDigits = currencyFractionDigits(currency, locale);
+  if (fractionDigits === 0) return String(minorUnits);
+  const scale = 10 ** fractionDigits;
+  const whole = Math.floor(minorUnits / scale);
+  const fraction = String(minorUnits % scale)
+    .padStart(fractionDigits, "0")
+    .replace(/0+$/, "");
+  return fraction ? `${whole}.${fraction}` : String(whole);
+}
+
+export function parseCurrencyInput(
+  value: string,
+  currency: string,
+  locale: string,
+):
+  | Readonly<{ kind: "empty" }>
+  | Readonly<{ kind: "invalid" }>
+  | Readonly<{ kind: "value"; minorUnits: number }> {
+  const normalized = value.trim().replace(",", ".");
+  if (!normalized) return { kind: "empty" };
+  const fractionDigits = currencyFractionDigits(currency, locale);
+  const pattern =
+    fractionDigits === 0 ? /^\d+$/ : new RegExp(`^\\d+(?:\\.\\d{1,${fractionDigits}})?$`);
+  if (!pattern.test(normalized)) return { kind: "invalid" };
+  const [whole, fraction = ""] = normalized.split(".");
+  const minorUnits =
+    Number(whole) * 10 ** fractionDigits + Number(fraction.padEnd(fractionDigits, "0"));
+  return Number.isSafeInteger(minorUnits) ? { kind: "value", minorUnits } : { kind: "invalid" };
+}
+
+export function currencyFractionDigits(currency: string, locale: string): number {
+  if (!/^[A-Z]{3}$/.test(currency)) return 2;
+  return getCurrencyFormatter(currency, locale).resolvedOptions().maximumFractionDigits ?? 2;
 }
 
 export function formatCalendarDate(
@@ -55,4 +91,14 @@ export function formatUtcDateTime(value: Date | string, locale: string): string 
     utcDateTimeFormatters.set(locale, formatter);
   }
   return formatter.format(typeof value === "string" ? new Date(value) : value);
+}
+
+function getCurrencyFormatter(currency: string, locale: string): Intl.NumberFormat {
+  const key = `${locale}:${currency}`;
+  let formatter = currencyFormatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, { currency, style: "currency" });
+    currencyFormatters.set(key, formatter);
+  }
+  return formatter;
 }

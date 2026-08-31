@@ -73,6 +73,33 @@ describe("EntryForm", () => {
     );
   });
 
+  it("stores entry costs using the selected currency precision", async () => {
+    const repository = historyRepository();
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <EntryForm
+          clock={{ now: () => now }}
+          historyEntries={repository}
+          idGenerator={{ generate: () => "018f47e2-7b30-7b80-99c0-81b80d9a57ce" }}
+          onCancel={jest.fn()}
+          onSaved={jest.fn()}
+          type="replacement"
+          vehicle={vehicleResult.value}
+        />
+      </SafeAreaProvider>,
+    );
+    await userEvent.type(screen.getByLabelText("Replaced item"), "Engine oil");
+    await userEvent.clear(screen.getByLabelText("Currency"));
+    await userEvent.type(screen.getByLabelText("Currency"), "JPY");
+    await userEvent.type(screen.getByLabelText("Total cost"), "430");
+    await userEvent.press(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(repository.create).toHaveBeenCalledTimes(1));
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ cost: { currency: "JPY", minorUnits: 430 } }),
+    );
+  });
+
   it("keeps an invalid required field in the form without writing", async () => {
     const repository = historyRepository();
 

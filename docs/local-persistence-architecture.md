@@ -50,14 +50,17 @@ Schemat jest zdefiniowany w `apps/mobile/infrastructure/database/schema.ts`, a p
 znajduje się w `apps/mobile/infrastructure/database/migrations`. Ograniczenia SQLite zabezpieczają
 dozwolone typy wpisów, nieujemne odległości i kwoty, kompletność pary kwota–waluta oraz maksymalne
 długości pól. Złożone klucze obce nie pozwalają połączyć szczegółów przeglądu, wymiany lub naprawy z
-wpisem innego typu. Utworzenie wspólnego rekordu i dokładnie jednego rekordu szczegółów pozostaje
-niezmiennikiem transakcyjnym repozytorium.
+wpisem innego typu, a triggery SQLite nie pozwalają połączyć dokumentu z wpisem należącym do innego
+pojazdu. Usunięcie wpisu najpierw odłącza od niego dokumenty w tej samej transakcji, dzięki czemu
+pozostają one przypisane do pojazdu. Utworzenie wspólnego rekordu i dokładnie jednego rekordu
+szczegółów pozostaje niezmiennikiem transakcyjnym repozytorium.
 
 Kolejne migracje dodają metadane zarządzanych plików, trwałe odwołanie pojazdu do zdjęcia oraz tabelę
 dokumentów. Nie powstają jeszcze puste tabele tankowań, przypomnień, subskrypcji ani synchronizacji.
 Limit jednego bezpłatnego pojazdu jest egzekwowany przez przypadek użycia, a nie przez konstrukcję
 schematu, aby późniejsze Premium nie wymagało przebudowy tożsamości danych. Schemat przechowuje
-stabilne identyfikatory zarządzanych plików, nigdy ich bezwzględne ścieżki systemowe.
+stabilne identyfikatory zarządzanych plików i nigdy nie przechowuje ich bezwzględnych ścieżek
+systemowych.
 
 ## Migracje i transakcje
 

@@ -88,10 +88,41 @@ describe("DocumentForm", () => {
     await userEvent.press(screen.getByRole("button", { name: "Save document" }));
 
     expect(
-      await screen.findByText("Enter a valid non-negative amount with up to two decimal places."),
+      await screen.findByText(
+        "Enter a valid non-negative amount using the currency's decimal precision.",
+      ),
     ).toBeOnTheScreen();
     expect(create).not.toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it("stores document amounts using the selected currency precision", async () => {
+    const create = jest.fn(async () => repositorySuccess({} as never));
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <DocumentForm
+          documents={{ create } as unknown as VehicleDocumentService}
+          entries={[]}
+          onCancel={jest.fn()}
+          onSaved={jest.fn()}
+          picker={picker()}
+          vehicle={vehicle}
+        />
+      </SafeAreaProvider>,
+    );
+
+    await userEvent.press(screen.getByRole("button", { name: "Choose file" }));
+    await userEvent.clear(screen.getByLabelText("Currency"));
+    await userEvent.type(screen.getByLabelText("Currency"), "KWD");
+    await userEvent.type(screen.getByLabelText("Amount"), "0.123");
+    await userEvent.press(screen.getByRole("button", { name: "Save document" }));
+
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+    expect(create).toHaveBeenCalledWith(
+      vehicle.id,
+      expect.anything(),
+      expect.objectContaining({ amount: { currency: "KWD", minorUnits: 123 } }),
+    );
   });
 });
 

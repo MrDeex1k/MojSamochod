@@ -58,11 +58,11 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 33 zestawy i 132 testy komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 34 zestawy i 147 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
-- React Doctor 0.9.12 dla zmian na branchu kończy się wynikiem 96/100 bez wykrytych problemów.
+- React Doctor 0.9.12 dla zmian na branchu kończy się wynikiem 100/100 bez wykrytych problemów.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
 - Po implementacji Fazy 3 bundle'e Hermes zostały ponownie poprawnie wygenerowane osobno dla iOS i
   Androida, wraz z nowymi modułami zdjęć, systemu plików i selektora daty oraz czasu.
@@ -110,10 +110,11 @@ opisywanego etapu.
 - Uzgadnianie przy starcie kończy oczekujące zapisy i usunięcia oraz usuwa osierocone pliki stagingu
   i niepowiązane zdjęcia lub dokumenty. Test ponownego otwarcia potwierdza trwałość relacji zdjęcia,
   dokumentu i wpisu historii.
-- Migracja `0002_add_vehicle_documents.sql` dodaje metadane dokumentów i ich relacje, a
+- Migracja `0002_add_vehicle_documents.sql` dodaje metadane dokumentów i ich relacje,
   `0003_enforce_document_sha256_uniqueness.sql` atomowo rezerwuje aktywną zawartość dokumentu po
-  SHA-256. Pliki do 20 MB są przechowywane w prywatnym magazynie aplikacji, a SQLite przechowuje ich
-  oryginalną nazwę, MIME, rozmiar, SHA-256, stan oraz klucz magazynowy.
+  SHA-256, a `0004_enforce_document_entry_vehicle_consistency.sql` wymusza zgodność pojazdu dokumentu
+  i powiązanego wpisu historii. Pliki do 20 MB są przechowywane w prywatnym magazynie aplikacji, a
+  SQLite przechowuje ich oryginalną nazwę, MIME, rozmiar, SHA-256, stan oraz klucz magazynowy.
 - Duplikat zawartości jest wykrywany po SHA-256 i odrzucany bez tworzenia drugiej kopii. Zastąpienie
   zapisuje nową relację przed usunięciem poprzedniego pliku, a uzgadnianie startowe naprawia
   przerwane operacje.
