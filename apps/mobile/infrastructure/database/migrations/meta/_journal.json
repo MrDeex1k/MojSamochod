@@ -36,6 +36,13 @@
       "when": 1788191612174,
       "tag": "0004_enforce_document_entry_vehicle_consistency",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788193413134,
+      "tag": "0005_enforce_history_entry_document_vehicle_consistency",
+      "breakpoints": true
     }
   ]
 }

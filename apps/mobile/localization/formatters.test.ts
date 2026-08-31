@@ -26,6 +26,10 @@ describe("currency formatters", () => {
     expect(formatCurrencyInputMinorUnits(minorUnits, currency, "en-US")).toBe(input);
   });
 
+  it("formats editable currency amounts with the locale decimal separator", () => {
+    expect(formatCurrencyInputMinorUnits(123, "PLN", "pl-PL")).toBe("1,23");
+  });
+
   it("rejects precision unsupported by the selected currency", () => {
     expect(parseCurrencyInput("1.5", "JPY", "en-US")).toEqual({ kind: "invalid" });
     expect(parseCurrencyInput("1.234", "USD", "en-US")).toEqual({ kind: "invalid" });

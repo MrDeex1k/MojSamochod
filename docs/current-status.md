@@ -58,7 +58,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 34 zestawy i 147 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 34 zestawy i 149 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -113,8 +113,10 @@ opisywanego etapu.
 - Migracja `0002_add_vehicle_documents.sql` dodaje metadane dokumentów i ich relacje,
   `0003_enforce_document_sha256_uniqueness.sql` atomowo rezerwuje aktywną zawartość dokumentu po
   SHA-256, a `0004_enforce_document_entry_vehicle_consistency.sql` wymusza zgodność pojazdu dokumentu
-  i powiązanego wpisu historii. Pliki do 20 MB są przechowywane w prywatnym magazynie aplikacji, a
-  SQLite przechowuje ich oryginalną nazwę, MIME, rozmiar, SHA-256, stan oraz klucz magazynowy.
+  i powiązanego wpisu historii przy zmianie dokumentu. Migracja
+  `0005_enforce_history_entry_document_vehicle_consistency.sql` chroni tę samą relację przy zmianie
+  pojazdu wpisu historii. Pliki do 20 MB są przechowywane w prywatnym magazynie aplikacji, a SQLite
+  przechowuje ich oryginalną nazwę, MIME, rozmiar, SHA-256, stan oraz klucz magazynowy.
 - Duplikat zawartości jest wykrywany po SHA-256 i odrzucany bez tworzenia drugiej kopii. Zastąpienie
   zapisuje nową relację przed usunięciem poprzedniego pliku, a uzgadnianie startowe naprawia
   przerwane operacje.

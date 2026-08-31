@@ -1,5 +1,6 @@
 const numberFormatters = new Map<string, Intl.NumberFormat>();
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
+const decimalSeparators = new Map<string, string>();
 const calendarDateFormatters = new Map<string, Intl.DateTimeFormat>();
 const utcDateTimeFormatters = new Map<string, Intl.DateTimeFormat>();
 
@@ -34,7 +35,7 @@ export function formatCurrencyInputMinorUnits(
   const fraction = String(minorUnits % scale)
     .padStart(fractionDigits, "0")
     .replace(/0+$/, "");
-  return fraction ? `${whole}.${fraction}` : String(whole);
+  return fraction ? `${whole}${getDecimalSeparator(locale)}${fraction}` : String(whole);
 }
 
 export function parseCurrencyInput(
@@ -101,4 +102,15 @@ function getCurrencyFormatter(currency: string, locale: string): Intl.NumberForm
     currencyFormatters.set(key, formatter);
   }
   return formatter;
+}
+
+function getDecimalSeparator(locale: string): string {
+  let separator = decimalSeparators.get(locale);
+  if (!separator) {
+    separator =
+      new Intl.NumberFormat(locale).formatToParts(1.1).find(({ type }) => type === "decimal")
+        ?.value ?? ".";
+    decimalSeparators.set(locale, separator);
+  }
+  return separator;
 }

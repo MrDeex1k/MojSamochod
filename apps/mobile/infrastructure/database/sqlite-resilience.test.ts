@@ -11,6 +11,7 @@ const migrationFileNames = [
   "0002_add_vehicle_documents.sql",
   "0003_enforce_document_sha256_uniqueness.sql",
   "0004_enforce_document_entry_vehicle_consistency.sql",
+  "0005_enforce_history_entry_document_vehicle_consistency.sql",
 ] as const;
 const migrationSql = readMigrations(migrationFileNames);
 const temporaryDirectories: string[] = [];
@@ -200,6 +201,31 @@ describe("SQLite persistence resilience", () => {
     expect(
       database.prepare("SELECT vehicle_id FROM vehicle_documents WHERE id = ?").get(documentId),
     ).toEqual({ vehicle_id: secondVehicleId });
+    database.close();
+  });
+
+  it("rejects moving a history entry away from its document's vehicle", () => {
+    const database = openMigratedDatabase(createTemporaryDatabasePath());
+    insertVehicle(database);
+    insertSecondVehicle(database);
+    insertHistoryEntry(database, vehicleId);
+    insertReadyManagedDocument(database);
+    database
+      .prepare(
+        `INSERT INTO vehicle_documents
+          (id, vehicle_id, history_entry_id, file_reference, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'Invoice', ?, ?)`,
+      )
+      .run(documentId, vehicleId, entryId, managedFileId, timestamp, timestamp);
+
+    expect(() =>
+      database
+        .prepare("UPDATE history_entries SET vehicle_id = ? WHERE id = ?")
+        .run(secondVehicleId, entryId),
+    ).toThrow(/history entry document belongs to another vehicle/);
+    expect(
+      database.prepare("SELECT vehicle_id FROM history_entries WHERE id = ?").get(entryId),
+    ).toEqual({ vehicle_id: vehicleId });
     database.close();
   });
 
