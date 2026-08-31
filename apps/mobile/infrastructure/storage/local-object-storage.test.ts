@@ -57,6 +57,7 @@ describe("LocalObjectStorage", () => {
 
     expect(result).toMatchObject({ error: { kind: "invalid-source" }, ok: false });
     expect(driver.files.size).toBe(0);
+    expect(driver.readCalls).toBe(0);
   });
 
   it("commits idempotently and treats repeated deletion as success", async () => {
@@ -110,6 +111,7 @@ describe("LocalObjectStorage", () => {
 class MemoryDriver implements ObjectStorageDriver {
   readonly copiedSources: string[] = [];
   readonly files = new Map<string, Uint8Array<ArrayBuffer>>();
+  readCalls = 0;
 
   constructor(private readonly source: Uint8Array<ArrayBuffer>) {}
 
@@ -143,9 +145,14 @@ class MemoryDriver implements ObjectStorageDriver {
   }
 
   async read(key: string): Promise<Uint8Array<ArrayBuffer>> {
+    this.readCalls += 1;
     const value = this.files.get(key);
     if (!value) throw new Error("Missing file");
     return value;
+  }
+
+  size(key: string): number {
+    return this.files.get(key)?.byteLength ?? 0;
   }
 
   uri(key: string): string {

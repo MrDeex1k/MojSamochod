@@ -53,11 +53,11 @@ długości pól. Złożone klucze obce nie pozwalają połączyć szczegółów 
 wpisem innego typu. Utworzenie wspólnego rekordu i dokładnie jednego rekordu szczegółów pozostaje
 niezmiennikiem transakcyjnym repozytorium.
 
-Nie powstają jeszcze puste tabele dokumentów, tankowań, przypomnień, subskrypcji ani synchronizacji.
+Kolejne migracje dodają metadane zarządzanych plików, trwałe odwołanie pojazdu do zdjęcia oraz tabelę
+dokumentów. Nie powstają jeszcze puste tabele tankowań, przypomnień, subskrypcji ani synchronizacji.
 Limit jednego bezpłatnego pojazdu jest egzekwowany przez przypadek użycia, a nie przez konstrukcję
-schematu, aby późniejsze Premium nie wymagało przebudowy tożsamości danych.
-Kolumna odwołania do zdjęcia pojazdu zostanie dodana razem z metadanymi zarządzanych plików w Fazie
-3; pierwszy schemat nie przechowuje ścieżki, której cykl życia nie jest jeszcze obsługiwany.
+schematu, aby późniejsze Premium nie wymagało przebudowy tożsamości danych. Schemat przechowuje
+stabilne identyfikatory zarządzanych plików, nigdy ich bezwzględne ścieżki systemowe.
 
 ## Migracje i transakcje
 
@@ -92,10 +92,12 @@ Faza 3 implementuje lokalny `ObjectStorage` i koordynację metadanych ze zdjęci
 wykorzystuje tę samą granicę dla dokumentów. Granica może w przyszłości otrzymać inną implementację,
 ale obecny zakres nie wprowadza S3, Cloudflare R2 ani innej chmury.
 
-Kontrakt rozdziela `stage`, `commit`, `discard`, `delete` oraz `copyTo`. Etapowanie kopiuje zewnętrzny
-URI do prywatnego obszaru tymczasowego i wylicza rozmiar oraz SHA-256. `commit` przenosi obiekt do
-trwałego magazynu i musi być idempotentny dla tego samego obiektu. `discard` oraz `delete` również są
-idempotentne: brak wskazanego obiektu oznacza powodzenie. `copyTo` udostępnia kontrolowaną drogę do
+Kontrakt rozdziela `stage`, `commit`, `discard`, `listStagedKeys`, `delete`, `getUri` oraz `copyTo`.
+Etapowanie kopiuje zewnętrzny URI do prywatnego obszaru tymczasowego, sprawdza rozmiar przed
+odczytaniem zawartości i wylicza SHA-256. `commit` przenosi obiekt do trwałego magazynu i musi być
+idempotentny dla tego samego obiektu. `discard` oraz `delete` również są idempotentne: brak
+wskazanego obiektu oznacza powodzenie. `listStagedKeys` umożliwia usuwanie osieroconego stagingu,
+`getUri` udostępnia prywatny URI do natywnego podglądu, a `copyTo` zapewnia kontrolowaną drogę do
 późniejszego eksportu bez ujawniania wewnętrznej ścieżki magazynu.
 
 SQLite i system plików nie tworzą wspólnej transakcji ACID. Koordynacja działa więc w dwóch etapach:

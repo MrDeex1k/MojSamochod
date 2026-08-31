@@ -25,6 +25,7 @@ export interface ObjectStorageDriver {
   list(prefix: string): readonly string[];
   move(fromKey: string, toKey: string): Promise<void>;
   read(key: string): Promise<Uint8Array<ArrayBuffer>>;
+  size(key: string): number;
   uri(key: string): string;
 }
 
@@ -42,6 +43,10 @@ export class LocalObjectStorage implements ObjectStorage {
 
     try {
       await this.driver.copyFrom(input.sourceUri, stagingKey);
+      if (this.driver.size(stagingKey) > input.maximumBytes) {
+        await this.driver.delete(stagingKey);
+        return objectStorageFailure("invalid-source", operation);
+      }
       const bytes = await this.driver.read(stagingKey);
       if (bytes.byteLength > input.maximumBytes) {
         await this.driver.delete(stagingKey);
@@ -180,6 +185,10 @@ export class ExpoFileSystemDriver implements ObjectStorageDriver {
 
   read(key: string): Promise<Uint8Array<ArrayBuffer>> {
     return this.file(key).bytes();
+  }
+
+  size(key: string): number {
+    return this.file(key).size;
   }
 
   uri(key: string): string {

@@ -25,6 +25,9 @@ export const managedFiles = sqliteTable(
     updatedAt: text("updated_at").notNull(),
   },
   (table) => [
+    uniqueIndex("managed_files_document_sha256_unique")
+      .on(table.sha256)
+      .where(sql`${table.kind} = 'document' and ${table.status} in ('staged', 'ready')`),
     uniqueIndex("managed_files_staging_key_unique").on(table.stagingKey),
     uniqueIndex("managed_files_storage_key_unique").on(table.storageKey),
     check("managed_files_kind", sql`${table.kind} in ('vehicle-photo', 'document')`),

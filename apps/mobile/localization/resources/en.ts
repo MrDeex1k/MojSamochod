@@ -38,6 +38,7 @@ export const en = {
     fileMissing: "The managed file is unavailable.",
     fileRequired: "Choose a file before saving.",
     fileTooLarge: "The file exceeds the 20 MB limit.",
+    invalidAmount: "Enter a valid non-negative amount with up to two decimal places.",
     keepEditing: "Keep editing",
     name: "Name",
     notes: "Notes",

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ne, type SQL } from "drizzle-orm";
 
 import type { VehicleDocumentRepository } from "@/application/repositories/vehicle-document-repository";
 import {
@@ -137,6 +137,18 @@ export class DrizzleVehicleDocumentRepository implements VehicleDocumentReposito
         if (!existing) return repositoryFailure("not-found", operation);
         const valid = validateRelations(transaction, document, operation);
         if (!valid.ok) return valid;
+        const fileConflict = transaction
+          .select({ id: vehicleDocuments.id })
+          .from(vehicleDocuments)
+          .where(
+            and(
+              eq(vehicleDocuments.fileReference, document.fileReference),
+              ne(vehicleDocuments.id, document.id),
+            ),
+          )
+          .limit(1)
+          .get();
+        if (fileConflict) return repositoryFailure("conflict", operation);
         transaction
           .update(vehicleDocuments)
           .set(mutableValues(document))

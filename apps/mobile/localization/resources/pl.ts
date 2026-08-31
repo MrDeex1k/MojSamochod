@@ -39,6 +39,7 @@ export const pl = {
     fileMissing: "Zarządzany plik jest niedostępny.",
     fileRequired: "Wybierz plik przed zapisaniem.",
     fileTooLarge: "Plik przekracza limit 20 MB.",
+    invalidAmount: "Wpisz poprawną nieujemną kwotę z najwyżej dwoma miejscami po przecinku.",
     keepEditing: "Kontynuuj edycję",
     name: "Nazwa",
     notes: "Notatki",

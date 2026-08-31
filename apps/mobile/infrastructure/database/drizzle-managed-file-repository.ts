@@ -49,7 +49,11 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
         .run();
       return repositorySuccess(undefined);
     } catch (error) {
-      return repositoryFailure("unavailable", operation, error);
+      return repositoryFailure(
+        isUniqueConstraintViolation(error) ? "conflict" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 
@@ -235,4 +239,27 @@ function mapManagedFileRow(row: ManagedFileRow): ManagedFileMetadata {
 function expect<T>(result: { ok: false } | { ok: true; value: T }): T {
   if (!result.ok) throw new Error("Stored managed file violates the domain contract");
   return result.value;
+}
+
+function isUniqueConstraintViolation(error: unknown): boolean {
+  let current = error;
+  for (let depth = 0; depth < 4 && current; depth += 1) {
+    if (typeof current === "object") {
+      const record = current as Readonly<{ cause?: unknown; code?: unknown; message?: unknown }>;
+      const code = typeof record.code === "string" ? record.code : "";
+      const message = typeof record.message === "string" ? record.message : "";
+      if (
+        code.includes("SQLITE_CONSTRAINT_UNIQUE") ||
+        code.includes("SQLITE_CONSTRAINT_PRIMARYKEY") ||
+        /UNIQUE constraint failed/i.test(message)
+      ) {
+        return true;
+      }
+      current = record.cause;
+      continue;
+    }
+    if (typeof current === "string" && /UNIQUE constraint failed/i.test(current)) return true;
+    break;
+  }
+  return false;
 }

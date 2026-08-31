@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";
 import type { HistoryEntry } from "@/domain/history/history-entry";
+import { formatCalendarDate, formatCurrencyMinorUnits } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
 export function DocumentList({
@@ -52,14 +53,14 @@ export function DocumentList({
                   </Text>
                   {document.documentDate ? (
                     <Text className="text-caption text-secondary">
-                      {formatDate(document.documentDate, i18n.language)}
+                      {formatCalendarDate(document.documentDate, i18n.language)}
                     </Text>
                   ) : null}
                 </View>
                 <View className="flex-row flex-wrap gap-content">
                   {document.amount ? (
                     <Text className="text-caption text-secondary">
-                      {formatMoney(
+                      {formatCurrencyMinorUnits(
                         document.amount.minorUnits,
                         document.amount.currency,
                         i18n.language,
@@ -85,14 +86,4 @@ export function DocumentList({
   ) : (
     <Screen>{content}</Screen>
   );
-}
-
-function formatDate(value: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(
-    new Date(`${value}T00:00:00.000Z`),
-  );
-}
-
-function formatMoney(minorUnits: number, currency: string, locale: string): string {
-  return new Intl.NumberFormat(locale, { currency, style: "currency" }).format(minorUnits / 100);
 }

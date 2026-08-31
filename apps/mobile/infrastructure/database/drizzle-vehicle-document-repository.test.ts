@@ -58,6 +58,27 @@ describe("DrizzleVehicleDocumentRepository", () => {
     });
     expect(transaction.insert).not.toHaveBeenCalled();
   });
+
+  it("reports a file-reference collision during update as conflict", async () => {
+    const transaction = {
+      select: jest
+        .fn()
+        .mockReturnValueOnce(selectOne({ id: document.id }))
+        .mockReturnValueOnce(selectOne({ id: vehicleId }))
+        .mockReturnValueOnce(selectOne({ id: fileReference }))
+        .mockReturnValueOnce(selectOne({ id: "another-document" })),
+      update: jest.fn(),
+    };
+    const database = {
+      transaction: jest.fn((callback: (value: unknown) => unknown) => callback(transaction)),
+    } as unknown as AppDatabase;
+
+    await expect(new DrizzleVehicleDocumentRepository(database).update(document)).resolves.toEqual({
+      error: { cause: undefined, kind: "conflict", operation: "vehicleDocument.update" },
+      ok: false,
+    });
+    expect(transaction.update).not.toHaveBeenCalled();
+  });
 });
 
 function selectOne(value: unknown) {

@@ -49,6 +49,7 @@ export function DocumentForm({
   const [entryId, setEntryId] = useState<string>(document?.historyEntryId ?? "");
   const [fileError, setFileError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [amountError, setAmountError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -82,12 +83,18 @@ export function DocumentForm({
       setFileError(t("documents.fileRequired"));
       return;
     }
+    const parsedAmount = parseAmount(amount, currency);
+    if (!parsedAmount.ok) {
+      setAmountError(t("documents.invalidAmount"));
+      return;
+    }
     setNameError(null);
+    setAmountError(null);
     setFormError(null);
     setSaving(true);
     const selectedEntry = entries.find((entry) => entry.id === entryId);
     const metadata = {
-      amount: parseAmount(amount, currency),
+      amount: parsedAmount.value,
       documentDate: date,
       historyEntryId: selectedEntry?.id,
       name,
@@ -141,9 +148,13 @@ export function DocumentForm({
       <View className="flex-row gap-compact">
         <View className="flex-[2]">
           <TextField
+            error={amountError ?? undefined}
             keyboardType="decimal-pad"
             label={t("documents.amount")}
-            onChangeText={setAmount}
+            onChangeText={(value) => {
+              setAmount(value);
+              setAmountError(null);
+            }}
             value={amount}
           />
         </View>
@@ -219,13 +230,12 @@ function RelationOption({
 }
 
 function parseAmount(value: string, currency: string) {
-  if (!value.trim()) return undefined;
+  if (!value.trim()) return { ok: true as const, value: undefined };
   const normalized = value.trim().replace(",", ".");
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return { ok: false as const };
   return {
-    currency,
-    minorUnits: /^\d+(?:\.\d{1,2})?$/.test(normalized)
-      ? Math.round(Number(normalized) * 100)
-      : Number.NaN,
+    ok: true as const,
+    value: { currency, minorUnits: Math.round(Number(normalized) * 100) },
   };
 }
 

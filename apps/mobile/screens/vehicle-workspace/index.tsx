@@ -15,6 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useAppTranslation } from "@/localization/use-app-translation";
+import {
+  formatCurrencyMinorUnits,
+  formatLocalizedNumber,
+  formatUtcDateTime,
+} from "@/localization/formatters";
 
 import { EntryForm } from "./entry-form";
 import { EntryDetail } from "./entry-detail";
@@ -513,9 +518,7 @@ function HistoryRow({
         )}
         {entry.cost ? (
           <Text className="text-caption text-secondary">
-            {currencyFormatter(i18n.language, entry.cost.currency).format(
-              entry.cost.minorUnits / 100,
-            )}
+            {formatCurrencyMinorUnits(entry.cost.minorUnits, entry.cost.currency, i18n.language)}
           </Text>
         ) : null}
       </View>
@@ -532,55 +535,18 @@ function entrySubject(entry: HistoryEntry, t: (key: string) => string): string {
 function formatEntryDistance(metres: number, vehicle: Vehicle, locale: string): string {
   const divisor = vehicle.distanceUnitPreference === "kilometres" ? 1000 : 1609.344;
   const unit = vehicle.distanceUnitPreference === "kilometres" ? "km" : "mi";
-  return `${numberFormatter(locale).format(Math.round(metres / divisor))} ${unit}`;
+  return `${formatLocalizedNumber(Math.round(metres / divisor), locale)} ${unit}`;
 }
 
 function formatOccurredAt(entry: HistoryEntry, locale: string): string {
-  return dateTimeFormatter(locale).format(new Date(entry.occurredAt));
+  return formatUtcDateTime(entry.occurredAt, locale);
 }
 
 function formatDistance(vehicle: Vehicle, locale: string): string | null {
   if (vehicle.currentOdometerMetres === undefined) return null;
   const divisor = vehicle.distanceUnitPreference === "kilometres" ? 1000 : 1609.344;
   const unit = vehicle.distanceUnitPreference === "kilometres" ? "km" : "mi";
-  return `${numberFormatter(locale).format(Math.round(vehicle.currentOdometerMetres / divisor))} ${unit}`;
-}
-
-const numberFormatters = new Map<string, Intl.NumberFormat>();
-const currencyFormatters = new Map<string, Intl.NumberFormat>();
-const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>();
-
-function numberFormatter(locale: string): Intl.NumberFormat {
-  const existing = numberFormatters.get(locale);
-  if (existing) return existing;
-  const formatter = new Intl.NumberFormat(locale);
-  numberFormatters.set(locale, formatter);
-  return formatter;
-}
-
-function currencyFormatter(locale: string, currency: string): Intl.NumberFormat {
-  const key = `${locale}:${currency}`;
-  const existing = currencyFormatters.get(key);
-  if (existing) return existing;
-  const formatter = new Intl.NumberFormat(locale, { currency, style: "currency" });
-  currencyFormatters.set(key, formatter);
-  return formatter;
-}
-
-function dateTimeFormatter(locale: string): Intl.DateTimeFormat {
-  const existing = dateTimeFormatters.get(locale);
-  if (existing) return existing;
-  const formatter = new Intl.DateTimeFormat(locale, {
-    day: "2-digit",
-    hour: "2-digit",
-    hour12: false,
-    minute: "2-digit",
-    month: "2-digit",
-    timeZone: "UTC",
-    year: "numeric",
-  });
-  dateTimeFormatters.set(locale, formatter);
-  return formatter;
+  return `${formatLocalizedNumber(Math.round(vehicle.currentOdometerMetres / divisor), locale)} ${unit}`;
 }
 
 async function loadWorkspace(

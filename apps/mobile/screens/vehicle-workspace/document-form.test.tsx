@@ -66,6 +66,33 @@ describe("DocumentForm", () => {
 
     expect(await screen.findByText("The file exceeds the 20 MB limit.")).toBeOnTheScreen();
   });
+
+  it("shows an amount field error without writing invalid metadata", async () => {
+    const create = jest.fn(async () => repositorySuccess({} as never));
+    const onSaved = jest.fn();
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <DocumentForm
+          documents={{ create } as unknown as VehicleDocumentService}
+          entries={[]}
+          onCancel={jest.fn()}
+          onSaved={onSaved}
+          picker={picker()}
+          vehicle={vehicle}
+        />
+      </SafeAreaProvider>,
+    );
+
+    await userEvent.press(screen.getByRole("button", { name: "Choose file" }));
+    await userEvent.type(screen.getByLabelText("Amount"), "12.345");
+    await userEvent.press(screen.getByRole("button", { name: "Save document" }));
+
+    expect(
+      await screen.findByText("Enter a valid non-negative amount with up to two decimal places."),
+    ).toBeOnTheScreen();
+    expect(create).not.toHaveBeenCalled();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
 });
 
 function picker(): DocumentFilePicker {

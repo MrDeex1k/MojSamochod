@@ -11,10 +11,10 @@ import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 import type { DocumentPresenter } from "@/infrastructure/documents/native-document-presenter";
 import type { DocumentFilePicker } from "@/infrastructure/documents/system-document-picker";
+import { formatCalendarDate, formatCurrencyMinorUnits } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
 type ResolvedFile = Readonly<{ mimeType: string; name: string; uri: string }>;
-const currencyFormatters = new Map<string, Intl.NumberFormat>();
 
 export function DocumentDetail({
   document,
@@ -44,7 +44,7 @@ export function DocumentDetail({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formattedAmount = document.amount
-    ? formatMoney(document.amount.minorUnits, document.amount.currency, i18n.language)
+    ? formatCurrencyMinorUnits(document.amount.minorUnits, document.amount.currency, i18n.language)
     : null;
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export function DocumentDetail({
         {document.documentDate ? (
           <DetailRow
             label={t("documents.date")}
-            value={formatDate(document.documentDate, i18n.language)}
+            value={formatCalendarDate(document.documentDate, i18n.language, "long")}
           />
         ) : null}
         {formattedAmount ? (
@@ -214,22 +214,6 @@ function DetailRow({ label, value }: Readonly<{ label: string; value: string }>)
       <Text className="flex-1 text-right text-body text-primary">{value}</Text>
     </View>
   );
-}
-
-function formatDate(value: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
-    new Date(`${value}T00:00:00.000Z`),
-  );
-}
-
-function formatMoney(minorUnits: number, currency: string, locale: string): string {
-  const key = `${locale}:${currency}`;
-  let formatter = currencyFormatters.get(key);
-  if (!formatter) {
-    formatter = new Intl.NumberFormat(locale, { currency, style: "currency" });
-    currencyFormatters.set(key, formatter);
-  }
-  return formatter.format(minorUnits / 100);
 }
 
 function entryLabel(entry: HistoryEntry, t: (key: string) => string): string {
