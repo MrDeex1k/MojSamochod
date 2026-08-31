@@ -14,6 +14,7 @@ import type { DocumentFilePicker } from "@/infrastructure/documents/system-docum
 import { useAppTranslation } from "@/localization/use-app-translation";
 
 type ResolvedFile = Readonly<{ mimeType: string; name: string; uri: string }>;
+const currencyFormatters = new Map<string, Intl.NumberFormat>();
 
 export function DocumentDetail({
   document,
@@ -42,6 +43,9 @@ export function DocumentDetail({
   const [file, setFile] = useState<ResolvedFile | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formattedAmount = document.amount
+    ? formatMoney(document.amount.minorUnits, document.amount.currency, i18n.language)
+    : null;
 
   useEffect(() => {
     let active = true;
@@ -56,48 +60,48 @@ export function DocumentDetail({
     };
   }, [document, documents, t]);
 
-  const share = async () => {
+  const share = () => {
     if (!file || busy) return;
     setBusy(true);
     setError(null);
-    try {
-      if (!(await presenter.share(file))) setError(t("documents.shareUnavailable"));
-    } catch {
-      setError(t("documents.shareError"));
-    } finally {
-      setBusy(false);
-    }
+    void presenter
+      .share(file)
+      .then((available) => {
+        if (!available) setError(t("documents.shareUnavailable"));
+      })
+      .catch(() => setError(t("documents.shareError")))
+      .finally(() => setBusy(false));
   };
 
-  const replace = async () => {
+  const replace = () => {
     if (busy) return;
     setBusy(true);
     setError(null);
-    try {
-      const picked = await picker.pick();
-      if (picked.kind === "cancelled") return;
-      if (picked.kind === "invalid-size") {
-        setError(t("documents.fileTooLarge"));
-        return;
-      }
-      if (picked.kind === "unsupported") {
-        setError(t("documents.unsupportedFile"));
-        return;
-      }
-      const result = await documents.replace(document, picked.document);
-      if (result.ok) onChanged();
-      else {
-        setError(
-          result.error.kind === "conflict"
-            ? t("documents.duplicateError")
-            : t("documents.replaceError"),
-        );
-      }
-    } catch {
-      setError(t("documents.replaceError"));
-    } finally {
-      setBusy(false);
-    }
+    void picker
+      .pick()
+      .then((picked) => {
+        if (picked.kind === "cancelled") return;
+        if (picked.kind === "invalid-size") {
+          setError(t("documents.fileTooLarge"));
+          return;
+        }
+        if (picked.kind === "unsupported") {
+          setError(t("documents.unsupportedFile"));
+          return;
+        }
+        return documents.replace(document, picked.document).then((result) => {
+          if (result.ok) onChanged();
+          else {
+            setError(
+              result.error.kind === "conflict"
+                ? t("documents.duplicateError")
+                : t("documents.replaceError"),
+            );
+          }
+        });
+      })
+      .catch(() => setError(t("documents.replaceError")))
+      .finally(() => setBusy(false));
   };
 
   const confirmDelete = () => {
@@ -156,14 +160,8 @@ export function DocumentDetail({
             value={formatDate(document.documentDate, i18n.language)}
           />
         ) : null}
-        {document.amount ? (
-          <DetailRow
-            label={t("documents.amount")}
-            value={new Intl.NumberFormat(i18n.language, {
-              currency: document.amount.currency,
-              style: "currency",
-            }).format(document.amount.minorUnits / 100)}
-          />
+        {formattedAmount ? (
+          <DetailRow label={t("documents.amount")} value={formattedAmount} />
         ) : null}
         <DetailRow
           label={t("documents.relation")}
@@ -181,12 +179,12 @@ export function DocumentDetail({
         label={
           file?.mimeType === "application/pdf" ? t("documents.openPdf") : t("documents.export")
         }
-        onPress={() => void share()}
+        onPress={share}
       />
       <Button
         disabled={busy}
         label={t("documents.replace")}
-        onPress={() => void replace()}
+        onPress={replace}
         variant="secondary"
       />
       <Button disabled={busy} label={t("documents.edit")} onPress={onEdit} variant="secondary" />
@@ -222,6 +220,16 @@ function formatDate(value: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
     new Date(`${value}T00:00:00.000Z`),
   );
+}
+
+function formatMoney(minorUnits: number, currency: string, locale: string): string {
+  const key = `${locale}:${currency}`;
+  let formatter = currencyFormatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, { currency, style: "currency" });
+    currencyFormatters.set(key, formatter);
+  }
+  return formatter.format(minorUnits / 100);
 }
 
 function entryLabel(entry: HistoryEntry, t: (key: string) => string): string {
