@@ -273,8 +273,27 @@ mogą być zapisywane w notatkach i dokumentach.
 
 ## Granica dokumentów
 
-Import dokumentów zostanie zaimplementowany w Fazie 4, ale pierwszy model rezerwuje następujące
-reguły relacji:
+Dokument jest encją należącą do pojazdu. Binarny plik jest osobnym zarządzanym obiektem, a encja
+dokumentu przechowuje wyłącznie stabilne odwołanie i metadane użytkownika.
+
+| Pole             | Wymagane  | Reguła                                                                |
+| ---------------- | --------- | --------------------------------------------------------------------- |
+| `id`             | Systemowo | Stabilny `DocumentId`.                                                |
+| `vehicleId`      | Systemowo | Pojazd będący właścicielem dokumentu.                                 |
+| `historyEntryId` | Nie       | Najwyżej jeden wpis historii należący do tego samego pojazdu.         |
+| `fileReference`  | Systemowo | Stabilny identyfikator gotowego zarządzanego pliku.                   |
+| `name`           | Tak       | Edytowalna nazwa po usunięciu skrajnych białych znaków, 1–255 znaków. |
+| `documentDate`   | Nie       | Prawidłowa data kalendarzowa `YYYY-MM-DD`.                            |
+| `amount`         | Nie       | Jedna wartość `Money`; zero różni się od braku kwoty.                 |
+| `notes`          | Nie       | Tekst o długości najwyżej 5000 znaków.                                |
+| `createdAt`      | Systemowo | Znacznik czasu utworzenia w UTC.                                      |
+| `updatedAt`      | Systemowo | Znacznik czasu ostatniej utrwalonej zmiany w UTC.                     |
+
+Zarządzany plik dokumentu zapisuje oryginalną nazwę, MIME, rozmiar, SHA-256, stan i bezpieczny
+klucz magazynowy. Obsługiwane są PDF, JPEG i PNG o rozmiarze najwyżej 20 MB, wybierane przez
+systemowy selektor plików.
+
+Reguły relacji i cyklu życia:
 
 - Zarządzany dokument należy do jednego pojazdu.
 - Może dodatkowo wskazywać jeden wpis historii należący do tego samego pojazdu.
@@ -282,8 +301,15 @@ reguły relacji:
 - Usunięcie wpisu historii usuwa wyłącznie jego relację z dokumentem. Dokument pozostaje przypisany
   do pojazdu i nie jest usuwany automatycznie.
 - Usunięcie dokumentu nie usuwa jego pojazdu ani wpisu historii.
-- Usunięcie pojazdu docelowo usuwa jego historię i zarządzane dokumenty poprzez jawną, odtwarzalną
-  operację na pamięci, zdefiniowaną przed zakończeniem Fazy 4.
+- Usunięcie pojazdu usuwa jego historię i zarządzane dokumenty poprzez jawną, odtwarzalną operację
+  na pamięci.
+- Ta sama zawartość nie jest importowana drugi raz: gotowy dokument z identycznym SHA-256 powoduje
+  konflikt, który interfejs wyjaśnia użytkownikowi.
+- Zastąpienie pliku zachowuje `DocumentId`, metadane użytkownika i relacje. Poprzedni plik jest
+  usuwany dopiero po utrwaleniu nowego odwołania.
+- Usunięcie dokumentu wymaga potwierdzenia i usuwa zarówno metadane, jak i zarządzany plik.
+- Obraz jest podglądany w aplikacji. PDF jest przekazywany do natywnej powierzchni systemowej z
+  czytelną nazwą pliku i możliwością eksportu.
 
 Ścieżka pliku nie może pojawiać się bezpośrednio w encji domenowej `Vehicle` ani `HistoryEntry`.
 Granice repozytorium i pamięci dokumentów rozwiązują stabilne odwołanie do dokumentu na plik w
@@ -328,6 +354,10 @@ Kod prezentacji powinien wywoływać przypadki użycia, a nie bezpośrednio repo
 | `GetHistoryEntry`     | Zwrócenie wpisu tylko wtedy, gdy należy do wskazanego pojazdu.                                                            |
 | `UpdateHistoryEntry`  | Zachowanie tożsamości i typu podczas walidacji edytowalnych wartości.                                                     |
 | `DeleteHistoryEntry`  | Usunięcie wpisu i odłączenie powiązanych dokumentów bez ich usuwania.                                                     |
+| `ImportDocument`      | Walidacja typu i rozmiaru, import pliku, wykrycie duplikatu oraz zapis metadanych i relacji.                              |
+| `UpdateDocument`      | Edycja nazwy, daty, kwoty, notatek i opcjonalnej relacji bez zmiany tożsamości dokumentu.                                 |
+| `ReplaceDocumentFile` | Bezpieczna wymiana binarnego pliku z zachowaniem dokumentu i usunięciem starego obiektu po zapisie.                       |
+| `DeleteDocument`      | Koordynacja trwałego usunięcia metadanych i zarządzanego pliku po potwierdzeniu.                                          |
 
 Wyniki przypadków użycia rozróżniają błędy walidacji, brakujące rekordy, awarie pamięci oraz
 konflikty. Wyjątek pamięci nie może być przedstawiany jako nieprawidłowe dane użytkownika.
@@ -399,7 +429,6 @@ realizacji, zamiast zniknąć w szczegółach implementacji:
 | ------------------------------------------------------- | ------------- |
 | Techniczne API importu, wymiany i usuwania zdjęcia      | Faza 3        |
 | Wymiana, przekręcenie i korekta drogomierza             | Faza 3        |
-| Formaty, limity, deduplikacja i odzyskiwanie dokumentów | Faza 4        |
 | Jednostki tankowania oraz obliczenia pełnego tankowania | Faza 5        |
 | Własność przypomnień o ubezpieczeniu i przeglądzie      | Faza 6        |
 | Unikalność VIN i numerów rejestracyjnych wielu pojazdów | Faza 8        |

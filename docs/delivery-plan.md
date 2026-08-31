@@ -105,6 +105,11 @@ tablet. Polish and English localization uses an English fallback; vehicle photos
 
 ## Phase 4 — Documents and invoices
 
+**Status:** Implemented and verified on `feat/documents-and-invoices`; integration into `main` is
+pending. The implementation includes managed PDF/JPEG/PNG imports up to 20 MB, optional metadata
+and history-entry relations, duplicate detection, preview, native export, replacement, deletion,
+recovery, and the version 2 metadata-only JSON export.
+
 ### Steps
 
 1. Add document import with explicit supported formats and size limits.
@@ -233,7 +238,6 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Complete the Drizzle and `expo-sqlite` compatibility spike for Expo SDK 57, pin the accepted
-dependencies through NUB and SFW, and implement the first versioned schema. UUIDv7 identity,
-`occurredAt` UTC timestamps, repository boundaries, managed-file metadata, and the JSON-only Phase 2
-export are defined in [Local Persistence Architecture](./local-persistence-architecture.md).
+Review and merge the Phase 4 pull request. Then start Phase 5 on a dedicated branch by defining the
+refuelling domain rules for full and partial fills, odometer readings, quantity, price, supported
+volume units, and the exact average-consumption algorithm before implementing persistence or UI.

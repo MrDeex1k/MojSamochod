@@ -78,19 +78,19 @@ Kolumna odwołania do zdjęcia pojazdu zostanie dodana razem z metadanymi zarzą
 
 ## Zarządzane pliki i ObjectStorage
 
-Zdjęcia oraz dokumenty nie będą przechowywane jako BLOB-y w SQLite. Docelowa konstrukcja rozdziela:
+Zdjęcia oraz dokumenty nie są przechowywane jako BLOB-y w SQLite. Konstrukcja rozdziela:
 
 - binarną zawartość w zarządzanym katalogu aplikacji;
 - metadane i relacje w SQLite;
 - operacje na plikach za interfejsem `ObjectStorage`.
 
-Metadane zarządzanego pliku będą obejmować co najmniej stabilny `ManagedFileId`, klucz magazynowy,
+Metadane zarządzanego pliku obejmują stabilny `ManagedFileId`, klucz magazynowy,
 rodzaj, MIME type, oryginalną nazwę, rozmiar, sumę SHA-256 oraz znaczniki czasu. Pojazd lub dokument
 odwołuje się do stabilnego identyfikatora, a nie do ścieżki źródłowej użytkownika.
 
-Faza 3 implementuje lokalny `ObjectStorage` i koordynację metadanych ze zdjęciem pojazdu. Ta sama
-granica może w przyszłości otrzymać inną implementację, ale obecny zakres nie wprowadza S3,
-Cloudflare R2 ani innej chmury.
+Faza 3 implementuje lokalny `ObjectStorage` i koordynację metadanych ze zdjęciem pojazdu, a Faza 4
+wykorzystuje tę samą granicę dla dokumentów. Granica może w przyszłości otrzymać inną implementację,
+ale obecny zakres nie wprowadza S3, Cloudflare R2 ani innej chmury.
 
 Kontrakt rozdziela `stage`, `commit`, `discard`, `delete` oraz `copyTo`. Etapowanie kopiuje zewnętrzny
 URI do prywatnego obszaru tymczasowego i wylicza rozmiar oraz SHA-256. `commit` przenosi obiekt do
@@ -109,16 +109,17 @@ SQLite i system plików nie tworzą wspólnej transakcji ACID. Koordynacja dzia�
 
 Przerwanie procesu pozostawia stan możliwy do naprawienia, a nie gotowy rekord wskazujący na
 nieistniejący plik. Procedura uzgadniania przy starcie usuwa osierocony staging, kończy stan
-oczekujący, ponawia rozpoczęte usunięcie oraz usuwa gotowe zdjęcie pojazdu bez relacji. Usuwanie
+oczekujący, ponawia rozpoczęte usunięcie oraz usuwa gotowe zdjęcie lub dokument bez relacji. Usuwanie
 działa analogicznie: najpierw oznaczenie metadanych, potem idempotentne usunięcie obiektu, a na końcu
 usunięcie rekordu. Surowe klucze magazynu są nieprzezroczyste, względne i nie mogą zawierać segmentów
 `.` lub `..`, ścieżek absolutnych ani separatorów systemowych.
 
 ## Eksport
 
-Faza 2 dostarcza wersjonowany, eksportowalny JSON zawierający pojazd i historię. Nie zawiera on
-plików binarnych. Po wdrożeniu zdjęć i dokumentów format eksportu zostanie rozszerzony do archiwum z
-manifestem JSON oraz katalogiem obiektów, bez umieszczania binarnej zawartości w bazie SQLite.
+Faza 2 dostarcza wersję 1 JSON z pojazdem i historią. Faza 4 wprowadza wersję 2, która dodaje
+metadane dokumentów, ale nadal nie zawiera plików binarnych. Przenośny backup zostanie później
+rozszerzony do archiwum z manifestem JSON oraz katalogiem obiektów, bez umieszczania binarnej
+zawartości w bazie SQLite ani kodowania jej jako Base64 w JSON.
 
 ## Granice implementacji
 

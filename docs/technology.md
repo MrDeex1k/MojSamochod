@@ -36,6 +36,8 @@ versions.
 | Local database        | Expo SQLite 57.0.2 and Drizzle ORM 0.45.2                                | Persistent SQLite access and typed queries.                       |
 | Database migrations   | Drizzle Kit 0.31.10                                                      | Generates reviewable SQL migrations bundled with the application. |
 | Record identifiers    | UUID 14.0.2 and Expo Crypto 57.0.2                                       | UUIDv7 generation backed by native secure randomness.             |
+| Document import       | Expo Document Picker 57.0.1                                              | Native PDF/JPEG/PNG selection with platform-granted file access.  |
+| Native file export    | Expo Sharing 57.0.16                                                     | Platform share/export surface for managed documents.              |
 
 NativeWind 5 is intentionally a preview dependency. Its compatibility with the active Expo SDK
 must be rechecked before SDK upgrades and before a production release.
@@ -131,18 +133,23 @@ JPEG processing, `expo-image` for native rendering, `expo-file-system` for priva
 and `@react-native-community/datetimepicker` for separate native date and UTC-time controls. Direct
 dependencies are pinned to Expo SDK-compatible versions in the application manifest.
 
+Phase 4 uses `expo-document-picker` for system PDF/JPEG/PNG selection and `expo-sharing` for native
+export. Android imports preserve the picker-granted `content://` URI until `expo-file-system` copies
+the file into private managed storage; copying first into Expo Go's shared cache can lose scoped
+read permission. Before sharing, the application creates a cache alias with the original file name
+so the platform surface does not expose the internal UUID storage key.
+
 ## Planned capabilities and open selections
 
 The following capabilities are part of the product direction but are not installed or implemented
 yet. A short technical spike should confirm each choice before it becomes a production dependency.
 
-| Capability              | Planned direction                                                                 | Decision still required                                                          |
-| ----------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Invoices and documents  | `ObjectStorage` backed by app-managed files with metadata and relations in SQLite | File import API, size limits, supported formats, orphan cleanup, export.         |
-| Reminders               | Local notifications scheduled from stored deadlines                               | Permission flow, rescheduling rules, timezone and overdue behavior.              |
-| Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records               | Full-tank rules, partial fills, units, rounding, invalid sequences.              |
-| Purchases               | Monthly and annual App Store and Google Play subscriptions                        | Purchase library, products, entitlement model, restore flow, receipt validation. |
-| Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code       | Serverless transport, identity, encryption, conflicts, retries, and recovery.    |
+| Capability              | Planned direction                                                           | Decision still required                                                          |
+| ----------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Reminders               | Local notifications scheduled from stored deadlines                         | Permission flow, rescheduling rules, timezone and overdue behavior.              |
+| Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records         | Full-tank rules, partial fills, units, rounding, invalid sequences.              |
+| Purchases               | Monthly and annual App Store and Google Play subscriptions                  | Purchase library, products, entitlement model, restore flow, receipt validation. |
+| Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code | Serverless transport, identity, encryption, conflicts, retries, and recovery.    |
 
 No new library should be selected only because it is popular. It must support the active Expo SDK,
 pass the repository's SFW policy, and demonstrate a clear maintenance and platform-compatibility
@@ -168,11 +175,11 @@ explicit product-scope decision.
 - Define export and restore behavior before calling the local-first data model production-ready.
 - Synchronization must not be added until stable identifiers and conflict rules exist.
 
-Binary vehicle photos and documents must live in app-managed file storage rather than SQLite BLOB
+Binary vehicle photos and documents live in app-managed file storage rather than SQLite BLOB
 columns. SQLite stores their stable identifiers, storage keys, MIME types, original names, sizes,
-SHA-256 digests, relations, and timestamps. Phase 2 defines the `ObjectStorage` contract and exports
-vehicle-history data as versioned JSON without binaries; the first local file implementation is
-part of Phase 3.
+SHA-256 digests, relations, states, and timestamps. Phase 4 extends the versioned JSON export with
+document metadata while intentionally keeping `binaryFilesIncluded` equal to `false`; a portable
+archive containing binaries remains production-hardening work.
 
 ## Verification matrix
 

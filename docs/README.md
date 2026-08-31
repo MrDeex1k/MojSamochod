@@ -70,6 +70,8 @@ include accounts, cloud storage, background synchronization, or a real-time sync
   document for Drizzle, UUIDv7, UTC event timestamps, migrations, managed files, and export.
 - [Vehicle history data export v1](./data-export-v1.md) — stable JSON portability contract for the
   vehicle and its history, without binary files.
+- [Vehicle history data export v2](./data-export-v2.md) — current JSON portability contract adding
+  document metadata while still excluding binary content.
 - [Vehicle history domain model](./domain-model.md) — approved entities, value types, invariants,
   lifecycle rules, and product decisions for the first vertical slice.
 - [First vehicle user flow](./first-vehicle-user-flow.md) — approved Polish working document covering
