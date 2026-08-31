@@ -5,6 +5,10 @@ import type {
   StagedObject,
   StagedObjectKey,
 } from "@/application/storage/object-storage";
+import {
+  maximumDocumentBytes,
+  maximumVehiclePhotoBytes,
+} from "@/application/storage/object-storage";
 import type { ManagedFileKind, ReadyManagedFileMetadata } from "@/domain/files/managed-file";
 import type { ManagedFileId } from "@/domain/shared/identifiers";
 import type { Clock } from "@/domain/shared/ports";
@@ -26,8 +30,32 @@ export class ManagedFileCoordinator {
   ) {}
 
   async import(source: ManagedFileSource): Promise<RepositoryResult<ReadyManagedFileMetadata>> {
-    const staged = await this.storage.stage(source);
+    const staged = await this.storage.stage({
+      ...source,
+      extension: extensionForMimeType(source.mimeType),
+      maximumBytes:
+        source.kind === "vehicle-photo" ? maximumVehiclePhotoBytes : maximumDocumentBytes,
+    });
     if (!staged.ok) return storageFailure(staged.error, "managedFile.import");
+
+    if (source.kind === "document") {
+      const duplicate = await this.repository.findReadyBySha256("document", staged.value.sha256);
+      if (!duplicate.ok) {
+        await this.storage.discard(staged.value.stagingKey);
+        return duplicate;
+      }
+      if (duplicate.value) {
+        await this.storage.discard(staged.value.stagingKey);
+        return {
+          error: {
+            cause: { managedFileId: duplicate.value.id },
+            kind: "conflict",
+            operation: "managedFile.importDuplicate",
+          },
+          ok: false,
+        };
+      }
+    }
 
     const timestamp = utcTimestampFromDate(this.clock.now());
     const metadataResult = await this.repository.createStaged({
@@ -60,6 +88,10 @@ export class ManagedFileCoordinator {
       : storageFailure(uri.error, "managedFile.getReadyUri");
   }
 
+  getReady(id: ManagedFileId): Promise<RepositoryResult<ReadyManagedFileMetadata | null>> {
+    return this.repository.getReady(id);
+  }
+
   async reconcile(): Promise<RepositoryResult<void>> {
     const pending = await this.repository.listRecoverable();
     if (!pending.ok) return pending;
@@ -87,6 +119,7 @@ export class ManagedFileCoordinator {
 
       const staged: StagedObject = {
         byteSize: metadata.byteSize,
+        extension: extensionForMimeType(metadata.mimeType),
         managedFileId: metadata.id,
         sha256: metadata.sha256,
         stagingKey: metadata.stagingKey as StagedObjectKey,
@@ -108,9 +141,9 @@ export class ManagedFileCoordinator {
       if (!ready.ok) return ready;
     }
 
-    const unreferencedPhotos = await this.repository.listUnreferencedVehiclePhotos();
-    if (!unreferencedPhotos.ok) return unreferencedPhotos;
-    for (const metadata of unreferencedPhotos.value) {
+    const unreferencedFiles = await this.repository.listUnreferencedReadyFiles();
+    if (!unreferencedFiles.ok) return unreferencedFiles;
+    for (const metadata of unreferencedFiles.value) {
       const removed = await this.remove(metadata.id);
       if (!removed.ok) return removed;
     }
@@ -164,6 +197,12 @@ export class ManagedFileCoordinator {
       },
     };
   }
+}
+
+function extensionForMimeType(mimeType: string): StagedObject["extension"] {
+  if (mimeType === "application/pdf") return "pdf";
+  if (mimeType === "image/png") return "png";
+  return "jpg";
 }
 
 function storageFailure<T>(

@@ -12,7 +12,7 @@ import {
   storageObjectKey,
   type StagedManagedFileMetadata,
 } from "@/domain/files/managed-file";
-import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
+import { managedFileIdFromUuidV7, type ManagedFileId } from "@/domain/shared/identifiers";
 import type { Clock } from "@/domain/shared/ports";
 import { utcTimestamp } from "@/domain/shared/value-objects";
 
@@ -20,6 +20,7 @@ import type { ManagedFileRepository } from "../repositories/managed-file-reposit
 import { ManagedFileCoordinator } from "./managed-file-coordinator";
 
 const id = managedFileIdFromUuidV7("018f47e2-7b31-7658-b336-34613389d00f");
+const secondId = managedFileIdFromUuidV7("018f47e2-7b32-7658-b336-34613389d00f");
 const timestamp = expectValid(utcTimestamp("2026-08-30T10:15:00.000Z", "timestamp"));
 const size = expectValid(byteSize(3));
 const hash = expectValid(sha256Digest("ab".repeat(32)));
@@ -66,6 +67,67 @@ describe("ManagedFileCoordinator", () => {
 
     expect(result).toMatchObject({ error: { kind: "unavailable" }, ok: false });
     expect(events).toContain("storage.discard");
+  });
+
+  it("keeps one ready record when identical documents are imported concurrently", async () => {
+    const records = new Map<
+      ManagedFileId,
+      Readonly<{ sha256: StagedManagedFileMetadata["sha256"]; status: "ready" | "staged" }>
+    >();
+    const discarded: string[] = [];
+    const repository = repositoryFake([]);
+    repository.findReadyBySha256 = async () => repositorySuccess(null);
+    repository.createStaged = async (metadata) => {
+      if ([...records.values()].some((record) => record.sha256 === metadata.sha256)) {
+        return repositoryFailure("conflict", "managedFile.createStaged");
+      }
+      records.set(metadata.id, { sha256: metadata.sha256, status: "staged" });
+      return repositorySuccess(undefined);
+    };
+    repository.markReady = async (managedFileId) => {
+      const record = records.get(managedFileId);
+      if (!record) return repositoryFailure("not-found", "managedFile.markReady");
+      records.set(managedFileId, { ...record, status: "ready" });
+      return repositorySuccess(undefined);
+    };
+    const storage = storageFake([]);
+    storage.stage = async (input) =>
+      objectStorageSuccess({
+        byteSize: size,
+        extension: "pdf",
+        managedFileId: input.managedFileId,
+        sha256: hash,
+        stagingKey: `staging/${input.managedFileId}.pdf` as StagedObjectKey,
+      });
+    storage.commit = async (staged) =>
+      objectStorageSuccess({
+        ...staged,
+        storageKey: expectValid(storageObjectKey(`objects/${staged.managedFileId}.pdf`)),
+      });
+    storage.discard = async (key) => {
+      discarded.push(key);
+      return objectStorageSuccess(undefined);
+    };
+    const coordinator = new ManagedFileCoordinator(clock, repository, storage);
+
+    const results = await Promise.all(
+      [id, secondId].map((managedFileId) =>
+        coordinator.import({
+          kind: "document",
+          managedFileId,
+          mimeType: "application/pdf",
+          originalName: "invoice.pdf",
+          sourceUri: "file:///invoice.pdf",
+        }),
+      ),
+    );
+
+    expect(results.filter((result) => result.ok)).toHaveLength(1);
+    expect(results.filter((result) => !result.ok && result.error.kind === "conflict")).toHaveLength(
+      1,
+    );
+    expect([...records.values()].filter((record) => record.status === "ready")).toHaveLength(1);
+    expect(discarded).toHaveLength(1);
   });
 
   it("reconciles tracked copies and removes untracked staging files", async () => {
@@ -138,9 +200,10 @@ function repositoryFake(events: string[]): ManagedFileRepository {
       events.push("repository.delete");
       return repositorySuccess(undefined);
     },
+    findReadyBySha256: async () => repositorySuccess(null),
     getReady: async () => repositorySuccess(null),
     listRecoverable: async () => repositorySuccess([]),
-    listUnreferencedVehiclePhotos: async () => repositorySuccess([]),
+    listUnreferencedReadyFiles: async () => repositorySuccess([]),
     markDeleting: async () => repositorySuccess(undefined),
     markReady: async () => {
       events.push("repository.markReady");
@@ -150,7 +213,13 @@ function repositoryFake(events: string[]): ManagedFileRepository {
 }
 
 function storageFake(events: string[]): ObjectStorage {
-  const staged: StagedObject = { byteSize: size, managedFileId: id, sha256: hash, stagingKey };
+  const staged: StagedObject = {
+    byteSize: size,
+    extension: "jpg",
+    managedFileId: id,
+    sha256: hash,
+    stagingKey,
+  };
   return {
     commit: async () => {
       events.push("storage.commit");

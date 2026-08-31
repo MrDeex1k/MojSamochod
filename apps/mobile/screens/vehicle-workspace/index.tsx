@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { ApplicationServices } from "@/components/providers/application-provider";
 import type { HistoryEntry } from "@/domain/history/history-entry";
+import type { VehicleDocument } from "@/domain/documents/vehicle-document";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 import { AdaptiveWorkspace } from "@/components/layout/adaptive-workspace";
 import { Screen } from "@/components/layout/screen";
@@ -14,19 +15,31 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useAppTranslation } from "@/localization/use-app-translation";
+import {
+  formatCurrencyMinorUnits,
+  formatLocalizedNumber,
+  formatUtcDateTime,
+} from "@/localization/formatters";
 
 import { EntryForm } from "./entry-form";
 import { EntryDetail } from "./entry-detail";
 import { EntryTypeSelection } from "./entry-type-selection";
 import { VehicleEditForm } from "./vehicle-edit-form";
+import { DocumentDetail } from "./document-detail";
+import { DocumentForm } from "./document-form";
+import { DocumentList } from "./document-list";
 
 type WorkspaceData = Readonly<{
+  documents: readonly VehicleDocument[];
   entries: readonly HistoryEntry[];
   photoUri: string | null;
   vehicle: Vehicle;
 }>;
 
 type WorkspaceMode =
+  | Readonly<{ document: VehicleDocument; kind: "document-detail" }>
+  | Readonly<{ document?: VehicleDocument; kind: "document-form" }>
+  | Readonly<{ kind: "documents" }>
   | Readonly<{ entry: HistoryEntry; kind: "detail" }>
   | Readonly<{ entry?: HistoryEntry; kind: "form"; type: HistoryEntry["type"] }>
   | Readonly<{ kind: "history" }>
@@ -37,12 +50,17 @@ type VehicleWorkspaceViewProps = WorkspaceData &
   Readonly<{
     mode: WorkspaceMode;
     onAddEntry: () => void;
+    onAddDocument: () => void;
     onCancelFlow: () => void;
     onChooseType: (type: HistoryEntry["type"]) => void;
+    onDocuments: () => void;
+    onDocumentsChanged: () => void;
+    onEditDocument: (document: VehicleDocument) => void;
     onEditEntry: (entry: HistoryEntry) => void;
     onEditVehicle: () => void;
     onSaved: () => void;
     onSelectEntry: (entry: HistoryEntry) => void;
+    onSelectDocument: (document: VehicleDocument) => void;
     services: ApplicationServices;
   }>;
 
@@ -97,8 +115,16 @@ export function VehicleWorkspaceScreen() {
       {...state.data}
       mode={mode}
       onAddEntry={() => setMode({ kind: "select-type" })}
+      onAddDocument={() => setMode({ kind: "document-form" })}
       onCancelFlow={() => setMode({ kind: "history" })}
       onChooseType={(type) => setMode({ kind: "form", type })}
+      onDocuments={() => setMode({ kind: "documents" })}
+      onDocumentsChanged={() => {
+        setMode({ kind: "documents" });
+        setState({ status: "loading" });
+        setAttempt((value) => value + 1);
+      }}
+      onEditDocument={(document) => setMode({ document, kind: "document-form" })}
       onEditEntry={(entry) => setMode({ entry, kind: "form", type: entry.type })}
       onEditVehicle={() => setMode({ kind: "vehicle-form" })}
       onSaved={() => {
@@ -107,27 +133,64 @@ export function VehicleWorkspaceScreen() {
         setAttempt((value) => value + 1);
       }}
       onSelectEntry={(entry) => setMode({ entry, kind: "detail" })}
+      onSelectDocument={(document) => setMode({ document, kind: "document-detail" })}
       services={services}
     />
   );
 }
 
 export function VehicleWorkspaceView({
+  documents,
   entries,
   mode,
   onAddEntry,
+  onAddDocument,
   onCancelFlow,
   onChooseType,
+  onDocuments,
+  onDocumentsChanged,
+  onEditDocument,
   onEditEntry,
   onEditVehicle,
   onSaved,
   onSelectEntry,
+  onSelectDocument,
   photoUri,
   services,
   vehicle,
 }: VehicleWorkspaceViewProps) {
   const phone =
-    mode.kind === "vehicle-form" ? (
+    mode.kind === "documents" ? (
+      <DocumentList
+        documents={documents}
+        entries={entries}
+        onAdd={onAddDocument}
+        onBack={onCancelFlow}
+        onSelect={onSelectDocument}
+      />
+    ) : mode.kind === "document-form" ? (
+      <DocumentForm
+        document={mode.document}
+        documents={services.documents}
+        entries={entries}
+        onCancel={onDocuments}
+        onSaved={onDocumentsChanged}
+        picker={services.documentPicker}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "document-detail" ? (
+      <DocumentDetail
+        document={mode.document}
+        documents={services.documents}
+        entries={entries}
+        onBack={onDocuments}
+        onChanged={onDocumentsChanged}
+        onEdit={() => onEditDocument(mode.document)}
+        picker={services.documentPicker}
+        presenter={services.documentPresenter}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "vehicle-form" ? (
       <VehicleEditForm
         {...services}
         existingPhotoUri={photoUri}
@@ -160,6 +223,7 @@ export function VehicleWorkspaceView({
         entries={entries}
         onAddEntry={onAddEntry}
         onEditVehicle={onEditVehicle}
+        onDocuments={onDocuments}
         onSelectEntry={onSelectEntry}
         photoUri={photoUri}
         vehicle={vehicle}
@@ -167,7 +231,27 @@ export function VehicleWorkspaceView({
     );
 
   const primaryPane =
-    mode.kind === "vehicle-form" ? (
+    mode.kind === "documents" || mode.kind === "document-detail" ? (
+      <DocumentList
+        documents={documents}
+        embedded
+        entries={entries}
+        onAdd={onAddDocument}
+        onBack={onCancelFlow}
+        onSelect={onSelectDocument}
+      />
+    ) : mode.kind === "document-form" ? (
+      <DocumentForm
+        document={mode.document}
+        documents={services.documents}
+        embedded
+        entries={entries}
+        onCancel={onDocuments}
+        onSaved={onDocumentsChanged}
+        picker={services.documentPicker}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "vehicle-form" ? (
       <VehicleEditForm
         {...services}
         embedded
@@ -192,13 +276,27 @@ export function VehicleWorkspaceView({
       <HistoryCard
         entries={entries}
         onAddEntry={onAddEntry}
+        onDocuments={onDocuments}
         onSelectEntry={onSelectEntry}
         vehicle={vehicle}
       />
     );
 
   const detailPane =
-    mode.kind === "detail" ? (
+    mode.kind === "document-detail" ? (
+      <DocumentDetail
+        document={mode.document}
+        documents={services.documents}
+        embedded
+        entries={entries}
+        onBack={onDocuments}
+        onChanged={onDocumentsChanged}
+        onEdit={() => onEditDocument(mode.document)}
+        picker={services.documentPicker}
+        presenter={services.documentPresenter}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "detail" ? (
       <EntryDetail
         embedded
         entry={mode.entry}
@@ -225,7 +323,13 @@ export function VehicleWorkspaceView({
 function PhoneWorkspace(
   props: Pick<
     VehicleWorkspaceViewProps,
-    "entries" | "onAddEntry" | "onEditVehicle" | "onSelectEntry" | "photoUri" | "vehicle"
+    | "entries"
+    | "onAddEntry"
+    | "onDocuments"
+    | "onEditVehicle"
+    | "onSelectEntry"
+    | "photoUri"
+    | "vehicle"
   >,
 ) {
   const { t } = useAppTranslation();
@@ -234,6 +338,7 @@ function PhoneWorkspace(
       <View className="gap-content">
         <VehicleSummary {...props} />
         <Button label={`+ ${t("workspace.addEntry")}`} onPress={props.onAddEntry} />
+        <Button label={t("documents.title")} onPress={props.onDocuments} variant="secondary" />
         <HistoryContent
           entries={props.entries}
           onAddEntry={props.onAddEntry}
@@ -323,14 +428,19 @@ function VehicleSummary({
 function HistoryCard({
   entries,
   onAddEntry,
+  onDocuments,
   onSelectEntry,
   vehicle,
-}: Pick<VehicleWorkspaceViewProps, "entries" | "onAddEntry" | "onSelectEntry" | "vehicle">) {
+}: Pick<
+  VehicleWorkspaceViewProps,
+  "entries" | "onAddEntry" | "onDocuments" | "onSelectEntry" | "vehicle"
+>) {
   const { t } = useAppTranslation();
   return (
     <Card className="h-full">
       <ScrollView contentContainerClassName="gap-content">
         <Button label={`+ ${t("workspace.addEntry")}`} onPress={onAddEntry} />
+        <Button label={t("documents.title")} onPress={onDocuments} variant="secondary" />
         <HistoryContent
           entries={entries}
           onAddEntry={onAddEntry}
@@ -408,9 +518,7 @@ function HistoryRow({
         )}
         {entry.cost ? (
           <Text className="text-caption text-secondary">
-            {currencyFormatter(i18n.language, entry.cost.currency).format(
-              entry.cost.minorUnits / 100,
-            )}
+            {formatCurrencyMinorUnits(entry.cost.minorUnits, entry.cost.currency, i18n.language)}
           </Text>
         ) : null}
       </View>
@@ -427,55 +535,18 @@ function entrySubject(entry: HistoryEntry, t: (key: string) => string): string {
 function formatEntryDistance(metres: number, vehicle: Vehicle, locale: string): string {
   const divisor = vehicle.distanceUnitPreference === "kilometres" ? 1000 : 1609.344;
   const unit = vehicle.distanceUnitPreference === "kilometres" ? "km" : "mi";
-  return `${numberFormatter(locale).format(Math.round(metres / divisor))} ${unit}`;
+  return `${formatLocalizedNumber(Math.round(metres / divisor), locale)} ${unit}`;
 }
 
 function formatOccurredAt(entry: HistoryEntry, locale: string): string {
-  return dateTimeFormatter(locale).format(new Date(entry.occurredAt));
+  return formatUtcDateTime(entry.occurredAt, locale);
 }
 
 function formatDistance(vehicle: Vehicle, locale: string): string | null {
   if (vehicle.currentOdometerMetres === undefined) return null;
   const divisor = vehicle.distanceUnitPreference === "kilometres" ? 1000 : 1609.344;
   const unit = vehicle.distanceUnitPreference === "kilometres" ? "km" : "mi";
-  return `${numberFormatter(locale).format(Math.round(vehicle.currentOdometerMetres / divisor))} ${unit}`;
-}
-
-const numberFormatters = new Map<string, Intl.NumberFormat>();
-const currencyFormatters = new Map<string, Intl.NumberFormat>();
-const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>();
-
-function numberFormatter(locale: string): Intl.NumberFormat {
-  const existing = numberFormatters.get(locale);
-  if (existing) return existing;
-  const formatter = new Intl.NumberFormat(locale);
-  numberFormatters.set(locale, formatter);
-  return formatter;
-}
-
-function currencyFormatter(locale: string, currency: string): Intl.NumberFormat {
-  const key = `${locale}:${currency}`;
-  const existing = currencyFormatters.get(key);
-  if (existing) return existing;
-  const formatter = new Intl.NumberFormat(locale, { currency, style: "currency" });
-  currencyFormatters.set(key, formatter);
-  return formatter;
-}
-
-function dateTimeFormatter(locale: string): Intl.DateTimeFormat {
-  const existing = dateTimeFormatters.get(locale);
-  if (existing) return existing;
-  const formatter = new Intl.DateTimeFormat(locale, {
-    day: "2-digit",
-    hour: "2-digit",
-    hour12: false,
-    minute: "2-digit",
-    month: "2-digit",
-    timeZone: "UTC",
-    year: "numeric",
-  });
-  dateTimeFormatters.set(locale, formatter);
-  return formatter;
+  return `${formatLocalizedNumber(Math.round(vehicle.currentOdometerMetres / divisor), locale)} ${unit}`;
 }
 
 async function loadWorkspace(
@@ -489,10 +560,15 @@ async function loadWorkspace(
   const vehicle = vehicleResult.value;
   const entriesResult = await services.historyEntries.list(vehicle.id);
   if (!entriesResult.ok) return { status: "error" };
+  const documentsResult = await services.documents.list(vehicle.id);
+  if (!documentsResult.ok) return { status: "error" };
   let photoUri: string | null = null;
   if (vehicle.photoReference) {
     const photoResult = await services.managedFiles.getReadyUri(vehicle.photoReference);
     if (photoResult.ok) photoUri = photoResult.value;
   }
-  return { data: { entries: entriesResult.value, photoUri, vehicle }, status: "ready" };
+  return {
+    data: { documents: documentsResult.value, entries: entriesResult.value, photoUri, vehicle },
+    status: "ready",
+  };
 }

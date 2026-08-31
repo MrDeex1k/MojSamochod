@@ -5,13 +5,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-const migrationSql = [
+const migrationFileNames = [
   "0000_create_vehicle_history_schema.sql",
   "0001_add_managed_vehicle_photos.sql",
-]
-  .map((fileName) => readFileSync(join(__dirname, "migrations", fileName), "utf8"))
-  .join("\n")
-  .replaceAll("--> statement-breakpoint", "");
+  "0002_add_vehicle_documents.sql",
+  "0003_enforce_document_sha256_uniqueness.sql",
+  "0004_enforce_document_entry_vehicle_consistency.sql",
+  "0005_enforce_history_entry_document_vehicle_consistency.sql",
+] as const;
+const migrationSql = readMigrations(migrationFileNames);
 const temporaryDirectories: string[] = [];
 
 afterEach(() => {
@@ -147,17 +149,135 @@ describe("SQLite persistence resilience", () => {
     });
     reopened.close();
   });
+
+  it("atomically reserves one active document for a SHA-256 digest", () => {
+    const database = openMigratedDatabase(createTemporaryDatabasePath());
+    insertManagedDocument(database, managedFileId);
+
+    expect(() => insertManagedDocument(database, secondManagedFileId)).toThrow(
+      /UNIQUE constraint failed/,
+    );
+    expect(
+      database
+        .prepare(
+          "SELECT count(*) AS count FROM managed_files WHERE kind = 'document' AND sha256 = ?",
+        )
+        .get("cd".repeat(32)),
+    ).toEqual({ count: 1 });
+    database.close();
+  });
+
+  it("rejects a document relation to a history entry owned by another vehicle", () => {
+    const database = openMigratedDatabase(createTemporaryDatabasePath());
+    insertVehicle(database);
+    insertSecondVehicle(database);
+    insertHistoryEntry(database, secondVehicleId);
+    insertReadyManagedDocument(database);
+
+    expect(() =>
+      database
+        .prepare(
+          `INSERT INTO vehicle_documents
+            (id, vehicle_id, history_entry_id, file_reference, name, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'Invoice', ?, ?)`,
+        )
+        .run(documentId, vehicleId, entryId, managedFileId, timestamp, timestamp),
+    ).toThrow(/vehicle document history entry belongs to another vehicle/);
+    expect(database.prepare("SELECT count(*) AS count FROM vehicle_documents").get()).toEqual({
+      count: 0,
+    });
+    database
+      .prepare(
+        `INSERT INTO vehicle_documents
+          (id, vehicle_id, history_entry_id, file_reference, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'Invoice', ?, ?)`,
+      )
+      .run(documentId, secondVehicleId, entryId, managedFileId, timestamp, timestamp);
+    expect(() =>
+      database
+        .prepare("UPDATE vehicle_documents SET vehicle_id = ? WHERE id = ?")
+        .run(vehicleId, documentId),
+    ).toThrow(/vehicle document history entry belongs to another vehicle/);
+    expect(
+      database.prepare("SELECT vehicle_id FROM vehicle_documents WHERE id = ?").get(documentId),
+    ).toEqual({ vehicle_id: secondVehicleId });
+    database.close();
+  });
+
+  it("rejects moving a history entry away from its document's vehicle", () => {
+    const database = openMigratedDatabase(createTemporaryDatabasePath());
+    insertVehicle(database);
+    insertSecondVehicle(database);
+    insertHistoryEntry(database, vehicleId);
+    insertReadyManagedDocument(database);
+    database
+      .prepare(
+        `INSERT INTO vehicle_documents
+          (id, vehicle_id, history_entry_id, file_reference, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'Invoice', ?, ?)`,
+      )
+      .run(documentId, vehicleId, entryId, managedFileId, timestamp, timestamp);
+
+    expect(() =>
+      database
+        .prepare("UPDATE history_entries SET vehicle_id = ? WHERE id = ?")
+        .run(secondVehicleId, entryId),
+    ).toThrow(/history entry document belongs to another vehicle/);
+    expect(
+      database.prepare("SELECT vehicle_id FROM history_entries WHERE id = ?").get(entryId),
+    ).toEqual({ vehicle_id: vehicleId });
+    database.close();
+  });
+
+  it("detaches a pre-existing mismatched relation while migrating the schema", () => {
+    const database = new DatabaseSync(createTemporaryDatabasePath());
+    database.exec("PRAGMA foreign_keys = ON;");
+    database.exec(readMigrations(migrationFileNames.slice(0, 4)));
+    insertVehicle(database);
+    insertSecondVehicle(database);
+    insertHistoryEntry(database, secondVehicleId);
+    insertReadyManagedDocument(database);
+    database
+      .prepare(
+        `INSERT INTO vehicle_documents
+          (id, vehicle_id, history_entry_id, file_reference, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'Invoice', ?, ?)`,
+      )
+      .run(documentId, vehicleId, entryId, managedFileId, timestamp, timestamp);
+
+    database.exec("BEGIN;");
+    database.exec(readMigrations(migrationFileNames.slice(4)));
+    database.exec("COMMIT;");
+
+    expect(
+      database
+        .prepare("SELECT vehicle_id, history_entry_id FROM vehicle_documents WHERE id = ?")
+        .get(documentId),
+    ).toEqual({ history_entry_id: null, vehicle_id: vehicleId });
+    expect(database.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    database.close();
+  });
 });
 
 const vehicleId = "018f47e2-7b2f-7cc8-98c4-dc0c0c07398f";
 const entryId = "018f47e2-7b30-7b80-99c0-81b80d9a57ce";
 const managedFileId = "018f47e2-7b31-7658-b336-34613389d00f";
+const secondManagedFileId = "018f47e2-7b32-7658-b336-34613389d00f";
+const secondVehicleId = "018f47e2-7b33-7658-b336-34613389d00f";
+const documentId = "018f47e2-7b34-7658-b336-34613389d00f";
 const timestamp = "2026-08-30T10:15:00.000Z";
 
 function createTemporaryDatabasePath(): string {
   const directory = mkdtempSync(join(tmpdir(), "moje-auto-sqlite-test-"));
   temporaryDirectories.push(directory);
   return join(directory, "persistence.db");
+}
+
+function readMigrations(fileNames: readonly string[]): string {
+  return fileNames
+    .map((fileName) => readFileSync(join(__dirname, "migrations", fileName), "utf8"))
+    .join("\n")
+    .replaceAll("--> statement-breakpoint", "");
 }
 
 function openMigratedDatabase(databasePath: string): DatabaseSync {
@@ -178,6 +298,26 @@ function insertVehicle(database: DatabaseSync, photoReference: string | null = n
     .run(vehicleId, photoReference, timestamp, timestamp);
 }
 
+function insertSecondVehicle(database: DatabaseSync): void {
+  database
+    .prepare(
+      `INSERT INTO vehicles
+        (id, make, model, distance_unit_preference, created_at, updated_at)
+       VALUES (?, 'BMW', 'M2', 'kilometres', ?, ?)`,
+    )
+    .run(secondVehicleId, timestamp, timestamp);
+}
+
+function insertHistoryEntry(database: DatabaseSync, ownerVehicleId: string): void {
+  database
+    .prepare(
+      `INSERT INTO history_entries
+        (id, vehicle_id, type, occurred_at, created_at, updated_at)
+       VALUES (?, ?, 'repair', ?, ?, ?)`,
+    )
+    .run(entryId, ownerVehicleId, timestamp, timestamp, timestamp);
+}
+
 function insertManagedPhoto(database: DatabaseSync): void {
   database
     .prepare(
@@ -187,4 +327,26 @@ function insertManagedPhoto(database: DatabaseSync): void {
        VALUES (?, 'vehicle-photo', 'ready', ?, 'image/jpeg', 'vehicle.jpg', 3, ?, ?, ?)`,
     )
     .run(managedFileId, `objects/${managedFileId}.jpg`, "ab".repeat(32), timestamp, timestamp);
+}
+
+function insertManagedDocument(database: DatabaseSync, id: string): void {
+  database
+    .prepare(
+      `INSERT INTO managed_files
+        (id, kind, status, staging_key, mime_type, original_name, byte_size, sha256,
+         created_at, updated_at)
+       VALUES (?, 'document', 'staged', ?, 'application/pdf', 'invoice.pdf', 3, ?, ?, ?)`,
+    )
+    .run(id, `staging/${id}.pdf`, "cd".repeat(32), timestamp, timestamp);
+}
+
+function insertReadyManagedDocument(database: DatabaseSync): void {
+  database
+    .prepare(
+      `INSERT INTO managed_files
+        (id, kind, status, storage_key, mime_type, original_name, byte_size, sha256,
+         created_at, updated_at)
+       VALUES (?, 'document', 'ready', ?, 'application/pdf', 'invoice.pdf', 3, ?, ?, ?)`,
+    )
+    .run(managedFileId, `objects/${managedFileId}.pdf`, "ef".repeat(32), timestamp, timestamp);
 }

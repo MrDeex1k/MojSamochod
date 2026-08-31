@@ -15,6 +15,34 @@
       "when": 1788119691844,
       "tag": "0001_add_managed_vehicle_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788130655765,
+      "tag": "0002_add_vehicle_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788187399311,
+      "tag": "0003_enforce_document_sha256_uniqueness",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788191612174,
+      "tag": "0004_enforce_document_entry_vehicle_consistency",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788193413134,
+      "tag": "0005_enforce_history_entry_document_vehicle_consistency",
+      "breakpoints": true
     }
   ]
 }

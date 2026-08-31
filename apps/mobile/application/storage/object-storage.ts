@@ -3,6 +3,9 @@ import type { ManagedFileId } from "@/domain/shared/identifiers";
 
 declare const stagedObjectKeyBrand: unique symbol;
 
+export const maximumDocumentBytes = 20 * 1024 * 1024;
+export const maximumVehiclePhotoBytes = 5 * 1024 * 1024;
+
 export type StagedObjectKey = string & { readonly [stagedObjectKeyBrand]: true };
 
 export type ObjectStorageErrorKind =
@@ -23,6 +26,7 @@ export type ObjectStorageResult<T> =
 
 export type StagedObject = Readonly<{
   byteSize: ByteSize;
+  extension: "jpg" | "pdf" | "png";
   managedFileId: ManagedFileId;
   sha256: Sha256Digest;
   stagingKey: StagedObjectKey;
@@ -38,7 +42,12 @@ export type StoredObject = Readonly<{
 export interface ObjectStorage {
   /** Copies an external URI into private staging storage and computes its integrity metadata. */
   stage(
-    input: Readonly<{ managedFileId: ManagedFileId; sourceUri: string }>,
+    input: Readonly<{
+      extension: StagedObject["extension"];
+      managedFileId: ManagedFileId;
+      maximumBytes: number;
+      sourceUri: string;
+    }>,
   ): Promise<ObjectStorageResult<StagedObject>>;
 
   /** Makes a staged object durable. Repeating the same commit must return the same stored object. */

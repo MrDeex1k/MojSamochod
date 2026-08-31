@@ -39,6 +39,9 @@ expo-env.d.ts
 coverage/
 *.lcov
 
+# local example photos
+/example-photos/
+
 # macOS
 .DS_Store
 *.pem

@@ -119,6 +119,28 @@ describe("DrizzleVehicleHistoryRepository", () => {
     expect(transaction.update).not.toHaveBeenCalled();
   });
 
+  it("detaches documents before deleting their related history entry", async () => {
+    const update = jest.fn(() => mutationBuilder(1));
+    const remove = jest.fn(() => mutationBuilder(1));
+    const transaction = {
+      delete: remove,
+      select: jest.fn().mockReturnValue(selectOne({ id: entry.id })),
+      update,
+    };
+    const database = {
+      transaction: jest.fn((callback: (value: unknown) => unknown) => callback(transaction)),
+    } as unknown as AppDatabase;
+    const repository: HistoryEntryRepository = new DrizzleVehicleHistoryRepository(database);
+
+    await expect(repository.delete(vehicle.id, entry.id)).resolves.toEqual({
+      ok: true,
+      value: undefined,
+    });
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(update.mock.invocationCallOrder[0]).toBeLessThan(remove.mock.invocationCallOrder[0]!);
+  });
+
   it("maps invalid stored domain data to a typed corruption error", async () => {
     const database = {
       select: jest.fn().mockReturnValue({

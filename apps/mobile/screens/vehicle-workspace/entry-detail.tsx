@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
+import {
+  formatCurrencyMinorUnits,
+  formatLocalizedNumber,
+  formatUtcDateTime,
+} from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
 export function EntryDetail({
@@ -68,7 +73,7 @@ export function EntryDetail({
       <View className="gap-compact border-t border-divider pt-content">
         <DetailRow
           label={t("entryDetail.dateTime")}
-          value={dateTimeFormatter(i18n.language).format(new Date(entry.occurredAt)) + " UTC"}
+          value={`${formatUtcDateTime(entry.occurredAt, i18n.language)} UTC`}
         />
         {entry.odometerMetres === undefined ? null : (
           <DetailRow
@@ -79,8 +84,10 @@ export function EntryDetail({
         {entry.cost ? (
           <DetailRow
             label={t("entryDetail.cost")}
-            value={currencyFormatter(i18n.language, entry.cost.currency).format(
-              entry.cost.minorUnits / 100,
+            value={formatCurrencyMinorUnits(
+              entry.cost.minorUnits,
+              entry.cost.currency,
+              i18n.language,
             )}
           />
         ) : null}
@@ -167,42 +174,8 @@ function entrySubject(entry: HistoryEntry, t: (key: string) => string): string {
   return entry.details.description ?? t(`entryForm.inspectionKinds.${entry.details.kind}`);
 }
 
-const dates = new Map<string, Intl.DateTimeFormat>();
-const currencies = new Map<string, Intl.NumberFormat>();
-const numbers = new Map<string, Intl.NumberFormat>();
-
-function dateTimeFormatter(locale: string): Intl.DateTimeFormat {
-  const existing = dates.get(locale);
-  if (existing) return existing;
-  const formatter = new Intl.DateTimeFormat(locale, {
-    day: "2-digit",
-    hour: "2-digit",
-    hour12: false,
-    minute: "2-digit",
-    month: "2-digit",
-    timeZone: "UTC",
-    year: "numeric",
-  });
-  dates.set(locale, formatter);
-  return formatter;
-}
-
-function currencyFormatter(locale: string, currency: string): Intl.NumberFormat {
-  const key = `${locale}:${currency}`;
-  const existing = currencies.get(key);
-  if (existing) return existing;
-  const formatter = new Intl.NumberFormat(locale, { currency, style: "currency" });
-  currencies.set(key, formatter);
-  return formatter;
-}
-
 function formatOdometer(metres: number, vehicle: Vehicle, locale: string): string {
   const unit = vehicle.distanceUnitPreference === "miles" ? "mi" : "km";
   const divisor = vehicle.distanceUnitPreference === "miles" ? 1609.344 : 1000;
-  let formatter = numbers.get(locale);
-  if (!formatter) {
-    formatter = new Intl.NumberFormat(locale);
-    numbers.set(locale, formatter);
-  }
-  return `${formatter.format(Math.round(metres / divisor))} ${unit}`;
+  return `${formatLocalizedNumber(Math.round(metres / divisor), locale)} ${unit}`;
 }

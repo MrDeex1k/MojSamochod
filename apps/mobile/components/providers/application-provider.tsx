@@ -2,12 +2,14 @@ import { createContext, type PropsWithChildren, useContext, useEffect, useState 
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
+import { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 import { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { Screen } from "@/components/layout/screen";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
 import { DrizzleManagedFileRepository } from "@/infrastructure/database/drizzle-managed-file-repository";
+import { DrizzleVehicleDocumentRepository } from "@/infrastructure/database/drizzle-vehicle-document-repository";
 import { DrizzleVehicleHistoryRepository } from "@/infrastructure/database/drizzle-vehicle-history-repository";
 import type { AppDatabase } from "@/infrastructure/database/database";
 import { UuidV7IdGenerator } from "@/infrastructure/identity/uuid-v7-id-generator";
@@ -15,6 +17,14 @@ import {
   GalleryVehiclePhotoPicker,
   type VehiclePhotoPicker,
 } from "@/infrastructure/media/gallery-vehicle-photo-picker";
+import {
+  NativeDocumentPresenter,
+  type DocumentPresenter,
+} from "@/infrastructure/documents/native-document-presenter";
+import {
+  SystemDocumentPicker,
+  type DocumentFilePicker,
+} from "@/infrastructure/documents/system-document-picker";
 import { LocalObjectStorage } from "@/infrastructure/storage/local-object-storage";
 import { SystemClock } from "@/infrastructure/time/system-clock";
 import { useAppTranslation } from "@/localization/use-app-translation";
@@ -23,6 +33,9 @@ import { useDatabase } from "./database-provider";
 
 export type ApplicationServices = Readonly<{
   clock: Clock;
+  documentPicker: DocumentFilePicker;
+  documentPresenter: DocumentPresenter;
+  documents: VehicleDocumentService;
   historyEntries: HistoryEntryRepository;
   idGenerator: IdGenerator;
   managedFiles: ManagedFileCoordinator;
@@ -79,15 +92,25 @@ export function ApplicationProvider({ children }: PropsWithChildren) {
 function createApplicationServices(database: AppDatabase): ApplicationServices {
   const clock = new SystemClock();
   const vehicleHistory = new DrizzleVehicleHistoryRepository(database);
+  const idGenerator = new UuidV7IdGenerator();
+  const managedFiles = new ManagedFileCoordinator(
+    clock,
+    new DrizzleManagedFileRepository(database),
+    new LocalObjectStorage(),
+  );
   return {
     clock,
-    historyEntries: vehicleHistory,
-    idGenerator: new UuidV7IdGenerator(),
-    managedFiles: new ManagedFileCoordinator(
+    documentPicker: new SystemDocumentPicker(),
+    documentPresenter: new NativeDocumentPresenter(),
+    documents: new VehicleDocumentService(
       clock,
-      new DrizzleManagedFileRepository(database),
-      new LocalObjectStorage(),
+      idGenerator,
+      new DrizzleVehicleDocumentRepository(database),
+      managedFiles,
     ),
+    historyEntries: vehicleHistory,
+    idGenerator,
+    managedFiles,
     photoPicker: new GalleryVehiclePhotoPicker(),
     vehicles: vehicleHistory,
   };

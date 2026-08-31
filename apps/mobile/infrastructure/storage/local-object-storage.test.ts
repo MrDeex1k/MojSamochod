@@ -24,12 +24,18 @@ describe("LocalObjectStorage", () => {
     const driver = new MemoryDriver(new Uint8Array([1, 2, 3]));
     const storage = new LocalObjectStorage(driver);
 
-    const result = await storage.stage({ managedFileId, sourceUri: "file:///selected.jpg" });
+    const result = await storage.stage({
+      extension: "jpg",
+      managedFileId,
+      maximumBytes: maximumVehiclePhotoBytes,
+      sourceUri: "file:///selected.jpg",
+    });
 
     expect(result).toEqual({
       ok: true,
       value: {
         byteSize: 3,
+        extension: "jpg",
         managedFileId,
         sha256: "ab".repeat(32),
         stagingKey: `staging/${managedFileId}.jpg`,
@@ -42,16 +48,27 @@ describe("LocalObjectStorage", () => {
     const driver = new MemoryDriver(new Uint8Array(maximumVehiclePhotoBytes + 1));
     const storage = new LocalObjectStorage(driver);
 
-    const result = await storage.stage({ managedFileId, sourceUri: "file:///large.jpg" });
+    const result = await storage.stage({
+      extension: "jpg",
+      managedFileId,
+      maximumBytes: maximumVehiclePhotoBytes,
+      sourceUri: "file:///large.jpg",
+    });
 
     expect(result).toMatchObject({ error: { kind: "invalid-source" }, ok: false });
     expect(driver.files.size).toBe(0);
+    expect(driver.readCalls).toBe(0);
   });
 
   it("commits idempotently and treats repeated deletion as success", async () => {
     const driver = new MemoryDriver(new Uint8Array([1]));
     const storage = new LocalObjectStorage(driver);
-    const staged = await storage.stage({ managedFileId, sourceUri: "file:///selected.jpg" });
+    const staged = await storage.stage({
+      extension: "jpg",
+      managedFileId,
+      maximumBytes: maximumVehiclePhotoBytes,
+      sourceUri: "file:///selected.jpg",
+    });
     if (!staged.ok) throw new Error("Expected staged object");
 
     const first = await storage.commit(staged.value);
@@ -72,7 +89,12 @@ describe("LocalObjectStorage", () => {
   it("resolves a committed photo after the storage service is recreated", async () => {
     const driver = new MemoryDriver(new Uint8Array([1, 2, 3]));
     const firstStorage = new LocalObjectStorage(driver);
-    const staged = await firstStorage.stage({ managedFileId, sourceUri: "file:///selected.jpg" });
+    const staged = await firstStorage.stage({
+      extension: "jpg",
+      managedFileId,
+      maximumBytes: maximumVehiclePhotoBytes,
+      sourceUri: "file:///selected.jpg",
+    });
     if (!staged.ok) throw new Error("Expected staged object");
     const committed = await firstStorage.commit(staged.value);
     if (!committed.ok) throw new Error("Expected committed object");
@@ -89,6 +111,7 @@ describe("LocalObjectStorage", () => {
 class MemoryDriver implements ObjectStorageDriver {
   readonly copiedSources: string[] = [];
   readonly files = new Map<string, Uint8Array<ArrayBuffer>>();
+  readCalls = 0;
 
   constructor(private readonly source: Uint8Array<ArrayBuffer>) {}
 
@@ -122,9 +145,14 @@ class MemoryDriver implements ObjectStorageDriver {
   }
 
   async read(key: string): Promise<Uint8Array<ArrayBuffer>> {
+    this.readCalls += 1;
     const value = this.files.get(key);
     if (!value) throw new Error("Missing file");
     return value;
+  }
+
+  size(key: string): number {
+    return this.files.get(key)?.byteLength ?? 0;
   }
 
   uri(key: string): string {

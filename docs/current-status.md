@@ -10,8 +10,9 @@ opisywanego etapu.
   kierunku wizualnego, jest zakończona.
 - Fundament aplikacji z fazy 1 został zintegrowany z `main`.
 - Faza 2, czyli lokalna persystencja danych, została zintegrowana z `main`.
-- Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, jest zaimplementowana i zweryfikowana
-  na branchu `feat/vehicle-history-slice`.
+- Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, została zintegrowana z `main`.
+- Faza 4, czyli dokumenty i faktury, jest zaimplementowana i zweryfikowana na branchu
+  `feat/documents-and-invoices`.
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -27,6 +28,11 @@ opisywanego etapu.
   tworzenie, szczegóły, edycję i bezpieczne usuwanie przeglądów, wymian i napraw.
 - Formularz wpisu ma osobne natywne kontrolki daty oraz godziny UTC, które zapisują jeden znacznik
   `occurredAt` z dokładnością do minuty. Po zapisie aplikacja wraca do historii.
+- Przestrzeń pojazdu udostępnia listę dokumentów i faktur. Użytkownik może zaimportować plik PDF,
+  JPEG albo PNG z systemowego selektora, nadać mu nazwę i opcjonalnie uzupełnić datę, kwotę,
+  walutę, notatki oraz relację z jednym wpisem historii.
+- Szczegóły dokumentu obsługują podgląd obrazu w aplikacji, natywny eksport PDF, edycję metadanych,
+  zastąpienie pliku z zachowaniem tożsamości i relacji oraz trwałe usunięcie po potwierdzeniu.
 - Główny layout zapewnia `SafeAreaProvider`, ciemny pasek stanu i wspólny import stylów.
 - Telefon jest obecnie obsługiwany w pionie, a tablet w poziomie. Pozostałe układy pokazują
   komunikat proszący o obrócenie urządzenia.
@@ -52,11 +58,11 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 25 zestawów i 108 testów komponentów, układu adaptacyjnego, inicjalizacji
-  bazy, domeny, mapperów rekordów, zachowania repozytoriów, trwałości SQLite, eksportu,
-  zarządzanych plików oraz lokalizacji.
+- Aktualny zestaw zawiera 34 zestawy i 149 testów komponentów, układu adaptacyjnego, inicjalizacji
+  bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
+  dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
-- React Doctor 0.9.12 dla zmian na branchu kończy się wynikiem 96/100 bez wykrytych problemów.
+- React Doctor 0.9.12 dla zmian na branchu kończy się wynikiem 100/100 bez wykrytych problemów.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
 - Po implementacji Fazy 3 bundle'e Hermes zostały ponownie poprawnie wygenerowane osobno dla iOS i
   Androida, wraz z nowymi modułami zdjęć, systemu plików i selektora daty oraz czasu.
@@ -70,6 +76,11 @@ opisywanego etapu.
   pełny przepływ: ponowne uruchomienie z zachowaniem danych, dodanie trzech typów wpisów, szczegóły,
   wejście w edycję, odrzucenie zmian i potwierdzone usunięcie wpisu. Przepływ zdjęcia sprawdzono na
   obu systemach mobilnych z plikami testowymi dostarczonymi w katalogu roboczym.
+- Końcowa weryfikacja Fazy 4 na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet
+  potwierdziła import z systemowego selektora, trwałość po przeładowaniu, listę i szczegóły w układzie
+  telefonu oraz tabletu. Na iPhonie sprawdzono pełny przepływ PDF: import z metadanymi, relację ze
+  wpisem, edycję, odrzucenie duplikatu SHA-256, zastąpienie obrazem, podgląd, czytelną nazwę w
+  natywnym eksporcie i usunięcie.
 
 ### Domena i persystencja
 
@@ -90,14 +101,25 @@ opisywanego etapu.
   pełny rollback przerwanego zapisu oraz odrzucanie rekordów łamiących ograniczenia schematu.
 - Błąd migracji zamyka połączenie i pozostaje błędem źródłowym również wtedy, gdy samo zamknięcie
   połączenia także się nie powiedzie.
-- Eksport `moje-auto-vehicle-history` w wersji 1 tworzy czytelny JSON pojazdu i historii, także dla
-  pustej bazy. Format jest niezależny od schematu Drizzle, nie zawiera zdjęć ani innych plików
-  binarnych i ma osobną dokumentację kompatybilności.
+- Eksport `moje-auto-vehicle-history` w wersji 2 tworzy czytelny JSON pojazdu, historii i metadanych
+  dokumentów, także dla pustej bazy. Nie zawiera zdjęć ani plików binarnych; pole
+  `binaryFilesIncluded` pozostaje równe `false`, a kontrakt ma osobną dokumentację kompatybilności.
 - Kontrakt `ObjectStorage` rozdziela etapowanie, trwałe zatwierdzenie, odrzucenie, usunięcie i eksport
   obiektu. Metadane definiują rozmiar, SHA-256 i bezpieczny względny klucz magazynu, a dokumentacja
   opisuje odzyskiwanie po przerwaniu operacji między SQLite i systemem plików.
 - Uzgadnianie przy starcie kończy oczekujące zapisy i usunięcia oraz usuwa osierocone pliki stagingu
-  i niepowiązane zdjęcia. Test ponownego otwarcia potwierdza trwałość relacji zdjęcia i wpisu historii.
+  i niepowiązane zdjęcia lub dokumenty. Test ponownego otwarcia potwierdza trwałość relacji zdjęcia,
+  dokumentu i wpisu historii.
+- Migracja `0002_add_vehicle_documents.sql` dodaje metadane dokumentów i ich relacje,
+  `0003_enforce_document_sha256_uniqueness.sql` atomowo rezerwuje aktywną zawartość dokumentu po
+  SHA-256, a `0004_enforce_document_entry_vehicle_consistency.sql` wymusza zgodność pojazdu dokumentu
+  i powiązanego wpisu historii przy zmianie dokumentu. Migracja
+  `0005_enforce_history_entry_document_vehicle_consistency.sql` chroni tę samą relację przy zmianie
+  pojazdu wpisu historii. Pliki do 20 MB są przechowywane w prywatnym magazynie aplikacji, a SQLite
+  przechowuje ich oryginalną nazwę, MIME, rozmiar, SHA-256, stan oraz klucz magazynowy.
+- Duplikat zawartości jest wykrywany po SHA-256 i odrzucany bez tworzenia drugiej kopii. Zastąpienie
+  zapisuje nową relację przed usunięciem poprzedniego pliku, a uzgadnianie startowe naprawia
+  przerwane operacje.
 
 ## Znane ograniczenia i dług techniczny
 
@@ -116,5 +138,5 @@ opisywanego etapu.
 
 ## Następny krok
 
-Przygotować pull request zamykający Fazę 3. Po integracji z `main` rozpocząć Fazę 4 dotyczącą
-dokumentów i faktur na osobnym branchu.
+Przygotować pull request zamykający Fazę 4. Po integracji z `main` rozpocząć Fazę 5 dotyczącą
+tankowań i obliczania zużycia paliwa na osobnym branchu.

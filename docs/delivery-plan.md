@@ -105,12 +105,17 @@ tablet. Polish and English localization uses an English fallback; vehicle photos
 
 ## Phase 4 — Documents and invoices
 
+**Status:** Implemented and verified on `feat/documents-and-invoices`; integration into `main` is
+pending. The implementation includes managed PDF/JPEG/PNG imports up to 20 MB, optional metadata
+and history-entry relations, duplicate detection, preview, native sharing of the original managed
+file, replacement, deletion, recovery, and the version 2 metadata-only JSON export.
+
 ### Steps
 
 1. Add document import with explicit supported formats and size limits.
 2. Store managed files separately from relational metadata.
 3. Relate a document to a vehicle, a history entry, or both.
-4. Add preview, metadata editing, replacement, export, and deletion.
+4. Add preview, metadata editing, replacement, native file sharing, and deletion.
 5. Handle permission denial, missing source files, interrupted copies, duplicates, and orphan cleanup.
 6. Test application upgrades and data export with attachments present.
 
@@ -118,7 +123,8 @@ tablet. Polish and English localization uses an English fallback; vehicle photos
 
 - Documents remain available offline and survive restart and migration.
 - Failed imports do not create broken metadata or orphaned files.
-- Users can export their documents and understand destructive actions.
+- Users can share the original managed PDF, JPEG, or PNG through the native platform surface,
+  export document metadata through JSON v2, and understand destructive actions.
 
 ## Phase 5 — Refuelling and fuel consumption
 
@@ -233,7 +239,6 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Complete the Drizzle and `expo-sqlite` compatibility spike for Expo SDK 57, pin the accepted
-dependencies through NUB and SFW, and implement the first versioned schema. UUIDv7 identity,
-`occurredAt` UTC timestamps, repository boundaries, managed-file metadata, and the JSON-only Phase 2
-export are defined in [Local Persistence Architecture](./local-persistence-architecture.md).
+Review and merge the Phase 4 pull request. Then start Phase 5 on a dedicated branch by defining the
+refuelling domain rules for full and partial fills, odometer readings, quantity, price, supported
+volume units, and the exact average-consumption algorithm before implementing persistence or UI.

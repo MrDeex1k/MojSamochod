@@ -1,4 +1,4 @@
-import { and, eq, isNull, ne } from "drizzle-orm";
+import { and, eq, isNull, ne, or } from "drizzle-orm";
 
 import type { ManagedFileRepository } from "@/application/repositories/managed-file-repository";
 import {
@@ -13,6 +13,7 @@ import {
   type DeletingManagedFileMetadata,
   type ManagedFileMetadata,
   type ReadyManagedFileMetadata,
+  type Sha256Digest,
   type StagedManagedFileMetadata,
   type StorageObjectKey,
 } from "@/domain/files/managed-file";
@@ -20,7 +21,7 @@ import { managedFileIdFromUuidV7, type ManagedFileId } from "@/domain/shared/ide
 import { utcTimestamp, type UtcTimestamp } from "@/domain/shared/value-objects";
 
 import type { AppDatabase } from "./database";
-import { managedFiles, vehicles } from "./schema";
+import { managedFiles, vehicleDocuments, vehicles } from "./schema";
 
 type ManagedFileRow = typeof managedFiles.$inferSelect;
 
@@ -48,7 +49,11 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
         .run();
       return repositorySuccess(undefined);
     } catch (error) {
-      return repositoryFailure("unavailable", operation, error);
+      return repositoryFailure(
+        isUniqueConstraintViolation(error) ? "conflict" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 
@@ -83,6 +88,34 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
     }
   }
 
+  async findReadyBySha256(
+    kind: "document",
+    sha256: Sha256Digest,
+  ): Promise<RepositoryResult<ReadyManagedFileMetadata | null>> {
+    const operation = "managedFile.findReadyBySha256";
+    try {
+      const row = this.database
+        .select()
+        .from(managedFiles)
+        .where(
+          and(
+            eq(managedFiles.kind, kind),
+            eq(managedFiles.sha256, sha256),
+            eq(managedFiles.status, "ready"),
+          ),
+        )
+        .limit(1)
+        .get();
+      if (!row) return repositorySuccess(null);
+      const metadata = mapManagedFileRow(row);
+      return metadata.status === "ready"
+        ? repositorySuccess(metadata)
+        : repositoryFailure("corrupt-data", operation);
+    } catch (error) {
+      return repositoryFailure("corrupt-data", operation, error);
+    }
+  }
+
   async listRecoverable(): Promise<
     RepositoryResult<readonly (DeletingManagedFileMetadata | StagedManagedFileMetadata)[]>
   > {
@@ -105,20 +138,23 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
     }
   }
 
-  async listUnreferencedVehiclePhotos(): Promise<
+  async listUnreferencedReadyFiles(): Promise<
     RepositoryResult<readonly ReadyManagedFileMetadata[]>
   > {
-    const operation = "managedFile.listUnreferencedVehiclePhotos";
+    const operation = "managedFile.listUnreferencedReadyFiles";
     try {
       const metadata = this.database
         .select({ managedFile: managedFiles })
         .from(managedFiles)
         .leftJoin(vehicles, eq(vehicles.photoReference, managedFiles.id))
+        .leftJoin(vehicleDocuments, eq(vehicleDocuments.fileReference, managedFiles.id))
         .where(
           and(
-            eq(managedFiles.kind, "vehicle-photo"),
             eq(managedFiles.status, "ready"),
-            isNull(vehicles.id),
+            or(
+              and(eq(managedFiles.kind, "vehicle-photo"), isNull(vehicles.id)),
+              and(eq(managedFiles.kind, "document"), isNull(vehicleDocuments.id)),
+            ),
           ),
         )
         .all()
@@ -203,4 +239,27 @@ function mapManagedFileRow(row: ManagedFileRow): ManagedFileMetadata {
 function expect<T>(result: { ok: false } | { ok: true; value: T }): T {
   if (!result.ok) throw new Error("Stored managed file violates the domain contract");
   return result.value;
+}
+
+function isUniqueConstraintViolation(error: unknown): boolean {
+  let current = error;
+  for (let depth = 0; depth < 4 && current; depth += 1) {
+    if (typeof current === "object") {
+      const record = current as Readonly<{ cause?: unknown; code?: unknown; message?: unknown }>;
+      const code = typeof record.code === "string" ? record.code : "";
+      const message = typeof record.message === "string" ? record.message : "";
+      if (
+        code.includes("SQLITE_CONSTRAINT_UNIQUE") ||
+        code.includes("SQLITE_CONSTRAINT_PRIMARYKEY") ||
+        /UNIQUE constraint failed/i.test(message)
+      ) {
+        return true;
+      }
+      current = record.cause;
+      continue;
+    }
+    if (typeof current === "string" && /UNIQUE constraint failed/i.test(current)) return true;
+    break;
+  }
+  return false;
 }

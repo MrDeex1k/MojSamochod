@@ -1,3 +1,4 @@
+declare const documentIdBrand: unique symbol;
 declare const historyEntryIdBrand: unique symbol;
 declare const managedFileIdBrand: unique symbol;
 declare const vehicleIdBrand: unique symbol;
@@ -18,6 +19,11 @@ function assertUuidV7(value: string): void {
   }
 }
 
+export function documentIdFromUuidV7(value: string): DocumentId {
+  assertUuidV7(value);
+  return value as DocumentId;
+}
+
 export function historyEntryIdFromUuidV7(value: string): HistoryEntryId {
   assertUuidV7(value);
   return value as HistoryEntryId;
@@ -32,3 +38,4 @@ export function vehicleIdFromUuidV7(value: string): VehicleId {
   assertUuidV7(value);
   return value as VehicleId;
 }
+export type DocumentId = string & { readonly [documentIdBrand]: true };

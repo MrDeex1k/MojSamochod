@@ -25,6 +25,9 @@ export const managedFiles = sqliteTable(
     updatedAt: text("updated_at").notNull(),
   },
   (table) => [
+    uniqueIndex("managed_files_document_sha256_unique")
+      .on(table.sha256)
+      .where(sql`${table.kind} = 'document' and ${table.status} in ('staged', 'ready')`),
     uniqueIndex("managed_files_staging_key_unique").on(table.stagingKey),
     uniqueIndex("managed_files_storage_key_unique").on(table.storageKey),
     check("managed_files_kind", sql`${table.kind} in ('vehicle-photo', 'document')`),
@@ -147,6 +150,60 @@ export const historyEntries = sqliteTable(
     ),
     check(
       "history_entries_notes_length",
+      sql`${table.notes} is null or length(${table.notes}) <= 5000`,
+    ),
+  ],
+);
+
+export const vehicleDocuments = sqliteTable(
+  "vehicle_documents",
+  {
+    id: text("id").primaryKey(),
+    vehicleId: text("vehicle_id")
+      .notNull()
+      .references(() => vehicles.id, { onDelete: "cascade" }),
+    historyEntryId: text("history_entry_id").references(() => historyEntries.id, {
+      onDelete: "set null",
+    }),
+    fileReference: text("file_reference")
+      .notNull()
+      .references(() => managedFiles.id, { onDelete: "restrict" }),
+    name: text("name").notNull(),
+    documentDate: text("document_date"),
+    amountMinorUnits: integer("amount_minor_units"),
+    amountCurrency: text("amount_currency"),
+    notes: text("notes"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("vehicle_documents_file_reference_unique").on(table.fileReference),
+    index("vehicle_documents_vehicle_date_index").on(
+      table.vehicleId,
+      table.documentDate,
+      table.createdAt,
+      table.id,
+    ),
+    index("vehicle_documents_history_entry_index").on(table.historyEntryId),
+    check("vehicle_documents_name_length", sql`length(trim(${table.name})) between 1 and 255`),
+    check(
+      "vehicle_documents_date_format",
+      sql`${table.documentDate} is null or (${table.documentDate} glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' and date(${table.documentDate}) = ${table.documentDate})`,
+    ),
+    check(
+      "vehicle_documents_amount_pair",
+      sql`(${table.amountMinorUnits} is null and ${table.amountCurrency} is null) or (${table.amountMinorUnits} is not null and ${table.amountCurrency} is not null)`,
+    ),
+    check(
+      "vehicle_documents_amount_range",
+      sql`${table.amountMinorUnits} is null or ${table.amountMinorUnits} between 0 and 9007199254740991`,
+    ),
+    check(
+      "vehicle_documents_currency_length",
+      sql`${table.amountCurrency} is null or length(${table.amountCurrency}) = 3`,
+    ),
+    check(
+      "vehicle_documents_notes_length",
       sql`${table.notes} is null or length(${table.notes}) <= 5000`,
     ),
   ],

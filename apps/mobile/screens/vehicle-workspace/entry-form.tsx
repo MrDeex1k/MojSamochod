@@ -17,6 +17,7 @@ import {
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
 import type { ValidationIssue } from "@/domain/shared/result";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
+import { formatCurrencyInputMinorUnits, parseCurrencyInput } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
 type EntryType = HistoryEntry["type"];
@@ -52,7 +53,11 @@ export function EntryForm({
   );
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
   const [odometer, setOdometer] = useState(() => formatInitialOdometer(entry, vehicle));
-  const [cost, setCost] = useState(() => (entry?.cost ? String(entry.cost.minorUnits / 100) : ""));
+  const [cost, setCost] = useState(() =>
+    entry?.cost
+      ? formatCurrencyInputMinorUnits(entry.cost.minorUnits, entry.cost.currency, i18n.language)
+      : "",
+  );
   const [currency, setCurrency] = useState(
     entry?.cost?.currency ?? getLocales()[0]?.currencyCode ?? "USD",
   );
@@ -79,7 +84,7 @@ export function EntryForm({
 
   const input = (): CreateHistoryEntryInput => {
     const common = {
-      cost: parseCost(cost, currency),
+      cost: parseCost(cost, currency, i18n.language),
       notes,
       occurredAt: occurredAt.toISOString(),
       odometerMetres: parseOdometer(odometer, vehicle),
@@ -365,11 +370,13 @@ function ChoiceField<T extends string>({
   );
 }
 
-function parseCost(value: string, currency: string) {
-  if (value.trim() === "") return undefined;
-  const normalized = value.trim().replace(",", ".");
-  const valid = /^\d+(?:\.\d{1,2})?$/.test(normalized);
-  return { currency, minorUnits: valid ? Math.round(Number(normalized) * 100) : Number.NaN };
+function parseCost(value: string, currency: string, locale: string) {
+  const parsed = parseCurrencyInput(value, currency, locale);
+  if (parsed.kind === "empty") return undefined;
+  return {
+    currency,
+    minorUnits: parsed.kind === "value" ? parsed.minorUnits : Number.NaN,
+  };
 }
 
 function parseOdometer(value: string, vehicle: Vehicle): number | undefined {

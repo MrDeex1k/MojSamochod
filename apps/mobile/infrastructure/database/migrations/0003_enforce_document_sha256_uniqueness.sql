@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `managed_files_document_sha256_unique` ON `managed_files` (`sha256`) WHERE "managed_files"."kind" = 'document' and "managed_files"."status" in ('staged', 'ready');
