@@ -13,8 +13,9 @@ opisywanego etapu.
 - Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, została zintegrowana z `main`.
 - Faza 4, czyli dokumenty i faktury, została zintegrowana z `main`.
 - Faza 5, czyli tankowania i zużycie paliwa, ma zatwierdzone reguły domenowe na branchu
-  `feat/refuelling-and-consumption`. Encja tankowania, jednostki objętości, dokładne ceny oraz
-  audytowalne obliczenia spalania są zaimplementowane bez zależności od UI i persystencji.
+  `feat/refuelling-and-consumption`. Encja tankowania, jednostki objętości, dokładne ceny,
+  audytowalne obliczenia spalania, konfiguracja paliwowa pojazdu, persystencja i eksport JSON v3 są
+  zaimplementowane. Do wykonania pozostają przepływy aplikacyjne i interfejs.
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -60,7 +61,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 38 zestawów i 172 testy komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 39 zestawów i 184 testy komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -103,9 +104,10 @@ opisywanego etapu.
   pełny rollback przerwanego zapisu oraz odrzucanie rekordów łamiących ograniczenia schematu.
 - Błąd migracji zamyka połączenie i pozostaje błędem źródłowym również wtedy, gdy samo zamknięcie
   połączenia także się nie powiedzie.
-- Eksport `moje-auto-vehicle-history` w wersji 2 tworzy czytelny JSON pojazdu, historii i metadanych
-  dokumentów, także dla pustej bazy. Nie zawiera zdjęć ani plików binarnych; pole
-  `binaryFilesIncluded` pozostaje równe `false`, a kontrakt ma osobną dokumentację kompatybilności.
+- Eksport `moje-auto-vehicle-history` w wersji 3 tworzy czytelny JSON pojazdu, historii, metadanych
+  dokumentów, konfiguracji paliwowej i źródłowych rekordów tankowań, także dla pustej bazy. Nie
+  zawiera zdjęć, plików binarnych ani wyliczonego spalania; pole `binaryFilesIncluded` pozostaje
+  równe `false`, a kontrakt ma osobną dokumentację kompatybilności.
 - Kontrakt `ObjectStorage` rozdziela etapowanie, trwałe zatwierdzenie, odrzucenie, usunięcie i eksport
   obiektu. Metadane definiują rozmiar, SHA-256 i bezpieczny względny klucz magazynu, a dokumentacja
   opisuje odzyskiwanie po przerwaniu operacji między SQLite i systemem plików.
@@ -122,6 +124,10 @@ opisywanego etapu.
 - Duplikat zawartości jest wykrywany po SHA-256 i odrzucany bez tworzenia drugiej kopii. Zastąpienie
   zapisuje nową relację przed usunięciem poprzedniego pliku, a uzgadnianie startowe naprawia
   przerwane operacje.
+- Migracja `0006_add_refuelling_persistence.sql` dodaje spójną, opcjonalną konfigurację paliwową
+  starszych pojazdów oraz tabelę tankowań z ograniczeniami jednostek, ilości i kompletności ceny.
+  Repozytorium zapisuje tankowanie i ewentualne podniesienie aktualnego przebiegu w jednej
+  transakcji, a listę zwraca w deterministycznej kolejności.
 
 ## Znane ograniczenia i dług techniczny
 
@@ -140,5 +146,5 @@ opisywanego etapu.
 
 ## Następny krok
 
-Rozszerzyć pojazd o pojemność zbiornika oraz preferencje objętości i spalania, uwzględniając
-bezpieczną ścieżkę dla istniejącego pojazdu bez konfiguracji paliwowej.
+Zaimplementować przepływy aplikacyjne tworzenia, odczytu, edycji, usuwania i listowania tankowań,
+łącząc domenę z repozytorium bez uzależniania interfejsu od Drizzle.
