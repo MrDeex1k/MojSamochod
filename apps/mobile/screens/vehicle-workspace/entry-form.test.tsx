@@ -14,6 +14,9 @@ const now = new Date("2026-08-30T10:15:00.000Z");
 const vehicleResult = createVehicle(
   {
     distanceUnitPreference: "kilometres",
+    fuelConsumptionUnitPreference: "litresPer100Kilometres",
+    fuelTankCapacityMicrolitres: 60_000_000,
+    fuelVolumeUnitPreference: "litres",
     initialOdometerMetres: 82_000_000,
     make: "Volvo",
     model: "V60",

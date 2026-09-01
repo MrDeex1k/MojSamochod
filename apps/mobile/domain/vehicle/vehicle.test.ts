@@ -16,6 +16,9 @@ describe("createVehicle", () => {
     const result = createVehicle(
       {
         distanceUnitPreference: "kilometres",
+        fuelConsumptionUnitPreference: "litresPer100Kilometres",
+        fuelTankCapacityMicrolitres: 60_000_000,
+        fuelVolumeUnitPreference: "litres",
         initialOdometerMetres: 123_000,
         make: "  Volvo  ",
         manufactureYear: 2025,
@@ -33,6 +36,9 @@ describe("createVehicle", () => {
         createdAt: "2026-08-30T14:30:00.000Z",
         currentOdometerMetres: 123_000,
         distanceUnitPreference: "kilometres",
+        fuelConsumptionUnitPreference: "litresPer100Kilometres",
+        fuelTankCapacityMicrolitres: 60_000_000,
+        fuelVolumeUnitPreference: "litres",
         id: generatedId,
         initialOdometerMetres: 123_000,
         make: "Volvo",
@@ -51,6 +57,9 @@ describe("createVehicle", () => {
     const result = createVehicle(
       {
         distanceUnitPreference: "miles",
+        fuelConsumptionUnitPreference: "milesPerUsGallon",
+        fuelTankCapacityMicrolitres: 15_850_000,
+        fuelVolumeUnitPreference: "usGallons",
         make: "Ford",
         model: "Mustang",
         registrationNumber: "   ",
@@ -73,6 +82,9 @@ describe("createVehicle", () => {
     const result = createVehicle(
       {
         distanceUnitPreference: "yards",
+        fuelConsumptionUnitPreference: "unknown",
+        fuelTankCapacityMicrolitres: 0,
+        fuelVolumeUnitPreference: "barrels",
         initialOdometerMetres: -1,
         make: " ",
         manufactureYear: 2028,
@@ -90,6 +102,9 @@ describe("createVehicle", () => {
         { code: "invalid-format", field: "vin" },
         { code: "out-of-range", field: "manufactureYear" },
         { code: "invalid-format", field: "distanceUnitPreference" },
+        { code: "out-of-range", field: "fuelTankCapacityMicrolitres" },
+        { code: "invalid-format", field: "fuelVolumeUnitPreference" },
+        { code: "invalid-format", field: "fuelConsumptionUnitPreference" },
       ],
       ok: false,
     });
@@ -99,7 +114,14 @@ describe("createVehicle", () => {
   it("rejects a generator that violates the UUIDv7 contract", () => {
     expect(() =>
       createVehicle(
-        { distanceUnitPreference: "kilometres", make: "Volvo", model: "V60" },
+        {
+          distanceUnitPreference: "kilometres",
+          fuelConsumptionUnitPreference: "litresPer100Kilometres",
+          fuelTankCapacityMicrolitres: 60_000_000,
+          fuelVolumeUnitPreference: "litres",
+          make: "Volvo",
+          model: "V60",
+        },
         { clock: { now: () => now }, idGenerator: { generate: () => "not-a-uuid" } },
       ),
     ).toThrow("Expected a canonical lowercase UUIDv7 identifier");
@@ -111,6 +133,9 @@ describe("updateVehicle", () => {
     const created = createVehicle(
       {
         distanceUnitPreference: "kilometres",
+        fuelConsumptionUnitPreference: "litresPer100Kilometres",
+        fuelTankCapacityMicrolitres: 60_000_000,
+        fuelVolumeUnitPreference: "litres",
         initialOdometerMetres: 80_000,
         make: "Volvo",
         model: "V60",
@@ -123,6 +148,9 @@ describe("updateVehicle", () => {
       created.value,
       {
         distanceUnitPreference: "kilometres",
+        fuelConsumptionUnitPreference: "litresPer100Kilometres",
+        fuelTankCapacityMicrolitres: 65_000_000,
+        fuelVolumeUnitPreference: "litres",
         initialOdometerMetres: 70_000,
         make: "Volvo",
         model: "V60 Cross Country",

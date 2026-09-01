@@ -1,4 +1,5 @@
 import type { RefuellingId } from "../shared/identifiers";
+import { invalid, valid, type ValidationResult } from "../shared/result";
 import type { Refuelling } from "./refuelling";
 import { compareRefuellingsOldestFirst } from "./refuelling";
 
@@ -6,6 +7,17 @@ export type FuelConsumptionUnit =
   | "litresPer100Kilometres"
   | "milesPerUsGallon"
   | "milesPerImperialGallon";
+
+export function fuelConsumptionUnit(
+  value: string,
+  field = "fuelConsumptionUnit",
+): ValidationResult<FuelConsumptionUnit> {
+  return value === "litresPer100Kilometres" ||
+    value === "milesPerUsGallon" ||
+    value === "milesPerImperialGallon"
+    ? valid(value)
+    : invalid([{ code: "invalid-format", field }]);
+}
 
 export type InvalidFuelIntervalReason =
   | "decreasing-odometer"

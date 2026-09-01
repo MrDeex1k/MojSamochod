@@ -128,6 +128,11 @@ export const pl = {
     addAction: "Dodaj pojazd",
     description: "Dodaj pojazd, aby rozpocząć prowadzenie jego pełnej historii w jednym miejscu.",
     distanceUnitLabel: "Jednostka odległości",
+    fuelConsumptionUnitLabel: "Jednostka zużycia paliwa",
+    fuelSettingsLabel: "Ustawienia paliwa",
+    fuelTankCapacityError: "Wpisz poprawną pojemność zbiornika paliwa większą od zera.",
+    fuelTankCapacityLabel: "Pojemność zbiornika paliwa",
+    fuelVolumeUnitLabel: "Jednostka objętości paliwa",
     genericError:
       "Nie udało się zapisać pojazdu. Spróbuj ponownie bez utraty wprowadzonych danych.",
     initialOdometerHelper:

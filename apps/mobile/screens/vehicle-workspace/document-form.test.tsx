@@ -11,7 +11,14 @@ import { DocumentForm } from "./document-form";
 const now = new Date("2026-08-31T08:00:00.000Z");
 const vehicle = expectValid(
   createVehicle(
-    { distanceUnitPreference: "kilometres", make: "Volvo", model: "V60" },
+    {
+      distanceUnitPreference: "kilometres",
+      fuelConsumptionUnitPreference: "litresPer100Kilometres",
+      fuelTankCapacityMicrolitres: 60_000_000,
+      fuelVolumeUnitPreference: "litres",
+      make: "Volvo",
+      model: "V60",
+    },
     {
       clock: { now: () => now },
       idGenerator: { generate: () => "018f47e2-7b2f-7cc8-98c4-dc0c0c07398f" },

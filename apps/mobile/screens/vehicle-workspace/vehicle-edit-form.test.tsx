@@ -13,6 +13,9 @@ const now = new Date("2026-08-30T10:15:00.000Z");
 const vehicleResult = createVehicle(
   {
     distanceUnitPreference: "kilometres",
+    fuelConsumptionUnitPreference: "litresPer100Kilometres",
+    fuelTankCapacityMicrolitres: 60_000_000,
+    fuelVolumeUnitPreference: "litres",
     initialOdometerMetres: 82_000_000,
     make: "Volvo",
     model: "V60",
@@ -53,8 +56,48 @@ describe("VehicleEditForm", () => {
         createdAt: vehicleResult.value.createdAt,
         currentOdometerMetres: vehicleResult.value.currentOdometerMetres,
         id: vehicleResult.value.id,
+        fuelTankCapacityMicrolitres: 60_000_000,
         model: "V60 Cross Country",
       }),
+    );
+  });
+
+  it("requires legacy vehicles to complete fuel configuration when they are edited", async () => {
+    const vehicles = vehicleRepository();
+    const legacyVehicle = {
+      ...vehicleResult.value,
+      fuelConsumptionUnitPreference: undefined,
+      fuelTankCapacityMicrolitres: undefined,
+      fuelVolumeUnitPreference: undefined,
+    };
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <VehicleEditForm
+          clock={{ now: () => new Date("2026-08-31T10:15:00.000Z") }}
+          existingPhotoUri={null}
+          idGenerator={{ generate: () => "018f47e2-7b31-7658-b336-34613389d00f" }}
+          managedFiles={managedFiles()}
+          onCancel={jest.fn()}
+          onSaved={jest.fn()}
+          photoPicker={photoPicker()}
+          vehicle={legacyVehicle}
+          vehicles={vehicles}
+        />
+      </SafeAreaProvider>,
+    );
+
+    await userEvent.press(screen.getByRole("button", { name: "Save vehicle" }));
+    expect(
+      screen.getByText("Enter a valid fuel tank capacity greater than zero."),
+    ).toBeOnTheScreen();
+    expect(vehicles.update).not.toHaveBeenCalled();
+
+    await userEvent.type(screen.getByLabelText("Fuel tank capacity"), "55");
+    await userEvent.press(screen.getByRole("button", { name: "Save vehicle" }));
+
+    await waitFor(() => expect(vehicles.update).toHaveBeenCalledTimes(1));
+    expect(vehicles.update).toHaveBeenCalledWith(
+      expect.objectContaining({ fuelTankCapacityMicrolitres: 55_000_000 }),
     );
   });
 });

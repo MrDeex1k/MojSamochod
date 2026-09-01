@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { TextField } from "@/components/ui/text-field";
+import { FuelConfigurationFields } from "@/components/vehicle/fuel-configuration-fields";
+import type { FuelConsumptionUnit } from "@/domain/refuelling/fuel-consumption";
+import {
+  microlitresToVolume,
+  parseVolumeToMicrolitres,
+  type VolumeUnit,
+} from "@/domain/refuelling/volume";
 import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
 import type { ValidationIssue } from "@/domain/shared/result";
@@ -57,6 +64,18 @@ export function VehicleEditForm({
   const [vin, setVin] = useState(vehicle.vin ?? "");
   const [initialOdometer, setInitialOdometer] = useState(() => formatOdometer(vehicle));
   const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>(vehicle.distanceUnitPreference);
+  const [fuelVolumeUnit, setFuelVolumeUnit] = useState<VolumeUnit>(
+    vehicle.fuelVolumeUnitPreference ?? defaultFuelVolumeUnit(vehicle),
+  );
+  const [fuelConsumptionUnit, setFuelConsumptionUnit] = useState<FuelConsumptionUnit>(
+    vehicle.fuelConsumptionUnitPreference ?? defaultFuelConsumptionUnit(vehicle),
+  );
+  const [fuelTankCapacity, setFuelTankCapacity] = useState(() =>
+    formatFuelTankCapacity(
+      vehicle,
+      vehicle.fuelVolumeUnitPreference ?? defaultFuelVolumeUnit(vehicle),
+    ),
+  );
   const [photoChange, setPhotoChange] = useState<PhotoChange>({ kind: "keep" });
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -90,6 +109,9 @@ export function VehicleEditForm({
       vehicle,
       {
         distanceUnitPreference: distanceUnit,
+        fuelConsumptionUnitPreference: fuelConsumptionUnit,
+        fuelTankCapacityMicrolitres: parseFuelCapacity(fuelTankCapacity, fuelVolumeUnit),
+        fuelVolumeUnitPreference: fuelVolumeUnit,
         initialOdometerMetres: parseOdometer(initialOdometer, distanceUnit),
         make,
         manufactureYear: manufactureYear.trim() ? Number(manufactureYear) : undefined,
@@ -213,6 +235,15 @@ export function VehicleEditForm({
         onChangeText={setInitialOdometer}
         value={initialOdometer}
       />
+      <FuelConfigurationFields
+        capacity={fuelTankCapacity}
+        capacityError={errors.fuelTankCapacityMicrolitres}
+        consumptionUnit={fuelConsumptionUnit}
+        onCapacityChange={setFuelTankCapacity}
+        onConsumptionUnitChange={setFuelConsumptionUnit}
+        onVolumeUnitChange={setFuelVolumeUnit}
+        volumeUnit={fuelVolumeUnit}
+      />
       {formError ? <Text className="text-body text-danger">{formError}</Text> : null}
       <Button disabled={saving} label={t("vehicleEdit.save")} onPress={() => void save()} />
       <Button label={t("vehicleEdit.cancel")} onPress={onCancel} variant="secondary" />
@@ -280,6 +311,24 @@ function formatOdometer(vehicle: Vehicle): string {
   return String(Math.round(vehicle.initialOdometerMetres / divisor));
 }
 
+function defaultFuelVolumeUnit(vehicle: Vehicle): VolumeUnit {
+  return vehicle.distanceUnitPreference === "miles" ? "usGallons" : "litres";
+}
+
+function defaultFuelConsumptionUnit(vehicle: Vehicle): FuelConsumptionUnit {
+  return vehicle.distanceUnitPreference === "miles" ? "milesPerUsGallon" : "litresPer100Kilometres";
+}
+
+function formatFuelTankCapacity(vehicle: Vehicle, unit: VolumeUnit): string {
+  if (vehicle.fuelTankCapacityMicrolitres === undefined) return "";
+  return String(Number(microlitresToVolume(vehicle.fuelTankCapacityMicrolitres, unit).toFixed(6)));
+}
+
+function parseFuelCapacity(value: string, unit: VolumeUnit): number {
+  const parsed = parseVolumeToMicrolitres(value.trim().replace(",", "."), unit, "fuelTankCapacity");
+  return parsed.ok ? parsed.value : Number.NaN;
+}
+
 function mapIssues(issues: readonly ValidationIssue[], t: (key: string) => string) {
   return Object.fromEntries(
     issues.map((issue) => {
@@ -287,6 +336,8 @@ function mapIssues(issues: readonly ValidationIssue[], t: (key: string) => strin
       if (issue.field === "manufactureYear") return [issue.field, t("firstVehicle.yearError")];
       if (issue.field === "initialOdometerMetres")
         return [issue.field, t("firstVehicle.invalidNumberError")];
+      if (issue.field === "fuelTankCapacityMicrolitres")
+        return [issue.field, t("firstVehicle.fuelTankCapacityError")];
       return [issue.field, t("firstVehicle.requiredError")];
     }),
   );

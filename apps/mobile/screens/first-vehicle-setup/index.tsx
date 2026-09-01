@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { TextField } from "@/components/ui/text-field";
+import { FuelConfigurationFields } from "@/components/vehicle/fuel-configuration-fields";
+import type { FuelConsumptionUnit } from "@/domain/refuelling/fuel-consumption";
+import { parseVolumeToMicrolitres, type VolumeUnit } from "@/domain/refuelling/volume";
 import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
 import type { ValidationIssue } from "@/domain/shared/result";
@@ -61,6 +64,11 @@ export function CreateFirstVehicleForm({
   const [vin, setVin] = useState("");
   const [initialOdometer, setInitialOdometer] = useState("");
   const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>(defaultDistanceUnit);
+  const [fuelTankCapacity, setFuelTankCapacity] = useState("");
+  const [fuelVolumeUnit, setFuelVolumeUnit] = useState<VolumeUnit>(defaultFuelVolumeUnit);
+  const [fuelConsumptionUnit, setFuelConsumptionUnit] = useState<FuelConsumptionUnit>(
+    defaultFuelConsumptionUnit,
+  );
   const [photo, setPhoto] = useState<SelectedPhoto | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -81,6 +89,9 @@ export function CreateFirstVehicleForm({
     const result = createVehicle(
       {
         distanceUnitPreference: distanceUnit,
+        fuelConsumptionUnitPreference: fuelConsumptionUnit,
+        fuelTankCapacityMicrolitres: parseFuelCapacity(fuelTankCapacity, fuelVolumeUnit),
+        fuelVolumeUnitPreference: fuelVolumeUnit,
         initialOdometerMetres: parseDistance(initialOdometer, distanceUnit),
         make,
         manufactureYear: parseOptionalInteger(manufactureYear),
@@ -232,6 +243,16 @@ export function CreateFirstVehicleForm({
           />
         </View>
 
+        <FuelConfigurationFields
+          capacity={fuelTankCapacity}
+          capacityError={errors.fuelTankCapacityMicrolitres}
+          consumptionUnit={fuelConsumptionUnit}
+          onCapacityChange={setFuelTankCapacity}
+          onConsumptionUnitChange={setFuelConsumptionUnit}
+          onVolumeUnitChange={setFuelVolumeUnit}
+          volumeUnit={fuelVolumeUnit}
+        />
+
         {formError ? (
           <Text accessibilityLiveRegion="polite" className="text-body text-danger">
             {formError}
@@ -243,8 +264,20 @@ export function CreateFirstVehicleForm({
   );
 }
 
-const defaultDistanceUnit: DistanceUnit =
-  getLocales()[0]?.measurementSystem === "us" ? "miles" : "kilometres";
+const measurementSystem = getLocales()[0]?.measurementSystem;
+const defaultDistanceUnit: DistanceUnit = measurementSystem === "us" ? "miles" : "kilometres";
+const defaultFuelVolumeUnit: VolumeUnit =
+  measurementSystem === "us"
+    ? "usGallons"
+    : measurementSystem === "uk"
+      ? "imperialGallons"
+      : "litres";
+const defaultFuelConsumptionUnit: FuelConsumptionUnit =
+  measurementSystem === "us"
+    ? "milesPerUsGallon"
+    : measurementSystem === "uk"
+      ? "milesPerImperialGallon"
+      : "litresPer100Kilometres";
 
 function parseOptionalInteger(value: string): number | undefined {
   return value.trim() === "" ? undefined : Number(value);
@@ -257,6 +290,11 @@ function parseDistance(value: string, unit: DistanceUnit): number | undefined {
   return unit === "miles" ? Math.round(numeric * 1609.344) : numeric * 1000;
 }
 
+function parseFuelCapacity(value: string, unit: VolumeUnit): number {
+  const parsed = parseVolumeToMicrolitres(value.trim().replace(",", "."), unit, "fuelTankCapacity");
+  return parsed.ok ? parsed.value : Number.NaN;
+}
+
 function mapValidationIssues(
   issues: readonly ValidationIssue[],
   t: (key: string) => string,
@@ -267,6 +305,9 @@ function mapValidationIssues(
       if (issue.field === "manufactureYear") return [issue.field, t("firstVehicle.yearError")];
       if (issue.field === "initialOdometerMetres") {
         return [issue.field, t("firstVehicle.invalidNumberError")];
+      }
+      if (issue.field === "fuelTankCapacityMicrolitres") {
+        return [issue.field, t("firstVehicle.fuelTankCapacityError")];
       }
       return [issue.field, t("firstVehicle.requiredError")];
     }),
