@@ -130,7 +130,7 @@ export const pl = {
     distanceUnitLabel: "Jednostka odległości",
     fuelConsumptionUnitLabel: "Jednostka zużycia paliwa",
     fuelSettingsLabel: "Ustawienia paliwa",
-    fuelTankCapacityError: "Wpisz poprawną pojemność zbiornika paliwa większą od zera.",
+    fuelTankCapacityError: "Wpisz całkowitą pojemność zbiornika paliwa większą od zera.",
     fuelTankCapacityLabel: "Pojemność zbiornika paliwa",
     fuelVolumeUnitLabel: "Jednostka objętości paliwa",
     genericError:
@@ -207,7 +207,8 @@ export const pl = {
     invalidOdometer: "Wpisz poprawną nieujemną liczbę całkowitą.",
     invalidPrice:
       "Wpisz poprawną cenę. Cena jednostkowa może mieć najwyżej trzy miejsca po przecinku.",
-    invalidQuantity: "Wpisz ilość paliwa większą od zera.",
+    invalidQuantity:
+      "Wpisz ilość paliwa większą od zera, używając maksymalnie dwóch miejsc po przecinku.",
     keepEditing: "Kontynuuj edycję",
     odometerHelper: "Pole opcjonalne. Wyższy odczyt zaktualizuje obecny przebieg pojazdu.",
     odometerLabel: "Bieżący licznik",

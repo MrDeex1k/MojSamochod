@@ -62,7 +62,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 43 zestawy i 206 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 43 zestawy i 209 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -95,8 +95,9 @@ opisywanego etapu.
 - Ponowna weryfikacja Fazy 5 na tych samych czterech urządzeniach potwierdziła brak selektora
   jednostki w formularzu tankowania, etykiety ilości i ceny zgodne z preferencją pojazdu oraz
   poprawną prezentację litrów na urządzeniach Apple i galonów amerykańskich na urządzeniach z
-  Androidem. Na iPhonie dodatkowo sprawdzono bez zapisu konwersję `125000 km → 77671 mi` i
-  `42 l → 11.095226 gal US` w edytorze pojazdu.
+  Androidem. Na iPhonie dodatkowo sprawdzono odrzucenie ilości paliwa z trzema miejscami po
+  przecinku. Na Pixel Tablet potwierdzono całkowitą prezentację pojemności po konwersji
+  `45 gal US → 170 l`; konwersja nie zmienia dokładnej wartości kanonicznej bez zapisu formularza.
 
 ### Domena i persystencja
 

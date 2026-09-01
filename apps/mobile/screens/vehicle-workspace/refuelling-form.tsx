@@ -1,6 +1,6 @@
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { getLocales } from "expo-localization";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Alert, Platform, ScrollView, Text, View } from "react-native";
 
 import type { RefuellingService } from "@/application/refuelling/refuelling-service";
@@ -22,6 +22,7 @@ import type {
 } from "@/domain/refuelling/refuelling";
 import {
   parseVolumeToMicrolitres,
+  positiveMicrolitres,
   type Microlitres,
   type VolumeUnit,
 } from "@/domain/refuelling/volume";
@@ -74,6 +75,7 @@ export function RefuellingForm({
   const [quantity, setQuantity] = useState(() =>
     refuelling ? formatEditableFuelVolume(refuelling.quantityMicrolitres, volumeUnit) : "",
   );
+  const quantityMicrolitres = useRef<number>(refuelling?.quantityMicrolitres ?? Number.NaN);
   const [fillKind, setFillKind] = useState<FillKind>(refuelling?.fillKind ?? "full");
   const [odometer, setOdometer] = useState(() => formatInitialOdometer(refuelling, vehicle));
   const [priceInputMode, setPriceInputMode] = useState<PriceInputMode>(
@@ -100,7 +102,7 @@ export function RefuellingForm({
       odometer,
       price,
       priceInputMode,
-      quantity,
+      quantityMicrolitres: quantityMicrolitres.current,
       vehicle,
       volumeUnit,
     });
@@ -148,7 +150,16 @@ export function RefuellingForm({
         error={errors.quantity}
         keyboardType="decimal-pad"
         label={`${t("refuelling.quantityLabel")} (${volumeUnitLabel(volumeUnit)})`}
-        onChangeText={setQuantity}
+        onChangeText={(value) => {
+          setQuantity(value);
+          const parsed = parseVolumeToMicrolitres(
+            normalizeDecimal(value),
+            volumeUnit,
+            "quantity",
+            2,
+          );
+          quantityMicrolitres.current = parsed.ok ? parsed.value : Number.NaN;
+        }}
         value={quantity}
       />
       <View className="gap-compact">
@@ -284,7 +295,7 @@ type ParseInput = Readonly<{
   odometer: string;
   price: string;
   priceInputMode: PriceInputMode;
-  quantity: string;
+  quantityMicrolitres: number;
   vehicle: Vehicle;
   volumeUnit: VolumeUnit;
 }>;
@@ -295,7 +306,7 @@ function parseInput(
   | Readonly<{ issues: readonly ValidationIssue[]; ok: false }>
   | Readonly<{ ok: true; value: CreateRefuellingInput }> {
   const issues: ValidationIssue[] = [];
-  const quantity = parseVolumeToMicrolitres(normalizeDecimal(input.quantity), input.volumeUnit);
+  const quantity = positiveMicrolitres(input.quantityMicrolitres, "quantity.value");
   if (!quantity.ok) issues.push(...quantity.issues);
   const odometerMetres = parseOdometer(input.odometer, input.vehicle);
   if (Number.isNaN(odometerMetres)) {

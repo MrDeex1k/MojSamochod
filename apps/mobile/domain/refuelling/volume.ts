@@ -5,7 +5,7 @@ declare const microlitresBrand: unique symbol;
 export type Microlitres = number & { readonly [microlitresBrand]: true };
 export type VolumeUnit = "litres" | "usGallons" | "imperialGallons";
 
-const maximumDecimalPlaces = 6;
+const defaultMaximumDecimalPlaces = 6;
 const microlitresPerLitre = 1_000_000n;
 const microlitresPerImperialGallon = 4_546_090n;
 const usGallonMicrolitreNumerator = 3_785_411_784n;
@@ -30,10 +30,15 @@ export function parseVolumeToMicrolitres(
   value: string,
   unit: string,
   field = "quantity",
+  maximumDecimalPlaces = defaultMaximumDecimalPlaces,
 ): ValidationResult<Microlitres> {
   const validatedUnit = volumeUnit(unit, `${field}.unit`);
   const normalized = value.trim();
-  const match = new RegExp(`^(\\d+)(?:\\.(\\d{1,${maximumDecimalPlaces}}))?$`).exec(normalized);
+  const pattern =
+    maximumDecimalPlaces === 0
+      ? /^(\d+)$/
+      : new RegExp(`^(\\d+)(?:\\.(\\d{1,${maximumDecimalPlaces}}))?$`);
+  const match = pattern.exec(normalized);
   if (!match) return invalid([{ code: "invalid-format", field: `${field}.value` }]);
   if (!validatedUnit.ok) return validatedUnit;
 

@@ -74,7 +74,22 @@ describe("RefuellingForm", () => {
     expect(refuellings.create).not.toHaveBeenCalled();
   });
 
+  it("rejects a refuelling quantity with more than two decimal places", async () => {
+    const refuellings = service();
+    await renderForm(refuellings, jest.fn());
+
+    await userEvent.type(screen.getByLabelText("Fuel quantity (l)"), "45.123");
+    await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
+
+    expect(
+      screen.getByText("Enter a fuel quantity greater than zero with up to two decimal places."),
+    ).toBeOnTheScreen();
+    expect(refuellings.create).not.toHaveBeenCalled();
+  });
+
   it("opens a historical litre entry in the vehicle's current gallon preference", async () => {
+    const refuellings = service();
+    const onSaved = jest.fn();
     const existing = expectValid(
       createRefuelling(
         {
@@ -97,14 +112,21 @@ describe("RefuellingForm", () => {
       ),
     );
 
-    await renderForm(service(), jest.fn(), {
+    await renderForm(refuellings, onSaved, {
       refuelling: existing,
       vehicle: { ...vehicle, fuelVolumeUnitPreference: "usGallons" },
     });
 
-    expect(screen.getByLabelText("Fuel quantity (gal (US))")).toHaveDisplayValue("11.887742");
+    expect(screen.getByLabelText("Fuel quantity (gal (US))")).toHaveDisplayValue("11.89");
     expect(screen.getByLabelText("Unit price (/gal (US))")).toHaveDisplayValue("25.237");
     expect(screen.queryByText("Fuel volume unit")).not.toBeOnTheScreen();
+
+    await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    expect(refuellings.update).toHaveBeenCalledWith(
+      existing,
+      expect.objectContaining({ quantityMicrolitres: 45_000_000 }),
+    );
   });
 });
 
@@ -134,6 +156,13 @@ function service(): jest.Mocked<RefuellingService> {
         ...input,
         createdAt: now.toISOString(),
         id: "018f47e2-7b35-7658-b336-34613389d00f",
+        updatedAt: now.toISOString(),
+      }),
+    ),
+    update: jest.fn(async (existing, input) =>
+      repositorySuccess({
+        ...existing,
+        ...input,
         updatedAt: now.toISOString(),
       }),
     ),

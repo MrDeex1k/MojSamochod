@@ -359,11 +359,16 @@ function formatFuelTankCapacity(vehicle: Vehicle, unit: VolumeUnit): string {
 }
 
 function formatFuelCapacityValue(value: Microlitres, unit: VolumeUnit): string {
-  return String(Number(microlitresToVolume(value, unit).toFixed(6)));
+  return String(Math.round(microlitresToVolume(value, unit)));
 }
 
 function parseFuelCapacity(value: string, unit: VolumeUnit): number {
-  const parsed = parseVolumeToMicrolitres(value.trim().replace(",", "."), unit, "fuelTankCapacity");
+  const parsed = parseVolumeToMicrolitres(
+    value.trim().replace(",", "."),
+    unit,
+    "fuelTankCapacity",
+    0,
+  );
   return parsed.ok ? parsed.value : Number.NaN;
 }
 

@@ -32,7 +32,7 @@ export function FuelConfigurationFields({
       </Text>
       <TextField
         error={capacityError}
-        keyboardType="decimal-pad"
+        keyboardType="number-pad"
         label={t("firstVehicle.fuelTankCapacityLabel")}
         onChangeText={onCapacityChange}
         value={capacity}

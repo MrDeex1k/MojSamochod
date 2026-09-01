@@ -161,7 +161,7 @@ describe("RefuellingList", () => {
     );
 
     expect(screen.getByText("31.36 mpg (US)")).toBeOnTheScreen();
-    expect(screen.getByText("11.887742 gal (US)")).toBeOnTheScreen();
+    expect(screen.getByText("11.89 gal (US)")).toBeOnTheScreen();
     expect(screen.queryByText("45 l")).not.toBeOnTheScreen();
   });
 });

@@ -53,4 +53,19 @@ describe("fuel volume", () => {
       ok: false,
     });
   });
+
+  it("enforces UI-specific precision without reducing canonical conversion precision", () => {
+    expect(parseVolumeToMicrolitres("45.12", "litres", "quantity", 2)).toEqual({
+      ok: true,
+      value: 45_120_000,
+    });
+    expect(parseVolumeToMicrolitres("45.123", "litres", "quantity", 2)).toEqual({
+      issues: [{ code: "invalid-format", field: "quantity.value" }],
+      ok: false,
+    });
+    expect(parseVolumeToMicrolitres("60.5", "litres", "fuelTankCapacity", 0)).toEqual({
+      issues: [{ code: "invalid-format", field: "fuelTankCapacity.value" }],
+      ok: false,
+    });
+  });
 });

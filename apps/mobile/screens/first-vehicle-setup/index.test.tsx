@@ -41,7 +41,7 @@ describe("CreateFirstVehicleForm", () => {
 
     expect(screen.getAllByText("This field is required.")).toHaveLength(2);
     expect(
-      screen.getByText("Enter a valid fuel tank capacity greater than zero."),
+      screen.getByText("Enter a whole fuel tank capacity greater than zero."),
     ).toBeOnTheScreen();
     expect(vehicles.create).not.toHaveBeenCalled();
   });

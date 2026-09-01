@@ -88,7 +88,7 @@ describe("VehicleEditForm", () => {
 
     await userEvent.press(screen.getByRole("button", { name: "Save vehicle" }));
     expect(
-      screen.getByText("Enter a valid fuel tank capacity greater than zero."),
+      screen.getByText("Enter a whole fuel tank capacity greater than zero."),
     ).toBeOnTheScreen();
     expect(vehicles.update).not.toHaveBeenCalled();
 
@@ -124,7 +124,7 @@ describe("VehicleEditForm", () => {
       "50952",
     );
     await userEvent.press(screen.getByRole("button", { name: "US gal" }));
-    expect(screen.getByLabelText("Fuel tank capacity")).toHaveDisplayValue("15.850323");
+    expect(screen.getByLabelText("Fuel tank capacity")).toHaveDisplayValue("16");
     await userEvent.press(screen.getByRole("button", { name: "mpg US" }));
     await userEvent.press(screen.getByRole("button", { name: "Save vehicle" }));
 
@@ -138,6 +138,34 @@ describe("VehicleEditForm", () => {
         initialOdometerMetres: 82_000_000,
       }),
     );
+  });
+
+  it("requires fuel tank capacity to be a whole number", async () => {
+    const vehicles = vehicleRepository();
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <VehicleEditForm
+          clock={{ now: () => new Date("2026-08-31T10:15:00.000Z") }}
+          existingPhotoUri={null}
+          idGenerator={{ generate: () => "018f47e2-7b31-7658-b336-34613389d00f" }}
+          managedFiles={managedFiles()}
+          onCancel={jest.fn()}
+          onSaved={jest.fn()}
+          photoPicker={photoPicker()}
+          vehicle={vehicleResult.value}
+          vehicles={vehicles}
+        />
+      </SafeAreaProvider>,
+    );
+
+    await userEvent.clear(screen.getByLabelText("Fuel tank capacity"));
+    await userEvent.type(screen.getByLabelText("Fuel tank capacity"), "60.5");
+    await userEvent.press(screen.getByRole("button", { name: "Save vehicle" }));
+
+    expect(
+      screen.getByText("Enter a whole fuel tank capacity greater than zero."),
+    ).toBeOnTheScreen();
+    expect(vehicles.update).not.toHaveBeenCalled();
   });
 });
 

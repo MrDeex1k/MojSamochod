@@ -138,24 +138,24 @@ bez pojazdu.
 
 ### Pola pojazdu
 
-| Pole                            | Wymagane  | Reguła                                                                             |
-| ------------------------------- | --------- | ---------------------------------------------------------------------------------- |
-| `id`                            | Systemowo | Stabilny `VehicleId`.                                                              |
-| `make`                          | Tak       | Tekst po usunięciu skrajnych białych znaków, 1–80 znaków.                          |
-| `model`                         | Tak       | Tekst po usunięciu skrajnych białych znaków, 1–80 znaków.                          |
-| `variant`                       | Nie       | Tekst o długości najwyżej 100 znaków.                                              |
-| `manufactureYear`               | Nie       | Czterocyfrowy rok, nie późniejszy niż bieżący rok kalendarzowy plus jeden.         |
-| `registrationNumber`            | Nie       | Tekst o długości najwyżej 20 znaków; przechowywany w postaci wpisanej.             |
-| `vin`                           | Nie       | Po normalizacji wielkimi literami dokładnie 17 prawidłowych znaków VIN.            |
-| `initialOdometerMetres`         | Nie       | Opcjonalny nieujemny odczyt podany podczas tworzenia pojazdu.                      |
-| `currentOdometerMetres`         | Nie       | Ostatni zaakceptowany odczyt; początkowo równy licznikowi początkowemu albo pusty. |
-| `distanceUnitPreference`        | Tak       | `kilometres` albo `miles`; wartość początkowa z ustawień regionalnych, edytowalna. |
-| `fuelTankCapacityMicrolitres`   | Tak       | Dodatnia pojemność zbiornika paliwa przechowywana w mikrolitrach.                  |
-| `fuelVolumeUnitPreference`      | Tak       | `litres`, `usGallons` albo `imperialGallons`; jawna i edytowalna.                  |
-| `fuelConsumptionUnitPreference` | Tak       | `litresPer100Kilometres`, `milesPerUsGallon` albo `milesPerImperialGallon`.        |
-| `photoReference`                | Nie       | Stabilne odwołanie do najwyżej jednego zdjęcia zarządzanego przez aplikację.       |
-| `createdAt`                     | Systemowo | Znacznik czasu utworzenia w UTC.                                                   |
-| `updatedAt`                     | Systemowo | Znacznik czasu ostatniej utrwalonej zmiany w UTC.                                  |
+| Pole                            | Wymagane  | Reguła                                                                                                  |
+| ------------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| `id`                            | Systemowo | Stabilny `VehicleId`.                                                                                   |
+| `make`                          | Tak       | Tekst po usunięciu skrajnych białych znaków, 1–80 znaków.                                               |
+| `model`                         | Tak       | Tekst po usunięciu skrajnych białych znaków, 1–80 znaków.                                               |
+| `variant`                       | Nie       | Tekst o długości najwyżej 100 znaków.                                                                   |
+| `manufactureYear`               | Nie       | Czterocyfrowy rok, nie późniejszy niż bieżący rok kalendarzowy plus jeden.                              |
+| `registrationNumber`            | Nie       | Tekst o długości najwyżej 20 znaków; przechowywany w postaci wpisanej.                                  |
+| `vin`                           | Nie       | Po normalizacji wielkimi literami dokładnie 17 prawidłowych znaków VIN.                                 |
+| `initialOdometerMetres`         | Nie       | Opcjonalny nieujemny odczyt podany podczas tworzenia pojazdu.                                           |
+| `currentOdometerMetres`         | Nie       | Ostatni zaakceptowany odczyt; początkowo równy licznikowi początkowemu albo pusty.                      |
+| `distanceUnitPreference`        | Tak       | `kilometres` albo `miles`; wartość początkowa z ustawień regionalnych, edytowalna.                      |
+| `fuelTankCapacityMicrolitres`   | Tak       | Dodatnia pojemność zbiornika paliwa przechowywana w mikrolitrach; formularz przyjmuje liczbę całkowitą. |
+| `fuelVolumeUnitPreference`      | Tak       | `litres`, `usGallons` albo `imperialGallons`; jawna i edytowalna.                                       |
+| `fuelConsumptionUnitPreference` | Tak       | `litresPer100Kilometres`, `milesPerUsGallon` albo `milesPerImperialGallon`.                             |
+| `photoReference`                | Nie       | Stabilne odwołanie do najwyżej jednego zdjęcia zarządzanego przez aplikację.                            |
+| `createdAt`                     | Systemowo | Znacznik czasu utworzenia w UTC.                                                                        |
+| `updatedAt`                     | Systemowo | Znacznik czasu ostatniej utrwalonej zmiany w UTC.                                                       |
 
 Widoczna dla użytkownika nazwa pojazdu jest wyprowadzana z pól `make`, `model` i opcjonalnie
 `variant`. Nie jest przechowywana osobno w pierwszym modelu, ponieważ druga edytowalna nazwa mogłaby

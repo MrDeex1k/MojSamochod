@@ -76,6 +76,9 @@ Rekomendowany wariant:
    mikrolitra.
 6. Zmiana preferencji jednostki nie przepisuje zapisanych tankowań, ale natychmiast przelicza ich
    prezentację, wartości otwierane do edycji oraz ceny jednostkowe odnoszące się do objętości.
+7. Użytkownik może wpisać ilość tankowania z dokładnością do najwyżej dwóch miejsc po przecinku.
+   Lista, szczegóły i formularz edycji również pokazują najwyżej dwa miejsca po przecinku, niezależnie
+   od tego, czy prezentują litry, galony amerykańskie czy galony imperialne.
 
 Obsługiwane wartości `inputVolumeUnit`:
 
@@ -126,9 +129,10 @@ Formularz tworzenia pojazdu otrzymuje wymagane pole `Pojemność zbiornika paliw
 - `fuelVolumeUnitPreference`, używaną podczas wpisywania pojemności i nowych tankowań;
 - `fuelConsumptionUnitPreference`, używaną do prezentacji wyniku spalania.
 
-Pojemność jest obowiązkowa dla każdego nowego pojazdu. Wartość wpisuje się razem z jednostką:
-litrami, galonami amerykańskimi albo galonami imperialnymi. Zmiana jednostki prezentacji nie zmienia
-kanonicznej pojemności.
+Pojemność jest obowiązkowa dla każdego nowego pojazdu i w formularzu zawsze jest dodatnią liczbą
+całkowitą. Wartość wpisuje się razem z jednostką: litrami, galonami amerykańskimi albo galonami
+imperialnymi. Zmiana jednostki prezentacji nie zmienia kanonicznej pojemności, a przeliczony wynik
+widoczny w polu jest zaokrąglany do najbliższej liczby całkowitej.
 
 Migracja istniejących danych nie może dopisywać zmyślonej pojemności. Starszy pojazd bez tej wartości
 pozostaje możliwy do odczytania, ale przed dodaniem pierwszego tankowania aplikacja prosi o
@@ -296,6 +300,11 @@ dotknięty przedział z obliczeń.
     danych źródłowych.
 21. Zmiana preferencji jednostki objętości przelicza prezentowaną cenę jednostkową bez zmiany waluty
     i historycznej kwoty całkowitej.
+22. Ilość tankowania z więcej niż dwoma miejscami po przecinku jest odrzucana.
+23. Historyczna ilość i wynik konwersji objętości są prezentowane z najwyżej dwoma miejscami po
+    przecinku bez zmiany wartości kanonicznej.
+24. Pojemność zbiornika z częścią ułamkową jest odrzucana, a konwersja pojemności jest prezentowana
+    jako liczba całkowita bez zmiany wartości kanonicznej.
 
 ## Stan decyzji
 
@@ -314,6 +323,8 @@ dotknięty przedział z obliczeń.
 | 11  | Pojemność zbiornika paliwa jest obowiązkowa podczas tworzenia nowego pojazdu.          | Zatwierdzona |
 | 12  | Jednostki są preferencjami pojazdu i nie są wybierane osobno przy każdym wpisie.       | Zatwierdzona |
 | 13  | Zmiana preferencji przelicza prezentację bez przepisywania danych kanonicznych.        | Zatwierdzona |
+| 14  | Ilość tankowania i jej konwersje mają najwyżej dwa miejsca po przecinku.               | Zatwierdzona |
+| 15  | Pojemność zbiornika jest liczbą całkowitą również po zmianie jednostki prezentacji.    | Zatwierdzona |
 
 Wszystkie decyzje wymagane do domknięcia Fazy 5 zostały zatwierdzone, zaimplementowane i
 zweryfikowane przed otwarciem fazy na review.
@@ -333,6 +344,8 @@ na czas formularza. Nieobsługiwany język systemowy poprawnie korzysta z angiel
 Ponowna weryfikacja na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet potwierdziła brak
 selektora jednostki w formularzu tankowania oraz zgodne z preferencją pojazdu etykiety ilości i ceny.
 Urządzenia Apple prezentowały litry, a urządzenia z Androidem galony amerykańskie. Na iPhonie
-dodatkowo sprawdzono bez zapisu konwersję licznika `125000 km → 77671 mi` oraz pojemności zbiornika
-`42 l → 11.095226 gal US`. Testy automatyczne potwierdzają zachowanie danych kanonicznych,
-przeliczanie historycznych ilości i cen oraz zmianę prezentacji `l/100 km ↔ mpg`.
+dodatkowo sprawdzono odrzucenie ilości paliwa `45,123`, ponieważ formularz dopuszcza najwyżej dwa
+miejsca po przecinku. Na Pixel Tablet potwierdzono całkowitą prezentację pojemności po konwersji
+`45 gal US → 170 l`. Testy automatyczne potwierdzają zachowanie dokładnych danych kanonicznych bez
+zapisu formularza, przeliczanie historycznych ilości i cen oraz zmianę prezentacji
+`l/100 km ↔ mpg`.

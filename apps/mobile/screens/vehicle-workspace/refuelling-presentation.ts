@@ -8,13 +8,13 @@ export function formatFuelVolume(
   unit: VolumeUnit,
   locale: string,
 ): string {
-  return new Intl.NumberFormat(locale, { maximumFractionDigits: 6 }).format(
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(
     microlitresToVolume(microlitres, unit),
   );
 }
 
 export function formatEditableFuelVolume(microlitres: Microlitres, unit: VolumeUnit): string {
-  return String(Number(microlitresToVolume(microlitres, unit).toFixed(6)));
+  return String(Number(microlitresToVolume(microlitres, unit).toFixed(2)));
 }
 
 export function formatFuelConsumption(value: number, locale: string): string {

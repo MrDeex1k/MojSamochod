@@ -132,7 +132,7 @@ describe("RefuellingDetail", () => {
       </SafeAreaProvider>,
     );
 
-    expect(screen.getAllByText("11.887742 gal (US)")).toHaveLength(2);
+    expect(screen.getAllByText("11.89 gal (US)")).toHaveLength(2);
     expect(screen.getByText("25.237 USD/gal (US)")).toBeOnTheScreen();
     expect(screen.queryByText("45 l")).not.toBeOnTheScreen();
   });
