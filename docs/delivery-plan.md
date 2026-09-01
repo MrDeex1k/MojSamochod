@@ -126,9 +126,8 @@ metadata-only JSON export.
 ## Phase 5 — Refuelling and fuel consumption
 
 **Status:** Complete on `feat/refuelling-and-consumption`; ready for review and integration. Domain
-decisions, pure consumption calculations, vehicle fuel configuration, refuelling persistence, the
-version 3 JSON export, application workflows, and the adaptive phone/tablet interface are covered
-by automated tests and native verification on iPhone, iPad, Android phone, and Android tablet.
+decisions, canonical unit conversions, vehicle fuel preferences, refuelling persistence, JSON v3
+export, application workflows, and adaptive phone/tablet UI have automated and native coverage.
 
 ### Steps
 
@@ -137,12 +136,19 @@ by automated tests and native verification on iPhone, iPad, Android phone, and A
 3. Calculate average consumption in pure, thoroughly tested domain functions.
 4. Explain insufficient or invalid data rather than displaying misleading averages.
 5. Add concise trends only when they improve understanding over a list and summary value.
+6. Remove per-entry unit selection and use the vehicle's saved distance, fuel-volume, and
+   consumption preferences throughout entry forms.
+7. Re-render historical values, editable values, tank capacity, and unit prices from canonical data
+   when a vehicle unit preference changes, without rewriting source records.
 
 ### Exit criteria
 
 - Calculations have fixtures for normal, partial, missing, and invalid sequences.
 - Users can audit which refuelling events produced an average.
 - Locale, currency, distance, and volume formatting are correct.
+- Users configure units once per vehicle rather than repeating the choice for every entry.
+- Changing a unit preference preserves canonical data and consistently converts all affected
+  presentation and editing surfaces.
 
 ## Phase 6 — Reminders
 

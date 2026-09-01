@@ -35,7 +35,11 @@ import {
 } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
-import { formatEditableFuelVolume, formatUnitPrice } from "./refuelling-presentation";
+import {
+  formatConvertedUnitPrice,
+  formatEditableFuelVolume,
+  volumeUnitLabel,
+} from "./refuelling-presentation";
 
 type PickerMode = "date" | "time" | null;
 type FieldErrors = Partial<
@@ -62,33 +66,28 @@ export function RefuellingForm({
   vehicle,
 }: RefuellingFormProps) {
   const { t, i18n } = useAppTranslation();
-  const initialVolumeUnit = refuelling?.inputVolumeUnit ?? vehicle.fuelVolumeUnitPreference!;
+  const volumeUnit = vehicle.fuelVolumeUnitPreference!;
   const [occurredAt, setOccurredAt] = useState(() =>
     toUtcMinute(new Date(refuelling?.occurredAt ?? clock.now())),
   );
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
   const [quantity, setQuantity] = useState(() =>
-    refuelling ? formatEditableFuelVolume(refuelling.quantityMicrolitres, initialVolumeUnit) : "",
+    refuelling ? formatEditableFuelVolume(refuelling.quantityMicrolitres, volumeUnit) : "",
   );
-  const [volumeUnit, setVolumeUnit] = useState<VolumeUnit>(initialVolumeUnit);
   const [fillKind, setFillKind] = useState<FillKind>(refuelling?.fillKind ?? "full");
   const [odometer, setOdometer] = useState(() => formatInitialOdometer(refuelling, vehicle));
   const [priceInputMode, setPriceInputMode] = useState<PriceInputMode>(
     refuelling?.pricing?.inputMode ?? "total",
   );
-  const [price, setPrice] = useState(() => formatInitialPrice(refuelling, i18n.language));
+  const [price, setPrice] = useState(() =>
+    formatInitialPrice(refuelling, volumeUnit, i18n.language),
+  );
   const [currency, setCurrency] = useState(
     refuelling?.pricing?.totalCost.currency ?? getLocales()[0]?.currencyCode ?? "USD",
   );
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const changeVolumeUnit = (nextUnit: VolumeUnit) => {
-    const parsed = parseVolumeToMicrolitres(normalizeDecimal(quantity), volumeUnit);
-    if (parsed.ok) setQuantity(formatEditableFuelVolume(parsed.value, nextUnit));
-    setVolumeUnit(nextUnit);
-  };
 
   const save = async () => {
     if (saving) return;
@@ -145,25 +144,10 @@ export function RefuellingForm({
         ]}
         value={fillKind}
       />
-      <View className="gap-compact">
-        <Text className="text-label font-semibold text-primary">
-          {t("refuelling.volumeUnitLabel")}
-        </Text>
-        <View className="flex-row flex-wrap gap-compact">
-          {(["litres", "usGallons", "imperialGallons"] as const).map((unit) => (
-            <Button
-              key={unit}
-              label={t(`refuelling.volumeUnit.${unit}`)}
-              onPress={() => changeVolumeUnit(unit)}
-              variant={volumeUnit === unit ? "primary" : "secondary"}
-            />
-          ))}
-        </View>
-      </View>
       <TextField
         error={errors.quantity}
         keyboardType="decimal-pad"
-        label={t("refuelling.quantityLabel")}
+        label={`${t("refuelling.quantityLabel")} (${volumeUnitLabel(volumeUnit)})`}
         onChangeText={setQuantity}
         value={quantity}
       />
@@ -225,11 +209,11 @@ export function RefuellingForm({
             error={errors.price}
             helperText={t("refuelling.priceOptional")}
             keyboardType="decimal-pad"
-            label={t(
+            label={
               priceInputMode === "total"
-                ? "refuelling.totalPriceLabel"
-                : "refuelling.unitPriceLabel",
-            )}
+                ? t("refuelling.totalPriceLabel")
+                : `${t("refuelling.unitPriceLabel")} (/${volumeUnitLabel(volumeUnit)})`
+            }
             onChangeText={setPrice}
             value={price}
           />
@@ -381,7 +365,11 @@ function formatInitialOdometer(refuelling: Refuelling | undefined, vehicle: Vehi
   return String(Math.round(refuelling.odometerMetres / divisor));
 }
 
-function formatInitialPrice(refuelling: Refuelling | undefined, locale: string): string {
+function formatInitialPrice(
+  refuelling: Refuelling | undefined,
+  volumeUnit: NonNullable<Vehicle["fuelVolumeUnitPreference"]>,
+  locale: string,
+): string {
   if (!refuelling?.pricing) return "";
   return refuelling.pricing.inputMode === "total"
     ? formatCurrencyInputMinorUnits(
@@ -389,7 +377,12 @@ function formatInitialPrice(refuelling: Refuelling | undefined, locale: string):
         refuelling.pricing.totalCost.currency,
         locale,
       )
-    : formatUnitPrice(refuelling.pricing.unitPriceMilliUnits, locale);
+    : formatConvertedUnitPrice(
+        refuelling.pricing.unitPriceMilliUnits,
+        refuelling.pricing.unitPriceVolumeUnit,
+        volumeUnit,
+        locale,
+      );
 }
 
 function normalizeDecimal(value: string): string {

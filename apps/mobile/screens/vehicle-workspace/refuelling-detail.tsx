@@ -12,8 +12,8 @@ import { useAppTranslation } from "@/localization/use-app-translation";
 
 import {
   formatFuelVolume,
+  formatConvertedUnitPrice,
   formatRefuellingOdometer,
-  formatUnitPrice,
   volumeUnitLabel,
 } from "./refuelling-presentation";
 
@@ -39,9 +39,9 @@ export function RefuellingDetail({
   const [error, setError] = useState(false);
   const quantity = `${formatFuelVolume(
     refuelling.quantityMicrolitres,
-    refuelling.inputVolumeUnit,
+    vehicle.fuelVolumeUnitPreference!,
     i18n.language,
-  )} ${volumeUnitLabel(refuelling.inputVolumeUnit)}`;
+  )} ${volumeUnitLabel(vehicle.fuelVolumeUnitPreference!)}`;
 
   const confirmDelete = () => {
     const odometer =
@@ -113,9 +113,14 @@ export function RefuellingDetail({
             />
             <DetailRow
               label={t("refuelling.unitPriceLabel")}
-              value={`${formatUnitPrice(refuelling.pricing.unitPriceMilliUnits, i18n.language)} ${
+              value={`${formatConvertedUnitPrice(
+                refuelling.pricing.unitPriceMilliUnits,
+                refuelling.pricing.unitPriceVolumeUnit,
+                vehicle.fuelVolumeUnitPreference!,
+                i18n.language,
+              )} ${
                 refuelling.pricing.totalCost.currency
-              }/${volumeUnitLabel(refuelling.pricing.unitPriceVolumeUnit)}`}
+              }/${volumeUnitLabel(vehicle.fuelVolumeUnitPreference!)}`}
             />
             <DetailRow
               label={t("refuelling.enteredAs")}

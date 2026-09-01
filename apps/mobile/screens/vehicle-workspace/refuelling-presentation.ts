@@ -1,4 +1,5 @@
 import type { FuelConsumptionUnit } from "@/domain/refuelling/fuel-consumption";
+import { convertUnitPriceMilliUnits } from "@/domain/refuelling/pricing";
 import { microlitresToVolume, type Microlitres, type VolumeUnit } from "@/domain/refuelling/volume";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 
@@ -28,6 +29,16 @@ export function formatUnitPrice(unitPriceMilliUnits: number, locale: string): st
     maximumFractionDigits: 3,
     minimumFractionDigits: 0,
   }).format(unitPriceMilliUnits / 1000);
+}
+
+export function formatConvertedUnitPrice(
+  unitPriceMilliUnits: number,
+  fromUnit: VolumeUnit,
+  toUnit: VolumeUnit,
+  locale: string,
+): string {
+  const converted = convertUnitPriceMilliUnits(unitPriceMilliUnits, fromUnit, toUnit);
+  return formatUnitPrice(converted ?? unitPriceMilliUnits, locale);
 }
 
 export function formatRefuellingOdometer(metres: number, vehicle: Vehicle, locale: string): string {

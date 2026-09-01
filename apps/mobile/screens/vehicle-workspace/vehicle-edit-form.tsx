@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
@@ -13,6 +13,7 @@ import type { FuelConsumptionUnit } from "@/domain/refuelling/fuel-consumption";
 import {
   microlitresToVolume,
   parseVolumeToMicrolitres,
+  type Microlitres,
   type VolumeUnit,
 } from "@/domain/refuelling/volume";
 import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
@@ -63,6 +64,7 @@ export function VehicleEditForm({
   const [registrationNumber, setRegistrationNumber] = useState(vehicle.registrationNumber ?? "");
   const [vin, setVin] = useState(vehicle.vin ?? "");
   const [initialOdometer, setInitialOdometer] = useState(() => formatOdometer(vehicle));
+  const initialOdometerMetres = useRef<number | undefined>(vehicle.initialOdometerMetres);
   const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>(vehicle.distanceUnitPreference);
   const [fuelVolumeUnit, setFuelVolumeUnit] = useState<VolumeUnit>(
     vehicle.fuelVolumeUnitPreference ?? defaultFuelVolumeUnit(vehicle),
@@ -75,6 +77,9 @@ export function VehicleEditForm({
       vehicle,
       vehicle.fuelVolumeUnitPreference ?? defaultFuelVolumeUnit(vehicle),
     ),
+  );
+  const fuelTankCapacityMicrolitres = useRef<number>(
+    vehicle.fuelTankCapacityMicrolitres ?? Number.NaN,
   );
   const [photoChange, setPhotoChange] = useState<PhotoChange>({ kind: "keep" });
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
@@ -94,6 +99,25 @@ export function VehicleEditForm({
     if (result.kind === "unavailable") setFormError(t("firstVehicle.photoError"));
   };
 
+  const changeDistanceUnit = (nextUnit: DistanceUnit) => {
+    if (
+      initialOdometerMetres.current !== undefined &&
+      Number.isFinite(initialOdometerMetres.current)
+    ) {
+      setInitialOdometer(formatDistance(initialOdometerMetres.current, nextUnit));
+    }
+    setDistanceUnit(nextUnit);
+  };
+
+  const changeFuelVolumeUnit = (nextUnit: VolumeUnit) => {
+    if (Number.isFinite(fuelTankCapacityMicrolitres.current)) {
+      setFuelTankCapacity(
+        formatFuelCapacityValue(fuelTankCapacityMicrolitres.current as Microlitres, nextUnit),
+      );
+    }
+    setFuelVolumeUnit(nextUnit);
+  };
+
   const save = async () => {
     if (saving) return;
     setFormError(null);
@@ -110,9 +134,9 @@ export function VehicleEditForm({
       {
         distanceUnitPreference: distanceUnit,
         fuelConsumptionUnitPreference: fuelConsumptionUnit,
-        fuelTankCapacityMicrolitres: parseFuelCapacity(fuelTankCapacity, fuelVolumeUnit),
+        fuelTankCapacityMicrolitres: fuelTankCapacityMicrolitres.current,
         fuelVolumeUnitPreference: fuelVolumeUnit,
-        initialOdometerMetres: parseOdometer(initialOdometer, distanceUnit),
+        initialOdometerMetres: initialOdometerMetres.current,
         make,
         manufactureYear: manufactureYear.trim() ? Number(manufactureYear) : undefined,
         model,
@@ -218,13 +242,13 @@ export function VehicleEditForm({
         <Button
           className="flex-1"
           label="km"
-          onPress={() => setDistanceUnit("kilometres")}
+          onPress={() => changeDistanceUnit("kilometres")}
           variant={distanceUnit === "kilometres" ? "primary" : "secondary"}
         />
         <Button
           className="flex-1"
           label="mi"
-          onPress={() => setDistanceUnit("miles")}
+          onPress={() => changeDistanceUnit("miles")}
           variant={distanceUnit === "miles" ? "primary" : "secondary"}
         />
       </View>
@@ -232,16 +256,22 @@ export function VehicleEditForm({
         error={errors.initialOdometerMetres}
         keyboardType="number-pad"
         label={t("firstVehicle.initialOdometerLabel")}
-        onChangeText={setInitialOdometer}
+        onChangeText={(value) => {
+          setInitialOdometer(value);
+          initialOdometerMetres.current = parseOdometer(value, distanceUnit);
+        }}
         value={initialOdometer}
       />
       <FuelConfigurationFields
         capacity={fuelTankCapacity}
         capacityError={errors.fuelTankCapacityMicrolitres}
         consumptionUnit={fuelConsumptionUnit}
-        onCapacityChange={setFuelTankCapacity}
+        onCapacityChange={(value) => {
+          setFuelTankCapacity(value);
+          fuelTankCapacityMicrolitres.current = parseFuelCapacity(value, fuelVolumeUnit);
+        }}
         onConsumptionUnitChange={setFuelConsumptionUnit}
-        onVolumeUnitChange={setFuelVolumeUnit}
+        onVolumeUnitChange={changeFuelVolumeUnit}
         volumeUnit={fuelVolumeUnit}
       />
       {formError ? <Text className="text-body text-danger">{formError}</Text> : null}
@@ -307,8 +337,12 @@ function parseOdometer(value: string, unit: DistanceUnit): number | undefined {
 
 function formatOdometer(vehicle: Vehicle): string {
   if (vehicle.initialOdometerMetres === undefined) return "";
-  const divisor = vehicle.distanceUnitPreference === "miles" ? 1609.344 : 1000;
-  return String(Math.round(vehicle.initialOdometerMetres / divisor));
+  return formatDistance(vehicle.initialOdometerMetres, vehicle.distanceUnitPreference);
+}
+
+function formatDistance(metres: number, unit: DistanceUnit): string {
+  const divisor = unit === "miles" ? 1609.344 : 1000;
+  return String(Math.round(metres / divisor));
 }
 
 function defaultFuelVolumeUnit(vehicle: Vehicle): VolumeUnit {
@@ -321,7 +355,11 @@ function defaultFuelConsumptionUnit(vehicle: Vehicle): FuelConsumptionUnit {
 
 function formatFuelTankCapacity(vehicle: Vehicle, unit: VolumeUnit): string {
   if (vehicle.fuelTankCapacityMicrolitres === undefined) return "";
-  return String(Number(microlitresToVolume(vehicle.fuelTankCapacityMicrolitres, unit).toFixed(6)));
+  return formatFuelCapacityValue(vehicle.fuelTankCapacityMicrolitres, unit);
+}
+
+function formatFuelCapacityValue(value: Microlitres, unit: VolumeUnit): string {
+  return String(Number(microlitresToVolume(value, unit).toFixed(6)));
 }
 
 function parseFuelCapacity(value: string, unit: VolumeUnit): number {

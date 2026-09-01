@@ -23,6 +23,18 @@ describe("fuel volume", () => {
     expect(microlitresToVolume(quantity.value, "imperialGallons")).toBe(1);
   });
 
+  it.each(["usGallons", "imperialGallons"] as const)(
+    "preserves canonical litres across a litres ↔ %s round trip",
+    (unit) => {
+      const litres = parseVolumeToMicrolitres("60", "litres");
+      if (!litres.ok) throw new Error("Expected valid litres fixture");
+      const converted = microlitresToVolume(litres.value, unit).toFixed(6);
+      const roundTrip = parseVolumeToMicrolitres(converted, unit);
+      if (!roundTrip.ok) throw new Error("Expected valid round-trip fixture");
+      expect(Math.abs(roundTrip.value - litres.value)).toBeLessThanOrEqual(1);
+    },
+  );
+
   it("rejects zero, excessive precision, localized separators, and unsupported units", () => {
     expect(parseVolumeToMicrolitres("0", "litres")).toEqual({
       issues: [{ code: "out-of-range", field: "quantity.value" }],

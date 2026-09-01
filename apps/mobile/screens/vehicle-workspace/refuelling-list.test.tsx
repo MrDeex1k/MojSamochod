@@ -126,6 +126,44 @@ describe("RefuellingList", () => {
     ).toBeOnTheScreen();
     expect(screen.getAllByText("Included in the average")).toHaveLength(2);
   });
+
+  it("re-renders the same history in current gallon, mile, and mpg preferences", async () => {
+    const first = refuelling(
+      "018f47e2-7b35-7658-b336-34613389d00f",
+      "2026-08-20T08:00:00.000Z",
+      99_000_000,
+      40_000_000,
+    );
+    const second = refuelling(
+      "018f47e2-7b36-7658-b336-34613389d00f",
+      "2026-09-01T08:00:00.000Z",
+      99_600_000,
+      45_000_000,
+    );
+    const records = [second, first];
+
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <RefuellingList
+          history={{ consumption: calculateFuelConsumption(records), refuellings: records }}
+          onAdd={jest.fn()}
+          onBack={jest.fn()}
+          onConfigureFuel={jest.fn()}
+          onSelect={jest.fn()}
+          vehicle={{
+            ...vehicle,
+            distanceUnitPreference: "miles",
+            fuelConsumptionUnitPreference: "milesPerUsGallon",
+            fuelVolumeUnitPreference: "usGallons",
+          }}
+        />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByText("31.36 mpg (US)")).toBeOnTheScreen();
+    expect(screen.getByText("11.887742 gal (US)")).toBeOnTheScreen();
+    expect(screen.queryByText("45 l")).not.toBeOnTheScreen();
+  });
 });
 
 function refuelling(id: string, occurredAt: string, odometerMetres: number, quantity: number) {

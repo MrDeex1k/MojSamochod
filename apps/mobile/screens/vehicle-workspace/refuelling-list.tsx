@@ -157,9 +157,9 @@ function RefuellingRow({
   const { t, i18n } = useAppTranslation();
   const quantity = `${formatFuelVolume(
     refuelling.quantityMicrolitres,
-    refuelling.inputVolumeUnit,
+    vehicle.fuelVolumeUnitPreference!,
     i18n.language,
-  )} ${volumeUnitLabel(refuelling.inputVolumeUnit)}`;
+  )} ${volumeUnitLabel(vehicle.fuelVolumeUnitPreference!)}`;
   return (
     <Pressable
       accessibilityLabel={`${t(`refuelling.fillKind.${refuelling.fillKind}`)}, ${quantity}`}

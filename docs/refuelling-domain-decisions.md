@@ -67,13 +67,15 @@ mają prawidłowe odczyty.
 Rekomendowany wariant:
 
 1. Domena przechowuje ilość jako dodatnią, bezpieczną liczbę całkowitą mikrolitrów.
-2. Warstwa prezentacji pozwala wprowadzać litry, galony amerykańskie albo galony imperialne.
-3. Jednostka użyta podczas wprowadzania jest zapisywana jako `inputVolumeUnit`, aby formularz edycji
-   nie zmieniał po cichu sposobu prezentacji historycznej wartości.
+2. Warstwa prezentacji obsługuje litry, galony amerykańskie i galony imperialne zgodnie z zapisaną
+   preferencją danego pojazdu. Formularz tankowania nie wymaga ponownego wyboru jednostki.
+3. Jednostka aktywna podczas tworzenia rekordu jest zapisywana jako `inputVolumeUnit` jako metadana
+   źródłowa. Późniejsza zmiana preferencji nie przepisuje tej metadanej.
 4. Obliczenia zawsze korzystają z wartości kanonicznej, a nie z binarnych liczb zmiennoprzecinkowych.
 5. Konwersja galonów do mikrolitrów stosuje jedną udokumentowaną regułę zaokrąglania do najbliższego
    mikrolitra.
-6. Zmiana preferencji jednostki nie przepisuje zapisanych tankowań.
+6. Zmiana preferencji jednostki nie przepisuje zapisanych tankowań, ale natychmiast przelicza ich
+   prezentację, wartości otwierane do edycji oraz ceny jednostkowe odnoszące się do objętości.
 
 Obsługiwane wartości `inputVolumeUnit`:
 
@@ -83,6 +85,38 @@ Obsługiwane wartości `inputVolumeUnit`:
 
 Preferencja objętości jest jawna i edytowalna. Język lub region urządzenia może dostarczyć wartość
 początkową, ale nie może później samoczynnie zmienić wyboru użytkownika.
+
+## Preferencje jednostek pojazdu
+
+Jednostki są preferencjami pojazdu, a nie pojedynczego wpisu. Użytkownik ustala je podczas tworzenia
+pojazdu, a później zmienia w `Ustawienia → Jednostki`. Do czasu powstania docelowej przestrzeni
+ustawień istniejący formularz edycji pojazdu pozostaje tymczasowym miejscem konfiguracji.
+
+Konfiguracja obejmuje:
+
+- jednostkę odległości: kilometry albo mile;
+- jednostkę objętości paliwa: litry, galony amerykańskie albo galony imperialne;
+- jednostkę prezentacji spalania: `l/100 km`, `mpg US` albo `mpg imperial`.
+
+Formularze historii i tankowań korzystają z zapisanych preferencji bez pokazywania selektora
+jednostki przy każdym wpisie. Etykieta pola albo tekst pomocniczy musi jednoznacznie wskazywać aktywną
+jednostkę.
+
+Zmiana preferencji jest zmianą prezentacji, a nie danych źródłowych:
+
+- odległości pozostają zapisane w metrach;
+- ilości paliwa i pojemność zbiornika pozostają zapisane w mikrolitrach;
+- historia nie jest masowo aktualizowana ani ponownie zapisywana;
+- listy, szczegóły i formularze edycji przeliczają wartości z jednostek kanonicznych na aktualną
+  preferencję pojazdu;
+- zmiana jednostki w ustawieniach przelicza widoczną wartość pojemności zbiornika i innych
+  edytowanych pól przed zapisem, zamiast interpretować tę samą liczbę w nowej jednostce;
+- cena jednostkowa może być prezentowana po przeliczeniu na aktualną jednostkę objętości, natomiast
+  waluta i łączna kwota historyczna nie są zmieniane.
+
+`inputVolumeUnit` pozostaje częścią rekordu i eksportu jako informacja o jednostce aktywnej podczas
+utworzenia tankowania. Nie steruje jednak późniejszą prezentacją historii po świadomej zmianie
+preferencji pojazdu.
 
 ## Pojemność zbiornika pojazdu
 
@@ -216,6 +250,8 @@ dotknięty przedział z obliczeń.
 - Po zapisie użytkownik wraca do historii tankowań.
 - Szczegóły pokazują wszystkie zapisane dane, ale pomijają puste pola bez pozostawiania pustego
   miejsca.
+- Formularz tankowania nie pokazuje selektora jednostki objętości. Korzysta z preferencji pojazdu i
+  podaje aktywną jednostkę przy polu ilości oraz ceny jednostkowej.
 - Usunięcie wymaga potwierdzenia identyfikującego datę i ilość paliwa oraz przebieg, jeżeli został
   podany.
 - Podsumowanie wskazuje brak wystarczających danych albo prezentuje wynik wraz z możliwością
@@ -252,6 +288,14 @@ dotknięty przedział z obliczeń.
 15. Migracja, restart bazy i eksport JSON zachowują wszystkie dane źródłowe.
 16. Nowy pojazd wymaga pojemności zbiornika, a starszy rekord bez niej wymaga uzupełnienia przed
     pierwszym tankowaniem.
+17. Formularz nowego tankowania używa preferencji pojazdu bez dodatkowego selektora jednostki.
+18. Zmiana `l ↔ gal US ↔ gal imperial` zachowuje kanoniczną ilość paliwa i pojemność zbiornika, a
+    następnie przelicza listę, szczegóły i formularz edycji.
+19. Zmiana `km ↔ mi` zachowuje kanoniczne odległości i przelicza wszystkie wartości prezentacyjne.
+20. Zmiana `l/100 km ↔ mpg US ↔ mpg imperial` ponownie wylicza prezentację spalania z tych samych
+    danych źródłowych.
+21. Zmiana preferencji jednostki objętości przelicza prezentowaną cenę jednostkową bez zmiany waluty
+    i historycznej kwoty całkowitej.
 
 ## Stan decyzji
 
@@ -268,8 +312,11 @@ dotknięty przedział z obliczeń.
 | 9   | Wynik prezentowany jest z dokładnością do dwóch miejsc po przecinku.                   | Zatwierdzona |
 | 10  | Eksport tankowań podnosi kontrakt JSON do wersji 3 w Fazie 5.                          | Zatwierdzona |
 | 11  | Pojemność zbiornika paliwa jest obowiązkowa podczas tworzenia nowego pojazdu.          | Zatwierdzona |
+| 12  | Jednostki są preferencjami pojazdu i nie są wybierane osobno przy każdym wpisie.       | Zatwierdzona |
+| 13  | Zmiana preferencji przelicza prezentację bez przepisywania danych kanonicznych.        | Zatwierdzona |
 
-Wszystkie decyzje wymagane przed implementacją Fazy 5 zostały zatwierdzone.
+Wszystkie decyzje wymagane do domknięcia Fazy 5 zostały zatwierdzone, zaimplementowane i
+zweryfikowane przed otwarciem fazy na review.
 
 ## Wynik końcowej weryfikacji
 
@@ -282,3 +329,10 @@ pomijanie pustych pól opcjonalnych oraz czytelne potwierdzenie usunięcia.
 Układy telefonu i tabletu przeszły weryfikację na iOS i Androidzie. Tablet pokazuje kartę pojazdu i
 listę bez pustej karty szczegółów, dodaje trzecią kartę po wyborze rekordu oraz usuwa kartę środkową
 na czas formularza. Nieobsługiwany język systemowy poprawnie korzysta z angielskiego fallbacku.
+
+Ponowna weryfikacja na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet potwierdziła brak
+selektora jednostki w formularzu tankowania oraz zgodne z preferencją pojazdu etykiety ilości i ceny.
+Urządzenia Apple prezentowały litry, a urządzenia z Androidem galony amerykańskie. Na iPhonie
+dodatkowo sprawdzono bez zapisu konwersję licznika `125000 km → 77671 mi` oraz pojemności zbiornika
+`42 l → 11.095226 gal US`. Testy automatyczne potwierdzają zachowanie danych kanonicznych,
+przeliczanie historycznych ilości i cen oraz zmianę prezentacji `l/100 km ↔ mpg`.

@@ -117,6 +117,25 @@ describe("RefuellingDetail", () => {
     expect(screen.queryByText("Total amount")).not.toBeOnTheScreen();
     expect(screen.queryByText("Unit price")).not.toBeOnTheScreen();
   });
+
+  it("renders historical volume and unit price using the current vehicle preference", async () => {
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <RefuellingDetail
+          onBack={jest.fn()}
+          onDeleted={jest.fn()}
+          onEdit={jest.fn()}
+          refuelling={refuelling}
+          refuellings={service()}
+          vehicle={{ ...vehicle, fuelVolumeUnitPreference: "usGallons" }}
+        />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getAllByText("11.887742 gal (US)")).toHaveLength(2);
+    expect(screen.getByText("25.237 USD/gal (US)")).toBeOnTheScreen();
+    expect(screen.queryByText("45 l")).not.toBeOnTheScreen();
+  });
 });
 
 function service(): jest.Mocked<RefuellingService> {

@@ -13,10 +13,10 @@ opisywanego etapu.
 - Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, została zintegrowana z `main`.
 - Faza 4, czyli dokumenty i faktury, została zintegrowana z `main`.
 - Faza 5, czyli tankowania i zużycie paliwa, jest ukończona na branchu
-  `feat/refuelling-and-consumption` i gotowa do przeglądu oraz integracji. Encja tankowania,
-  jednostki objętości, dokładne ceny, audytowalne obliczenia spalania, konfiguracja paliwowa
-  pojazdu, persystencja, eksport JSON v3, przepływy aplikacyjne i interfejs są zaimplementowane i
-  zweryfikowane na czterech urządzeniach natywnych.
+  `feat/refuelling-and-consumption` i gotowa do przeglądu oraz integracji. Jednostki są
+  preferencjami pojazdu, formularz tankowania nie powtarza ich wyboru, a listy, szczegóły,
+  formularze edycji, pojemność zbiornika i ceny jednostkowe przeliczają prezentację z danych
+  kanonicznych bez przepisywania historii.
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -62,7 +62,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 43 zestawy i 198 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 43 zestawy i 206 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -92,6 +92,11 @@ opisywanego etapu.
   obliczenie spalania, zmianę ilości, ponowne przeliczenie po usunięciu oraz podniesienie aktualnego
   przebiegu pojazdu. Zweryfikowano również ceny podawane jako kwota całkowita i cena jednostkowa z
   trzema miejscami po przecinku, zapis czasu UTC, polski interfejs i angielski fallback.
+- Ponowna weryfikacja Fazy 5 na tych samych czterech urządzeniach potwierdziła brak selektora
+  jednostki w formularzu tankowania, etykiety ilości i ceny zgodne z preferencją pojazdu oraz
+  poprawną prezentację litrów na urządzeniach Apple i galonów amerykańskich na urządzeniach z
+  Androidem. Na iPhonie dodatkowo sprawdzono bez zapisu konwersję `125000 km → 77671 mi` i
+  `42 l → 11.095226 gal US` w edytorze pojazdu.
 
 ### Domena i persystencja
 

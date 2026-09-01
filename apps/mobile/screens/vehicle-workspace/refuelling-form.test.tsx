@@ -5,6 +5,7 @@ jest.mock("@react-native-community/datetimepicker", () => () => null);
 
 import type { RefuellingService } from "@/application/refuelling/refuelling-service";
 import { repositorySuccess } from "@/application/repositories/repository-result";
+import { createRefuelling } from "@/domain/refuelling/refuelling";
 import { createVehicle } from "@/domain/vehicle/vehicle";
 
 import { RefuellingForm } from "./refuelling-form";
@@ -33,7 +34,8 @@ describe("RefuellingForm", () => {
     const onSaved = jest.fn();
     await renderForm(refuellings, onSaved);
 
-    await userEvent.type(screen.getByLabelText("Fuel quantity"), "45");
+    expect(screen.queryByText("Fuel volume unit")).not.toBeOnTheScreen();
+    await userEvent.type(screen.getByLabelText("Fuel quantity (l)"), "45");
     await userEvent.type(screen.getByLabelText("Current odometer"), "99000");
     await userEvent.type(screen.getByLabelText("Total amount"), "300.00");
     await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
@@ -59,9 +61,9 @@ describe("RefuellingForm", () => {
     const refuellings = service();
     await renderForm(refuellings, jest.fn());
 
-    await userEvent.type(screen.getByLabelText("Fuel quantity"), "45");
+    await userEvent.type(screen.getByLabelText("Fuel quantity (l)"), "45");
     await userEvent.press(screen.getByRole("button", { name: "Price per volume unit" }));
-    await userEvent.type(screen.getByLabelText("Unit price"), "6.6667");
+    await userEvent.type(screen.getByLabelText("Unit price (/l)"), "6.6667");
     await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
 
     expect(
@@ -71,9 +73,46 @@ describe("RefuellingForm", () => {
     ).toBeOnTheScreen();
     expect(refuellings.create).not.toHaveBeenCalled();
   });
+
+  it("opens a historical litre entry in the vehicle's current gallon preference", async () => {
+    const existing = expectValid(
+      createRefuelling(
+        {
+          fillKind: "full",
+          inputVolumeUnit: "litres",
+          occurredAt: "2026-09-01T08:00:00.000Z",
+          pricing: {
+            inputMode: "perVolumeUnit",
+            totalCost: { currency: "USD", minorUnits: 30_000 },
+            unitPriceMilliUnits: 6_667,
+            unitPriceVolumeUnit: "litres",
+          },
+          quantityMicrolitres: 45_000_000,
+          vehicleId: vehicle.id,
+        },
+        {
+          clock: { now: () => now },
+          idGenerator: { generate: () => "018f47e2-7b35-7658-b336-34613389d00f" },
+        },
+      ),
+    );
+
+    await renderForm(service(), jest.fn(), {
+      refuelling: existing,
+      vehicle: { ...vehicle, fuelVolumeUnitPreference: "usGallons" },
+    });
+
+    expect(screen.getByLabelText("Fuel quantity (gal (US))")).toHaveDisplayValue("11.887742");
+    expect(screen.getByLabelText("Unit price (/gal (US))")).toHaveDisplayValue("25.237");
+    expect(screen.queryByText("Fuel volume unit")).not.toBeOnTheScreen();
+  });
 });
 
-async function renderForm(refuellings: jest.Mocked<RefuellingService>, onSaved: jest.Mock) {
+async function renderForm(
+  refuellings: jest.Mocked<RefuellingService>,
+  onSaved: jest.Mock,
+  overrides: Partial<React.ComponentProps<typeof RefuellingForm>> = {},
+) {
   await render(
     <SafeAreaProvider initialMetrics={safeAreaMetrics}>
       <RefuellingForm
@@ -82,6 +121,7 @@ async function renderForm(refuellings: jest.Mocked<RefuellingService>, onSaved: 
         onSaved={onSaved}
         refuellings={refuellings}
         vehicle={vehicle}
+        {...overrides}
       />
     </SafeAreaProvider>,
   );

@@ -20,6 +20,20 @@ export function parseUnitPriceMilliUnits(
     : invalid([{ code: "out-of-range", field }]);
 }
 
+export function convertUnitPriceMilliUnits(
+  value: number,
+  fromUnit: VolumeUnit,
+  toUnit: VolumeUnit,
+): number | undefined {
+  if (!Number.isSafeInteger(value) || value < 0) return undefined;
+  const [fromNumerator, fromDenominator] = microlitresPerVolumeUnit(fromUnit);
+  const [toNumerator, toDenominator] = microlitresPerVolumeUnit(toUnit);
+  return roundedSafeInteger(
+    BigInt(value) * toNumerator * fromDenominator,
+    fromNumerator * toDenominator,
+  );
+}
+
 export function pricingFromUnitPrice(input: {
   currency: string;
   currencyFractionDigits: number;

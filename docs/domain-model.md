@@ -181,7 +181,9 @@ późniejsze dodanie nie może wymagać zmiany reguł tożsamości ani przebiegu
    inicjalizowana licznikiem początkowym i aktualizowana odczytami podawanymi przy wpisach historii.
 7. Pojazd ma najwyżej jedno zdjęcie. Użytkownik może wybrać je podczas tworzenia pojazdu, a później
    bezpiecznie zastąpić lub usunąć bez zmiany tożsamości pojazdu.
-8. Zmiana jednostki wyświetlania nie przepisuje zapisanych odległości.
+8. Zmiana preferencji jednostki nie przepisuje zapisanych odległości, ilości paliwa ani pojemności
+   zbiornika. Wszystkie wartości prezentacyjne i wartości otwierane do edycji są ponownie
+   przeliczane z jednostek kanonicznych.
 9. Numer rejestracyjny i VIN są identyfikatorami podanymi przez użytkownika, a nie tożsamością
    rekordu.
 10. Powielone numery rejestracyjne lub VIN nie mają znaczenia przy obsłudze jednego pojazdu. Przed

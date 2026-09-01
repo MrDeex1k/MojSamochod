@@ -1,4 +1,9 @@
-import { parseUnitPriceMilliUnits, pricingFromTotalCost, pricingFromUnitPrice } from "./pricing";
+import {
+  convertUnitPriceMilliUnits,
+  parseUnitPriceMilliUnits,
+  pricingFromTotalCost,
+  pricingFromUnitPrice,
+} from "./pricing";
 
 describe("refuelling pricing", () => {
   it("parses at most three decimal places without floating-point storage", () => {
@@ -47,6 +52,18 @@ describe("refuelling pricing", () => {
         unitPriceVolumeUnit: "litres",
       },
     });
+  });
+
+  it("converts a unit price between litres and gallons without changing its meaning", () => {
+    const usGallonPrice = convertUnitPriceMilliUnits(6_667, "litres", "usGallons");
+    expect(usGallonPrice).toBe(25_237);
+    expect(convertUnitPriceMilliUnits(usGallonPrice!, "usGallons", "litres")).toBe(6_667);
+
+    const imperialGallonPrice = convertUnitPriceMilliUnits(6_667, "litres", "imperialGallons");
+    expect(imperialGallonPrice).toBe(30_309);
+    expect(convertUnitPriceMilliUnits(imperialGallonPrice!, "imperialGallons", "litres")).toBe(
+      6_667,
+    );
   });
 
   it("respects currencies with zero or three fraction digits", () => {
