@@ -130,8 +130,8 @@ metadata-only JSON export.
 
 **Status:** Domain decisions, pure consumption calculations, vehicle fuel configuration,
 refuelling persistence, and the version 3 JSON export are implemented on
-`feat/refuelling-and-consumption`. Application workflows and interface implementation remain in
-progress.
+`feat/refuelling-and-consumption`. Application workflows and the adaptive phone/tablet interface
+are implemented with automated coverage. Final native verification remains pending.
 
 ### Steps
 

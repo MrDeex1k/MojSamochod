@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { ApplicationServices } from "@/components/providers/application-provider";
+import type { RefuellingHistory } from "@/application/refuelling/refuelling-service";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";
+import type { Refuelling } from "@/domain/refuelling/refuelling";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 import { AdaptiveWorkspace } from "@/components/layout/adaptive-workspace";
 import { Screen } from "@/components/layout/screen";
@@ -28,11 +30,15 @@ import { VehicleEditForm } from "./vehicle-edit-form";
 import { DocumentDetail } from "./document-detail";
 import { DocumentForm } from "./document-form";
 import { DocumentList } from "./document-list";
+import { RefuellingDetail } from "./refuelling-detail";
+import { RefuellingForm } from "./refuelling-form";
+import { RefuellingList } from "./refuelling-list";
 
 type WorkspaceData = Readonly<{
   documents: readonly VehicleDocument[];
   entries: readonly HistoryEntry[];
   photoUri: string | null;
+  refuellingHistory: RefuellingHistory;
   vehicle: Vehicle;
 }>;
 
@@ -43,6 +49,9 @@ type WorkspaceMode =
   | Readonly<{ entry: HistoryEntry; kind: "detail" }>
   | Readonly<{ entry?: HistoryEntry; kind: "form"; type: HistoryEntry["type"] }>
   | Readonly<{ kind: "history" }>
+  | Readonly<{ kind: "fuel" }>
+  | Readonly<{ kind: "refuelling-form"; refuelling?: Refuelling }>
+  | Readonly<{ kind: "refuelling-detail"; refuelling: Refuelling }>
   | Readonly<{ kind: "select-type" }>
   | Readonly<{ kind: "vehicle-form" }>;
 
@@ -57,9 +66,14 @@ type VehicleWorkspaceViewProps = WorkspaceData &
     onDocumentsChanged: () => void;
     onEditDocument: (document: VehicleDocument) => void;
     onEditEntry: (entry: HistoryEntry) => void;
+    onEditRefuelling: (refuelling: Refuelling) => void;
     onEditVehicle: () => void;
+    onFuel: () => void;
+    onFuelChanged: () => void;
+    onAddRefuelling: () => void;
     onSaved: () => void;
     onSelectEntry: (entry: HistoryEntry) => void;
+    onSelectRefuelling: (refuelling: Refuelling) => void;
     onSelectDocument: (document: VehicleDocument) => void;
     services: ApplicationServices;
   }>;
@@ -115,6 +129,7 @@ export function VehicleWorkspaceScreen() {
       {...state.data}
       mode={mode}
       onAddEntry={() => setMode({ kind: "select-type" })}
+      onAddRefuelling={() => setMode({ kind: "refuelling-form" })}
       onAddDocument={() => setMode({ kind: "document-form" })}
       onCancelFlow={() => setMode({ kind: "history" })}
       onChooseType={(type) => setMode({ kind: "form", type })}
@@ -126,13 +141,21 @@ export function VehicleWorkspaceScreen() {
       }}
       onEditDocument={(document) => setMode({ document, kind: "document-form" })}
       onEditEntry={(entry) => setMode({ entry, kind: "form", type: entry.type })}
+      onEditRefuelling={(refuelling) => setMode({ kind: "refuelling-form", refuelling })}
       onEditVehicle={() => setMode({ kind: "vehicle-form" })}
+      onFuel={() => setMode({ kind: "fuel" })}
+      onFuelChanged={() => {
+        setMode({ kind: "fuel" });
+        setState({ status: "loading" });
+        setAttempt((value) => value + 1);
+      }}
       onSaved={() => {
         setMode({ kind: "history" });
         setState({ status: "loading" });
         setAttempt((value) => value + 1);
       }}
       onSelectEntry={(entry) => setMode({ entry, kind: "detail" })}
+      onSelectRefuelling={(refuelling) => setMode({ kind: "refuelling-detail", refuelling })}
       onSelectDocument={(document) => setMode({ document, kind: "document-detail" })}
       services={services}
     />
@@ -144,6 +167,7 @@ export function VehicleWorkspaceView({
   entries,
   mode,
   onAddEntry,
+  onAddRefuelling,
   onAddDocument,
   onCancelFlow,
   onChooseType,
@@ -151,16 +175,48 @@ export function VehicleWorkspaceView({
   onDocumentsChanged,
   onEditDocument,
   onEditEntry,
+  onEditRefuelling,
   onEditVehicle,
+  onFuel,
+  onFuelChanged,
   onSaved,
   onSelectEntry,
+  onSelectRefuelling,
   onSelectDocument,
   photoUri,
+  refuellingHistory,
   services,
   vehicle,
 }: VehicleWorkspaceViewProps) {
   const phone =
-    mode.kind === "documents" ? (
+    mode.kind === "fuel" ? (
+      <RefuellingList
+        history={refuellingHistory}
+        onAdd={onAddRefuelling}
+        onBack={onCancelFlow}
+        onConfigureFuel={onEditVehicle}
+        onSelect={onSelectRefuelling}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "refuelling-form" ? (
+      <RefuellingForm
+        clock={services.clock}
+        onCancel={onFuel}
+        onSaved={onFuelChanged}
+        refuelling={mode.refuelling}
+        refuellings={services.refuellings}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "refuelling-detail" ? (
+      <RefuellingDetail
+        onBack={onFuel}
+        onDeleted={onFuelChanged}
+        onEdit={() => onEditRefuelling(mode.refuelling)}
+        refuelling={mode.refuelling}
+        refuellings={services.refuellings}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "documents" ? (
       <DocumentList
         documents={documents}
         entries={entries}
@@ -223,6 +279,7 @@ export function VehicleWorkspaceView({
         entries={entries}
         onAddEntry={onAddEntry}
         onEditVehicle={onEditVehicle}
+        onFuel={onFuel}
         onDocuments={onDocuments}
         onSelectEntry={onSelectEntry}
         photoUri={photoUri}
@@ -231,7 +288,27 @@ export function VehicleWorkspaceView({
     );
 
   const primaryPane =
-    mode.kind === "documents" || mode.kind === "document-detail" ? (
+    mode.kind === "fuel" || mode.kind === "refuelling-detail" ? (
+      <RefuellingList
+        embedded
+        history={refuellingHistory}
+        onAdd={onAddRefuelling}
+        onBack={onCancelFlow}
+        onConfigureFuel={onEditVehicle}
+        onSelect={onSelectRefuelling}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "refuelling-form" ? (
+      <RefuellingForm
+        clock={services.clock}
+        embedded
+        onCancel={onFuel}
+        onSaved={onFuelChanged}
+        refuelling={mode.refuelling}
+        refuellings={services.refuellings}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "documents" || mode.kind === "document-detail" ? (
       <DocumentList
         documents={documents}
         embedded
@@ -277,13 +354,24 @@ export function VehicleWorkspaceView({
         entries={entries}
         onAddEntry={onAddEntry}
         onDocuments={onDocuments}
+        onFuel={onFuel}
         onSelectEntry={onSelectEntry}
         vehicle={vehicle}
       />
     );
 
   const detailPane =
-    mode.kind === "document-detail" ? (
+    mode.kind === "refuelling-detail" ? (
+      <RefuellingDetail
+        embedded
+        onBack={onFuel}
+        onDeleted={onFuelChanged}
+        onEdit={() => onEditRefuelling(mode.refuelling)}
+        refuelling={mode.refuelling}
+        refuellings={services.refuellings}
+        vehicle={vehicle}
+      />
+    ) : mode.kind === "document-detail" ? (
       <DocumentDetail
         document={mode.document}
         documents={services.documents}
@@ -327,6 +415,7 @@ function PhoneWorkspace(
     | "onAddEntry"
     | "onDocuments"
     | "onEditVehicle"
+    | "onFuel"
     | "onSelectEntry"
     | "photoUri"
     | "vehicle"
@@ -339,6 +428,7 @@ function PhoneWorkspace(
         <VehicleSummary {...props} />
         <Button label={`+ ${t("workspace.addEntry")}`} onPress={props.onAddEntry} />
         <Button label={t("documents.title")} onPress={props.onDocuments} variant="secondary" />
+        <Button label={t("refuelling.title")} onPress={props.onFuel} variant="secondary" />
         <HistoryContent
           entries={props.entries}
           onAddEntry={props.onAddEntry}
@@ -429,11 +519,12 @@ function HistoryCard({
   entries,
   onAddEntry,
   onDocuments,
+  onFuel,
   onSelectEntry,
   vehicle,
 }: Pick<
   VehicleWorkspaceViewProps,
-  "entries" | "onAddEntry" | "onDocuments" | "onSelectEntry" | "vehicle"
+  "entries" | "onAddEntry" | "onDocuments" | "onFuel" | "onSelectEntry" | "vehicle"
 >) {
   const { t } = useAppTranslation();
   return (
@@ -441,6 +532,7 @@ function HistoryCard({
       <ScrollView contentContainerClassName="gap-content">
         <Button label={`+ ${t("workspace.addEntry")}`} onPress={onAddEntry} />
         <Button label={t("documents.title")} onPress={onDocuments} variant="secondary" />
+        <Button label={t("refuelling.title")} onPress={onFuel} variant="secondary" />
         <HistoryContent
           entries={entries}
           onAddEntry={onAddEntry}
@@ -562,13 +654,21 @@ async function loadWorkspace(
   if (!entriesResult.ok) return { status: "error" };
   const documentsResult = await services.documents.list(vehicle.id);
   if (!documentsResult.ok) return { status: "error" };
+  const refuellingsResult = await services.refuellings.list(vehicle.id);
+  if (!refuellingsResult.ok) return { status: "error" };
   let photoUri: string | null = null;
   if (vehicle.photoReference) {
     const photoResult = await services.managedFiles.getReadyUri(vehicle.photoReference);
     if (photoResult.ok) photoUri = photoResult.value;
   }
   return {
-    data: { documents: documentsResult.value, entries: entriesResult.value, photoUri, vehicle },
+    data: {
+      documents: documentsResult.value,
+      entries: entriesResult.value,
+      photoUri,
+      refuellingHistory: refuellingsResult.value,
+      vehicle,
+    },
     status: "ready",
   };
 }

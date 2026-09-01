@@ -6,12 +6,12 @@
 
 **Faza realizacji:** Faza 5 — tankowania i zużycie paliwa
 
-**Status implementacji:** typy domenowe, walidacja, konwersje jednostek, ceny oraz czyste obliczenia
-zużycia są zaimplementowane; konfiguracja pojazdu, persystencja i interfejs pozostają do wykonania
+**Status implementacji:** domena, konfiguracja pojazdu, persystencja, eksport JSON v3, przepływy
+aplikacyjne i interfejs są zaimplementowane; do wykonania pozostaje końcowa weryfikacja natywna
 
 Ten dokument definiuje zatwierdzony model tankowania przed rozpoczęciem migracji, logiki domenowej i
 interfejsu. Implementacja Fazy 5 musi zachować opisane reguły albo zmienić dokument razem z kodem.
-Stabilny kontrakt eksportu JSON v3 powstanie wraz z implementacją eksportu.
+Stabilny kontrakt eksportu JSON v3 jest opisany w `data-export-v3.md`.
 
 ## Zakres Fazy 5
 

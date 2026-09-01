@@ -14,8 +14,9 @@ opisywanego etapu.
 - Faza 4, czyli dokumenty i faktury, została zintegrowana z `main`.
 - Faza 5, czyli tankowania i zużycie paliwa, ma zatwierdzone reguły domenowe na branchu
   `feat/refuelling-and-consumption`. Encja tankowania, jednostki objętości, dokładne ceny,
-  audytowalne obliczenia spalania, konfiguracja paliwowa pojazdu, persystencja i eksport JSON v3 są
-  zaimplementowane. Do wykonania pozostają przepływy aplikacyjne i interfejs.
+  audytowalne obliczenia spalania, konfiguracja paliwowa pojazdu, persystencja, eksport JSON v3,
+  przepływy aplikacyjne i interfejs są zaimplementowane. Do wykonania pozostaje końcowa weryfikacja
+  na czterech urządzeniach natywnych.
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -61,7 +62,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 39 zestawów i 184 testy komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 43 zestawy i 197 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -128,6 +129,14 @@ opisywanego etapu.
   starszych pojazdów oraz tabelę tankowań z ograniczeniami jednostek, ilości i kompletności ceny.
   Repozytorium zapisuje tankowanie i ewentualne podniesienie aktualnego przebiegu w jednej
   transakcji, a listę zwraca w deterministycznej kolejności.
+- Osobna przestrzeń `Paliwo` obsługuje pełną historię tankowań, formularz z datą i godziną UTC,
+  edycję, szczegóły oraz trwałe usuwanie po potwierdzeniu. Cena jest opcjonalna i może być podana
+  jako kwota całkowita albo cena jednostkowa; aplikacja zapisuje obie dokładne wartości i tryb
+  źródłowy.
+- Podsumowanie spalania nie pokazuje mylącej wartości dla niepełnych lub nieprawidłowych
+  przedziałów. Prawidłowy wynik wskazuje rekordy uczestniczące w obliczeniu, a szczegóły pomijają
+  niezapisane pola opcjonalne. Telefon korzysta z osobnych widoków, a tablet zachowuje układ
+  list–detail i usuwa środkową kartę podczas formularza.
 
 ## Znane ograniczenia i dług techniczny
 
@@ -146,5 +155,5 @@ opisywanego etapu.
 
 ## Następny krok
 
-Zaimplementować przepływy aplikacyjne tworzenia, odczytu, edycji, usuwania i listowania tankowań,
-łącząc domenę z repozytorium bez uzależniania interfejsu od Drizzle.
+Przeprowadzić końcową weryfikację całego przepływu tankowań na iPhonie, iPadzie, telefonie z
+Androidem oraz tablecie z Androidem, bez zastępowania urządzeń natywnych przeglądarką.

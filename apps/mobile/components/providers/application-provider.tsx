@@ -1,9 +1,9 @@
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from "react";
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
-import type { RefuellingRepository } from "@/application/repositories/refuelling-repository";
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
 import { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
+import { RefuellingService } from "@/application/refuelling/refuelling-service";
 import { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { Screen } from "@/components/layout/screen";
 import { ErrorState } from "@/components/states/error-state";
@@ -42,7 +42,7 @@ export type ApplicationServices = Readonly<{
   idGenerator: IdGenerator;
   managedFiles: ManagedFileCoordinator;
   photoPicker: VehiclePhotoPicker;
-  refuellings: RefuellingRepository;
+  refuellings: RefuellingService;
   vehicles: VehicleRepository;
 }>;
 
@@ -95,6 +95,7 @@ export function ApplicationProvider({ children }: PropsWithChildren) {
 function createApplicationServices(database: AppDatabase): ApplicationServices {
   const clock = new SystemClock();
   const vehicleHistory = new DrizzleVehicleHistoryRepository(database);
+  const refuellingRepository = new DrizzleRefuellingRepository(database);
   const idGenerator = new UuidV7IdGenerator();
   const managedFiles = new ManagedFileCoordinator(
     clock,
@@ -115,7 +116,7 @@ function createApplicationServices(database: AppDatabase): ApplicationServices {
     idGenerator,
     managedFiles,
     photoPicker: new GalleryVehiclePhotoPicker(),
-    refuellings: new DrizzleRefuellingRepository(database),
+    refuellings: new RefuellingService(clock, idGenerator, refuellingRepository),
     vehicles: vehicleHistory,
   };
 }
