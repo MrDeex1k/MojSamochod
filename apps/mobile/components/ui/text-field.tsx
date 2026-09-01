@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { Text, TextInput, type TextInputProps, View } from "react-native";
+import { StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
 
 type TextFieldProps = TextInputProps & {
   error?: string;
@@ -16,6 +16,7 @@ export function TextField({
   label,
   multiline = false,
   nativeID,
+  style,
   ...props
 }: TextFieldProps) {
   const generatedId = useId().replaceAll(":", "");
@@ -34,10 +35,11 @@ export function TextField({
         accessibilityState={{ ...accessibilityState, disabled: !editable }}
         className={`rounded-control border bg-surface-muted px-content text-body text-primary placeholder:text-secondary focus:border-accent disabled:opacity-50 ${
           error ? "border-danger" : "border-divider"
-        } ${multiline ? "min-h-28 py-control" : "min-h-12 py-control"} ${className ?? ""}`}
+        } ${multiline ? "min-h-28 py-control" : "min-h-12"} ${className ?? ""}`}
         editable={editable}
         multiline={multiline}
         nativeID={inputId}
+        style={[!multiline && styles.singleLineInput, style]}
         textAlignVertical={multiline ? "top" : "center"}
         {...props}
       />
@@ -53,3 +55,10 @@ export function TextField({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  singleLineInput: {
+    includeFontPadding: false,
+    paddingVertical: 0,
+  },
+});
