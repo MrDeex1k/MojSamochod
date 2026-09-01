@@ -13,7 +13,8 @@ opisywanego etapu.
 - Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, została zintegrowana z `main`.
 - Faza 4, czyli dokumenty i faktury, została zintegrowana z `main`.
 - Faza 5, czyli tankowania i zużycie paliwa, ma zatwierdzone reguły domenowe na branchu
-  `feat/refuelling-and-consumption` i jest gotowa do implementacji.
+  `feat/refuelling-and-consumption`. Encja tankowania, jednostki objętości, dokładne ceny oraz
+  audytowalne obliczenia spalania są zaimplementowane bez zależności od UI i persystencji.
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -59,7 +60,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 34 zestawy i 149 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 38 zestawów i 172 testy komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -139,5 +140,5 @@ opisywanego etapu.
 
 ## Następny krok
 
-Zapisać zatwierdzony kontrakt Fazy 5 w osobnym commicie, a następnie zaimplementować typy domenowe,
-walidację i czyste obliczenia zużycia paliwa wraz z testami.
+Rozszerzyć pojazd o pojemność zbiornika oraz preferencje objętości i spalania, uwzględniając
+bezpieczną ścieżkę dla istniejącego pojazdu bez konfiguracji paliwowej.

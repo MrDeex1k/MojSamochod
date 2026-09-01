@@ -128,8 +128,9 @@ metadata-only JSON export.
 
 ## Phase 5 — Refuelling and fuel consumption
 
-**Status:** Domain decisions are approved on `feat/refuelling-and-consumption`; implementation can
-begin with pure domain types and fuel-consumption calculations.
+**Status:** Domain decisions and the pure refuelling model are implemented on
+`feat/refuelling-and-consumption`. Vehicle fuel configuration, persistence, export, application
+workflows, and interface implementation remain in progress.
 
 ### Steps
 

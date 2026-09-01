@@ -6,7 +6,8 @@
 
 **Faza realizacji:** Faza 5 — tankowania i zużycie paliwa
 
-**Status implementacji:** implementacja nie została rozpoczęta
+**Status implementacji:** typy domenowe, walidacja, konwersje jednostek, ceny oraz czyste obliczenia
+zużycia są zaimplementowane; konfiguracja pojazdu, persystencja i interfejs pozostają do wykonania
 
 Ten dokument definiuje zatwierdzony model tankowania przed rozpoczęciem migracji, logiki domenowej i
 interfejsu. Implementacja Fazy 5 musi zachować opisane reguły albo zmienić dokument razem z kodem.
