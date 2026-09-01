@@ -67,6 +67,13 @@ export const vehicles = sqliteTable(
     distanceUnitPreference: text("distance_unit_preference", {
       enum: ["kilometres", "miles"],
     }).notNull(),
+    fuelTankCapacityMicrolitres: integer("fuel_tank_capacity_microlitres"),
+    fuelVolumeUnitPreference: text("fuel_volume_unit_preference", {
+      enum: ["litres", "usGallons", "imperialGallons"],
+    }),
+    fuelConsumptionUnitPreference: text("fuel_consumption_unit_preference", {
+      enum: ["litresPer100Kilometres", "milesPerUsGallon", "milesPerImperialGallon"],
+    }),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
@@ -98,6 +105,61 @@ export const vehicles = sqliteTable(
     check(
       "vehicles_distance_unit",
       sql`${table.distanceUnitPreference} in ('kilometres', 'miles')`,
+    ),
+    check(
+      "vehicles_fuel_configuration",
+      sql`(${table.fuelTankCapacityMicrolitres} is null and ${table.fuelVolumeUnitPreference} is null and ${table.fuelConsumptionUnitPreference} is null) or (${table.fuelTankCapacityMicrolitres} is not null and ${table.fuelVolumeUnitPreference} is not null and ${table.fuelConsumptionUnitPreference} is not null and ${table.fuelTankCapacityMicrolitres} between 1 and 9007199254740991 and ${table.fuelVolumeUnitPreference} in ('litres', 'usGallons', 'imperialGallons') and ${table.fuelConsumptionUnitPreference} in ('litresPer100Kilometres', 'milesPerUsGallon', 'milesPerImperialGallon'))`,
+    ),
+  ],
+);
+
+export const refuellings = sqliteTable(
+  "refuellings",
+  {
+    id: text("id").primaryKey(),
+    vehicleId: text("vehicle_id")
+      .notNull()
+      .references(() => vehicles.id, { onDelete: "cascade" }),
+    occurredAt: text("occurred_at").notNull(),
+    odometerMetres: integer("odometer_metres"),
+    quantityMicrolitres: integer("quantity_microlitres").notNull(),
+    inputVolumeUnit: text("input_volume_unit", {
+      enum: ["litres", "usGallons", "imperialGallons"],
+    }).notNull(),
+    fillKind: text("fill_kind", { enum: ["full", "partial"] }).notNull(),
+    pricingInputMode: text("pricing_input_mode", { enum: ["total", "perVolumeUnit"] }),
+    totalCostMinorUnits: integer("total_cost_minor_units"),
+    totalCostCurrency: text("total_cost_currency"),
+    unitPriceMilliUnits: integer("unit_price_milli_units"),
+    unitPriceVolumeUnit: text("unit_price_volume_unit", {
+      enum: ["litres", "usGallons", "imperialGallons"],
+    }),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("refuellings_vehicle_timeline_index").on(
+      table.vehicleId,
+      table.occurredAt,
+      table.createdAt,
+      table.id,
+    ),
+    check(
+      "refuellings_odometer_range",
+      sql`${table.odometerMetres} is null or ${table.odometerMetres} between 0 and 9007199254740991`,
+    ),
+    check(
+      "refuellings_quantity_range",
+      sql`${table.quantityMicrolitres} between 1 and 9007199254740991`,
+    ),
+    check(
+      "refuellings_input_volume_unit",
+      sql`${table.inputVolumeUnit} in ('litres', 'usGallons', 'imperialGallons')`,
+    ),
+    check("refuellings_fill_kind", sql`${table.fillKind} in ('full', 'partial')`),
+    check(
+      "refuellings_pricing_group",
+      sql`(${table.pricingInputMode} is null and ${table.totalCostMinorUnits} is null and ${table.totalCostCurrency} is null and ${table.unitPriceMilliUnits} is null and ${table.unitPriceVolumeUnit} is null) or (${table.pricingInputMode} is not null and ${table.totalCostMinorUnits} is not null and ${table.totalCostCurrency} is not null and ${table.unitPriceMilliUnits} is not null and ${table.unitPriceVolumeUnit} is not null and ${table.pricingInputMode} in ('total', 'perVolumeUnit') and ${table.totalCostMinorUnits} between 0 and 9007199254740991 and length(${table.totalCostCurrency}) = 3 and upper(${table.totalCostCurrency}) = ${table.totalCostCurrency} and ${table.unitPriceMilliUnits} between 0 and 9007199254740991 and ${table.unitPriceVolumeUnit} in ('litres', 'usGallons', 'imperialGallons'))`,
     ),
   ],
 );

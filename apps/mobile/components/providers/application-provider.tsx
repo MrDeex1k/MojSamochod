@@ -1,6 +1,7 @@
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from "react";
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
+import type { RefuellingRepository } from "@/application/repositories/refuelling-repository";
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
 import { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 import { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
@@ -9,6 +10,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
 import { DrizzleManagedFileRepository } from "@/infrastructure/database/drizzle-managed-file-repository";
+import { DrizzleRefuellingRepository } from "@/infrastructure/database/drizzle-refuelling-repository";
 import { DrizzleVehicleDocumentRepository } from "@/infrastructure/database/drizzle-vehicle-document-repository";
 import { DrizzleVehicleHistoryRepository } from "@/infrastructure/database/drizzle-vehicle-history-repository";
 import type { AppDatabase } from "@/infrastructure/database/database";
@@ -40,6 +42,7 @@ export type ApplicationServices = Readonly<{
   idGenerator: IdGenerator;
   managedFiles: ManagedFileCoordinator;
   photoPicker: VehiclePhotoPicker;
+  refuellings: RefuellingRepository;
   vehicles: VehicleRepository;
 }>;
 
@@ -112,6 +115,7 @@ function createApplicationServices(database: AppDatabase): ApplicationServices {
     idGenerator,
     managedFiles,
     photoPicker: new GalleryVehiclePhotoPicker(),
+    refuellings: new DrizzleRefuellingRepository(database),
     vehicles: vehicleHistory,
   };
 }

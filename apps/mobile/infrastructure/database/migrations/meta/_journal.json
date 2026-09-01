@@ -43,6 +43,13 @@
       "when": 1788193413134,
       "tag": "0005_enforce_history_entry_document_vehicle_consistency",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1788250902238,
+      "tag": "0006_add_refuelling_persistence",
+      "breakpoints": true
     }
   ]
 }

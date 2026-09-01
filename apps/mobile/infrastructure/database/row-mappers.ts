@@ -5,8 +5,15 @@ import type {
   ReplacementEntry,
 } from "@/domain/history/history-entry";
 import {
+  fuelConsumptionUnit,
+  type FuelConsumptionUnit,
+} from "@/domain/refuelling/fuel-consumption";
+import type { FillKind, PriceInputMode, Refuelling } from "@/domain/refuelling/refuelling";
+import { positiveMicrolitres, volumeUnit } from "@/domain/refuelling/volume";
+import {
   historyEntryIdFromUuidV7,
   managedFileIdFromUuidV7,
+  refuellingIdFromUuidV7,
   vehicleIdFromUuidV7,
   type HistoryEntryId,
   type VehicleId,
@@ -25,6 +32,7 @@ import {
   historyEntries,
   inspectionDetails,
   repairDetails,
+  refuellings,
   replacementDetails,
   vehicles,
 } from "./schema";
@@ -34,6 +42,7 @@ type HistoryEntryRow = typeof historyEntries.$inferSelect;
 type InspectionDetailsRow = typeof inspectionDetails.$inferSelect;
 type ReplacementDetailsRow = typeof replacementDetails.$inferSelect;
 type RepairDetailsRow = typeof repairDetails.$inferSelect;
+type RefuellingRow = typeof refuellings.$inferSelect;
 
 export type JoinedHistoryRow = Readonly<{
   entry: HistoryEntryRow;
@@ -73,11 +82,13 @@ export function mapVehicleRow(row: VehicleRow): Vehicle {
   if (!isDistanceUnit(row.distanceUnitPreference)) {
     throw new CorruptStoredDataError("distanceUnitPreference");
   }
+  const fuelConfiguration = mapFuelConfiguration(row);
 
   return {
     createdAt: expectValue(utcTimestamp(row.createdAt, "createdAt"), "createdAt"),
     currentOdometerMetres,
     distanceUnitPreference: row.distanceUnitPreference,
+    ...fuelConfiguration,
     id: mapVehicleId(row.id, "id"),
     initialOdometerMetres,
     make,
@@ -90,6 +101,89 @@ export function mapVehicleRow(row: VehicleRow): Vehicle {
     updatedAt: expectValue(utcTimestamp(row.updatedAt, "updatedAt"), "updatedAt"),
     variant,
     vin,
+  };
+}
+
+export function mapRefuellingRow(row: RefuellingRow): Refuelling {
+  const pricingValues = [
+    row.pricingInputMode,
+    row.totalCostMinorUnits,
+    row.totalCostCurrency,
+    row.unitPriceMilliUnits,
+    row.unitPriceVolumeUnit,
+  ];
+  const hasPricing = pricingValues.some((value) => value !== null);
+  if (hasPricing && pricingValues.some((value) => value === null)) {
+    throw new CorruptStoredDataError("pricing");
+  }
+  if (!isFillKind(row.fillKind)) throw new CorruptStoredDataError("fillKind");
+  if (!isPriceInputModeOrNull(row.pricingInputMode)) {
+    throw new CorruptStoredDataError("pricing.inputMode");
+  }
+
+  return {
+    createdAt: expectValue(utcTimestamp(row.createdAt, "createdAt"), "createdAt"),
+    fillKind: row.fillKind,
+    id: mapRefuellingId(row.id, "id"),
+    inputVolumeUnit: expectValue(volumeUnit(row.inputVolumeUnit), "inputVolumeUnit"),
+    occurredAt: expectValue(utcTimestamp(row.occurredAt, "occurredAt"), "occurredAt"),
+    odometerMetres: expectValue(
+      metres(row.odometerMetres ?? undefined, "odometerMetres"),
+      "odometerMetres",
+    ),
+    pricing: hasPricing
+      ? {
+          inputMode: row.pricingInputMode!,
+          totalCost: expectPresentValue(
+            money({ currency: row.totalCostCurrency!, minorUnits: row.totalCostMinorUnits! }),
+            "pricing.totalCost",
+          ),
+          unitPriceMilliUnits: expectSafeNonNegativeInteger(
+            row.unitPriceMilliUnits!,
+            "pricing.unitPriceMilliUnits",
+          ),
+          unitPriceVolumeUnit: expectValue(
+            volumeUnit(row.unitPriceVolumeUnit!, "pricing.unitPriceVolumeUnit"),
+            "pricing.unitPriceVolumeUnit",
+          ),
+        }
+      : undefined,
+    quantityMicrolitres: expectValue(
+      positiveMicrolitres(row.quantityMicrolitres),
+      "quantityMicrolitres",
+    ),
+    updatedAt: expectValue(utcTimestamp(row.updatedAt, "updatedAt"), "updatedAt"),
+    vehicleId: mapVehicleId(row.vehicleId, "vehicleId"),
+  };
+}
+
+function mapFuelConfiguration(row: VehicleRow): {
+  fuelConsumptionUnitPreference?: FuelConsumptionUnit;
+  fuelTankCapacityMicrolitres?: Vehicle["fuelTankCapacityMicrolitres"];
+  fuelVolumeUnitPreference?: Vehicle["fuelVolumeUnitPreference"];
+} {
+  const values = [
+    row.fuelTankCapacityMicrolitres,
+    row.fuelVolumeUnitPreference,
+    row.fuelConsumptionUnitPreference,
+  ];
+  if (values.every((value) => value === null)) return {};
+  if (values.some((value) => value === null)) {
+    throw new CorruptStoredDataError("fuelConfiguration");
+  }
+  return {
+    fuelConsumptionUnitPreference: expectValue(
+      fuelConsumptionUnit(row.fuelConsumptionUnitPreference!, "fuelConsumptionUnitPreference"),
+      "fuelConsumptionUnitPreference",
+    ),
+    fuelTankCapacityMicrolitres: expectValue(
+      positiveMicrolitres(row.fuelTankCapacityMicrolitres!, "fuelTankCapacityMicrolitres"),
+      "fuelTankCapacityMicrolitres",
+    ),
+    fuelVolumeUnitPreference: expectValue(
+      volumeUnit(row.fuelVolumeUnitPreference!, "fuelVolumeUnitPreference"),
+      "fuelVolumeUnitPreference",
+    ),
   };
 }
 
@@ -203,6 +297,12 @@ function expectValue<T>(result: ValidationResult<T>, field: string): T {
   return result.value;
 }
 
+function expectPresentValue<T>(result: ValidationResult<T | undefined>, field: string): T {
+  const value = expectValue(result, field);
+  if (value === undefined) throw new CorruptStoredDataError(field);
+  return value;
+}
+
 function mapVehicleId(value: string, field: string): VehicleId {
   try {
     return vehicleIdFromUuidV7(value);
@@ -214,6 +314,14 @@ function mapVehicleId(value: string, field: string): VehicleId {
 function mapHistoryEntryId(value: string, field: string): HistoryEntryId {
   try {
     return historyEntryIdFromUuidV7(value);
+  } catch {
+    throw new CorruptStoredDataError(field);
+  }
+}
+
+function mapRefuellingId(value: string, field: string) {
+  try {
+    return refuellingIdFromUuidV7(value);
   } catch {
     throw new CorruptStoredDataError(field);
   }
@@ -239,4 +347,17 @@ function isInspectionResult(value: string): value is InspectionEntry["details"][
   return (
     value === "passed" || value === "failed" || value === "conditional" || value === "not-recorded"
   );
+}
+
+function isFillKind(value: string): value is FillKind {
+  return value === "full" || value === "partial";
+}
+
+function isPriceInputModeOrNull(value: string | null): value is PriceInputMode | null {
+  return value === null || value === "total" || value === "perVolumeUnit";
+}
+
+function expectSafeNonNegativeInteger(value: number, field: string): number {
+  if (!Number.isSafeInteger(value) || value < 0) throw new CorruptStoredDataError(field);
+  return value;
 }

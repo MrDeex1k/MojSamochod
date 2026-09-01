@@ -12,6 +12,7 @@ const migrationFileNames = [
   "0003_enforce_document_sha256_uniqueness.sql",
   "0004_enforce_document_entry_vehicle_consistency.sql",
   "0005_enforce_history_entry_document_vehicle_consistency.sql",
+  "0006_add_refuelling_persistence.sql",
 ] as const;
 const migrationSql = readMigrations(migrationFileNames);
 const temporaryDirectories: string[] = [];
@@ -42,6 +43,117 @@ describe("SQLite persistence resilience", () => {
       make: "Volvo",
       model: "V60",
     });
+  });
+
+  it("migrates an existing vehicle as a readable legacy record without fuel configuration", () => {
+    const database = new DatabaseSync(createTemporaryDatabasePath());
+    database.exec("PRAGMA foreign_keys = ON;");
+    database.exec(readMigrations(migrationFileNames.slice(0, 6)));
+    insertVehicle(database);
+    database.exec(readMigrations(migrationFileNames.slice(6)));
+
+    expect(
+      database
+        .prepare(
+          `SELECT fuel_tank_capacity_microlitres, fuel_volume_unit_preference,
+                  fuel_consumption_unit_preference
+           FROM vehicles WHERE id = ?`,
+        )
+        .get(vehicleId),
+    ).toEqual({
+      fuel_consumption_unit_preference: null,
+      fuel_tank_capacity_microlitres: null,
+      fuel_volume_unit_preference: null,
+    });
+    expect(database.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    database.close();
+  });
+
+  it("keeps a refuelling and its pricing after reopening the database", () => {
+    const databasePath = createTemporaryDatabasePath();
+    const database = openMigratedDatabase(databasePath);
+    insertVehicle(database);
+    configureVehicleFuel(database);
+    insertRefuelling(database);
+    database.close();
+
+    const reopened = new DatabaseSync(databasePath);
+    reopened.exec("PRAGMA foreign_keys = ON;");
+    expect(
+      reopened
+        .prepare(
+          `SELECT quantity_microlitres, fill_kind, total_cost_minor_units,
+                  total_cost_currency, unit_price_milli_units
+           FROM refuellings WHERE id = ?`,
+        )
+        .get(refuellingId),
+    ).toEqual({
+      fill_kind: "full",
+      quantity_microlitres: 45_000_000,
+      total_cost_currency: "PLN",
+      total_cost_minor_units: 30_000,
+      unit_price_milli_units: 6_667,
+    });
+    reopened.close();
+  });
+
+  it("rejects incomplete fuel configuration and partial refuelling pricing", () => {
+    const database = openMigratedDatabase(createTemporaryDatabasePath());
+    insertVehicle(database);
+
+    expect(() =>
+      database
+        .prepare("UPDATE vehicles SET fuel_tank_capacity_microlitres = 60000000 WHERE id = ?")
+        .run(vehicleId),
+    ).toThrow(/vehicle fuel configuration is incomplete or invalid/);
+
+    configureVehicleFuel(database);
+    expect(() =>
+      database
+        .prepare(
+          `INSERT INTO refuellings
+            (id, vehicle_id, occurred_at, quantity_microlitres, input_volume_unit,
+             fill_kind, pricing_input_mode, created_at, updated_at)
+           VALUES (?, ?, ?, 45000000, 'litres', 'full', 'total', ?, ?)`,
+        )
+        .run(refuellingId, vehicleId, timestamp, timestamp, timestamp),
+    ).toThrow();
+    expect(database.prepare("SELECT count(*) AS count FROM refuellings").get()).toEqual({
+      count: 0,
+    });
+    database.close();
+  });
+
+  it("rolls back a refuelling and odometer advancement when the transaction fails", () => {
+    const database = openMigratedDatabase(createTemporaryDatabasePath());
+    insertVehicle(database);
+    configureVehicleFuel(database);
+
+    expect(() => {
+      database.exec("BEGIN;");
+      insertRefuelling(database);
+      database
+        .prepare("UPDATE vehicles SET current_odometer_metres = 85000000 WHERE id = ?")
+        .run(vehicleId);
+      database
+        .prepare(
+          `INSERT INTO refuellings
+            (id, vehicle_id, occurred_at, quantity_microlitres, input_volume_unit,
+             fill_kind, created_at, updated_at)
+           VALUES (?, ?, ?, 0, 'litres', 'full', ?, ?)`,
+        )
+        .run(secondRefuellingId, vehicleId, timestamp, timestamp, timestamp);
+      database.exec("COMMIT;");
+    }).toThrow();
+    database.exec("ROLLBACK;");
+
+    expect(database.prepare("SELECT count(*) AS count FROM refuellings").get()).toEqual({
+      count: 0,
+    });
+    expect(
+      database.prepare("SELECT current_odometer_metres FROM vehicles WHERE id = ?").get(vehicleId),
+    ).toEqual({ current_odometer_metres: 82_000_000 });
+    database.close();
   });
 
   it("rolls back the whole write when a detail record violates the entry contract", () => {
@@ -265,6 +377,8 @@ const managedFileId = "018f47e2-7b31-7658-b336-34613389d00f";
 const secondManagedFileId = "018f47e2-7b32-7658-b336-34613389d00f";
 const secondVehicleId = "018f47e2-7b33-7658-b336-34613389d00f";
 const documentId = "018f47e2-7b34-7658-b336-34613389d00f";
+const refuellingId = "018f47e2-7b35-7658-b336-34613389d00f";
+const secondRefuellingId = "018f47e2-7b36-7658-b336-34613389d00f";
 const timestamp = "2026-08-30T10:15:00.000Z";
 
 function createTemporaryDatabasePath(): string {
@@ -306,6 +420,32 @@ function insertSecondVehicle(database: DatabaseSync): void {
        VALUES (?, 'BMW', 'M2', 'kilometres', ?, ?)`,
     )
     .run(secondVehicleId, timestamp, timestamp);
+}
+
+function configureVehicleFuel(database: DatabaseSync): void {
+  database
+    .prepare(
+      `UPDATE vehicles
+       SET fuel_tank_capacity_microlitres = 60000000,
+           fuel_volume_unit_preference = 'litres',
+           fuel_consumption_unit_preference = 'litresPer100Kilometres'
+       WHERE id = ?`,
+    )
+    .run(vehicleId);
+}
+
+function insertRefuelling(database: DatabaseSync): void {
+  database
+    .prepare(
+      `INSERT INTO refuellings
+        (id, vehicle_id, occurred_at, odometer_metres, quantity_microlitres,
+         input_volume_unit, fill_kind, pricing_input_mode, total_cost_minor_units,
+         total_cost_currency, unit_price_milli_units, unit_price_volume_unit,
+         created_at, updated_at)
+       VALUES (?, ?, ?, 85000000, 45000000, 'litres', 'full', 'total', 30000,
+               'PLN', 6667, 'litres', ?, ?)`,
+    )
+    .run(refuellingId, vehicleId, timestamp, timestamp, timestamp);
 }
 
 function insertHistoryEntry(database: DatabaseSync, ownerVehicleId: string): void {

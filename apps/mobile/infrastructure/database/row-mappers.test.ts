@@ -1,4 +1,9 @@
-import { CorruptStoredDataError, mapHistoryRow, mapVehicleRow } from "./row-mappers";
+import {
+  CorruptStoredDataError,
+  mapHistoryRow,
+  mapRefuellingRow,
+  mapVehicleRow,
+} from "./row-mappers";
 
 const vehicleId = "018f47e2-7b2f-7cc8-98c4-dc0c0c07398f";
 const entryId = "018f47e2-7b30-7b80-99c0-81b80d9a57ce";
@@ -8,6 +13,9 @@ const vehicleRow = {
   createdAt: timestamp,
   currentOdometerMetres: 125_000,
   distanceUnitPreference: "kilometres" as const,
+  fuelConsumptionUnitPreference: "litresPer100Kilometres" as const,
+  fuelTankCapacityMicrolitres: 60_000_000,
+  fuelVolumeUnitPreference: "litres" as const,
   id: vehicleId,
   initialOdometerMetres: 120_000,
   make: "Volvo",
@@ -39,6 +47,56 @@ describe("database row mappers", () => {
       ...vehicleRow,
       photoReference: undefined,
     });
+  });
+
+  it("keeps a legacy vehicle without fuel configuration readable", () => {
+    expect(
+      mapVehicleRow({
+        ...vehicleRow,
+        fuelConsumptionUnitPreference: null,
+        fuelTankCapacityMicrolitres: null,
+        fuelVolumeUnitPreference: null,
+      }),
+    ).toEqual(
+      expect.not.objectContaining({
+        fuelConsumptionUnitPreference: expect.anything(),
+        fuelTankCapacityMicrolitres: expect.anything(),
+        fuelVolumeUnitPreference: expect.anything(),
+      }),
+    );
+  });
+
+  it("maps complete refuelling pricing and rejects a partial pricing group", () => {
+    const row = {
+      createdAt: timestamp,
+      fillKind: "full" as const,
+      id: "018f47e2-7b35-7658-b336-34613389d00f",
+      inputVolumeUnit: "litres" as const,
+      occurredAt: timestamp,
+      odometerMetres: 126_000,
+      pricingInputMode: "total" as const,
+      quantityMicrolitres: 45_000_000,
+      totalCostCurrency: "PLN",
+      totalCostMinorUnits: 29_000,
+      unitPriceMilliUnits: 6_444,
+      unitPriceVolumeUnit: "litres" as const,
+      updatedAt: timestamp,
+      vehicleId,
+    };
+
+    expect(mapRefuellingRow(row)).toMatchObject({
+      fillKind: "full",
+      pricing: {
+        inputMode: "total",
+        totalCost: { currency: "PLN", minorUnits: 29_000 },
+        unitPriceMilliUnits: 6_444,
+        unitPriceVolumeUnit: "litres",
+      },
+      quantityMicrolitres: 45_000_000,
+    });
+    expect(() => mapRefuellingRow({ ...row, totalCostCurrency: null })).toThrow(
+      CorruptStoredDataError,
+    );
   });
 
   it.each([
