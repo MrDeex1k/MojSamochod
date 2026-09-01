@@ -74,6 +74,9 @@ include accounts, cloud storage, background synchronization, or a real-time sync
   document metadata while still excluding binary content.
 - [Vehicle history domain model](./domain-model.md) — approved entities, value types, invariants,
   lifecycle rules, and product decisions for the first vertical slice.
+- [Refuelling domain decisions](./refuelling-domain-decisions.md) — approved Polish working
+  contract for refuelling records, units, pricing, and auditable fuel-consumption calculations in
+  Phase 5.
 - [First vehicle user flow](./first-vehicle-user-flow.md) — approved Polish working document covering
   first-run, vehicle setup, history-entry behavior, and phone/tablet wireframes.
 - [Technology](./technology.md) — platforms, current stack, tooling, and planned native

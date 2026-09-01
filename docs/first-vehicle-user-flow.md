@@ -13,22 +13,23 @@ danych do utworzenia pojazdu oraz zarządzania pierwszym wpisem jego historii. W
 hierarchię informacji i zachowanie, a nie finalny wygląd interfejsu.
 
 Model danych i reguły biznesowe wynikają z [modelu domenowego](./domain-model.md). Dokument nie
-zmienia zatwierdzonych zasad licznika początkowego, aktualnego przebiegu, zdjęcia pojazdu, pieniędzy,
-dat ani usuwania.
+zmienia zatwierdzonych zasad licznika początkowego, aktualnego przebiegu, pojemności zbiornika,
+zdjęcia pojazdu, pieniędzy, dat ani usuwania.
 
 ## Cel pierwszego przekroju
 
 Po zakończeniu przepływu użytkownik potrafi bez połączenia z siecią:
 
-1. Dodać jeden pojazd z wymaganymi danymi, opcjonalnym zdjęciem i licznikiem początkowym.
+1. Dodać jeden pojazd z wymaganymi danymi i pojemnością zbiornika oraz opcjonalnym zdjęciem i
+   licznikiem początkowym.
 2. Rozpoznać swój pojazd i jego aktualny przebieg na głównym ekranie.
 3. Dodać przegląd, wymianę albo naprawę z opcjonalnym bieżącym odczytem licznika.
 4. Otworzyć szczegóły wpisu, edytować go i bezpiecznie usunąć.
 5. Zamknąć aplikację i po ponownym uruchomieniu zobaczyć zachowane dane.
 
-Poza tym przekrojem pozostają dokumenty, tankowania, przypomnienia, Premium, wiele pojazdów i
-synchronizacja. Ich przyszłe miejsca w architekturze informacji nie mogą blokować pierwszego
-użytecznego przepływu.
+Poza tym pierwotnym przekrojem pozostają dokumenty, tankowania, przypomnienia, Premium, wiele
+pojazdów i synchronizacja. Faza 5 rozszerza formularz pojazdu o pojemność zbiornika i preferencje
+jednostek potrzebne do tankowań.
 
 ## Główny przebieg
 
@@ -102,12 +103,15 @@ widoczne, aby użytkownik od razu znał dostępny zakres danych.
 - Nieudany import zachowuje wszystkie dane formularza i pozwala ponowić wybór albo kontynuować bez
   zdjęcia.
 
-### 3. Stan licznika na moment rozpoczęcia ewidencji
+### 3. Dane eksploatacyjne
 
-| Pole                                          | Zachowanie                                                                |
-| --------------------------------------------- | ------------------------------------------------------------------------- |
-| Jednostka                                     | Wymagane `km` albo `mi`; domyślna wartość wynika z ustawień regionalnych. |
-| Stan licznika na moment rozpoczęcia ewidencji | Opcjonalna nieujemna liczba całkowita.                                    |
+| Pole                                          | Zachowanie                                                                    |
+| --------------------------------------------- | ----------------------------------------------------------------------------- |
+| Jednostka odległości                          | Wymagane `km` albo `mi`; domyślna wartość z ustawień regionalnych.            |
+| Stan licznika na moment rozpoczęcia ewidencji | Opcjonalna nieujemna liczba całkowita.                                        |
+| Pojemność zbiornika paliwa                    | Wymagana dodatnia wartość.                                                    |
+| Jednostka objętości                           | Wymagane `l`, `US gal` albo `Imp gal`; początkowa wartość zależna od regionu. |
+| Jednostka spalania                            | Wymagane `l/100 km`, `mpg US` albo `mpg imperial`; ma wartość początkową.     |
 
 Tekst pomocniczy wyjaśnia, że jest to odczyt z momentu rozpoczęcia ewidencji i że późniejsze odczyty
 można wpisywać przy każdym zdarzeniu.
@@ -274,6 +278,10 @@ ani nieaktywnych atrap nawigacji jako gotowej funkcji.
 │ Stan licznika na moment      │
 │ rozpoczęcia ewidencji        │
 │ [____________] [ km ▾ ]      │
+│ Pojemność zbiornika paliwa * │
+│ [____________] [ l ▾ ]       │
+│ Jednostka spalania *         │
+│ [ l/100 km               ▾ ] │
 │                              │
 │ [       Dodaj pojazd       ] │
 └──────────────────────────────┘
@@ -422,8 +430,8 @@ ale pozostaje widoczna dla zachowania kontekstu.
 ## Kryteria akceptacji przepływu
 
 1. Użytkownik rozumie bez instrukcji, które pola pojazdu są wymagane.
-2. Może dodać pojazd bez zdjęcia i bez licznika początkowego.
-3. Może dodać pojazd z jednym zdjęciem i licznikiem początkowym.
+2. Może dodać pojazd bez zdjęcia i bez licznika początkowego, ale z wymaganą pojemnością zbiornika.
+3. Może dodać pojazd z jednym zdjęciem, licznikiem początkowym i pojemnością zbiornika.
 4. Po zapisie rozpoznaje pojazd, aktualny przebieg i główną akcję w kilka sekund.
 5. Rozróżnia przegląd, wymianę i naprawę przed rozpoczęciem formularza.
 6. Rozumie, kiedy odczyt wpisu zmieni aktualny przebieg pojazdu.

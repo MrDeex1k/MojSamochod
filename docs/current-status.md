@@ -11,8 +11,9 @@ opisywanego etapu.
 - Fundament aplikacji z fazy 1 został zintegrowany z `main`.
 - Faza 2, czyli lokalna persystencja danych, została zintegrowana z `main`.
 - Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, została zintegrowana z `main`.
-- Faza 4, czyli dokumenty i faktury, jest zaimplementowana i zweryfikowana na branchu
-  `feat/documents-and-invoices`.
+- Faza 4, czyli dokumenty i faktury, została zintegrowana z `main`.
+- Faza 5, czyli tankowania i zużycie paliwa, ma zatwierdzone reguły domenowe na branchu
+  `feat/refuelling-and-consumption` i jest gotowa do implementacji.
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -138,5 +139,5 @@ opisywanego etapu.
 
 ## Następny krok
 
-Przygotować pull request zamykający Fazę 4. Po integracji z `main` rozpocząć Fazę 5 dotyczącą
-tankowań i obliczania zużycia paliwa na osobnym branchu.
+Zapisać zatwierdzony kontrakt Fazy 5 w osobnym commicie, a następnie zaimplementować typy domenowe,
+walidację i czyste obliczenia zużycia paliwa wraz z testami.

@@ -105,10 +105,10 @@ tablet. Polish and English localization uses an English fallback; vehicle photos
 
 ## Phase 4 — Documents and invoices
 
-**Status:** Implemented and verified on `feat/documents-and-invoices`; integration into `main` is
-pending. The implementation includes managed PDF/JPEG/PNG imports up to 20 MB, optional metadata
-and history-entry relations, duplicate detection, preview, native sharing of the original managed
-file, replacement, deletion, recovery, and the version 2 metadata-only JSON export.
+**Status:** Complete and integrated into `main`. The implementation includes managed PDF/JPEG/PNG
+imports up to 20 MB, optional metadata and history-entry relations, duplicate detection, preview,
+native sharing of the original managed file, replacement, deletion, recovery, and the version 2
+metadata-only JSON export.
 
 ### Steps
 
@@ -127,6 +127,9 @@ file, replacement, deletion, recovery, and the version 2 metadata-only JSON expo
   export document metadata through JSON v2, and understand destructive actions.
 
 ## Phase 5 — Refuelling and fuel consumption
+
+**Status:** Domain decisions are approved on `feat/refuelling-and-consumption`; implementation can
+begin with pure domain types and fuel-consumption calculations.
 
 ### Steps
 
