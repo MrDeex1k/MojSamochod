@@ -88,7 +88,7 @@ export function RefuellingDetail({
       <View className="gap-compact border-t border-divider pt-content">
         <DetailRow
           label={t("refuelling.dateTime")}
-          value={`${formatUtcDateTime(refuelling.occurredAt, i18n.language)} UTC`}
+          value={formatUtcDateTime(refuelling.occurredAt, i18n.language)}
         />
         <DetailRow label={t("refuelling.quantityLabel")} value={quantity} />
         <DetailRow

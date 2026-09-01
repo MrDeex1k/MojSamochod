@@ -95,7 +95,7 @@ export const pl = {
     saveError: "Nie udało się zapisać wpisu. Zmiany pozostają w formularzu.",
     serviceProviderLabel: "Warsztat lub usługodawca",
     subjectLabel: "Przedmiot naprawy",
-    timeLabel: "Godzina (UTC)",
+    timeLabel: "Godzina",
     title: { inspection: "Dodaj przegląd", repair: "Dodaj naprawę", replacement: "Dodaj wymianę" },
   },
   entryDetail: {
@@ -217,7 +217,7 @@ export const pl = {
     quantityLabel: "Ilość paliwa",
     save: "Zapisz tankowanie",
     saveError: "Nie udało się zapisać tankowania. Zmiany pozostają w formularzu.",
-    timeLabel: "Godzina (UTC)",
+    timeLabel: "Godzina",
     title: "Paliwo",
     totalPriceLabel: "Kwota całkowita",
     unitPriceLabel: "Cena jednostkowa",

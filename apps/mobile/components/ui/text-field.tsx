@@ -59,6 +59,7 @@ export function TextField({
 const styles = StyleSheet.create({
   singleLineInput: {
     includeFontPadding: false,
+    lineHeight: 16,
     paddingVertical: 0,
   },
 });

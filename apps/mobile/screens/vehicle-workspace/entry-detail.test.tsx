@@ -58,6 +58,7 @@ describe("EntryDetail", () => {
     expect(screen.getByText("Engine oil")).toBeOnTheScreen();
     expect(screen.getByText("Volvo")).toBeOnTheScreen();
     expect(screen.getByText("$430.50")).toBeOnTheScreen();
+    expect(screen.queryByText(/UTC/)).not.toBeOnTheScreen();
     expect(screen.queryByText("Notes")).not.toBeOnTheScreen();
   });
 

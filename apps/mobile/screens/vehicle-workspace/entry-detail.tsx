@@ -73,7 +73,7 @@ export function EntryDetail({
       <View className="gap-compact border-t border-divider pt-content">
         <DetailRow
           label={t("entryDetail.dateTime")}
-          value={`${formatUtcDateTime(entry.occurredAt, i18n.language)} UTC`}
+          value={formatUtcDateTime(entry.occurredAt, i18n.language)}
         />
         {entry.odometerMetres === undefined ? null : (
           <DetailRow

@@ -94,7 +94,7 @@ export const en = {
     saveError: "The entry could not be saved. Your changes remain in the form.",
     serviceProviderLabel: "Workshop or service provider",
     subjectLabel: "Repair subject",
-    timeLabel: "Time (UTC)",
+    timeLabel: "Time",
     title: { inspection: "Add inspection", repair: "Add repair", replacement: "Add replacement" },
   },
   entryDetail: {
@@ -215,7 +215,7 @@ export const en = {
     quantityLabel: "Fuel quantity",
     save: "Save refuelling",
     saveError: "The refuelling could not be saved. Your changes remain in the form.",
-    timeLabel: "Time (UTC)",
+    timeLabel: "Time",
     title: "Fuel",
     totalPriceLabel: "Total amount",
     unitPriceLabel: "Unit price",
