@@ -188,7 +188,11 @@ późniejsze dodanie nie może wymagać zmiany reguł tożsamości ani przebiegu
    rekordu.
 10. Powielone numery rejestracyjne lub VIN nie mają znaczenia przy obsłudze jednego pojazdu. Przed
     wdrożeniem wielu pojazdów trzeba ustalić reguły unikalności i obsługę nieznanych wartości.
-11. Migracja starszego pojazdu nie przypisuje domyślnej, zmyślonej pojemności zbiornika. Taki rekord
+11. `currentOdometerMetres` jest monotoniczny. Korekta albo usunięcie historycznego wpisu nie obniża
+    go automatycznie, ponieważ historia może być niepełna i nie stanowi źródła do ponownego
+    wyprowadzania bieżącego odczytu. Świadome cofnięcie lub korekta drogomierza wymaga osobnego
+    przepływu domenowego.
+12. Migracja starszego pojazdu nie przypisuje domyślnej, zmyślonej pojemności zbiornika. Taki rekord
     pozostaje możliwy do odczytania, ale wymaga uzupełnienia pojemności przed pierwszym tankowaniem.
 
 ## Encja wpisu historii
@@ -440,9 +444,6 @@ realizacji, zamiast zniknąć w szczegółach implementacji:
 
 | Decyzja                                                 | Faza docelowa |
 | ------------------------------------------------------- | ------------- |
-| Techniczne API importu, wymiany i usuwania zdjęcia      | Faza 3        |
-| Wymiana, przekręcenie i korekta drogomierza             | Faza 3        |
-| Jednostki tankowania oraz obliczenia pełnego tankowania | Faza 5        |
 | Własność przypomnień o ubezpieczeniu i przeglądzie      | Faza 6        |
 | Unikalność VIN i numerów rejestracyjnych wielu pojazdów | Faza 8        |
 | Nagrobki i propagacja usunięć między urządzeniami       | Faza 9        |

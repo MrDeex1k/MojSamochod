@@ -62,7 +62,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 43 zestawy i 209 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 46 zestawów i 221 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -98,12 +98,21 @@ opisywanego etapu.
   Androidem. Na iPhonie dodatkowo sprawdzono odrzucenie ilości paliwa z trzema miejscami po
   przecinku. Na Pixel Tablet potwierdzono całkowitą prezentację pojemności po konwersji
   `45 gal US → 170 l`; konwersja nie zmienia dokładnej wartości kanonicznej bez zapisu formularza.
+- Po poprawkach z przeglądu pull requesta ponownie uruchomiono aplikację na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet. Potwierdzono historię na telefonie Apple, prawidłową
+  blokadę pionowej orientacji iPada, formularz tankowania na telefonie i tablecie z Androidem oraz
+  zachowanie wpisanej ceny po ponownym wybraniu aktywnego trybu ceny. Zachowanie powrotu do sekcji
+  paliwa i integralność metadanych historycznego tankowania są dodatkowo objęte testami
+  komponentowymi i domenowymi.
 
 ### Domena i persystencja
 
 - Interfejsy repozytorium pojazdu i historii są oddzielone od Drizzle oraz zwracają typowane wyniki:
   konflikt, brak rekordu, uszkodzone dane, niedostępny magazyn albo nieobsługiwana operacja.
 - Produkcyjna implementacja Drizzle zapewnia CRUD pojazdu oraz wpisów przeglądu, wymiany i naprawy.
+- Edycja historycznego tankowania zachowuje jego jednostkę wejściową oraz dokładne dane ceny,
+  jeżeli użytkownik nie zmienił ilości ani ceny. Zmiana samej ilości przelicza cenę z zapisanej
+  wartości źródłowej zamiast z zaokrąglonej prezentacji.
+- Warstwa SQLite wymusza całkowity typ kanonicznej pojemności zbiornika, a nie tylko jej zakres.
 - Utworzenie lub aktualizacja wpisu, jego szczegółów i ewentualne podniesienie aktualnego przebiegu
   odbywają się w jednej transakcji. Edycja i usunięcie wpisu nie obniżają przebiegu pojazdu.
 - Rekordy odczytane z SQLite są ponownie sprawdzane względem kontraktu domenowego. Nieprawidłowy

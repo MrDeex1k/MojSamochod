@@ -6,7 +6,7 @@ import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Refuelling } from "@/domain/refuelling/refuelling";
-import type { Vehicle } from "@/domain/vehicle/vehicle";
+import type { FuelConfiguredVehicle } from "@/domain/vehicle/vehicle";
 import { formatCurrencyMinorUnits, formatUtcDateTime } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
@@ -32,16 +32,24 @@ export function RefuellingDetail({
   onEdit: () => void;
   refuelling: Refuelling;
   refuellings: RefuellingService;
-  vehicle: Vehicle;
+  vehicle: FuelConfiguredVehicle;
 }>) {
   const { t, i18n } = useAppTranslation();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(false);
   const quantity = `${formatFuelVolume(
     refuelling.quantityMicrolitres,
-    vehicle.fuelVolumeUnitPreference!,
+    vehicle.fuelVolumeUnitPreference,
     i18n.language,
-  )} ${volumeUnitLabel(vehicle.fuelVolumeUnitPreference!)}`;
+  )} ${volumeUnitLabel(vehicle.fuelVolumeUnitPreference)}`;
+  const convertedUnitPrice = refuelling.pricing
+    ? formatConvertedUnitPrice(
+        refuelling.pricing.unitPriceMilliUnits,
+        refuelling.pricing.unitPriceVolumeUnit,
+        vehicle.fuelVolumeUnitPreference,
+        i18n.language,
+      )
+    : undefined;
 
   const confirmDelete = () => {
     const odometer =
@@ -111,17 +119,14 @@ export function RefuellingDetail({
                 i18n.language,
               )}
             />
-            <DetailRow
-              label={t("refuelling.unitPriceLabel")}
-              value={`${formatConvertedUnitPrice(
-                refuelling.pricing.unitPriceMilliUnits,
-                refuelling.pricing.unitPriceVolumeUnit,
-                vehicle.fuelVolumeUnitPreference!,
-                i18n.language,
-              )} ${
-                refuelling.pricing.totalCost.currency
-              }/${volumeUnitLabel(vehicle.fuelVolumeUnitPreference!)}`}
-            />
+            {convertedUnitPrice === undefined ? null : (
+              <DetailRow
+                label={t("refuelling.unitPriceLabel")}
+                value={`${convertedUnitPrice} ${
+                  refuelling.pricing.totalCost.currency
+                }/${volumeUnitLabel(vehicle.fuelVolumeUnitPreference)}`}
+              />
+            )}
             <DetailRow
               label={t("refuelling.enteredAs")}
               value={t(`refuelling.priceMode.${refuelling.pricing.inputMode}`)}

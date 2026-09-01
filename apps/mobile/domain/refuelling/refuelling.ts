@@ -83,6 +83,7 @@ export function updateRefuelling(
         createdAt: existing.createdAt,
         id: existing.id,
         updatedAt: utcTimestampFromDate(now),
+        vehicleId: existing.vehicleId,
       })
     : validated;
 }

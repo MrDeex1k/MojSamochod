@@ -23,6 +23,7 @@ import {
 import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
 import type { ValidationIssue } from "@/domain/shared/result";
+import { distanceToMetres, metresToDistance } from "@/domain/vehicle/distance";
 import { createVehicle, type DistanceUnit, type Vehicle } from "@/domain/vehicle/vehicle";
 import type {
   VehiclePhotoPicker,
@@ -319,12 +320,11 @@ function parseDistance(value: string, unit: DistanceUnit): number | undefined {
   if (value.trim() === "") return undefined;
   if (!/^\d+$/.test(value.trim())) return Number.NaN;
   const numeric = Number(value);
-  return unit === "miles" ? Math.round(numeric * 1609.344) : numeric * 1000;
+  return distanceToMetres(numeric, unit);
 }
 
 function formatDistance(metres: number, unit: DistanceUnit): string {
-  const divisor = unit === "miles" ? 1609.344 : 1000;
-  return String(Math.round(metres / divisor));
+  return String(Math.round(metresToDistance(metres, unit)));
 }
 
 function parseFuelCapacity(value: string, unit: VolumeUnit): number {

@@ -9,7 +9,8 @@ WHEN NOT (
     AND NEW.`fuel_volume_unit_preference` IS NULL
     AND NEW.`fuel_consumption_unit_preference` IS NULL)
   OR
-  (COALESCE(NEW.`fuel_tank_capacity_microlitres` BETWEEN 1 AND 9007199254740991, 0)
+  (COALESCE(typeof(NEW.`fuel_tank_capacity_microlitres`) = 'integer', 0)
+    AND COALESCE(NEW.`fuel_tank_capacity_microlitres` BETWEEN 1 AND 9007199254740991, 0)
     AND COALESCE(NEW.`fuel_volume_unit_preference` IN ('litres', 'usGallons', 'imperialGallons'), 0)
     AND COALESCE(NEW.`fuel_consumption_unit_preference` IN ('litresPer100Kilometres', 'milesPerUsGallon', 'milesPerImperialGallon'), 0))
 )
@@ -24,7 +25,8 @@ WHEN NOT (
     AND NEW.`fuel_volume_unit_preference` IS NULL
     AND NEW.`fuel_consumption_unit_preference` IS NULL)
   OR
-  (COALESCE(NEW.`fuel_tank_capacity_microlitres` BETWEEN 1 AND 9007199254740991, 0)
+  (COALESCE(typeof(NEW.`fuel_tank_capacity_microlitres`) = 'integer', 0)
+    AND COALESCE(NEW.`fuel_tank_capacity_microlitres` BETWEEN 1 AND 9007199254740991, 0)
     AND COALESCE(NEW.`fuel_volume_unit_preference` IN ('litres', 'usGallons', 'imperialGallons'), 0)
     AND COALESCE(NEW.`fuel_consumption_unit_preference` IN ('litresPer100Kilometres', 'milesPerUsGallon', 'milesPerImperialGallon'), 0))
 )

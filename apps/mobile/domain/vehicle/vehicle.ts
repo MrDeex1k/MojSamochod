@@ -38,6 +38,24 @@ export type Vehicle = Readonly<{
   vin?: string;
 }>;
 
+export type FuelConfiguredVehicle = Vehicle &
+  Readonly<
+    Required<
+      Pick<
+        Vehicle,
+        "fuelConsumptionUnitPreference" | "fuelTankCapacityMicrolitres" | "fuelVolumeUnitPreference"
+      >
+    >
+  >;
+
+export function hasFuelConfiguration(vehicle: Vehicle): vehicle is FuelConfiguredVehicle {
+  return (
+    vehicle.fuelConsumptionUnitPreference !== undefined &&
+    vehicle.fuelTankCapacityMicrolitres !== undefined &&
+    vehicle.fuelVolumeUnitPreference !== undefined
+  );
+}
+
 export type CreateVehicleInput = Readonly<{
   distanceUnitPreference: string;
   fuelConsumptionUnitPreference: string;
@@ -61,7 +79,7 @@ export type CreateVehicleDependencies = Readonly<{
 export function createVehicle(
   input: CreateVehicleInput,
   dependencies: CreateVehicleDependencies,
-): ValidationResult<Vehicle> {
+): ValidationResult<FuelConfiguredVehicle> {
   const now = dependencies.clock.now();
   const issues: ValidationIssue[] = [];
   const make = collect(requiredText(input.make, "make", 80), issues);
@@ -121,7 +139,7 @@ export function updateVehicle(
   existing: Vehicle,
   input: CreateVehicleInput,
   clock: Clock,
-): ValidationResult<Vehicle> {
+): ValidationResult<FuelConfiguredVehicle> {
   const validated = createVehicle(input, {
     clock,
     idGenerator: { generate: () => existing.id },

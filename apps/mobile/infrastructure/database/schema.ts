@@ -108,7 +108,7 @@ export const vehicles = sqliteTable(
     ),
     check(
       "vehicles_fuel_configuration",
-      sql`(${table.fuelTankCapacityMicrolitres} is null and ${table.fuelVolumeUnitPreference} is null and ${table.fuelConsumptionUnitPreference} is null) or (${table.fuelTankCapacityMicrolitres} is not null and ${table.fuelVolumeUnitPreference} is not null and ${table.fuelConsumptionUnitPreference} is not null and ${table.fuelTankCapacityMicrolitres} between 1 and 9007199254740991 and ${table.fuelVolumeUnitPreference} in ('litres', 'usGallons', 'imperialGallons') and ${table.fuelConsumptionUnitPreference} in ('litresPer100Kilometres', 'milesPerUsGallon', 'milesPerImperialGallon'))`,
+      sql`(${table.fuelTankCapacityMicrolitres} is null and ${table.fuelVolumeUnitPreference} is null and ${table.fuelConsumptionUnitPreference} is null) or (${table.fuelTankCapacityMicrolitres} is not null and ${table.fuelVolumeUnitPreference} is not null and ${table.fuelConsumptionUnitPreference} is not null and typeof(${table.fuelTankCapacityMicrolitres}) = 'integer' and ${table.fuelTankCapacityMicrolitres} between 1 and 9007199254740991 and ${table.fuelVolumeUnitPreference} in ('litres', 'usGallons', 'imperialGallons') and ${table.fuelConsumptionUnitPreference} in ('litresPer100Kilometres', 'milesPerUsGallon', 'milesPerImperialGallon'))`,
     ),
   ],
 );

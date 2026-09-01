@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { fuelConsumptionValue } from "@/domain/refuelling/fuel-consumption";
 import type { Refuelling } from "@/domain/refuelling/refuelling";
-import type { Vehicle } from "@/domain/vehicle/vehicle";
+import {
+  hasFuelConfiguration,
+  type FuelConfiguredVehicle,
+  type Vehicle,
+} from "@/domain/vehicle/vehicle";
 import { formatCurrencyMinorUnits, formatUtcDateTime } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
@@ -39,21 +43,20 @@ export function RefuellingList({
 }: RefuellingListProps) {
   const { t } = useAppTranslation();
   const includedRefuellingIds = new Set(history.consumption.includedRefuellingIds);
+  const configuredVehicle = hasFuelConfiguration(vehicle) ? vehicle : undefined;
   const content = (
     <Card className={embedded ? "h-full" : undefined}>
       <Text accessibilityRole="header" className="text-title font-bold text-primary">
         {t("refuelling.title")}
       </Text>
-      {vehicle.fuelTankCapacityMicrolitres === undefined ||
-      vehicle.fuelConsumptionUnitPreference === undefined ||
-      vehicle.fuelVolumeUnitPreference === undefined ? (
+      {!configuredVehicle ? (
         <View className="gap-content">
           <Text className="text-body text-secondary">{t("refuelling.configurationRequired")}</Text>
           <Button label={t("refuelling.configureVehicle")} onPress={onConfigureFuel} />
         </View>
       ) : (
         <>
-          <ConsumptionSummary history={history} vehicle={vehicle} />
+          <ConsumptionSummary history={history} vehicle={configuredVehicle} />
           <Button label={`+ ${t("refuelling.add")}`} onPress={onAdd} />
           {history.refuellings.length === 0 ? (
             <View className="gap-compact">
@@ -70,7 +73,7 @@ export function RefuellingList({
                   key={refuelling.id}
                   onPress={() => onSelect(refuelling)}
                   refuelling={refuelling}
-                  vehicle={vehicle}
+                  vehicle={configuredVehicle}
                 />
               ))}
             </View>
@@ -93,9 +96,9 @@ export function RefuellingList({
 function ConsumptionSummary({
   history,
   vehicle,
-}: Readonly<{ history: RefuellingHistory; vehicle: Vehicle }>) {
+}: Readonly<{ history: RefuellingHistory; vehicle: FuelConfiguredVehicle }>) {
   const { t, i18n } = useAppTranslation();
-  const unit = vehicle.fuelConsumptionUnitPreference!;
+  const unit = vehicle.fuelConsumptionUnitPreference;
   const value = fuelConsumptionValue(history.consumption, unit);
   const invalidInterval = history.consumption.intervals.find(
     (interval) => interval.status === "invalid",
@@ -152,14 +155,14 @@ function RefuellingRow({
   included: boolean;
   onPress: () => void;
   refuelling: Refuelling;
-  vehicle: Vehicle;
+  vehicle: FuelConfiguredVehicle;
 }>) {
   const { t, i18n } = useAppTranslation();
   const quantity = `${formatFuelVolume(
     refuelling.quantityMicrolitres,
-    vehicle.fuelVolumeUnitPreference!,
+    vehicle.fuelVolumeUnitPreference,
     i18n.language,
-  )} ${volumeUnitLabel(vehicle.fuelVolumeUnitPreference!)}`;
+  )} ${volumeUnitLabel(vehicle.fuelVolumeUnitPreference)}`;
   return (
     <Pressable
       accessibilityLabel={`${t(`refuelling.fillKind.${refuelling.fillKind}`)}, ${quantity}`}

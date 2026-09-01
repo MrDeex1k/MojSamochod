@@ -958,7 +958,7 @@
         },
         "vehicles_fuel_configuration": {
           "name": "vehicles_fuel_configuration",
-          "value": "(\"vehicles\".\"fuel_tank_capacity_microlitres\" is null and \"vehicles\".\"fuel_volume_unit_preference\" is null and \"vehicles\".\"fuel_consumption_unit_preference\" is null) or (\"vehicles\".\"fuel_tank_capacity_microlitres\" is not null and \"vehicles\".\"fuel_volume_unit_preference\" is not null and \"vehicles\".\"fuel_consumption_unit_preference\" is not null and \"vehicles\".\"fuel_tank_capacity_microlitres\" between 1 and 9007199254740991 and \"vehicles\".\"fuel_volume_unit_preference\" in ('litres', 'usGallons', 'imperialGallons') and \"vehicles\".\"fuel_consumption_unit_preference\" in ('litresPer100Kilometres', 'milesPerUsGallon', 'milesPerImperialGallon'))"
+          "value": "(\"vehicles\".\"fuel_tank_capacity_microlitres\" is null and \"vehicles\".\"fuel_volume_unit_preference\" is null and \"vehicles\".\"fuel_consumption_unit_preference\" is null) or (\"vehicles\".\"fuel_tank_capacity_microlitres\" is not null and \"vehicles\".\"fuel_volume_unit_preference\" is not null and \"vehicles\".\"fuel_consumption_unit_preference\" is not null and typeof(\"vehicles\".\"fuel_tank_capacity_microlitres\") = 'integer' and \"vehicles\".\"fuel_tank_capacity_microlitres\" between 1 and 9007199254740991 and \"vehicles\".\"fuel_volume_unit_preference\" in ('litres', 'usGallons', 'imperialGallons') and \"vehicles\".\"fuel_consumption_unit_preference\" in ('litresPer100Kilometres', 'milesPerUsGallon', 'milesPerImperialGallon'))"
         }
       }
     }

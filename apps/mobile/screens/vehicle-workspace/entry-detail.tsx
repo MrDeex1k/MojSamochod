@@ -6,6 +6,7 @@ import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { HistoryEntry } from "@/domain/history/history-entry";
+import { distanceUnitLabel, metresToDistance } from "@/domain/vehicle/distance";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 import {
   formatCurrencyMinorUnits,
@@ -175,7 +176,6 @@ function entrySubject(entry: HistoryEntry, t: (key: string) => string): string {
 }
 
 function formatOdometer(metres: number, vehicle: Vehicle, locale: string): string {
-  const unit = vehicle.distanceUnitPreference === "miles" ? "mi" : "km";
-  const divisor = vehicle.distanceUnitPreference === "miles" ? 1609.344 : 1000;
-  return `${formatLocalizedNumber(Math.round(metres / divisor), locale)} ${unit}`;
+  const unit = vehicle.distanceUnitPreference;
+  return `${formatLocalizedNumber(Math.round(metresToDistance(metres, unit)), locale)} ${distanceUnitLabel(unit)}`;
 }

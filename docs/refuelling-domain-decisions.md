@@ -79,6 +79,11 @@ Rekomendowany wariant:
 7. Użytkownik może wpisać ilość tankowania z dokładnością do najwyżej dwóch miejsc po przecinku.
    Lista, szczegóły i formularz edycji również pokazują najwyżej dwa miejsca po przecinku, niezależnie
    od tego, czy prezentują litry, galony amerykańskie czy galony imperialne.
+8. Edycja historycznego tankowania zachowuje `inputVolumeUnit` zapisane przy utworzeniu rekordu.
+   Zapis formularza bez zmiany ilości ani ceny zachowuje dokładne dane kanoniczne i cały obiekt
+   `pricing`, bez ponownego wyliczania z zaokrąglonej prezentacji.
+9. Zmiana samej ilości przelicza drugą reprezentację ceny z dokładnej wartości źródłowej zapisanej
+   w `pricing`. Dopiero rzeczywista edycja ceny zapisuje nową cenę w aktualnej jednostce pojazdu.
 
 Obsługiwane wartości `inputVolumeUnit`:
 
@@ -157,6 +162,10 @@ tysięcznych części głównej jednostki waluty, razem z kodem ISO 4217 i jedno
 Kwota łączna wyliczona z ceny jednostkowej jest zaokrąglana dopiero do najmniejszej jednostki danej
 waluty. Regułą jest zaokrąglenie do najbliższej wartości, a dokładną połowę zaokrągla się od zera.
 Historyczne ceny nie są automatycznie przeliczane między walutami.
+
+Bieżący licznik pojazdu jest monotoniczny. Edycja lub usunięcie tankowania nie obniża go i nie
+wyprowadza ponownie z pozostałej historii, ponieważ historia może być niepełna albo wprowadzana poza
+kolejnością. Osobna korekta drogomierza pozostaje dedykowanym przepływem domenowym.
 
 ## Reguły pełnego i częściowego tankowania
 
@@ -305,6 +314,15 @@ dotknięty przedział z obliczeń.
     przecinku bez zmiany wartości kanonicznej.
 24. Pojemność zbiornika z częścią ułamkową jest odrzucana, a konwersja pojemności jest prezentowana
     jako liczba całkowita bez zmiany wartości kanonicznej.
+25. Zapis historycznego tankowania bez edycji ilości lub ceny zachowuje dokładne metadane
+    `inputVolumeUnit` i `pricing`.
+26. Zmiana samej ilości przelicza cenę z zapisanej wartości źródłowej, bez używania zaokrąglonej
+    wartości widocznej w formularzu.
+27. Nieudana konwersja ceny jednostkowej nie pokazuje wartości źródłowej z etykietą jednostki
+    docelowej i nie niszczy zapisanej ceny przy zapisie innych pól.
+28. Uzupełnienie konfiguracji paliwa z sekcji tankowań wraca do tej sekcji, a nie do historii.
+29. SQLite odrzuca pojemność zbiornika zapisaną jako wartość `REAL`, nawet gdy mieści się w
+    dozwolonym zakresie.
 
 ## Stan decyzji
 

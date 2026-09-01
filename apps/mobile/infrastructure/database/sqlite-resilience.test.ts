@@ -107,6 +107,18 @@ describe("SQLite persistence resilience", () => {
         .run(vehicleId),
     ).toThrow(/vehicle fuel configuration is incomplete or invalid/);
 
+    expect(() =>
+      database
+        .prepare(
+          `UPDATE vehicles
+           SET fuel_tank_capacity_microlitres = 50.5,
+               fuel_volume_unit_preference = 'litres',
+               fuel_consumption_unit_preference = 'litresPer100Kilometres'
+           WHERE id = ?`,
+        )
+        .run(vehicleId),
+    ).toThrow(/vehicle fuel configuration is incomplete or invalid/);
+
     configureVehicleFuel(database);
     expect(() =>
       database

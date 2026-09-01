@@ -74,7 +74,7 @@ The optional `pricing` object contains:
 | --------------------- | ------- | ---------------------------------------------------------------------- |
 | `inputMode`           | string  | `total` or `perVolumeUnit`, preserving how the user entered the price. |
 | `totalCost`           | object  | ISO 4217 currency plus integer minor units.                            |
-| `unitPriceMilliUnits` | integer | Unit price stored to three decimal places in minor-currency units.     |
+| `unitPriceMilliUnits` | integer | Unit price stored as integer thousandths of the major currency unit.   |
 | `unitPriceVolumeUnit` | string  | Volume unit to which the unit price applies.                           |
 
 Records are exported in the deterministic order provided by the repository: newest

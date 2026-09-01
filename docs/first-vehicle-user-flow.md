@@ -6,7 +6,7 @@
 
 **Faza realizacji:** Faza 0 — decyzje produktowe i domenowe
 
-**Status implementacji:** niezaimplementowany
+**Status implementacji:** zaimplementowany w Fazie 3 i rozszerzony o paliwo w Fazie 5
 
 Ten roboczy dokument opisuje pierwszy kompletny przepływ użytkownika: od uruchomienia aplikacji bez
 danych do utworzenia pojazdu oraz zarządzania pierwszym wpisem jego historii. Wireframe’y pokazują
@@ -27,9 +27,9 @@ Po zakończeniu przepływu użytkownik potrafi bez połączenia z siecią:
 4. Otworzyć szczegóły wpisu, edytować go i bezpiecznie usunąć.
 5. Zamknąć aplikację i po ponownym uruchomieniu zobaczyć zachowane dane.
 
-Poza tym pierwotnym przekrojem pozostają dokumenty, tankowania, przypomnienia, Premium, wiele
-pojazdów i synchronizacja. Faza 5 rozszerza formularz pojazdu o pojemność zbiornika i preferencje
-jednostek potrzebne do tankowań.
+Poza tym pierwotnym przekrojem pozostają przypomnienia, Premium, wiele pojazdów i synchronizacja.
+Dokumenty wdrożono w Fazie 4, a Faza 5 rozszerzyła formularz pojazdu o pojemność zbiornika,
+preferencje jednostek i obsługę tankowań.
 
 ## Główny przebieg
 

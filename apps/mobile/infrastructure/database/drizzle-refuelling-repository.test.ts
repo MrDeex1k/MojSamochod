@@ -91,7 +91,75 @@ describe("DrizzleRefuellingRepository", () => {
     });
     expect(transaction.update).not.toHaveBeenCalled();
   });
+
+  it("returns not-found when deleting outside the vehicle boundary", async () => {
+    const run = jest.fn(() => ({ changes: 0 }));
+    const where = jest.fn(() => ({ run }));
+    const database = {
+      delete: jest.fn(() => ({ where })),
+    } as unknown as AppDatabase;
+
+    await expect(
+      new DrizzleRefuellingRepository(database).delete(vehicleId, refuelling.id),
+    ).resolves.toMatchObject({
+      error: { kind: "not-found", operation: "refuelling.delete" },
+      ok: false,
+    });
+    expect(where).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns null when no refuelling matches both identifiers", async () => {
+    const database = {
+      select: jest.fn(() => selectOne(undefined)),
+    } as unknown as AppDatabase;
+
+    await expect(
+      new DrizzleRefuellingRepository(database).get(vehicleId, refuelling.id),
+    ).resolves.toEqual({ ok: true, value: null });
+  });
+
+  it("returns the vehicle timeline in the order supplied by the filtered database query", async () => {
+    const later = {
+      ...refuelling,
+      createdAt: "2026-09-01T10:00:00.000Z" as typeof refuelling.createdAt,
+      id: "018f47e2-7b36-7658-b336-34613389d00f" as typeof refuelling.id,
+      occurredAt: "2026-09-01T09:00:00.000Z" as typeof refuelling.occurredAt,
+      updatedAt: "2026-09-01T10:00:00.000Z" as typeof refuelling.updatedAt,
+    };
+    const all = jest.fn(() => [row(later), row(refuelling)]);
+    const orderBy = jest.fn(() => ({ all }));
+    const where = jest.fn(() => ({ orderBy }));
+    const database = {
+      select: jest.fn(() => ({ from: () => ({ where }) })),
+    } as unknown as AppDatabase;
+
+    await expect(new DrizzleRefuellingRepository(database).list(vehicleId)).resolves.toEqual({
+      ok: true,
+      value: [later, refuelling],
+    });
+    expect(where).toHaveBeenCalledTimes(1);
+    expect(orderBy).toHaveBeenCalledTimes(1);
+  });
 });
+
+function row(value: typeof refuelling) {
+  return {
+    createdAt: value.createdAt,
+    fillKind: value.fillKind,
+    id: value.id,
+    inputVolumeUnit: value.inputVolumeUnit,
+    occurredAt: value.occurredAt,
+    odometerMetres: value.odometerMetres ?? null,
+    pricingInputMode: value.pricing?.inputMode ?? null,
+    quantityMicrolitres: value.quantityMicrolitres,
+    totalCostCurrency: value.pricing?.totalCost.currency ?? null,
+    totalCostMinorUnits: value.pricing?.totalCost.minorUnits ?? null,
+    unitPriceMilliUnits: value.pricing?.unitPriceMilliUnits ?? null,
+    unitPriceVolumeUnit: value.pricing?.unitPriceVolumeUnit ?? null,
+    updatedAt: value.updatedAt,
+    vehicleId: value.vehicleId,
+  };
+}
 
 function selectOne(value: unknown) {
   const terminal = { get: () => value };

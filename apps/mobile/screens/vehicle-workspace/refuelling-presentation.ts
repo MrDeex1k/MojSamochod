@@ -1,6 +1,7 @@
 import type { FuelConsumptionUnit } from "@/domain/refuelling/fuel-consumption";
 import { convertUnitPriceMilliUnits } from "@/domain/refuelling/pricing";
 import { microlitresToVolume, type Microlitres, type VolumeUnit } from "@/domain/refuelling/volume";
+import { distanceUnitLabel, metresToDistance } from "@/domain/vehicle/distance";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 
 export function formatFuelVolume(
@@ -13,8 +14,15 @@ export function formatFuelVolume(
   );
 }
 
-export function formatEditableFuelVolume(microlitres: Microlitres, unit: VolumeUnit): string {
-  return String(Number(microlitresToVolume(microlitres, unit).toFixed(2)));
+export function formatEditableFuelVolume(
+  microlitres: Microlitres,
+  unit: VolumeUnit,
+  locale: string,
+): string {
+  return new Intl.NumberFormat(locale, {
+    maximumFractionDigits: 2,
+    useGrouping: false,
+  }).format(microlitresToVolume(microlitres, unit));
 }
 
 export function formatFuelConsumption(value: number, locale: string): string {
@@ -36,15 +44,14 @@ export function formatConvertedUnitPrice(
   fromUnit: VolumeUnit,
   toUnit: VolumeUnit,
   locale: string,
-): string {
+): string | undefined {
   const converted = convertUnitPriceMilliUnits(unitPriceMilliUnits, fromUnit, toUnit);
-  return formatUnitPrice(converted ?? unitPriceMilliUnits, locale);
+  return converted === undefined ? undefined : formatUnitPrice(converted, locale);
 }
 
 export function formatRefuellingOdometer(metres: number, vehicle: Vehicle, locale: string): string {
-  const divisor = vehicle.distanceUnitPreference === "miles" ? 1609.344 : 1000;
-  const unit = vehicle.distanceUnitPreference === "miles" ? "mi" : "km";
-  return `${new Intl.NumberFormat(locale).format(Math.round(metres / divisor))} ${unit}`;
+  const unit = vehicle.distanceUnitPreference;
+  return `${new Intl.NumberFormat(locale).format(Math.round(metresToDistance(metres, unit)))} ${distanceUnitLabel(unit)}`;
 }
 
 export function fuelConsumptionUnitLabel(unit: FuelConsumptionUnit): string {

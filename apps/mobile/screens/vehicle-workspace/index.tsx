@@ -7,7 +7,8 @@ import type { RefuellingHistory } from "@/application/refuelling/refuelling-serv
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";
 import type { Refuelling } from "@/domain/refuelling/refuelling";
-import type { Vehicle } from "@/domain/vehicle/vehicle";
+import { distanceUnitLabel, metresToDistance } from "@/domain/vehicle/distance";
+import { hasFuelConfiguration, type Vehicle } from "@/domain/vehicle/vehicle";
 import { AdaptiveWorkspace } from "@/components/layout/adaptive-workspace";
 import { Screen } from "@/components/layout/screen";
 import { useApplicationServices } from "@/components/providers/application-provider";
@@ -53,7 +54,7 @@ type WorkspaceMode =
   | Readonly<{ kind: "refuelling-form"; refuelling?: Refuelling }>
   | Readonly<{ kind: "refuelling-detail"; refuelling: Refuelling }>
   | Readonly<{ kind: "select-type" }>
-  | Readonly<{ kind: "vehicle-form" }>;
+  | Readonly<{ kind: "vehicle-form"; returnTo: "fuel" | "history" }>;
 
 type VehicleWorkspaceViewProps = WorkspaceData &
   Readonly<{
@@ -62,6 +63,7 @@ type VehicleWorkspaceViewProps = WorkspaceData &
     onAddDocument: () => void;
     onCancelFlow: () => void;
     onChooseType: (type: HistoryEntry["type"]) => void;
+    onConfigureFuel: () => void;
     onDocuments: () => void;
     onDocumentsChanged: () => void;
     onEditDocument: (document: VehicleDocument) => void;
@@ -133,6 +135,7 @@ export function VehicleWorkspaceScreen() {
       onAddDocument={() => setMode({ kind: "document-form" })}
       onCancelFlow={() => setMode({ kind: "history" })}
       onChooseType={(type) => setMode({ kind: "form", type })}
+      onConfigureFuel={() => setMode({ kind: "vehicle-form", returnTo: "fuel" })}
       onDocuments={() => setMode({ kind: "documents" })}
       onDocumentsChanged={() => {
         setMode({ kind: "documents" });
@@ -142,7 +145,7 @@ export function VehicleWorkspaceScreen() {
       onEditDocument={(document) => setMode({ document, kind: "document-form" })}
       onEditEntry={(entry) => setMode({ entry, kind: "form", type: entry.type })}
       onEditRefuelling={(refuelling) => setMode({ kind: "refuelling-form", refuelling })}
-      onEditVehicle={() => setMode({ kind: "vehicle-form" })}
+      onEditVehicle={() => setMode({ kind: "vehicle-form", returnTo: "history" })}
       onFuel={() => setMode({ kind: "fuel" })}
       onFuelChanged={() => {
         setMode({ kind: "fuel" });
@@ -171,6 +174,7 @@ export function VehicleWorkspaceView({
   onAddDocument,
   onCancelFlow,
   onChooseType,
+  onConfigureFuel,
   onDocuments,
   onDocumentsChanged,
   onEditDocument,
@@ -188,33 +192,34 @@ export function VehicleWorkspaceView({
   services,
   vehicle,
 }: VehicleWorkspaceViewProps) {
+  const configuredVehicle = hasFuelConfiguration(vehicle) ? vehicle : undefined;
   const phone =
     mode.kind === "fuel" ? (
       <RefuellingList
         history={refuellingHistory}
         onAdd={onAddRefuelling}
         onBack={onCancelFlow}
-        onConfigureFuel={onEditVehicle}
+        onConfigureFuel={onConfigureFuel}
         onSelect={onSelectRefuelling}
         vehicle={vehicle}
       />
-    ) : mode.kind === "refuelling-form" ? (
+    ) : mode.kind === "refuelling-form" && configuredVehicle ? (
       <RefuellingForm
         clock={services.clock}
         onCancel={onFuel}
         onSaved={onFuelChanged}
         refuelling={mode.refuelling}
         refuellings={services.refuellings}
-        vehicle={vehicle}
+        vehicle={configuredVehicle}
       />
-    ) : mode.kind === "refuelling-detail" ? (
+    ) : mode.kind === "refuelling-detail" && configuredVehicle ? (
       <RefuellingDetail
         onBack={onFuel}
         onDeleted={onFuelChanged}
         onEdit={() => onEditRefuelling(mode.refuelling)}
         refuelling={mode.refuelling}
         refuellings={services.refuellings}
-        vehicle={vehicle}
+        vehicle={configuredVehicle}
       />
     ) : mode.kind === "documents" ? (
       <DocumentList
@@ -250,8 +255,8 @@ export function VehicleWorkspaceView({
       <VehicleEditForm
         {...services}
         existingPhotoUri={photoUri}
-        onCancel={onCancelFlow}
-        onSaved={onSaved}
+        onCancel={mode.returnTo === "fuel" ? onFuel : onCancelFlow}
+        onSaved={mode.returnTo === "fuel" ? onFuelChanged : onSaved}
         vehicle={vehicle}
       />
     ) : mode.kind === "select-type" ? (
@@ -294,11 +299,11 @@ export function VehicleWorkspaceView({
         history={refuellingHistory}
         onAdd={onAddRefuelling}
         onBack={onCancelFlow}
-        onConfigureFuel={onEditVehicle}
+        onConfigureFuel={onConfigureFuel}
         onSelect={onSelectRefuelling}
         vehicle={vehicle}
       />
-    ) : mode.kind === "refuelling-form" ? (
+    ) : mode.kind === "refuelling-form" && configuredVehicle ? (
       <RefuellingForm
         clock={services.clock}
         embedded
@@ -306,7 +311,7 @@ export function VehicleWorkspaceView({
         onSaved={onFuelChanged}
         refuelling={mode.refuelling}
         refuellings={services.refuellings}
-        vehicle={vehicle}
+        vehicle={configuredVehicle}
       />
     ) : mode.kind === "documents" || mode.kind === "document-detail" ? (
       <DocumentList
@@ -333,8 +338,8 @@ export function VehicleWorkspaceView({
         {...services}
         embedded
         existingPhotoUri={photoUri}
-        onCancel={onCancelFlow}
-        onSaved={onSaved}
+        onCancel={mode.returnTo === "fuel" ? onFuel : onCancelFlow}
+        onSaved={mode.returnTo === "fuel" ? onFuelChanged : onSaved}
         vehicle={vehicle}
       />
     ) : mode.kind === "select-type" ? (
@@ -361,7 +366,7 @@ export function VehicleWorkspaceView({
     );
 
   const detailPane =
-    mode.kind === "refuelling-detail" ? (
+    mode.kind === "refuelling-detail" && configuredVehicle ? (
       <RefuellingDetail
         embedded
         onBack={onFuel}
@@ -369,7 +374,7 @@ export function VehicleWorkspaceView({
         onEdit={() => onEditRefuelling(mode.refuelling)}
         refuelling={mode.refuelling}
         refuellings={services.refuellings}
-        vehicle={vehicle}
+        vehicle={configuredVehicle}
       />
     ) : mode.kind === "document-detail" ? (
       <DocumentDetail
@@ -625,9 +630,8 @@ function entrySubject(entry: HistoryEntry, t: (key: string) => string): string {
 }
 
 function formatEntryDistance(metres: number, vehicle: Vehicle, locale: string): string {
-  const divisor = vehicle.distanceUnitPreference === "kilometres" ? 1000 : 1609.344;
-  const unit = vehicle.distanceUnitPreference === "kilometres" ? "km" : "mi";
-  return `${formatLocalizedNumber(Math.round(metres / divisor), locale)} ${unit}`;
+  const unit = vehicle.distanceUnitPreference;
+  return `${formatLocalizedNumber(Math.round(metresToDistance(metres, unit)), locale)} ${distanceUnitLabel(unit)}`;
 }
 
 function formatOccurredAt(entry: HistoryEntry, locale: string): string {
@@ -636,9 +640,11 @@ function formatOccurredAt(entry: HistoryEntry, locale: string): string {
 
 function formatDistance(vehicle: Vehicle, locale: string): string | null {
   if (vehicle.currentOdometerMetres === undefined) return null;
-  const divisor = vehicle.distanceUnitPreference === "kilometres" ? 1000 : 1609.344;
-  const unit = vehicle.distanceUnitPreference === "kilometres" ? "km" : "mi";
-  return `${formatLocalizedNumber(Math.round(vehicle.currentOdometerMetres / divisor), locale)} ${unit}`;
+  const unit = vehicle.distanceUnitPreference;
+  return `${formatLocalizedNumber(
+    Math.round(metresToDistance(vehicle.currentOdometerMetres, unit)),
+    locale,
+  )} ${distanceUnitLabel(unit)}`;
 }
 
 async function loadWorkspace(

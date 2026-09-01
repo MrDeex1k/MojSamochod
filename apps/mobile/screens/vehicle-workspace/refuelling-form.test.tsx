@@ -74,6 +74,16 @@ describe("RefuellingForm", () => {
     expect(refuellings.create).not.toHaveBeenCalled();
   });
 
+  it("does not clear an entered price when the active input mode is selected again", async () => {
+    const refuellings = service();
+    await renderForm(refuellings, jest.fn());
+
+    await userEvent.type(screen.getByLabelText("Total amount"), "300.00");
+    await userEvent.press(screen.getByRole("button", { name: "Total amount" }));
+
+    expect(screen.getByLabelText("Total amount")).toHaveDisplayValue("300.00");
+  });
+
   it("rejects a refuelling quantity with more than two decimal places", async () => {
     const refuellings = service();
     await renderForm(refuellings, jest.fn());
@@ -123,9 +133,105 @@ describe("RefuellingForm", () => {
 
     await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
     await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    expect(refuellings.update).toHaveBeenCalledWith(existing, {
+      fillKind: "full",
+      inputVolumeUnit: "litres",
+      occurredAt: "2026-09-01T08:00:00.000Z",
+      odometerMetres: undefined,
+      pricing: {
+        inputMode: "perVolumeUnit",
+        totalCost: { currency: "USD", minorUnits: 30_000 },
+        unitPriceMilliUnits: 6_667,
+        unitPriceVolumeUnit: "litres",
+      },
+      quantityMicrolitres: 45_000_000,
+      vehicleId: vehicle.id,
+    });
+  });
+
+  it("recalculates totals from exact source pricing when only the quantity changes", async () => {
+    const refuellings = service();
+    const existing = expectValid(
+      createRefuelling(
+        {
+          fillKind: "full",
+          inputVolumeUnit: "litres",
+          occurredAt: "2026-09-01T08:00:00.000Z",
+          pricing: {
+            inputMode: "perVolumeUnit",
+            totalCost: { currency: "USD", minorUnits: 30_000 },
+            unitPriceMilliUnits: 6_667,
+            unitPriceVolumeUnit: "litres",
+          },
+          quantityMicrolitres: 45_000_000,
+          vehicleId: vehicle.id,
+        },
+        {
+          clock: { now: () => now },
+          idGenerator: { generate: () => "018f47e2-7b35-7658-b336-34613389d00f" },
+        },
+      ),
+    );
+
+    await renderForm(refuellings, jest.fn(), {
+      refuelling: existing,
+      vehicle: { ...vehicle, fuelVolumeUnitPreference: "usGallons" },
+    });
+    await userEvent.clear(screen.getByLabelText("Fuel quantity (gal (US))"));
+    await userEvent.type(screen.getByLabelText("Fuel quantity (gal (US))"), "12");
+    await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
+
+    await waitFor(() => expect(refuellings.update).toHaveBeenCalledTimes(1));
     expect(refuellings.update).toHaveBeenCalledWith(
       existing,
-      expect.objectContaining({ quantityMicrolitres: 45_000_000 }),
+      expect.objectContaining({
+        inputVolumeUnit: "litres",
+        pricing: expect.objectContaining({
+          inputMode: "perVolumeUnit",
+          unitPriceMilliUnits: 6_667,
+          unitPriceVolumeUnit: "litres",
+        }),
+        quantityMicrolitres: 45_424_941,
+      }),
+    );
+  });
+
+  it("preserves source pricing when a converted unit price cannot be represented", async () => {
+    const refuellings = service();
+    const existing = expectValid(
+      createRefuelling(
+        {
+          fillKind: "full",
+          inputVolumeUnit: "litres",
+          occurredAt: "2026-09-01T08:00:00.000Z",
+          pricing: {
+            inputMode: "perVolumeUnit",
+            totalCost: { currency: "USD", minorUnits: 30_000 },
+            unitPriceMilliUnits: Number.MAX_SAFE_INTEGER,
+            unitPriceVolumeUnit: "litres",
+          },
+          quantityMicrolitres: 45_000_000,
+          vehicleId: vehicle.id,
+        },
+        {
+          clock: { now: () => now },
+          idGenerator: { generate: () => "018f47e2-7b35-7658-b336-34613389d00f" },
+        },
+      ),
+    );
+
+    await renderForm(refuellings, jest.fn(), {
+      refuelling: existing,
+      vehicle: { ...vehicle, fuelVolumeUnitPreference: "imperialGallons" },
+    });
+    expect(screen.getByLabelText("Unit price (/gal (UK))")).toHaveDisplayValue("");
+
+    await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
+
+    await waitFor(() => expect(refuellings.update).toHaveBeenCalledTimes(1));
+    expect(refuellings.update).toHaveBeenCalledWith(
+      existing,
+      expect.objectContaining({ pricing: existing.pricing }),
     );
   });
 });

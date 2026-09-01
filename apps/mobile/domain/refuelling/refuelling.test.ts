@@ -5,6 +5,7 @@ import { createRefuelling, updateRefuelling } from "./refuelling";
 const now = new Date("2026-09-01T10:00:00.000Z");
 const vehicleId = vehicleIdFromUuidV7("01941f29-7c00-73e4-a310-744d2167fc5b");
 const generatedId = "01941f29-7c00-73e5-a310-744d2167fc5b";
+const otherVehicleId = vehicleIdFromUuidV7("01941f29-7c00-73e6-a310-744d2167fc5b");
 
 function dependencies(): { clock: Clock; idGenerator: IdGenerator } {
   return {
@@ -130,7 +131,7 @@ describe("Refuelling", () => {
         occurredAt: "2026-09-01T09:00:00.000Z",
         odometerMetres: 121_000_000,
         quantityMicrolitres: 20_000_000,
-        vehicleId,
+        vehicleId: otherVehicleId,
       },
       { now: () => new Date("2026-09-01T11:00:00.000Z") },
     );
@@ -142,6 +143,7 @@ describe("Refuelling", () => {
         fillKind: "full",
         id: created.value.id,
         updatedAt: "2026-09-01T11:00:00.000Z",
+        vehicleId,
       },
     });
   });
