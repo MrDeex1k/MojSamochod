@@ -6,8 +6,8 @@
 
 **Faza realizacji:** Faza 5 — tankowania i zużycie paliwa
 
-**Status implementacji:** domena, konfiguracja pojazdu, persystencja, eksport JSON v3, przepływy
-aplikacyjne i interfejs są zaimplementowane; do wykonania pozostaje końcowa weryfikacja natywna
+**Status implementacji:** ukończona i zweryfikowana natywnie na iPhonie, iPadzie, telefonie z
+Androidem oraz tablecie z Androidem
 
 Ten dokument definiuje zatwierdzony model tankowania przed rozpoczęciem migracji, logiki domenowej i
 interfejsu. Implementacja Fazy 5 musi zachować opisane reguły albo zmienić dokument razem z kodem.
@@ -270,3 +270,15 @@ dotknięty przedział z obliczeń.
 | 11  | Pojemność zbiornika paliwa jest obowiązkowa podczas tworzenia nowego pojazdu.          | Zatwierdzona |
 
 Wszystkie decyzje wymagane przed implementacją Fazy 5 zostały zatwierdzone.
+
+## Wynik końcowej weryfikacji
+
+Końcowy test natywny potwierdził pełny przepływ tworzenia, odczytu, edycji i usuwania tankowań,
+trwałość po ponownym uruchomieniu, aktualizację przebiegu pojazdu oraz ponowne obliczanie spalania po
+zmianach danych. Sprawdzono sekwencję dwóch pełnych tankowań z tankowaniem częściowym bez przebiegu,
+oba tryby podawania ceny, dokładność ceny jednostkowej do trzech miejsc, zapis daty i godziny UTC,
+pomijanie pustych pól opcjonalnych oraz czytelne potwierdzenie usunięcia.
+
+Układy telefonu i tabletu przeszły weryfikację na iOS i Androidzie. Tablet pokazuje kartę pojazdu i
+listę bez pustej karty szczegółów, dodaje trzecią kartę po wyborze rekordu oraz usuwa kartę środkową
+na czas formularza. Nieobsługiwany język systemowy poprawnie korzysta z angielskiego fallbacku.

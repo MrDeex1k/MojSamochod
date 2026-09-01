@@ -37,10 +37,7 @@ initial visual direction have been approved.
 
 ## Phase 1 — Application and design-system foundation
 
-**Status:** Implemented on `feat/application-foundation`; final documentation and integration into
-`main` are pending. The current implementation includes the semantic dark theme, reusable UI and
-application-state primitives, the adaptive phone/tablet shell, orientation guards, Jest and React
-Native Testing Library conventions, and native verification on the four representative targets.
+**Status:** Complete and integrated into `main`.
 
 ### Steps
 
@@ -63,9 +60,9 @@ Native Testing Library conventions, and native verification on the four represen
 
 ## Phase 2 — Local persistence foundation
 
-**Status:** Complete on `feat/local-persistence-foundation`; ready for review and integration.
-Drizzle ORM, UUIDv7, transactional repositories, persistence resilience, the version 1 JSON export,
-and the managed-file boundary are implemented and documented.
+**Status:** Complete and integrated into `main`. Drizzle ORM, UUIDv7, transactional repositories,
+persistence resilience, the version 1 JSON export, and the managed-file boundary are implemented
+and documented.
 
 ### Steps
 
@@ -84,9 +81,9 @@ and the managed-file boundary are implemented and documented.
 
 ## Phase 3 — First complete vehicle-history slice
 
-**Status:** Implemented and verified on `feat/vehicle-history-slice`; integration into `main` is
-pending. Automated checks and native verification cover iPhone, iPad, Android phone, and Android
-tablet. Polish and English localization uses an English fallback; vehicle photos are gallery-only.
+**Status:** Complete and integrated into `main`. Automated checks and native verification cover
+iPhone, iPad, Android phone, and Android tablet. Polish and English localization uses an English
+fallback; vehicle photos are gallery-only.
 
 ### Steps
 
@@ -128,10 +125,10 @@ metadata-only JSON export.
 
 ## Phase 5 — Refuelling and fuel consumption
 
-**Status:** Domain decisions, pure consumption calculations, vehicle fuel configuration,
-refuelling persistence, and the version 3 JSON export are implemented on
-`feat/refuelling-and-consumption`. Application workflows and the adaptive phone/tablet interface
-are implemented with automated coverage. Final native verification remains pending.
+**Status:** Complete on `feat/refuelling-and-consumption`; ready for review and integration. Domain
+decisions, pure consumption calculations, vehicle fuel configuration, refuelling persistence, the
+version 3 JSON export, application workflows, and the adaptive phone/tablet interface are covered
+by automated tests and native verification on iPhone, iPad, Android phone, and Android tablet.
 
 ### Steps
 
@@ -244,6 +241,6 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Review and merge the Phase 4 pull request. Then start Phase 5 on a dedicated branch by defining the
-refuelling domain rules for full and partial fills, odometer readings, quantity, price, supported
-volume units, and the exact average-consumption algorithm before implementing persistence or UI.
+Review and merge the Phase 5 pull request. Then start Phase 6 on a dedicated branch by defining the
+inspection and insurance deadline model, reminder states, notification-permission flow, and local
+notification scheduling rules before implementing persistence or UI.

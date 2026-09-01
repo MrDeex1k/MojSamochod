@@ -12,11 +12,11 @@ opisywanego etapu.
 - Faza 2, czyli lokalna persystencja danych, została zintegrowana z `main`.
 - Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, została zintegrowana z `main`.
 - Faza 4, czyli dokumenty i faktury, została zintegrowana z `main`.
-- Faza 5, czyli tankowania i zużycie paliwa, ma zatwierdzone reguły domenowe na branchu
-  `feat/refuelling-and-consumption`. Encja tankowania, jednostki objętości, dokładne ceny,
-  audytowalne obliczenia spalania, konfiguracja paliwowa pojazdu, persystencja, eksport JSON v3,
-  przepływy aplikacyjne i interfejs są zaimplementowane. Do wykonania pozostaje końcowa weryfikacja
-  na czterech urządzeniach natywnych.
+- Faza 5, czyli tankowania i zużycie paliwa, jest ukończona na branchu
+  `feat/refuelling-and-consumption` i gotowa do przeglądu oraz integracji. Encja tankowania,
+  jednostki objętości, dokładne ceny, audytowalne obliczenia spalania, konfiguracja paliwowa
+  pojazdu, persystencja, eksport JSON v3, przepływy aplikacyjne i interfejs są zaimplementowane i
+  zweryfikowane na czterech urządzeniach natywnych.
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -62,7 +62,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 43 zestawy i 197 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 43 zestawy i 198 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -85,6 +85,13 @@ opisywanego etapu.
   telefonu oraz tabletu. Na iPhonie sprawdzono pełny przepływ PDF: import z metadanymi, relację ze
   wpisem, edycję, odrzucenie duplikatu SHA-256, zastąpienie obrazem, podgląd, czytelną nazwę w
   natywnym eksporcie i usunięcie.
+- Końcowa weryfikacja Fazy 5 na iPhonie 15, iPadzie 10. generacji, Pixelu 9 i Pixel Tablet
+  potwierdziła konfigurację starszego pojazdu, pustą historię, formularz, walidację, szczegóły,
+  edycję, usuwanie, trwałość po ponownym uruchomieniu oraz układy telefonu i tabletu. Pełny
+  scenariusz obejmował dwa pełne tankowania rozdzielone tankowaniem częściowym bez przebiegu,
+  obliczenie spalania, zmianę ilości, ponowne przeliczenie po usunięciu oraz podniesienie aktualnego
+  przebiegu pojazdu. Zweryfikowano również ceny podawane jako kwota całkowita i cena jednostkowa z
+  trzema miejscami po przecinku, zapis czasu UTC, polski interfejs i angielski fallback.
 
 ### Domena i persystencja
 
@@ -155,5 +162,5 @@ opisywanego etapu.
 
 ## Następny krok
 
-Przeprowadzić końcową weryfikację całego przepływu tankowań na iPhonie, iPadzie, telefonie z
-Androidem oraz tablecie z Androidem, bez zastępowania urządzeń natywnych przeglądarką.
+Przejrzeć i zintegrować pull request Fazy 5. Po aktualizacji `main` rozpocząć Fazę 6 od ustalenia
+modelu terminów przeglądu i ubezpieczenia, stanów przypomnień oraz zasad lokalnych powiadomień.

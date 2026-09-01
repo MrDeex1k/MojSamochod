@@ -171,10 +171,7 @@ export const pl = {
     awaitingConsumption: "Dodaj dwa pełne tankowania z odczytami licznika, aby obliczyć zużycie.",
     back: "Wróć do historii pojazdu",
     backToFuel: "Wróć do historii tankowań",
-    basedOn_few: "Na podstawie {{count}} rekordów tankowania oznaczonych poniżej.",
-    basedOn_many: "Na podstawie {{count}} rekordów tankowania oznaczonych poniżej.",
-    basedOn_one: "Na podstawie {{count}} rekordu tankowania oznaczonego poniżej.",
-    basedOn_other: "Na podstawie {{count}} rekordu tankowania oznaczonego poniżej.",
+    basedOn: "Liczba tankowań uwzględnionych w średniej: {{recordCount}}.",
     cancel: "Anuluj",
     configurationRequired:
       "Uzupełnij pojemność zbiornika i preferencje jednostek przed dodaniem tankowania.",

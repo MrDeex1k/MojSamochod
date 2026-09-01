@@ -170,8 +170,7 @@ export const en = {
       "Add two full refuellings with odometer readings to calculate consumption.",
     back: "Back to vehicle history",
     backToFuel: "Back to fuel history",
-    basedOn_one: "Based on {{count}} refuelling record marked below.",
-    basedOn_other: "Based on {{count}} refuelling records marked below.",
+    basedOn: "Refuellings included in the average: {{recordCount}}.",
     cancel: "Cancel",
     configurationRequired:
       "Complete the fuel tank capacity and unit preferences before adding a refuelling.",

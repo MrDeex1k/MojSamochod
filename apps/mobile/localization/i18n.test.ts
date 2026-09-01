@@ -20,6 +20,18 @@ describe("application localization", () => {
     expect(i18n.resolvedLanguage).toBe("en");
   });
 
+  it("formats the refuelling average audit text without plural inflection", () => {
+    const polish = createAppI18n("pl-PL");
+    const english = createAppI18n("en-US");
+
+    expect(polish.t("refuelling.basedOn", { recordCount: 2 })).toBe(
+      "Liczba tankowań uwzględnionych w średniej: 2.",
+    );
+    expect(english.t("refuelling.basedOn", { recordCount: 1 })).toBe(
+      "Refuellings included in the average: 1.",
+    );
+  });
+
   it("keeps Polish and English catalogs structurally aligned", () => {
     const i18n = createAppI18n("pl-PL");
     const polishKeys = Object.keys(i18n.getResourceBundle("pl", "translation"));

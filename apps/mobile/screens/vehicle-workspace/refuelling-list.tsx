@@ -38,6 +38,7 @@ export function RefuellingList({
   vehicle,
 }: RefuellingListProps) {
   const { t } = useAppTranslation();
+  const includedRefuellingIds = new Set(history.consumption.includedRefuellingIds);
   const content = (
     <Card className={embedded ? "h-full" : undefined}>
       <Text accessibilityRole="header" className="text-title font-bold text-primary">
@@ -65,7 +66,7 @@ export function RefuellingList({
             <View>
               {history.refuellings.map((refuelling) => (
                 <RefuellingRow
-                  included={history.consumption.includedRefuellingIds.includes(refuelling.id)}
+                  included={includedRefuellingIds.has(refuelling.id)}
                   key={refuelling.id}
                   onPress={() => onSelect(refuelling)}
                   refuelling={refuelling}
@@ -118,7 +119,7 @@ function ConsumptionSummary({
           </Text>
           <Text className="text-caption text-secondary">
             {t("refuelling.basedOn", {
-              count: history.consumption.includedRefuellingIds.length,
+              recordCount: history.consumption.includedRefuellingIds.length,
             })}
           </Text>
           {invalidInterval ? (
