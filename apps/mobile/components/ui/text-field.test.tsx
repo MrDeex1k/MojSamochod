@@ -36,7 +36,8 @@ describe("TextField", () => {
     expect(input).toHaveProp("textAlignVertical", "center");
     expect(input).toHaveStyle({
       includeFontPadding: false,
-      lineHeight: 16,
+      lineHeight: 20,
+      paddingHorizontal: 16,
       paddingVertical: 0,
     });
   });

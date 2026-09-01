@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
+import { Platform, StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
 
 type TextFieldProps = TextInputProps & {
   error?: string;
@@ -59,7 +59,8 @@ export function TextField({
 const styles = StyleSheet.create({
   singleLineInput: {
     includeFontPadding: false,
-    lineHeight: 16,
+    lineHeight: Platform.OS === "ios" ? 20 : 16,
+    paddingHorizontal: 16,
     paddingVertical: 0,
   },
 });

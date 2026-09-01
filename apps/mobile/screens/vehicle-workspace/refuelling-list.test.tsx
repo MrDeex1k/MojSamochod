@@ -57,6 +57,7 @@ describe("RefuellingList", () => {
     expect(screen.getByText("7.50 l/100 km")).toBeOnTheScreen();
     expect(screen.getAllByText("Included in the average")).toHaveLength(2);
     expect(screen.getByText("Refuellings included in the average: 2.")).toBeOnTheScreen();
+    expect(screen.getByTestId("consumption-summary")).toHaveStyle({ marginHorizontal: -16 });
   });
 
   it("explains why a first full refuelling is not enough", async () => {

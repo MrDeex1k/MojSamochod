@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import type { RefuellingHistory } from "@/application/refuelling/refuelling-service";
 import { Screen } from "@/components/layout/screen";
@@ -102,7 +102,11 @@ function ConsumptionSummary({
   );
 
   return (
-    <View className="gap-compact rounded-control bg-surface-muted p-content">
+    <View
+      className="gap-compact rounded-control bg-surface-muted p-content"
+      style={styles.consumptionSummary}
+      testID="consumption-summary"
+    >
       <Text className="text-label font-semibold uppercase tracking-widest text-accent">
         {t("refuelling.averageConsumption")}
       </Text>
@@ -132,6 +136,12 @@ function ConsumptionSummary({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  consumptionSummary: {
+    marginHorizontal: -16,
+  },
+});
 
 function RefuellingRow({
   included,
