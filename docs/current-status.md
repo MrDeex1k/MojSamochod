@@ -12,8 +12,7 @@ opisywanego etapu.
 - Faza 2, czyli lokalna persystencja danych, została zintegrowana z `main`.
 - Faza 3, czyli pierwszy kompletny przepływ pojazdu i historii, została zintegrowana z `main`.
 - Faza 4, czyli dokumenty i faktury, została zintegrowana z `main`.
-- Faza 5, czyli tankowania i zużycie paliwa, jest ukończona na branchu
-  `feat/refuelling-and-consumption` i gotowa do przeglądu oraz integracji. Jednostki są
+- Faza 5, czyli tankowania i zużycie paliwa, została zintegrowana z `main`. Jednostki są
   preferencjami pojazdu, formularz tankowania nie powtarza ich wyboru, a listy, szczegóły,
   formularze edycji, pojemność zbiornika i ceny jednostkowe przeliczają prezentację z danych
   kanonicznych bez przepisywania historii.
@@ -66,7 +65,7 @@ opisywanego etapu.
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
-- React Doctor 0.9.12 dla zmian na branchu kończy się wynikiem 100/100 bez wykrytych problemów.
+- React Doctor 0.9.12 dla zmian Fazy 5 zakończył się wynikiem 100/100 bez wykrytych problemów.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
 - Po implementacji Fazy 3 bundle'e Hermes zostały ponownie poprawnie wygenerowane osobno dla iOS i
   Androida, wraz z nowymi modułami zdjęć, systemu plików i selektora daty oraz czasu.
@@ -181,5 +180,6 @@ opisywanego etapu.
 
 ## Następny krok
 
-Przejrzeć i zintegrować pull request Fazy 5. Po aktualizacji `main` rozpocząć Fazę 6 od ustalenia
-modelu terminów przeglądu i ubezpieczenia, stanów przypomnień oraz zasad lokalnych powiadomień.
+Rozpocząć Fazę 6 na dedykowanym branchu od ustalenia modelu terminów przeglądu i ubezpieczenia,
+stanów przypomnień, przepływu uprawnień oraz zasad deterministycznego planowania lokalnych
+powiadomień. Persystencja i interfejs powinny powstać dopiero po zatwierdzeniu tych decyzji.

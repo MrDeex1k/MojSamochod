@@ -125,9 +125,9 @@ metadata-only JSON export.
 
 ## Phase 5 — Refuelling and fuel consumption
 
-**Status:** Complete on `feat/refuelling-and-consumption`; ready for review and integration. Domain
-decisions, canonical unit conversions, vehicle fuel preferences, refuelling persistence, JSON v3
-export, application workflows, and adaptive phone/tablet UI have automated and native coverage.
+**Status:** Complete and integrated into `main`. Domain decisions, canonical unit conversions,
+vehicle fuel preferences, refuelling persistence, JSON v3 export, application workflows, and
+adaptive phone/tablet UI have automated and native coverage.
 
 ### Steps
 
@@ -151,6 +151,9 @@ export, application workflows, and adaptive phone/tablet UI have automated and n
   presentation and editing surfaces.
 
 ## Phase 6 — Reminders
+
+**Status:** Not started. Domain ownership, deadline semantics, reminder states, notification
+permission flow, and deterministic local scheduling must be agreed before implementation.
 
 ### Steps
 
@@ -247,6 +250,6 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Review and merge the Phase 5 pull request. Then start Phase 6 on a dedicated branch by defining the
-inspection and insurance deadline model, reminder states, notification-permission flow, and local
-notification scheduling rules before implementing persistence or UI.
+Start Phase 6 on a dedicated branch by defining the inspection and insurance deadline model,
+reminder states, notification-permission flow, and local notification scheduling rules before
+implementing persistence or UI.

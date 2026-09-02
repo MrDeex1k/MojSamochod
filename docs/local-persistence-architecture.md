@@ -23,15 +23,16 @@ Uzupełnia model domenowy, ale nie zmienia zatwierdzonych reguł produktu.
 
 ## Identyfikatory i czas
 
-- `VehicleId`, `HistoryEntryId` oraz przyszłe `ManagedFileId` używają UUIDv7.
+- `VehicleId`, `HistoryEntryId`, `ManagedFileId`, `DocumentId` oraz `RefuellingId` używają UUIDv7.
 - UUIDv7 jest wyłącznie niezmienną, globalnie unikalną tożsamością rekordu. Kod domenowy nie odczytuje
   z niego daty ani nie używa jego części czasowej do sortowania, wyświetlania lub walidacji.
 - Moment utworzenia i ostatniej zmiany rekordu jest przechowywany osobno w `createdAt` i `updatedAt`.
 - Czas zdarzenia historii jest przechowywany osobno w wymaganym polu `occurredAt`.
 - Wszystkie trzy pola czasu są kanonicznymi znacznikami UTC zapisanymi jako tekst ISO 8601, na
   przykład `2026-08-30T14:30:00.000Z`.
-- Formularz wpisu pokazuje osobne kontrolki `Data` i `Godzina (UTC)`. Warstwa aplikacyjna łączy je w
-  jedno `occurredAt`; SQLite przechowuje tylko jedną kolumnę `occurred_at`.
+- Formularz wpisu pokazuje osobne kontrolki `Data` i `Godzina` bez technicznego sufiksu w etykiecie.
+  Warstwa aplikacyjna interpretuje je w UTC, łączy w jedno `occurredAt`, a SQLite przechowuje tylko
+  jedną kolumnę `occurred_at`.
 - Pierwszy formularz wybiera godzinę z dokładnością do minuty. Sekundy i milisekundy zapisywane są
   jako zero.
 - Zdarzenie z `occurredAt` późniejszym niż bieżący czas UTC jest odrzucane.
@@ -122,9 +123,10 @@ usunięcie rekordu. Surowe klucze magazynu są nieprzezroczyste, względne i nie
 ## Eksport
 
 Faza 2 dostarcza wersję 1 JSON z pojazdem i historią. Faza 4 wprowadza wersję 2, która dodaje
-metadane dokumentów, ale nadal nie zawiera plików binarnych. Przenośny backup zostanie później
-rozszerzony do archiwum z manifestem JSON oraz katalogiem obiektów, bez umieszczania binarnej
-zawartości w bazie SQLite ani kodowania jej jako Base64 w JSON.
+metadane dokumentów, a Faza 5 wersję 3 z konfiguracją paliwową i źródłowymi rekordami tankowań.
+Żadna z tych wersji nie zawiera plików binarnych ani wyliczonego spalania. Przenośny backup zostanie
+później rozszerzony do archiwum z manifestem JSON oraz katalogiem obiektów, bez umieszczania
+binarnej zawartości w bazie SQLite ani kodowania jej jako Base64 w JSON.
 
 ## Granice implementacji
 

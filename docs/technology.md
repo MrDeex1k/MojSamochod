@@ -12,9 +12,8 @@
 
 The supported presentation is portrait on phones and landscape on tablets. Expo's static
 `orientation` setting cannot express a different lock per device class, so the application uses
-`default` to make tablet landscape available. The adaptive application shell must enforce or guard
-the supported presentation when it is introduced; phone landscape and tablet portrait are not
-current layout targets.
+`default` to make tablet landscape available. The adaptive application shell guards the supported
+presentation and asks the user to rotate unsupported phone-landscape and tablet-portrait layouts.
 
 ## Current application stack
 
@@ -139,6 +138,12 @@ the file into private managed storage; copying first into Expo Go's shared cache
 read permission. Before sharing, the application creates a cache alias with the original file name
 so the platform surface does not expose the internal UUID storage key.
 
+Phase 5 uses pure TypeScript domain functions for canonical distance and volume conversion,
+refuelling validation, exact price derivation, and auditable fuel-consumption calculation. Vehicle
+preferences control distance, fuel-volume, and consumption presentation without rewriting
+historical source records. SQLite persists raw refuelling data, while JSON export v3 exposes those
+records without storing derived consumption values.
+
 ## Planned capabilities and open selections
 
 The following capabilities are part of the product direction but are not installed or implemented
@@ -147,7 +152,6 @@ yet. A short technical spike should confirm each choice before it becomes a prod
 | Capability              | Planned direction                                                           | Decision still required                                                          |
 | ----------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | Reminders               | Local notifications scheduled from stored deadlines                         | Permission flow, rescheduling rules, timezone and overdue behavior.              |
-| Fuel calculations       | Pure TypeScript domain logic backed by persisted refuelling records         | Full-tank rules, partial fills, units, rounding, invalid sequences.              |
 | Purchases               | Monthly and annual App Store and Google Play subscriptions                  | Purchase library, products, entitlement model, restore flow, receipt validation. |
 | Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code | Serverless transport, identity, encryption, conflicts, retries, and recovery.    |
 

@@ -177,7 +177,7 @@ Po utworzeniu wpisu typ jest niezmienny.
 | Pole                 | Zachowanie                                                                                 |
 | -------------------- | ------------------------------------------------------------------------------------------ |
 | Data zdarzenia       | Wymagana, domyślnie bieżąca data UTC.                                                      |
-| Godzina (UTC)        | Wymagana, domyślnie bieżąca godzina UTC, wybierana z dokładnością do minuty.               |
+| Godzina              | Wymagana, domyślnie bieżąca godzina UTC, wybierana z dokładnością do minuty.               |
 | Bieżący licznik      | Opcjonalny, w jednostce pojazdu.                                                           |
 | Koszt całkowity      | Opcjonalny; zero i brak wartości pozostają rozróżnione.                                    |
 | Waluta               | Pokazywana przy koszcie, domyślnie według ustawień regionalnych, zapisywana razem z kwotą. |
@@ -185,7 +185,8 @@ Po utworzeniu wpisu typ jest niezmienny.
 | Notatki              | Opcjonalne, wielowierszowe.                                                                |
 
 Kontrolki daty i godziny tworzą razem jeden znacznik `occurredAt` zapisany w UTC jako ISO 8601.
-Formularz jasno oznacza strefę UTC i odrzuca wynik późniejszy niż bieżący czas UTC. UUIDv7 wpisu
+Etykiety pozostają zwięzłe i nie pokazują technicznego sufiksu `UTC`; formularz odrzuca wynik
+późniejszy niż bieżący czas UTC. UUIDv7 wpisu
 nie jest używany do ustalenia czasu zdarzenia ani momentu utworzenia rekordu.
 
 ### Pola zależne od typu
@@ -326,7 +327,7 @@ Jeżeli wersja nie istnieje, pod zdjęciem pozostają tylko marka i model wyrów
 │ [ Olej silnikowy___________] │
 │ Data *                       │
 │ [ 29.08.2026______________] │
-│ Godzina (UTC) *              │
+│ Godzina *                    │
 │ [ 14:30___________________] │
 │ Bieżący licznik              │
 │ [ 85 140______________] km   │
@@ -460,5 +461,5 @@ ale pozostaje widoczna dla zachowania kontekstu.
    stałej karty pojazdu.
 9. Domyślny wygląd aplikacji używa grafitowego tła `#121212` zamiast zupełnej czerni. Delikatnie
    jaśniejsze powierzchnie kart i pól zachowują czytelną hierarchię.
-10. Formularz wpisu pokazuje osobne pola `Data` i `Godzina (UTC)`, które są zapisywane jako jeden
-    znacznik `occurredAt` w UTC.
+10. Formularz wpisu pokazuje osobne pola `Data` i `Godzina` bez sufiksu `UTC`; wartości są
+    zapisywane jako jeden znacznik `occurredAt` w UTC.

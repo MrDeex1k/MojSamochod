@@ -88,9 +88,9 @@ i synchronizacja między urządzeniami nie wymagały przepisywania tożsamości 
 
 - Zdarzenie historii pojazdu używa wymaganego znacznika czasu `occurredAt` w UTC. Jest zapisywany w
   jednym polu jako tekst ISO 8601, na przykład `2026-08-30T14:30:00.000Z`.
-- Formularz pokazuje osobne kontrolki `Data` i `Godzina (UTC)`, ale warstwa aplikacyjna łączy je w
-  jedno `occurredAt`. W pierwszym przekroju użytkownik wybiera czas z dokładnością do minuty, a
-  sekundy i milisekundy są zapisywane jako zero.
+- Formularz pokazuje osobne kontrolki `Data` i `Godzina` bez technicznego sufiksu w etykiecie, ale
+  warstwa aplikacyjna interpretuje je w UTC i łączy w jedno `occurredAt`. Użytkownik wybiera czas z
+  dokładnością do minuty, a sekundy i milisekundy są zapisywane jako zero.
 - Terminy również używają dat kalendarzowych; ich późniejszy harmonogram powiadomień może dodatkowo
   przechowywać strefę czasową i lokalną godzinę powiadomienia.
 - Metadane rekordu używają znaczników czasu UTC w polach `createdAt` i `updatedAt`.
@@ -377,8 +377,8 @@ konflikty. Wyjątek pamięci nie może być przedstawiany jako nieprawidłowe da
 
 ## Kryteria akceptacji pierwszego przekroju
 
-Domena i fundament persystencji są gotowe do budowy pierwszego przekroju UI, gdy wszystkie poniższe
-zachowania można wykazać testami automatycznymi:
+Pierwszy przekrój UI, domena i fundament persystencji są ukończone. Poniższe zachowania są objęte
+testami automatycznymi:
 
 1. Prawidłowy pojazd jest tworzony ze stabilnym identyfikatorem i zachowany po ponownym
    zainicjalizowaniu repozytorium.
