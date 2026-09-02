@@ -1,6 +1,6 @@
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { getLocales } from "expo-localization";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Alert, Platform, ScrollView, Text, View } from "react-native";
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
@@ -16,6 +16,7 @@ import {
 } from "@/domain/history/history-entry";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
 import type { ValidationIssue } from "@/domain/shared/result";
+import { distanceToMetres, metresToDistance } from "@/domain/vehicle/distance";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 import { formatCurrencyInputMinorUnits, parseCurrencyInput } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
@@ -53,6 +54,7 @@ export function EntryForm({
   );
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
   const [odometer, setOdometer] = useState(() => formatInitialOdometer(entry, vehicle));
+  const odometerChanged = useRef(false);
   const [cost, setCost] = useState(() =>
     entry?.cost
       ? formatCurrencyInputMinorUnits(entry.cost.minorUnits, entry.cost.currency, i18n.language)
@@ -87,7 +89,8 @@ export function EntryForm({
       cost: parseCost(cost, currency, i18n.language),
       notes,
       occurredAt: occurredAt.toISOString(),
-      odometerMetres: parseOdometer(odometer, vehicle),
+      odometerMetres:
+        entry && !odometerChanged.current ? entry.odometerMetres : parseOdometer(odometer, vehicle),
       serviceProvider,
       vehicleId: vehicle.id,
     };
@@ -195,7 +198,10 @@ export function EntryForm({
         helperText={t("entryForm.odometerHelper")}
         keyboardType="number-pad"
         label={t("entryForm.odometerLabel")}
-        onChangeText={setOdometer}
+        onChangeText={(value) => {
+          setOdometer(value);
+          odometerChanged.current = true;
+        }}
         value={odometer}
       />
       <View className="flex-row gap-compact">
@@ -383,15 +389,12 @@ function parseOdometer(value: string, vehicle: Vehicle): number | undefined {
   if (value.trim() === "") return undefined;
   if (!/^\d+$/.test(value.trim())) return Number.NaN;
   const numeric = Number(value);
-  return vehicle.distanceUnitPreference === "miles"
-    ? Math.round(numeric * 1609.344)
-    : numeric * 1000;
+  return distanceToMetres(numeric, vehicle.distanceUnitPreference);
 }
 
 function formatInitialOdometer(entry: HistoryEntry | undefined, vehicle: Vehicle): string {
   if (entry?.odometerMetres === undefined) return "";
-  const divisor = vehicle.distanceUnitPreference === "miles" ? 1609.344 : 1000;
-  return String(Math.round(entry.odometerMetres / divisor));
+  return String(Math.round(metresToDistance(entry.odometerMetres, vehicle.distanceUnitPreference)));
 }
 
 function entryDescription(entry: HistoryEntry | undefined): string {

@@ -21,7 +21,8 @@ reguły — dokument i implementacja muszą zmieniać się razem.
 
 Model obejmuje pierwszy kompletny przekrój funkcjonalny:
 
-1. Utworzenie jednego pojazdu z opcjonalnym licznikiem początkowym i jednym opcjonalnym zdjęciem.
+1. Utworzenie jednego pojazdu z wymaganą pojemnością zbiornika, opcjonalnym licznikiem początkowym
+   i jednym opcjonalnym zdjęciem.
 2. Wyświetlenie jego aktualnego przebiegu i chronologicznej historii.
 3. Dodanie wpisu przeglądu, wymiany lub naprawy.
 4. Wyświetlenie, edycję i bezpieczne usunięcie wpisu.
@@ -137,21 +138,24 @@ bez pojazdu.
 
 ### Pola pojazdu
 
-| Pole                     | Wymagane  | Reguła                                                                             |
-| ------------------------ | --------- | ---------------------------------------------------------------------------------- |
-| `id`                     | Systemowo | Stabilny `VehicleId`.                                                              |
-| `make`                   | Tak       | Tekst po usunięciu skrajnych białych znaków, 1–80 znaków.                          |
-| `model`                  | Tak       | Tekst po usunięciu skrajnych białych znaków, 1–80 znaków.                          |
-| `variant`                | Nie       | Tekst o długości najwyżej 100 znaków.                                              |
-| `manufactureYear`        | Nie       | Czterocyfrowy rok, nie późniejszy niż bieżący rok kalendarzowy plus jeden.         |
-| `registrationNumber`     | Nie       | Tekst o długości najwyżej 20 znaków; przechowywany w postaci wpisanej.             |
-| `vin`                    | Nie       | Po normalizacji wielkimi literami dokładnie 17 prawidłowych znaków VIN.            |
-| `initialOdometerMetres`  | Nie       | Opcjonalny nieujemny odczyt podany podczas tworzenia pojazdu.                      |
-| `currentOdometerMetres`  | Nie       | Ostatni zaakceptowany odczyt; początkowo równy licznikowi początkowemu albo pusty. |
-| `distanceUnitPreference` | Tak       | `kilometres` albo `miles`; wartość początkowa z ustawień regionalnych, edytowalna. |
-| `photoReference`         | Nie       | Stabilne odwołanie do najwyżej jednego zdjęcia zarządzanego przez aplikację.       |
-| `createdAt`              | Systemowo | Znacznik czasu utworzenia w UTC.                                                   |
-| `updatedAt`              | Systemowo | Znacznik czasu ostatniej utrwalonej zmiany w UTC.                                  |
+| Pole                            | Wymagane  | Reguła                                                                                                  |
+| ------------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| `id`                            | Systemowo | Stabilny `VehicleId`.                                                                                   |
+| `make`                          | Tak       | Tekst po usunięciu skrajnych białych znaków, 1–80 znaków.                                               |
+| `model`                         | Tak       | Tekst po usunięciu skrajnych białych znaków, 1–80 znaków.                                               |
+| `variant`                       | Nie       | Tekst o długości najwyżej 100 znaków.                                                                   |
+| `manufactureYear`               | Nie       | Czterocyfrowy rok, nie późniejszy niż bieżący rok kalendarzowy plus jeden.                              |
+| `registrationNumber`            | Nie       | Tekst o długości najwyżej 20 znaków; przechowywany w postaci wpisanej.                                  |
+| `vin`                           | Nie       | Po normalizacji wielkimi literami dokładnie 17 prawidłowych znaków VIN.                                 |
+| `initialOdometerMetres`         | Nie       | Opcjonalny nieujemny odczyt podany podczas tworzenia pojazdu.                                           |
+| `currentOdometerMetres`         | Nie       | Ostatni zaakceptowany odczyt; początkowo równy licznikowi początkowemu albo pusty.                      |
+| `distanceUnitPreference`        | Tak       | `kilometres` albo `miles`; wartość początkowa z ustawień regionalnych, edytowalna.                      |
+| `fuelTankCapacityMicrolitres`   | Tak       | Dodatnia pojemność zbiornika paliwa przechowywana w mikrolitrach; formularz przyjmuje liczbę całkowitą. |
+| `fuelVolumeUnitPreference`      | Tak       | `litres`, `usGallons` albo `imperialGallons`; jawna i edytowalna.                                       |
+| `fuelConsumptionUnitPreference` | Tak       | `litresPer100Kilometres`, `milesPerUsGallon` albo `milesPerImperialGallon`.                             |
+| `photoReference`                | Nie       | Stabilne odwołanie do najwyżej jednego zdjęcia zarządzanego przez aplikację.                            |
+| `createdAt`                     | Systemowo | Znacznik czasu utworzenia w UTC.                                                                        |
+| `updatedAt`                     | Systemowo | Znacznik czasu ostatniej utrwalonej zmiany w UTC.                                                       |
 
 Widoczna dla użytkownika nazwa pojazdu jest wyprowadzana z pól `make`, `model` i opcjonalnie
 `variant`. Nie jest przechowywana osobno w pierwszym modelu, ponieważ druga edytowalna nazwa mogłaby
@@ -165,8 +169,9 @@ późniejsze dodanie nie może wymagać zmiany reguł tożsamości ani przebiegu
 1. Bezpłatna aplikacja może zawierać najwyżej jeden aktywny pojazd.
 2. Limit jest egzekwowany w przypadku użycia warstwy aplikacyjnej lub domenowej, a nie wyłącznie
    przez ukrycie przycisku dodawania.
-3. Pojazd zawsze ma markę, model oraz preferencję jednostki. Licznik początkowy i aktualny przebieg
-   mogą pozostać nieznane, dopóki użytkownik nie poda pierwszego odczytu.
+3. Nowy pojazd zawsze ma markę, model, pojemność zbiornika oraz preferencje jednostki odległości,
+   objętości i prezentacji spalania. Licznik początkowy i aktualny przebieg mogą pozostać nieznane,
+   dopóki użytkownik nie poda pierwszego odczytu.
 4. `initialOdometerMetres` zapisuje wyłącznie odczyt podany przy dodawaniu pojazdu. Jest punktem
    rozpoczęcia ewidencji i nie jest nadpisywany przez kolejne wpisy historii.
 5. `currentOdometerMetres` jest ostatnią jawnie zaakceptowaną wartością. Przy tworzeniu pojazdu
@@ -176,11 +181,19 @@ późniejsze dodanie nie może wymagać zmiany reguł tożsamości ani przebiegu
    inicjalizowana licznikiem początkowym i aktualizowana odczytami podawanymi przy wpisach historii.
 7. Pojazd ma najwyżej jedno zdjęcie. Użytkownik może wybrać je podczas tworzenia pojazdu, a później
    bezpiecznie zastąpić lub usunąć bez zmiany tożsamości pojazdu.
-8. Zmiana jednostki wyświetlania nie przepisuje zapisanych odległości.
+8. Zmiana preferencji jednostki nie przepisuje zapisanych odległości, ilości paliwa ani pojemności
+   zbiornika. Wszystkie wartości prezentacyjne i wartości otwierane do edycji są ponownie
+   przeliczane z jednostek kanonicznych.
 9. Numer rejestracyjny i VIN są identyfikatorami podanymi przez użytkownika, a nie tożsamością
    rekordu.
 10. Powielone numery rejestracyjne lub VIN nie mają znaczenia przy obsłudze jednego pojazdu. Przed
     wdrożeniem wielu pojazdów trzeba ustalić reguły unikalności i obsługę nieznanych wartości.
+11. `currentOdometerMetres` jest monotoniczny. Korekta albo usunięcie historycznego wpisu nie obniża
+    go automatycznie, ponieważ historia może być niepełna i nie stanowi źródła do ponownego
+    wyprowadzania bieżącego odczytu. Świadome cofnięcie lub korekta drogomierza wymaga osobnego
+    przepływu domenowego.
+12. Migracja starszego pojazdu nie przypisuje domyślnej, zmyślonej pojemności zbiornika. Taki rekord
+    pozostaje możliwy do odczytania, ale wymaga uzupełnienia pojemności przed pierwszym tankowaniem.
 
 ## Encja wpisu historii
 
@@ -346,7 +359,7 @@ Kod prezentacji powinien wywoływać przypadki użycia, a nie bezpośrednio repo
 
 | Przypadek użycia      | Odpowiedzialność                                                                                                          |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `CreateVehicle`       | Walidacja tożsamości, opcjonalnego licznika początkowego i zdjęcia, egzekwowanie bezpłatnego limitu oraz zapis pojazdu.   |
+| `CreateVehicle`       | Walidacja tożsamości, pojemności zbiornika, jednostek, opcjonalnego licznika i zdjęcia, egzekwowanie limitu oraz zapis.   |
 | `GetVehicleWorkspace` | Zwrócenie pojazdu oraz deterministycznej strony jego historii.                                                            |
 | `UpdateVehicle`       | Walidacja edytowalnej tożsamości, jednostki, licznika początkowego i zdjęcia; aktualny przebieg zmieniają wpisy historii. |
 | `DeleteVehicle`       | Potwierdzenie zamiaru i koordynacja usunięcia agregatu oraz zarządzanych plików.                                          |
@@ -372,8 +385,8 @@ zachowania można wykazać testami automatycznymi:
 2. Drugi bezpłatny pojazd jest odrzucany na granicy przypadku użycia.
 3. Wymagane pola pojazdu, VIN, rok, odległość, limity tekstu, pieniądze i znaczniki czasu są
    walidowane bez cichego zmieniania prawidłowych danych.
-4. Pojazd można utworzyć bez licznika początkowego, a podany licznik początkowy inicjalizuje aktualny
-   przebieg bez utraty własnej wartości historycznej.
+4. Pojazd wymaga dodatniej pojemności zbiornika, ale można go utworzyć bez licznika początkowego;
+   podany licznik początkowy inicjalizuje aktualny przebieg bez utraty własnej wartości historycznej.
 5. Pojazd można utworzyć bez zdjęcia albo z dokładnie jednym zdjęciem, które pozostaje dostępne po
    ponownym uruchomieniu aplikacji.
 6. Każdy typ wpisu przyjmuje własne prawidłowe szczegóły i odrzuca szczegóły innego typu.
@@ -394,8 +407,9 @@ zachowania można wykazać testami automatycznymi:
 
 Poniższe decyzje zostały zatwierdzone jako bazowy model domenowy Fazy 0.
 
-1. **Minimalna konfiguracja pojazdu:** marka, model i jednostka odległości są wymagane; numer
-   rejestracyjny, VIN, rok, wariant, licznik początkowy i zdjęcie są opcjonalne.
+1. **Minimalna konfiguracja pojazdu:** marka, model, pojemność zbiornika oraz preferencje jednostek
+   odległości, objętości i spalania są wymagane; numer rejestracyjny, VIN, rok, wariant, licznik
+   początkowy i zdjęcie są opcjonalne.
 2. **Zdjęcie pojazdu:** użytkownik może dodać jedno zdjęcie podczas tworzenia pojazdu, a później je
    zastąpić lub usunąć.
 3. **Licznik początkowy i aktualny przebieg:** licznik początkowy jest opcjonalnym odczytem z momentu
@@ -419,6 +433,9 @@ Poniższe decyzje zostały zatwierdzone jako bazowy model domenowy Fazy 0.
     własną.
 13. **Szczegóły strukturalne:** pierwszy przekrój celowo pomija pozycje robocizny, magazyn części,
     gwarancje, kody diagnostyczne i inne pojęcia zarządzania warsztatem.
+14. **Pojemność zbiornika:** podczas tworzenia nowego pojazdu użytkownik podaje obowiązkową dodatnią
+    pojemność zbiornika wraz z jednostką objętości. Starszy rekord bez tej wartości nie otrzymuje
+    sztucznej wartości podczas migracji.
 
 ## Decyzje odłożone ze wskazaną fazą
 
@@ -427,9 +444,6 @@ realizacji, zamiast zniknąć w szczegółach implementacji:
 
 | Decyzja                                                 | Faza docelowa |
 | ------------------------------------------------------- | ------------- |
-| Techniczne API importu, wymiany i usuwania zdjęcia      | Faza 3        |
-| Wymiana, przekręcenie i korekta drogomierza             | Faza 3        |
-| Jednostki tankowania oraz obliczenia pełnego tankowania | Faza 5        |
 | Własność przypomnień o ubezpieczeniu i przeglądzie      | Faza 6        |
 | Unikalność VIN i numerów rejestracyjnych wielu pojazdów | Faza 8        |
 | Nagrobki i propagacja usunięć między urządzeniami       | Faza 9        |

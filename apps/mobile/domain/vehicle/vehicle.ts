@@ -1,4 +1,11 @@
 import { vehicleIdFromUuidV7, type ManagedFileId, type VehicleId } from "../shared/identifiers";
+import { fuelConsumptionUnit, type FuelConsumptionUnit } from "../refuelling/fuel-consumption";
+import {
+  positiveMicrolitres,
+  volumeUnit,
+  type Microlitres,
+  type VolumeUnit,
+} from "../refuelling/volume";
 import type { Clock, IdGenerator } from "../shared/ports";
 import { invalid, valid, type ValidationIssue, type ValidationResult } from "../shared/result";
 import {
@@ -16,6 +23,9 @@ export type Vehicle = Readonly<{
   createdAt: UtcTimestamp;
   currentOdometerMetres?: Metres;
   distanceUnitPreference: DistanceUnit;
+  fuelConsumptionUnitPreference?: FuelConsumptionUnit;
+  fuelTankCapacityMicrolitres?: Microlitres;
+  fuelVolumeUnitPreference?: VolumeUnit;
   id: VehicleId;
   initialOdometerMetres?: Metres;
   make: string;
@@ -28,8 +38,29 @@ export type Vehicle = Readonly<{
   vin?: string;
 }>;
 
+export type FuelConfiguredVehicle = Vehicle &
+  Readonly<
+    Required<
+      Pick<
+        Vehicle,
+        "fuelConsumptionUnitPreference" | "fuelTankCapacityMicrolitres" | "fuelVolumeUnitPreference"
+      >
+    >
+  >;
+
+export function hasFuelConfiguration(vehicle: Vehicle): vehicle is FuelConfiguredVehicle {
+  return (
+    vehicle.fuelConsumptionUnitPreference !== undefined &&
+    vehicle.fuelTankCapacityMicrolitres !== undefined &&
+    vehicle.fuelVolumeUnitPreference !== undefined
+  );
+}
+
 export type CreateVehicleInput = Readonly<{
   distanceUnitPreference: string;
+  fuelConsumptionUnitPreference: string;
+  fuelTankCapacityMicrolitres: number;
+  fuelVolumeUnitPreference: string;
   initialOdometerMetres?: number;
   make: string;
   manufactureYear?: number;
@@ -48,7 +79,7 @@ export type CreateVehicleDependencies = Readonly<{
 export function createVehicle(
   input: CreateVehicleInput,
   dependencies: CreateVehicleDependencies,
-): ValidationResult<Vehicle> {
+): ValidationResult<FuelConfiguredVehicle> {
   const now = dependencies.clock.now();
   const issues: ValidationIssue[] = [];
   const make = collect(requiredText(input.make, "make", 80), issues);
@@ -65,6 +96,18 @@ export function createVehicle(
   const vin = validateVin(input.vin, issues);
   const manufactureYear = validateManufactureYear(input.manufactureYear, now, issues);
   const distanceUnitPreference = validateDistanceUnit(input.distanceUnitPreference, issues);
+  const fuelTankCapacityMicrolitres = collect(
+    positiveMicrolitres(input.fuelTankCapacityMicrolitres, "fuelTankCapacityMicrolitres"),
+    issues,
+  );
+  const fuelVolumeUnitPreference = collect(
+    volumeUnit(input.fuelVolumeUnitPreference, "fuelVolumeUnitPreference"),
+    issues,
+  );
+  const fuelConsumptionUnitPreference = collect(
+    fuelConsumptionUnit(input.fuelConsumptionUnitPreference, "fuelConsumptionUnitPreference"),
+    issues,
+  );
 
   if (issues.length > 0) {
     return invalid(issues);
@@ -76,6 +119,9 @@ export function createVehicle(
     createdAt: timestamp,
     currentOdometerMetres: initialOdometerMetres,
     distanceUnitPreference: distanceUnitPreference!,
+    fuelConsumptionUnitPreference: fuelConsumptionUnitPreference!,
+    fuelTankCapacityMicrolitres: fuelTankCapacityMicrolitres!,
+    fuelVolumeUnitPreference: fuelVolumeUnitPreference!,
     id: vehicleIdFromUuidV7(dependencies.idGenerator.generate()),
     initialOdometerMetres,
     make: make!,
@@ -93,7 +139,7 @@ export function updateVehicle(
   existing: Vehicle,
   input: CreateVehicleInput,
   clock: Clock,
-): ValidationResult<Vehicle> {
+): ValidationResult<FuelConfiguredVehicle> {
   const validated = createVehicle(input, {
     clock,
     idGenerator: { generate: () => existing.id },

@@ -28,4 +28,17 @@ describe("TextField", () => {
 
     expect(screen.getByLabelText("Brand")).toBeDisabled();
   });
+
+  it("centers a single-line value without native padding or extra line height", async () => {
+    await render(<TextField label="Odometer" value="240" />);
+
+    const input = screen.getByLabelText("Odometer");
+    expect(input).toHaveProp("textAlignVertical", "center");
+    expect(input).toHaveStyle({
+      includeFontPadding: false,
+      lineHeight: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 0,
+    });
+  });
 });

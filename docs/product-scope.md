@@ -106,23 +106,23 @@ presentation where it adds context. Tablets should not introduce different produ
 Not every item below needs to be a permanent full-screen route. Focused creation tasks may be sheets
 or modals on phones and contextual panels on tablets.
 
-| Surface                   | Responsibility                                                                                                  | Suggested presentation                                                  |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Launch and initialization | Open the database, run migrations, initialize the dark theme, and route safely.                                 | Native splash followed by the correct application state.                |
-| First vehicle setup       | Explain the minimum value and create the first vehicle.                                                         | Focused first-run flow without marketing slides.                        |
-| Vehicle workspace         | Identify the vehicle, show mileage, nearest deadline, recent history, costs, documents, and primary add action. | Main destination; list-detail capable on tablets.                       |
-| Vehicle editor            | Create or edit vehicle identity, optional photo, mileage, and deadlines.                                        | Focused form.                                                           |
-| History timeline          | Scan inspection, replacement, and repair entries chronologically.                                               | Part of the vehicle workspace or a secondary list when history grows.   |
-| History entry editor      | Create or edit an inspection, replacement, or repair with UTC event date and time plus relevant fields.         | Sheet, modal, or full-screen form depending on platform and complexity. |
-| History entry details     | Review all entry information, related amount, document, edit action, and safe deletion.                         | Secondary screen or tablet detail pane.                                 |
-| Vehicle documents         | Scan invoices and files related to the vehicle and its entries.                                                 | Secondary list from the vehicle workspace.                              |
-| Document preview          | Preview metadata and supported content; export, replace, reassign, or delete the file.                          | Full-screen preview or platform document surface.                       |
-| Fuel workspace            | Show consumption summary, refuelling history, data sufficiency, and add action.                                 | Main destination.                                                       |
-| Refuelling editor         | Record date, odometer, quantity, total or unit price, and full or partial fill state.                           | Focused form.                                                           |
-| Reminders workspace       | Show upcoming, overdue, and unavailable notification states.                                                    | Main destination.                                                       |
-| Reminder editor           | Create or edit insurance and technical-inspection deadlines and notification preferences.                       | Focused form.                                                           |
-| Settings                  | Configure units, locale-sensitive preferences, privacy, and help.                                               | Main destination with grouped plain lists.                              |
-| Data management           | Export data and documents, inspect storage, and perform explicitly confirmed destructive actions.               | Secondary settings screen.                                              |
+| Surface                   | Responsibility                                                                                                                   | Suggested presentation                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Launch and initialization | Open the database, run migrations, initialize the dark theme, and route safely.                                                  | Native splash followed by the correct application state.                |
+| First vehicle setup       | Explain the minimum value and create the first vehicle.                                                                          | Focused first-run flow without marketing slides.                        |
+| Vehicle workspace         | Identify the vehicle, show mileage, nearest deadline, recent history, costs, documents, and primary add action.                  | Main destination; list-detail capable on tablets.                       |
+| Vehicle editor            | Create or edit vehicle identity, optional photo, mileage, fuel tank capacity, and distance, volume, and consumption preferences. | Focused form.                                                           |
+| History timeline          | Scan inspection, replacement, and repair entries chronologically.                                                                | Part of the vehicle workspace or a secondary list when history grows.   |
+| History entry editor      | Create or edit an inspection, replacement, or repair with UTC event date and time plus relevant fields.                          | Sheet, modal, or full-screen form depending on platform and complexity. |
+| History entry details     | Review all entry information, related amount, document, edit action, and safe deletion.                                          | Secondary screen or tablet detail pane.                                 |
+| Vehicle documents         | Scan invoices and files related to the vehicle and its entries.                                                                  | Secondary list from the vehicle workspace.                              |
+| Document preview          | Preview metadata and supported content; export, replace, reassign, or delete the file.                                           | Full-screen preview or platform document surface.                       |
+| Fuel workspace            | Show consumption summary, refuelling history, data sufficiency, and add action.                                                  | Main destination.                                                       |
+| Refuelling editor         | Record date, odometer, quantity, total or unit price, and fill state using the vehicle's saved unit preferences.                 | Focused form without repeated per-entry unit selection.                 |
+| Reminders workspace       | Show upcoming, overdue, and unavailable notification states.                                                                     | Main destination.                                                       |
+| Reminder editor           | Create or edit insurance and technical-inspection deadlines and notification preferences.                                        | Focused form.                                                           |
+| Settings                  | Configure per-vehicle units, locale-sensitive preferences, privacy, and help.                                                    | Main destination with grouped plain lists.                              |
+| Data management           | Export data and documents, inspect storage, and perform explicitly confirmed destructive actions.                                | Secondary settings screen.                                              |
 
 ## Additional target-product screens and surfaces
 
@@ -152,7 +152,6 @@ or modals on phones and contextual panels on tablets.
 
 ## Open product decisions
 
-- Exact vehicle fields required during first setup.
 - Whether vehicle documents remain embedded in the main workspace or receive a permanent secondary
   route.
 - Whether Fuel and Reminders both justify permanent phone tabs after prototype testing.

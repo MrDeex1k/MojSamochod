@@ -11,7 +11,14 @@ import { EntryDetail } from "./entry-detail";
 
 const now = new Date("2026-08-30T10:15:00.000Z");
 const vehicleResult = createVehicle(
-  { distanceUnitPreference: "kilometres", make: "Volvo", model: "V60" },
+  {
+    distanceUnitPreference: "kilometres",
+    fuelConsumptionUnitPreference: "litresPer100Kilometres",
+    fuelTankCapacityMicrolitres: 60_000_000,
+    fuelVolumeUnitPreference: "litres",
+    make: "Volvo",
+    model: "V60",
+  },
   {
     clock: { now: () => now },
     idGenerator: { generate: () => "018f47e2-7b2f-7cc8-98c4-dc0c0c07398f" },
@@ -51,6 +58,7 @@ describe("EntryDetail", () => {
     expect(screen.getByText("Engine oil")).toBeOnTheScreen();
     expect(screen.getByText("Volvo")).toBeOnTheScreen();
     expect(screen.getByText("$430.50")).toBeOnTheScreen();
+    expect(screen.queryByText(/UTC/)).not.toBeOnTheScreen();
     expect(screen.queryByText("Notes")).not.toBeOnTheScreen();
   });
 

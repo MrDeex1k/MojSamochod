@@ -40,6 +40,9 @@ describe("CreateFirstVehicleForm", () => {
     await userEvent.press(screen.getByRole("button", { name: "Add vehicle" }));
 
     expect(screen.getAllByText("This field is required.")).toHaveLength(2);
+    expect(
+      screen.getByText("Enter a whole fuel tank capacity greater than zero."),
+    ).toBeOnTheScreen();
     expect(vehicles.create).not.toHaveBeenCalled();
   });
 
@@ -61,6 +64,9 @@ describe("CreateFirstVehicleForm", () => {
     );
     await userEvent.type(screen.getByLabelText("Make"), "Volvo");
     await userEvent.type(screen.getByLabelText("Model"), "V60");
+    await userEvent.press(screen.getByRole("button", { name: "l" }));
+    await userEvent.press(screen.getByRole("button", { name: "l/100 km" }));
+    await userEvent.type(screen.getByLabelText("Fuel tank capacity"), "60");
     await userEvent.press(screen.getByRole("button", { name: "km" }));
     await userEvent.type(screen.getByLabelText("Odometer when record keeping starts"), "82000");
     await userEvent.press(screen.getByRole("button", { name: "Add vehicle" }));
@@ -69,6 +75,9 @@ describe("CreateFirstVehicleForm", () => {
     expect(vehicles.create).toHaveBeenCalledWith(
       expect.objectContaining({
         currentOdometerMetres: 82_000_000,
+        fuelConsumptionUnitPreference: "litresPer100Kilometres",
+        fuelTankCapacityMicrolitres: 60_000_000,
+        fuelVolumeUnitPreference: "litres",
         initialOdometerMetres: 82_000_000,
         make: "Volvo",
         model: "V60",
@@ -100,6 +109,7 @@ describe("CreateFirstVehicleForm", () => {
     );
     await userEvent.type(screen.getByLabelText("Make"), "Volvo");
     await userEvent.type(screen.getByLabelText("Model"), "V60");
+    await userEvent.type(screen.getByLabelText("Fuel tank capacity"), "60");
     await userEvent.press(screen.getByRole("button", { name: "Add photo" }));
     expect(await screen.findByLabelText("Vehicle photo")).toBeOnTheScreen();
     await userEvent.press(screen.getByRole("button", { name: "Add vehicle" }));

@@ -275,6 +275,9 @@ function vehicleValues(vehicle: Vehicle) {
 function vehicleMutableValues(vehicle: Vehicle) {
   return {
     distanceUnitPreference: vehicle.distanceUnitPreference,
+    fuelConsumptionUnitPreference: vehicle.fuelConsumptionUnitPreference ?? null,
+    fuelTankCapacityMicrolitres: vehicle.fuelTankCapacityMicrolitres ?? null,
+    fuelVolumeUnitPreference: vehicle.fuelVolumeUnitPreference ?? null,
     initialOdometerMetres: vehicle.initialOdometerMetres ?? null,
     make: vehicle.make,
     manufactureYear: vehicle.manufactureYear ?? null,

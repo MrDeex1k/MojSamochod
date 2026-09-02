@@ -37,10 +37,7 @@ initial visual direction have been approved.
 
 ## Phase 1 — Application and design-system foundation
 
-**Status:** Implemented on `feat/application-foundation`; final documentation and integration into
-`main` are pending. The current implementation includes the semantic dark theme, reusable UI and
-application-state primitives, the adaptive phone/tablet shell, orientation guards, Jest and React
-Native Testing Library conventions, and native verification on the four representative targets.
+**Status:** Complete and integrated into `main`.
 
 ### Steps
 
@@ -63,9 +60,9 @@ Native Testing Library conventions, and native verification on the four represen
 
 ## Phase 2 — Local persistence foundation
 
-**Status:** Complete on `feat/local-persistence-foundation`; ready for review and integration.
-Drizzle ORM, UUIDv7, transactional repositories, persistence resilience, the version 1 JSON export,
-and the managed-file boundary are implemented and documented.
+**Status:** Complete and integrated into `main`. Drizzle ORM, UUIDv7, transactional repositories,
+persistence resilience, the version 1 JSON export, and the managed-file boundary are implemented
+and documented.
 
 ### Steps
 
@@ -84,9 +81,9 @@ and the managed-file boundary are implemented and documented.
 
 ## Phase 3 — First complete vehicle-history slice
 
-**Status:** Implemented and verified on `feat/vehicle-history-slice`; integration into `main` is
-pending. Automated checks and native verification cover iPhone, iPad, Android phone, and Android
-tablet. Polish and English localization uses an English fallback; vehicle photos are gallery-only.
+**Status:** Complete and integrated into `main`. Automated checks and native verification cover
+iPhone, iPad, Android phone, and Android tablet. Polish and English localization uses an English
+fallback; vehicle photos are gallery-only.
 
 ### Steps
 
@@ -105,10 +102,10 @@ tablet. Polish and English localization uses an English fallback; vehicle photos
 
 ## Phase 4 — Documents and invoices
 
-**Status:** Implemented and verified on `feat/documents-and-invoices`; integration into `main` is
-pending. The implementation includes managed PDF/JPEG/PNG imports up to 20 MB, optional metadata
-and history-entry relations, duplicate detection, preview, native sharing of the original managed
-file, replacement, deletion, recovery, and the version 2 metadata-only JSON export.
+**Status:** Complete and integrated into `main`. The implementation includes managed PDF/JPEG/PNG
+imports up to 20 MB, optional metadata and history-entry relations, duplicate detection, preview,
+native sharing of the original managed file, replacement, deletion, recovery, and the version 2
+metadata-only JSON export.
 
 ### Steps
 
@@ -128,6 +125,10 @@ file, replacement, deletion, recovery, and the version 2 metadata-only JSON expo
 
 ## Phase 5 — Refuelling and fuel consumption
 
+**Status:** Complete on `feat/refuelling-and-consumption`; ready for review and integration. Domain
+decisions, canonical unit conversions, vehicle fuel preferences, refuelling persistence, JSON v3
+export, application workflows, and adaptive phone/tablet UI have automated and native coverage.
+
 ### Steps
 
 1. Define full-fill, partial-fill, odometer, quantity, price, and unit behavior.
@@ -135,12 +136,19 @@ file, replacement, deletion, recovery, and the version 2 metadata-only JSON expo
 3. Calculate average consumption in pure, thoroughly tested domain functions.
 4. Explain insufficient or invalid data rather than displaying misleading averages.
 5. Add concise trends only when they improve understanding over a list and summary value.
+6. Remove per-entry unit selection and use the vehicle's saved distance, fuel-volume, and
+   consumption preferences throughout entry forms.
+7. Re-render historical values, editable values, tank capacity, and unit prices from canonical data
+   when a vehicle unit preference changes, without rewriting source records.
 
 ### Exit criteria
 
 - Calculations have fixtures for normal, partial, missing, and invalid sequences.
 - Users can audit which refuelling events produced an average.
 - Locale, currency, distance, and volume formatting are correct.
+- Users configure units once per vehicle rather than repeating the choice for every entry.
+- Changing a unit preference preserves canonical data and consistently converts all affected
+  presentation and editing surfaces.
 
 ## Phase 6 — Reminders
 
@@ -239,6 +247,6 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Review and merge the Phase 4 pull request. Then start Phase 5 on a dedicated branch by defining the
-refuelling domain rules for full and partial fills, odometer readings, quantity, price, supported
-volume units, and the exact average-consumption algorithm before implementing persistence or UI.
+Review and merge the Phase 5 pull request. Then start Phase 6 on a dedicated branch by defining the
+inspection and insurance deadline model, reminder states, notification-permission flow, and local
+notification scheduling rules before implementing persistence or UI.

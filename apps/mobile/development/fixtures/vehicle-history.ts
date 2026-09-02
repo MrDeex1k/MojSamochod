@@ -14,6 +14,9 @@ export function createDevelopmentVehicleHistoryFixture(): DevelopmentVehicleHist
     createVehicle(
       {
         distanceUnitPreference: "kilometres",
+        fuelConsumptionUnitPreference: "litresPer100Kilometres",
+        fuelTankCapacityMicrolitres: 60_000_000,
+        fuelVolumeUnitPreference: "litres",
         initialOdometerMetres: 82_000_000,
         make: "Volvo",
         manufactureYear: 2020,
