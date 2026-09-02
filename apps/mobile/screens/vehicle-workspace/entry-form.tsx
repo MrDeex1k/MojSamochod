@@ -1,6 +1,6 @@
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { getLocales } from "expo-localization";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Alert, Platform, ScrollView, Text, View } from "react-native";
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
@@ -54,6 +54,7 @@ export function EntryForm({
   );
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
   const [odometer, setOdometer] = useState(() => formatInitialOdometer(entry, vehicle));
+  const odometerChanged = useRef(false);
   const [cost, setCost] = useState(() =>
     entry?.cost
       ? formatCurrencyInputMinorUnits(entry.cost.minorUnits, entry.cost.currency, i18n.language)
@@ -88,7 +89,8 @@ export function EntryForm({
       cost: parseCost(cost, currency, i18n.language),
       notes,
       occurredAt: occurredAt.toISOString(),
-      odometerMetres: parseOdometer(odometer, vehicle),
+      odometerMetres:
+        entry && !odometerChanged.current ? entry.odometerMetres : parseOdometer(odometer, vehicle),
       serviceProvider,
       vehicleId: vehicle.id,
     };
@@ -196,7 +198,10 @@ export function EntryForm({
         helperText={t("entryForm.odometerHelper")}
         keyboardType="number-pad"
         label={t("entryForm.odometerLabel")}
-        onChangeText={setOdometer}
+        onChangeText={(value) => {
+          setOdometer(value);
+          odometerChanged.current = true;
+        }}
         value={odometer}
       />
       <View className="flex-row gap-compact">

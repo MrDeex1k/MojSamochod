@@ -149,6 +149,59 @@ describe("RefuellingForm", () => {
     });
   });
 
+  it("preserves the exact canonical odometer when its rounded display value is unchanged", async () => {
+    const refuellings = service();
+    const existing = refuellingWithOdometer();
+
+    await renderForm(refuellings, jest.fn(), {
+      refuelling: existing,
+      vehicle: { ...vehicle, distanceUnitPreference: "miles" },
+    });
+
+    expect(screen.getByLabelText("Current odometer")).toHaveDisplayValue("52817");
+    await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
+
+    await waitFor(() => expect(refuellings.update).toHaveBeenCalledTimes(1));
+    expect(refuellings.update).toHaveBeenCalledWith(
+      existing,
+      expect.objectContaining({ odometerMetres: 85_000_000 }),
+    );
+  });
+
+  it("converts a deliberately edited odometer from the current distance unit", async () => {
+    const refuellings = service();
+    const existing = refuellingWithOdometer();
+
+    await renderForm(refuellings, jest.fn(), {
+      refuelling: existing,
+      vehicle: { ...vehicle, distanceUnitPreference: "miles" },
+    });
+    await userEvent.clear(screen.getByLabelText("Current odometer"));
+    await userEvent.type(screen.getByLabelText("Current odometer"), "53000");
+    await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
+
+    await waitFor(() => expect(refuellings.update).toHaveBeenCalledTimes(1));
+    expect(refuellings.update).toHaveBeenCalledWith(
+      existing,
+      expect.objectContaining({ odometerMetres: 85_295_232 }),
+    );
+  });
+
+  it("removes an optional odometer when the user clears its field", async () => {
+    const refuellings = service();
+    const existing = refuellingWithOdometer();
+
+    await renderForm(refuellings, jest.fn(), { refuelling: existing });
+    await userEvent.clear(screen.getByLabelText("Current odometer"));
+    await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
+
+    await waitFor(() => expect(refuellings.update).toHaveBeenCalledTimes(1));
+    expect(refuellings.update).toHaveBeenCalledWith(
+      existing,
+      expect.objectContaining({ odometerMetres: undefined }),
+    );
+  });
+
   it("recalculates totals from exact source pricing when only the quantity changes", async () => {
     const refuellings = service();
     const existing = expectValid(
@@ -273,6 +326,25 @@ function service(): jest.Mocked<RefuellingService> {
       }),
     ),
   } as unknown as jest.Mocked<RefuellingService>;
+}
+
+function refuellingWithOdometer() {
+  return expectValid(
+    createRefuelling(
+      {
+        fillKind: "full",
+        inputVolumeUnit: "litres",
+        occurredAt: "2026-09-01T08:00:00.000Z",
+        odometerMetres: 85_000_000,
+        quantityMicrolitres: 45_000_000,
+        vehicleId: vehicle.id,
+      },
+      {
+        clock: { now: () => now },
+        idGenerator: { generate: () => "018f47e2-7b35-7658-b336-34613389d00f" },
+      },
+    ),
+  );
 }
 
 function expectValid<T>(result: { ok: false } | { ok: true; value: T }): T {

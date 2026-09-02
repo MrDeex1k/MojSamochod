@@ -62,7 +62,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 46 zestawów i 221 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 46 zestawów i 227 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -103,6 +103,10 @@ opisywanego etapu.
   zachowanie wpisanej ceny po ponownym wybraniu aktywnego trybu ceny. Zachowanie powrotu do sekcji
   paliwa i integralność metadanych historycznego tankowania są dodatkowo objęte testami
   komponentowymi i domenowymi.
+- Dodatkowa regresja po review potwierdza, że zapis edytowanego wpisu bez dotknięcia pola licznika
+  zachowuje dokładną wartość w metrach mimo zaokrąglonej prezentacji po zmianie `km ↔ mi`.
+  Świadoma edycja nadal przelicza wartość, a wyczyszczenie usuwa opcjonalny odczyt. Przepływ zapisu
+  bez zmiany licznika sprawdzono również natywnie na iPhonie 15 i Pixelu 9.
 
 ### Domena i persystencja
 

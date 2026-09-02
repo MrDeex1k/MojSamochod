@@ -82,6 +82,7 @@ export function RefuellingForm({
   const quantityChanged = useRef(false);
   const [fillKind, setFillKind] = useState<FillKind>(refuelling?.fillKind ?? "full");
   const [odometer, setOdometer] = useState(() => formatInitialOdometer(refuelling, vehicle));
+  const odometerChanged = useRef(false);
   const [priceInputMode, setPriceInputMode] = useState<PriceInputMode>(
     refuelling?.pricing?.inputMode ?? "total",
   );
@@ -105,6 +106,7 @@ export function RefuellingForm({
       locale: i18n.language,
       occurredAt,
       odometer,
+      odometerChanged: odometerChanged.current,
       price,
       priceInputMode,
       pricingChanged: pricingChanged.current,
@@ -208,7 +210,10 @@ export function RefuellingForm({
         helperText={t("refuelling.odometerHelper")}
         keyboardType="number-pad"
         label={t("refuelling.odometerLabel")}
-        onChangeText={setOdometer}
+        onChangeText={(value) => {
+          setOdometer(value);
+          odometerChanged.current = true;
+        }}
         value={odometer}
       />
       <ChoiceField
@@ -310,6 +315,7 @@ type ParseInput = Readonly<{
   locale: string;
   occurredAt: Date;
   odometer: string;
+  odometerChanged: boolean;
   price: string;
   priceInputMode: PriceInputMode;
   pricingChanged: boolean;
@@ -328,7 +334,10 @@ function parseInput(
   const issues: ValidationIssue[] = [];
   const quantity = positiveMicrolitres(input.quantityMicrolitres, "quantity.value");
   if (!quantity.ok) issues.push(...quantity.issues);
-  const odometerMetres = parseOdometer(input.odometer, input.vehicle);
+  const odometerMetres =
+    input.refuelling && !input.odometerChanged
+      ? input.refuelling.odometerMetres
+      : parseOdometer(input.odometer, input.vehicle);
   if (Number.isNaN(odometerMetres)) {
     issues.push({ code: "invalid-format", field: "odometerMetres" });
   }

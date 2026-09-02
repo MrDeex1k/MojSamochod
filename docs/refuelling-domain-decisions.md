@@ -84,6 +84,9 @@ Rekomendowany wariant:
    `pricing`, bez ponownego wyliczania z zaokrąglonej prezentacji.
 9. Zmiana samej ilości przelicza drugą reprezentację ceny z dokładnej wartości źródłowej zapisanej
    w `pricing`. Dopiero rzeczywista edycja ceny zapisuje nową cenę w aktualnej jednostce pojazdu.
+10. Zapis edytowanego wpisu bez zmiany pola licznika zachowuje dokładne `odometerMetres`. Wartość
+    zaokrąglona do prezentacji w aktualnej jednostce jest przeliczana i zapisywana dopiero po jawnej
+    edycji pola przez użytkownika; wyczyszczenie pola usuwa opcjonalny odczyt.
 
 Obsługiwane wartości `inputVolumeUnit`:
 
@@ -323,6 +326,8 @@ dotknięty przedział z obliczeń.
 28. Uzupełnienie konfiguracji paliwa z sekcji tankowań wraca do tej sekcji, a nie do historii.
 29. SQLite odrzuca pojemność zbiornika zapisaną jako wartość `REAL`, nawet gdy mieści się w
     dozwolonym zakresie.
+30. Zapis tankowania lub innego wpisu historii bez zmiany licznika nie przepisuje jego wartości
+    kanonicznej po zmianie preferencji `km ↔ mi`.
 
 ## Stan decyzji
 

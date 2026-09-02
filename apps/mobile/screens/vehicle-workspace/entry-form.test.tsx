@@ -40,6 +40,20 @@ const repairResult = createHistoryEntry(
   },
 );
 if (!repairResult.ok) throw new Error("Invalid repair fixture");
+const repairWithOdometerResult = createHistoryEntry(
+  {
+    details: { subject: "Brake system" },
+    occurredAt: now.toISOString(),
+    odometerMetres: 85_000_000,
+    type: "repair",
+    vehicleId: vehicleResult.value.id,
+  },
+  {
+    clock: { now: () => now },
+    idGenerator: { generate: () => "018f47e2-7b30-7b80-99c0-81b80d9a57ce" },
+  },
+);
+if (!repairWithOdometerResult.ok) throw new Error("Invalid repair fixture with odometer");
 
 describe("EntryForm", () => {
   it("creates a replacement with UTC time and optional common values", async () => {
@@ -142,6 +156,83 @@ describe("EntryForm", () => {
     );
 
     expect(screen.getByRole("header", { name: "Edit repair" })).toBeOnTheScreen();
+  });
+
+  it("preserves the exact canonical odometer when its rounded display value is unchanged", async () => {
+    const repository = historyRepository();
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <EntryForm
+          clock={{ now: () => now }}
+          entry={repairWithOdometerResult.value}
+          historyEntries={repository}
+          idGenerator={{ generate: () => "018f47e2-7b30-7b80-99c0-81b80d9a57ce" }}
+          onCancel={jest.fn()}
+          onSaved={jest.fn()}
+          type="repair"
+          vehicle={{ ...vehicleResult.value, distanceUnitPreference: "miles" }}
+        />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByLabelText("Current odometer")).toHaveDisplayValue("52817");
+    await userEvent.press(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(repository.update).toHaveBeenCalledTimes(1));
+    expect(repository.update).toHaveBeenCalledWith(
+      expect.objectContaining({ odometerMetres: 85_000_000 }),
+    );
+  });
+
+  it("converts a deliberately edited odometer from the current distance unit", async () => {
+    const repository = historyRepository();
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <EntryForm
+          clock={{ now: () => now }}
+          entry={repairWithOdometerResult.value}
+          historyEntries={repository}
+          idGenerator={{ generate: () => "018f47e2-7b30-7b80-99c0-81b80d9a57ce" }}
+          onCancel={jest.fn()}
+          onSaved={jest.fn()}
+          type="repair"
+          vehicle={{ ...vehicleResult.value, distanceUnitPreference: "miles" }}
+        />
+      </SafeAreaProvider>,
+    );
+    await userEvent.clear(screen.getByLabelText("Current odometer"));
+    await userEvent.type(screen.getByLabelText("Current odometer"), "53000");
+    await userEvent.press(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(repository.update).toHaveBeenCalledTimes(1));
+    expect(repository.update).toHaveBeenCalledWith(
+      expect.objectContaining({ odometerMetres: 85_295_232 }),
+    );
+  });
+
+  it("removes an optional odometer when the user clears its field", async () => {
+    const repository = historyRepository();
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <EntryForm
+          clock={{ now: () => now }}
+          entry={repairWithOdometerResult.value}
+          historyEntries={repository}
+          idGenerator={{ generate: () => "018f47e2-7b30-7b80-99c0-81b80d9a57ce" }}
+          onCancel={jest.fn()}
+          onSaved={jest.fn()}
+          type="repair"
+          vehicle={vehicleResult.value}
+        />
+      </SafeAreaProvider>,
+    );
+    await userEvent.clear(screen.getByLabelText("Current odometer"));
+    await userEvent.press(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(repository.update).toHaveBeenCalledTimes(1));
+    expect(repository.update).toHaveBeenCalledWith(
+      expect.objectContaining({ odometerMetres: undefined }),
+    );
   });
 });
 
