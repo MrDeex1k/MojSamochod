@@ -1,4 +1,4 @@
-import * as Notifications from "expo-notifications";
+import * as Notifications from "./local-notifications-api";
 import { Linking, Platform } from "react-native";
 import { createReminder } from "@/domain/reminders/reminder";
 import { planReminderNotifications } from "@/domain/reminders/notification-plan";
@@ -10,7 +10,7 @@ import {
   reminderChannelId,
 } from "./native-reminder-notifications";
 
-jest.mock("expo-notifications", () => ({
+jest.mock("./local-notifications-api", () => ({
   AndroidImportance: { NONE: 0, DEFAULT: 3 },
   IosAuthorizationStatus: {
     NOT_DETERMINED: 0,

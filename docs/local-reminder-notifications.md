@@ -9,8 +9,8 @@ installed Expo 57.0.18 package's `bundledNativeModules.json`. Installation uses 
 permission inspection, explicit permission requests, settings navigation, one-shot scheduling,
 listing, and cancellation. Domain code does not import Expo or React Native.
 
-Stage 4 adds reconciliation between stored reminders and native schedules. Reminder forms and
-permission education remain stage 5. Dependency updates are stage 6; native delivery and full four-device
+Stage 4 adds reconciliation between stored reminders and native schedules. Stage 5 adds reminder
+forms, contextual permission education and reactive permission/schedule feedback. Dependency updates are stage 6; native delivery and full four-device
 regression verification follow in stage 7 and remain pending.
 
 ## Permissions and presentation
@@ -67,8 +67,9 @@ fallback), vehicle make/model and the calendar deadline, without relative countd
 - Data, permission and listing failures leave native state untouched. A cancellation failure
   prevents replacement scheduling in that pass. Scheduling failures may leave a partial schedule;
   the next pass reads actual native state before retrying, including uncertain successful writes.
-- `getLastResult()` exposes the last pass's permission, counters and typed issue stages for the
-  upcoming UI. Results are in-memory diagnostics, not persisted reminder data or JSON export.
+- `getLastResult()` exposes the last pass's permission, counters and typed issue stages.
+  `subscribe()` and `getSnapshot()` expose the same result through `useSyncExternalStore` in the UI.
+  Results are in-memory diagnostics, not persisted reminder data or JSON export.
   Explicit `reconcile()` calls and subsequent lifecycle/data events retry; there is no background
   retry worker or guarantee of immediate recovery while the application is closed.
 
@@ -132,3 +133,21 @@ the local-only plugin, application-specific permissions and upgraded native depe
   as part of notification integration.
 
 API reference: [Expo Notifications](https://docs.expo.dev/versions/latest/sdk/notifications/).
+
+## Stage 5 host compatibility findings
+
+On 2026-09-04, Expo Go 57.0.9 was used for native UI checks on all four form factors.
+The `expo-notifications` 57.0.15 barrel eagerly imports push-token auto-registration, which throws
+on Android Expo Go even though application code only uses local notifications. The narrow
+`local-notifications-api.ts` facade imports only the installed package's local API build modules.
+A regression test rejects imports of remote registration and the push-token emitter. These are
+internal package paths: review them during stage 6 updates and prefer the public entry point once
+it no longer causes remote initialization. No global warning suppression or token registration is used.
+
+With local imports, Android Expo Go starts and reminder CRUD works, but its native
+`ExpoNotificationChannelManager.getNotificationChannelAsync` rejects with a null
+`NotificationsChannelsProvider`. The adapter preserves the failure as `unavailable`; the UI shows
+an explicit inspection/scheduling error and retry without losing the saved deadline. It does not
+pretend permission was granted or silently skip channel checks. Apple Expo Go permission denial
+and grant were exercised successfully. These findings do not prove behavior in our own build.
+Stage 7 must repeat the permission and delivery matrix using rebuilt application binaries.

@@ -1,4 +1,4 @@
-import * as Notifications from "expo-notifications";
+import * as Notifications from "./local-notifications-api";
 import { Linking, Platform } from "react-native";
 import type {
   NotificationResult,

@@ -33,6 +33,16 @@ type NotificationContent = (
 export class ReminderSchedule {
   private tail: Promise<unknown> = Promise.resolve();
   private lastResult: ReconciliationResult | null = null;
+  private readonly listeners = new Set<() => void>();
+
+  subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  };
+
+  getSnapshot = (): ReconciliationResult | null => this.lastResult;
 
   constructor(
     private readonly clock: Clock,
@@ -52,6 +62,7 @@ export class ReminderSchedule {
     const next = this.tail.then(async () => {
       const result = await this.runSafely();
       this.lastResult = result;
+      for (const listener of this.listeners) listener();
       return result;
     });
     this.tail = next;

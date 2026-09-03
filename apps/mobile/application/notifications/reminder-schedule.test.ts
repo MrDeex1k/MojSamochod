@@ -89,6 +89,18 @@ function setup() {
 }
 
 describe("reminder schedule reconciliation", () => {
+  it("publishes completed snapshots and removes UI subscriptions", async () => {
+    const { schedule } = setup();
+    const listener = jest.fn();
+    const unsubscribe = schedule.subscribe(listener);
+    expect(schedule.getSnapshot()).toBeNull();
+    const result = await schedule.reconcile();
+    expect(schedule.getSnapshot()).toBe(result);
+    expect(listener).toHaveBeenCalledTimes(1);
+    unsubscribe();
+    await schedule.reconcile();
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
   it("is idempotent and recovers native state after restarting the coordinator", async () => {
     const { schedule, notifications, state, vehicles, reminders } = setup();
     expect(schedule.getLastResult()).toBeNull();

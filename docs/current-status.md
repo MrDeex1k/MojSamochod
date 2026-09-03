@@ -68,7 +68,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 55 zestawów i 370 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 57 zestawów i 386 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -203,15 +203,24 @@ dokładne. Test introspekcji sprawdza wynik działania wszystkich pluginów.
 Etap 4 dodaje szeregowe uzgadnianie harmonogramu przy starcie, powrocie do foreground,
 zmianie języka i zgody oraz po udanych zapisach/usunięciach danych. Nie zmienia pasujących alertów,
 usuwa nieaktualne i uzupełnia brakujące. Błędy powiadomień nie blokują zapisu SQLite; wynik
-ostatniego przebiegu pozostaje dostępny do prezentacji w przyszłym UI i ponowienia.
+ostatniego przebiegu pozostaje dostępny do prezentacji w UI i ponowienia.
 Testy obejmują m.in. częściowe błędy, odmowę/przywrócenie zgody, restart koordynatora i usuwanie
 pojazdu podczas trwającego planowania.
-Pełne `nub run check` przechodzi: 55 zestawów, 370 testów. React Doctor: 100/100, bez uwag.
+Etap 5 dodaje osobną sekcję „Przypomnienia”, dwie karty terminów, natywny wybór daty,
+tworzenie/edycję/usuwanie, wybór wyprzedzeń i stany daty. Zapis i usunięcie wracają do listy
+przypomnień. Formularz zachowuje strefę istniejącego terminu, ostrzega przed porzuceniem zmian,
+a zgoda jest osobną, opcjonalną czynnością po zapisie. UI reaguje na wynik uzgadniania,
+odmowę i błąd odczytu uprawnień; błąd nie usuwa ani nie blokuje terminów.
+Pełne `nub run check` przechodzi: 57 zestawów, 386 testów. React Doctor 0.9.13: 87/100;
+dwie uwagi dotyczą celowo szeregowych operacji anulowania/planowania z etapu 4,
+trzecia istniejącej złożoności nawigacji `HistoryWorkspaceView`. Bez wyciszania reguł.
 Expo Doctor: 19/21 kontroli — brak rozpoznania `nub.lock`, TypeScript 7 i dostępne nowsze patche
 pakietów Expo. Szczegóły: `local-reminder-notifications.md`. Nie aktualizowano całego SDK.
-Nie zmieniano układu UI i nie weryfikowano jeszcze dostarczania na urządzeniach w tym etapie.
+UI sprawdzono w Expo Go 57.0.9 na iPhonie 17 Pro, iPadzie Air 11 (M4), Pixelu 9 i Pixel Tablet.
+Zakres, wyniki i ograniczenia: [phase-6-step-5-verification.md](phase-6-step-5-verification.md).
+Na Androidzie Expo Go zgłasza błąd natywnego dostawcy kanałów powiadomień; nie traktujemy tego
+hosta jako dowodu poprawności uprawnień ani harmonogramu własnej aplikacji.
 
-Następny krok to etap 5: formularze i lista terminów na telefonie/tablecie, lokalizacja,
-kontekstowe objaśnienie zgody i prezentacja stanu uprawnień/harmonogramu. Następnie etap 6 (aktualizacja wszystkich
-pakietów do najnowszego zgodnego zestawu) oraz etap 7 (pełna weryfikacja natywna po aktualizacji).
+Następny krok to etap 6 (aktualizacja wszystkich pakietów do najnowszego zgodnego zestawu),
+a następnie etap 7 (pełna weryfikacja natywna po aktualizacji, także we własnych buildach).
 Aktualizacji zależności jeszcze nie rozpoczęto.

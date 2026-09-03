@@ -4,7 +4,7 @@
 
 **Status:** ustalenia zaakceptowane przez użytkownika.
 
-**Faza:** 6 — przypomnienia. Etapy 1–4 zaimplementowane; weryfikacja dostarczania na urządzeniach pozostaje do wykonania.
+**Faza:** 6 — przypomnienia. Etapy 1–5 zaimplementowane; końcowa weryfikacja dostarczania na urządzeniach pozostaje do wykonania.
 
 Dokument zapisuje uzgodniony zakres i zachowanie produktu. Szczegóły techniczne harmonogramu
 oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
@@ -17,8 +17,10 @@ oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
    aplikacyjne i [eksport JSON v4](data-export-v4.md).
 3. **Gotowe:** adapter lokalnych powiadomień, obsługa uprawnień i konfiguracja natywna.
 4. **Gotowe:** uzgadnianie harmonogramu po zmianach danych, restarcie i zmianie uprawnień.
-5. **Następne:** interfejs telefonu i tabletu oraz lokalizacja.
-6. Aktualizacja wszystkich zależności produkcyjnych i deweloperskich repozytorium do najnowszych
+5. **Gotowe:** interfejs telefonu i tabletu, lokalizacja PL/EN, kontekstowe objaśnienie zgody,
+   stany uprawnień i błędów oraz testy UI. Zakres prób natywnych opisuje
+   [raport etapu 5](phase-6-step-5-verification.md); nie zamykają one etapu 7.
+6. **Następne:** aktualizacja wszystkich zależności produkcyjnych i deweloperskich repozytorium do najnowszych
    zgodnych wersji, wraz z koniecznymi dostosowaniami kodu i testami automatycznymi.
 7. Pełna weryfikacja natywna po aktualizacji pakietów, poprawki regresji i dokumentacja końcowa.
 
@@ -129,6 +131,11 @@ przez system operacyjny pozostaje do sprawdzenia natywnie w etapie 7.
 - Osobna sekcja „Przypomnienia” dla wybranego pojazdu zawiera dwie karty: ubezpieczenie
   i badanie techniczne.
 - Brak daty pokazujemy jako „Dodaj termin”.
+- Po zapisie albo usunięciu wracamy do listy przypomnień. Usunięcie i porzucenie zmienionego
+  formularza wymagają potwierdzenia. Data korzysta z natywnego selektora bez godziny i etykiety UTC.
+- Tablet zachowuje kartę pojazdu po lewej, a lista i formularz zajmują prawy obszar.
+- Zgoda jest osobną czynnością po zapisie terminu. Błąd powiadomień pozostawia termin widoczny
+  i umożliwia ponowienie; odmowa udostępnia przejście do ustawień systemowych.
 - Nie dokładamy obowiązkowych pól do formularza dodawania pojazdu.
 - Zachowujemy obsługę polskiego i angielskiego, ciemny motyw oraz natywne układy telefonu
   i tabletu na obu platformach.

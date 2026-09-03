@@ -152,9 +152,11 @@ adaptive phone/tablet UI have automated and native coverage.
 
 ## Phase 6 — Reminders
 
-**Status:** Domain decisions accepted; implementation stages 1–4 (domain rules, persistence,
+**Status:** Domain decisions accepted; implementation stages 1–5 (domain rules, persistence,
 application services, JSON v4 export, native notification adapter/configuration, schedule
-reconciliation, and automated tests) are complete. UI, dependency updates, and native verification remain pending. See
+reconciliation, localized phone/tablet UI, and automated tests) are complete. Dependency updates and
+final native acceptance remain pending. Stage 5 UI checks used Expo Go; Android notification-channel
+support failed in that host and must be rechecked in our rebuilt app. See
 [reminder-domain-decisions.md](reminder-domain-decisions.md) for the working contract.
 
 ### Steps
@@ -268,8 +270,7 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Implement Phase 6 stage 5: phone/tablet reminder forms and list, localized deadline states,
-contextual permission education, and permission/scheduling feedback without blocking saved data.
-Then update dependencies in stage 6 and run final native verification
+Implement Phase 6 stage 6: update all dependencies to the newest compatible set under NUB/SFW,
+review the local-only notification facade against the updated Expo package, then run final native verification
 in stage 7, following
 [reminder-domain-decisions.md](reminder-domain-decisions.md).
