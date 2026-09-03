@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Version 3 is the current user-owned JSON representation of locally stored vehicle data. It extends
+Version 3 is a historical user-owned JSON representation of locally stored vehicle data, superseded
+by [version 4](data-export-v4.md). It extends
 version 2 with the vehicle's fuel configuration and raw refuelling records. The export remains
 independent of the SQLite and Drizzle schemas and still excludes binary content.
 

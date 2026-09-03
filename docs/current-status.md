@@ -130,10 +130,10 @@ opisywanego etapu.
   pełny rollback przerwanego zapisu oraz odrzucanie rekordów łamiących ograniczenia schematu.
 - Błąd migracji zamyka połączenie i pozostaje błędem źródłowym również wtedy, gdy samo zamknięcie
   połączenia także się nie powiedzie.
-- Eksport `moje-auto-vehicle-history` w wersji 3 tworzy czytelny JSON pojazdu, historii, metadanych
-  dokumentów, konfiguracji paliwowej i źródłowych rekordów tankowań, także dla pustej bazy. Nie
-  zawiera zdjęć, plików binarnych ani wyliczonego spalania; pole `binaryFilesIncluded` pozostaje
-  równe `false`, a kontrakt ma osobną dokumentację kompatybilności.
+- Eksport `moje-auto-vehicle-history` w wersji 4 tworzy czytelny JSON pojazdu, historii, metadanych
+  dokumentów, konfiguracji paliwowej, źródłowych rekordów tankowań i przypomnień, także dla pustej
+  bazy. Nie zawiera zdjęć, plików binarnych, wyliczonego spalania ani stanu powiadomień urządzenia;
+  pole `binaryFilesIncluded` pozostaje równe `false`. Kontrakt opisuje `data-export-v4.md`.
 - Kontrakt `ObjectStorage` rozdziela etapowanie, trwałe zatwierdzenie, odrzucenie, usunięcie i eksport
   obiektu. Metadane definiują rozmiar, SHA-256 i bezpieczny względny klucz magazynu, a dokumentacja
   opisuje odzyskiwanie po przerwaniu operacji między SQLite i systemem plików.
@@ -185,9 +185,12 @@ Ustalenia Fazy 6 zostały zaakceptowane i zapisane w
 Etap 1 jest zaimplementowany: domena przypomnień, walidacja dat i stref, tworzenie i edycja,
 stany daty oraz plan powiadomień na 09:00 w zapamiętanej strefie. Testy obejmują zmiany czasu,
 granice dnia, niestandardowe przesunięcia stref i pomijanie minionych powiadomień.
-Pełne `nub run check` przechodzi: 48 zestawów, 283 testy. Na tym etapie nie zmieniano UI,
-zależności ani schematu bazy i nie uruchamiano testów natywnych.
+Etap 2 również jest gotowy: migracja `0007_add_vehicle_reminders.sql`, repozytorium i usługa
+przypomnień, unikalność rodzaju dla pojazdu, kaskadowe usuwanie oraz eksport JSON v4.
+Testy na rzeczywistym SQLite potwierdzają zachowanie danych po migracji i ponownym otwarciu,
+izolację pojazdów, odrzucanie konfliktów i rollback błędu zapisu.
+Pełne `nub run check` przechodzi: 50 zestawów, 316 testów. React Doctor: 100/100, bez uwag.
+Nie zmieniano układu UI ani zależności i nie uruchamiano testów natywnych w tym etapie.
 
-Następny krok to etap 2: persystencja, unikalność rodzaju przypomnienia dla pojazdu, operacje
-aplikacyjne i eksport JSON. Następnie integracja powiadomień, uzgadnianie harmonogramu,
-uprawnienia i interfejs z weryfikacją natywną.
+Następny krok to etap 3: integracja natywnych powiadomień i uprawnień. Następnie uzgadnianie
+harmonogramu oraz interfejs z weryfikacją natywną.

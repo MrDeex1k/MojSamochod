@@ -4,7 +4,7 @@
 
 **Status:** ustalenia zaakceptowane przez użytkownika.
 
-**Faza:** 6 — przypomnienia. Etap 1 (domena i testy reguł) zaimplementowany.
+**Faza:** 6 — przypomnienia. Etapy 1–2 (domena, persystencja i eksport) zaimplementowane.
 
 Dokument zapisuje uzgodniony zakres i zachowanie produktu. Szczegóły techniczne harmonogramu
 oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
@@ -13,8 +13,9 @@ oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
 
 1. **Gotowe:** domena i testy reguł — tworzenie i edycja, `ReminderId` UUIDv7, osobne znaczniki
    utworzenia i aktualizacji, walidacja dat i stref, stany terminu oraz obliczanie planu powiadomień.
-2. **Następne:** SQLite, migracja, repozytorium, operacje aplikacyjne i eksport JSON.
-3. Integracja natywnych powiadomień i uprawnień.
+2. **Gotowe:** SQLite, migracja `0007_add_vehicle_reminders.sql`, repozytorium, operacje
+   aplikacyjne i [eksport JSON v4](data-export-v4.md).
+3. **Następne:** integracja natywnych powiadomień i uprawnień.
 4. Uzgadnianie harmonogramu po zmianach danych, restarcie i zmianie uprawnień.
 5. Interfejs telefonu i tabletu oraz lokalizacja.
 6. Weryfikacja natywna, poprawki i dokumentacja końcowa.
@@ -22,8 +23,8 @@ oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
 Domena nie odczytuje systemowej strefy ani bieżącego czasu samodzielnie: otrzymuje je jawnie.
 Edycja przyjmuje wyłącznie datę i wyprzedzenia; zachowuje właściciela, rodzaj, identyfikator,
 czas utworzenia i strefę. Brak wyprzedzeń oznacza wyłączone powiadomienia, nie usunięcie terminu.
-Unikalność rodzaju terminu dla pojazdu będzie egzekwowana przez operacje aplikacyjne i bazę
-w etapie 2; sama fabryka pojedynczego rekordu nie ma dostępu do pozostałych terminów.
+Unikalność rodzaju terminu dla pojazdu jest egzekwowana przez operacje aplikacyjne i unikalny
+indeks SQLite; sama fabryka pojedynczego rekordu nie ma dostępu do pozostałych terminów.
 
 Planowanie używa jawnej strefy i kalendarza gregoriańskiego przez `Intl.DateTimeFormat`.
 Każde lokalne 09:00 jest przeliczane i sprawdzane przez konwersję zwrotną. Brak takiej chwili
@@ -34,6 +35,15 @@ posłużą do uzgadniania harmonogramu, ale nie są identyfikatorami systemowych
 
 Etap 1 nie zmienia zależności, schematu SQLite ani UI i nie planuje rzeczywistych powiadomień.
 Zgodność obliczeń z natywnym silnikiem aplikacji pozostaje częścią dalszej weryfikacji.
+
+Etap 2 dodaje tabelę `reminders` i udostępnia `ReminderService` przez istniejący provider aplikacji,
+bez zmian widocznego UI i bez nowych zależności. Usunięcie pojazdu usuwa jego terminy kaskadowo.
+Odczyt sprawdza pełny kontrakt domenowy; uszkodzone dane zwracają `corrupt-data`.
+Edycja pobiera aktualny rekord z repozytorium i nie pozwala podmienić chronionych metadanych.
+Testy wykonują SQL, migracje i transakcje sterownika Expo Drizzle na rzeczywistym SQLite przez
+testowy adapter transportu. Obejmują migrację istniejących danych, ponowne uruchomienie migratora,
+ponowne otwarcie pliku, konflikty, izolację pojazdów i rollback błędu zapisu.
+Nie zastępuje to testów silnika SQLite i powiadomień na urządzeniach, zaplanowanych na dalsze etapy.
 
 ## Zakres i własność
 

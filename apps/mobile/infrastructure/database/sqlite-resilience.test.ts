@@ -13,6 +13,7 @@ const migrationFileNames = [
   "0004_enforce_document_entry_vehicle_consistency.sql",
   "0005_enforce_history_entry_document_vehicle_consistency.sql",
   "0006_add_refuelling_persistence.sql",
+  "0007_add_vehicle_reminders.sql",
 ] as const;
 const migrationSql = readMigrations(migrationFileNames);
 const temporaryDirectories: string[] = [];

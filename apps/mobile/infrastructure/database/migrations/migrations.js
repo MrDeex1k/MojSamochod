@@ -8,6 +8,7 @@ import m0003 from "./0003_enforce_document_sha256_uniqueness.sql";
 import m0004 from "./0004_enforce_document_entry_vehicle_consistency.sql";
 import m0005 from "./0005_enforce_history_entry_document_vehicle_consistency.sql";
 import m0006 from "./0006_add_refuelling_persistence.sql";
+import m0007 from "./0007_add_vehicle_reminders.sql";
 
 export default {
   journal,
@@ -19,5 +20,6 @@ export default {
     m0004,
     m0005,
     m0006,
+    m0007,
   },
 };

@@ -144,6 +144,11 @@ preferences control distance, fuel-volume, and consumption presentation without 
 historical source records. SQLite persists raw refuelling data, while JSON export v3 exposes those
 records without storing derived consumption values.
 
+Phase 6 stages 1–2 add pure reminder-domain rules, a vehicle-owned SQLite reminder table,
+and application services. Migration `0007_add_vehicle_reminders.sql` enforces one current deadline
+per vehicle and kind. JSON export v4 adds reminder source data without device notification state.
+Native notification integration and reminder UI are not implemented yet.
+
 ## Planned capabilities and open selections
 
 The following capabilities are part of the product direction but are not installed or implemented

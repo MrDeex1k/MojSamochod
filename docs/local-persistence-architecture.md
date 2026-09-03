@@ -23,7 +23,7 @@ Uzupełnia model domenowy, ale nie zmienia zatwierdzonych reguł produktu.
 
 ## Identyfikatory i czas
 
-- `VehicleId`, `HistoryEntryId`, `ManagedFileId`, `DocumentId` oraz `RefuellingId` używają UUIDv7.
+- `VehicleId`, `HistoryEntryId`, `ManagedFileId`, `DocumentId`, `RefuellingId` oraz `ReminderId` używają UUIDv7.
 - UUIDv7 jest wyłącznie niezmienną, globalnie unikalną tożsamością rekordu. Kod domenowy nie odczytuje
   z niego daty ani nie używa jego części czasowej do sortowania, wyświetlania lub walidacji.
 - Moment utworzenia i ostatniej zmiany rekordu jest przechowywany osobno w `createdAt` i `updatedAt`.
@@ -124,11 +124,22 @@ usunięcie rekordu. Surowe klucze magazynu są nieprzezroczyste, względne i nie
 
 Faza 2 dostarcza wersję 1 JSON z pojazdem i historią. Faza 4 wprowadza wersję 2, która dodaje
 metadane dokumentów, a Faza 5 wersję 3 z konfiguracją paliwową i źródłowymi rekordami tankowań.
+Faza 6 wprowadza [wersję 4](data-export-v4.md) z terminami przypomnień, zachowaną strefą i wybranymi
+wyprzedzeniami, bez uprawnień i identyfikatorów powiadomień systemowych.
 Żadna z tych wersji nie zawiera plików binarnych ani wyliczonego spalania. Przenośny backup zostanie
 później rozszerzony do archiwum z manifestem JSON oraz katalogiem obiektów, bez umieszczania
 binarnej zawartości w bazie SQLite ani kodowania jej jako Base64 w JSON.
 
 ## Granice implementacji
+
+Przypomnienia przechowuje tabela `reminders`, dodana migracją `0007_add_vehicle_reminders.sql`.
+Unikalny indeks `(vehicle_id, kind)` chroni przed powtórzeniem rodzaju terminu także przy
+konkurencyjnych zapisach. Klucz obcy usuwa terminy razem z pojazdem. Data jest tekstem
+`YYYY-MM-DD`, strefa nazwaną strefą IANA, a trzy wyprzedzenia flagami `0/1` z ograniczeniami CHECK.
+Pełną poprawność strefy sprawdza domena przy tworzeniu oraz mapper przy odczycie.
+Edycja repozytorium zmienia wyłącznie datę, flagi i `updatedAt`; próba podmiany rodzaju,
+strefy lub czasu utworzenia zwraca konflikt. Operacje aplikacyjne odczytują zapisany rekord
+przed edycją, zamiast ufać metadanym przesłanym przez formularz.
 
 - Drizzle jest szczegółem infrastruktury, a nie typem domenowym.
 - Repozytoria zwracają modele domenowe i typowane błędy.

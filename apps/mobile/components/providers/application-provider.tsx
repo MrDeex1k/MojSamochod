@@ -4,6 +4,7 @@ import type { HistoryEntryRepository } from "@/application/repositories/history-
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
 import { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 import { RefuellingService } from "@/application/refuelling/refuelling-service";
+import { ReminderService } from "@/application/reminders/reminder-service";
 import { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { Screen } from "@/components/layout/screen";
 import { ErrorState } from "@/components/states/error-state";
@@ -11,6 +12,7 @@ import { LoadingState } from "@/components/states/loading-state";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
 import { DrizzleManagedFileRepository } from "@/infrastructure/database/drizzle-managed-file-repository";
 import { DrizzleRefuellingRepository } from "@/infrastructure/database/drizzle-refuelling-repository";
+import { DrizzleReminderRepository } from "@/infrastructure/database/drizzle-reminder-repository";
 import { DrizzleVehicleDocumentRepository } from "@/infrastructure/database/drizzle-vehicle-document-repository";
 import { DrizzleVehicleHistoryRepository } from "@/infrastructure/database/drizzle-vehicle-history-repository";
 import type { AppDatabase } from "@/infrastructure/database/database";
@@ -43,6 +45,7 @@ export type ApplicationServices = Readonly<{
   managedFiles: ManagedFileCoordinator;
   photoPicker: VehiclePhotoPicker;
   refuellings: RefuellingService;
+  reminders: ReminderService;
   vehicles: VehicleRepository;
 }>;
 
@@ -117,6 +120,7 @@ function createApplicationServices(database: AppDatabase): ApplicationServices {
     managedFiles,
     photoPicker: new GalleryVehiclePhotoPicker(),
     refuellings: new RefuellingService(clock, idGenerator, refuellingRepository),
+    reminders: new ReminderService(clock, idGenerator, new DrizzleReminderRepository(database)),
     vehicles: vehicleHistory,
   };
 }
