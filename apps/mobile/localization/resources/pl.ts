@@ -1,6 +1,9 @@
 export const pl = {
   notifications: {
     channelName: "Przypomnienia o pojeździe",
+    insuranceTitle: "Termin ubezpieczenia",
+    inspectionTitle: "Termin badania technicznego",
+    validUntil: "{{vehicle}} — ważne do {{date}}.",
   },
   common: {
     appName: "Moje Auto",

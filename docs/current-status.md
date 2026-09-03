@@ -58,12 +58,19 @@ opisywanego etapu.
 
 ### Testy i jakość
 
+- Do szybkich iteracji natywnych używamy Expo Go zgodnego z SDK 57, również na fizycznym iPhonie
+  i iPadzie dzięki wersji z App Store. Dotyczy to funkcji obsługiwanych przez moduły tego klienta;
+  nie zastępuje testów automatycznych ani sprawdzenia obu platform i rozmiarów urządzeń.
+- Wersja sklepowa iOS wymaga tego samego konta Expo w CLI i Expo Go. Zmiany modułów natywnych,
+  konfiguracji, uprawnień aplikacji i końcową akceptację po aktualizacji pakietów sprawdzamy także
+  we własnym przebudowanym buildzie. Raporty testów wskazują host (Expo Go lub własny build),
+  wersję i urządzenie. Zasady opisuje [technology.md](technology.md#verification-matrix).
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 46 zestawów i 227 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 55 zestawów i 370 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
-  dokumentów oraz lokalizacji.
+  dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
 - React Doctor 0.9.12 dla zmian Fazy 5 zakończył się wynikiem 100/100 bez wykrytych problemów.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
@@ -193,10 +200,18 @@ Etap 3 dodaje `expo-notifications` 57.0.15, adapter lokalnych powiadomień i obs
 Powiadomienia są jednorazowe i korzystają z chwil UTC domeny. Start aplikacji nie pyta o zgodę.
 Konfiguracja pozostaje lokalna: bez APNs, zdalnych powiadomień w tle i dodatkowej zgody na alarmy
 dokładne. Test introspekcji sprawdza wynik działania wszystkich pluginów.
-Pełne `nub run check` przechodzi: 52 zestawy, 344 testy. React Doctor: 100/100, bez uwag.
+Etap 4 dodaje szeregowe uzgadnianie harmonogramu przy starcie, powrocie do foreground,
+zmianie języka i zgody oraz po udanych zapisach/usunięciach danych. Nie zmienia pasujących alertów,
+usuwa nieaktualne i uzupełnia brakujące. Błędy powiadomień nie blokują zapisu SQLite; wynik
+ostatniego przebiegu pozostaje dostępny do prezentacji w przyszłym UI i ponowienia.
+Testy obejmują m.in. częściowe błędy, odmowę/przywrócenie zgody, restart koordynatora i usuwanie
+pojazdu podczas trwającego planowania.
+Pełne `nub run check` przechodzi: 55 zestawów, 370 testów. React Doctor: 100/100, bez uwag.
 Expo Doctor: 19/21 kontroli — brak rozpoznania `nub.lock`, TypeScript 7 i dostępne nowsze patche
 pakietów Expo. Szczegóły: `local-reminder-notifications.md`. Nie aktualizowano całego SDK.
 Nie zmieniano układu UI i nie weryfikowano jeszcze dostarczania na urządzeniach w tym etapie.
 
-Następny krok to etap 4: uzgadnianie harmonogramu z danymi i uprawnieniami po zmianach,
-usuwaniu oraz restarcie, bez duplikatów. Następnie interfejs i weryfikacja natywna.
+Następny krok to etap 5: formularze i lista terminów na telefonie/tablecie, lokalizacja,
+kontekstowe objaśnienie zgody i prezentacja stanu uprawnień/harmonogramu. Następnie etap 6 (aktualizacja wszystkich
+pakietów do najnowszego zgodnego zestawu) oraz etap 7 (pełna weryfikacja natywna po aktualizacji).
+Aktualizacji zależności jeszcze nie rozpoczęto.

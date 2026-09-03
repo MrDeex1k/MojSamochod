@@ -194,6 +194,34 @@ archive containing binaries remains production-hardening work.
 
 ## Verification matrix
 
+### Fast native iteration with Expo Go 57
+
+Use Expo Go compatible with SDK 57 as the preferred fast feedback loop when a change only needs
+native modules already bundled in that client. It runs the project's JavaScript on native iOS and
+Android, including phone/tablet UI, localization, forms, and preliminary local-notification checks.
+It is not Expo Web and does not replace automated tests or the platform/form-factor matrix below.
+
+Expo Go with SDK 57 support is available from the iOS App Store as of 2026-09-03, enabling quick
+checks on physical iPhones and iPads without building a separate app for each JavaScript change.
+Use compatible simulator/emulator clients for the same SDK. The iOS store client requires the same
+Expo account in the CLI and Expo Go; Expo's announcement exempts simulator clients and development
+builds. From `apps/mobile`, use `nub exec expo login` when needed, then start Metro with
+`nub run dev` from the repository root. See the
+[Expo Go 57 announcement](https://expo.dev/changelog/expo-go-57-login).
+
+Use a rebuilt development/release app when changing native dependencies or configuration, testing
+our config plugins, app-specific permission texts, entitlements or signing, or performing final
+acceptance after dependency upgrades. Expo Go uses its own bundled native code, permissions and
+storage sandbox, so a passing Go test does not prove these aspects of our app work. Do not assume
+data entered in Expo Go exists in a separate development build.
+
+Record the host (Expo Go version or own build), platform, device and tested scope in verification
+notes. After phase 6 dependency updates in step 6, step 7 must verify the rebuilt app as well as any
+quick checks performed in Expo Go. Notification-specific limits are documented in
+[local-reminder-notifications.md](local-reminder-notifications.md).
+
+### Required targets and automated coverage
+
 Every user-visible feature should be verified on:
 
 - a representative iPhone simulator,

@@ -46,6 +46,26 @@ beforeEach(() => {
 });
 
 describe("Native reminder permissions", () => {
+  it("notifies reconciliation once after an explicit coalesced permission request", async () => {
+    const changed = jest.fn();
+    const adapter = new NativeReminderNotifications(clock, () => "Reminders", changed);
+    await adapter.getPermission();
+    expect(changed).not.toHaveBeenCalled();
+    await Promise.all([
+      adapter.requestPermissionAfterExplanation(),
+      adapter.requestPermissionAfterExplanation(),
+    ]);
+    expect(changed).toHaveBeenCalledTimes(1);
+  });
+
+  it("refreshes actual permission state even when the explicit request fails", async () => {
+    const changed = jest.fn();
+    native.getPermissionsAsync.mockRejectedValueOnce(new Error("native failure"));
+    const adapter = new NativeReminderNotifications(clock, () => "Reminders", changed);
+    expect(await adapter.requestPermissionAfterExplanation()).toMatchObject({ ok: false });
+    expect(changed).toHaveBeenCalledTimes(1);
+  });
+
   it("does not ask permission or create a channel when constructed or queried", async () => {
     jest.replaceProperty(Platform, "OS", "android");
     const adapter = notifications();

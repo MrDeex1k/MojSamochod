@@ -1,6 +1,9 @@
 export const en = {
   notifications: {
     channelName: "Vehicle reminders",
+    insuranceTitle: "Insurance deadline",
+    inspectionTitle: "Technical inspection deadline",
+    validUntil: "{{vehicle}} — valid until {{date}}.",
   },
   common: {
     appName: "My Car",

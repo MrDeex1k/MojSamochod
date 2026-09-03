@@ -4,7 +4,7 @@
 
 **Status:** ustalenia zaakceptowane przez użytkownika.
 
-**Faza:** 6 — przypomnienia. Etapy 1–3 zaimplementowane; weryfikacja dostarczania na urządzeniach pozostaje do wykonania.
+**Faza:** 6 — przypomnienia. Etapy 1–4 zaimplementowane; weryfikacja dostarczania na urządzeniach pozostaje do wykonania.
 
 Dokument zapisuje uzgodniony zakres i zachowanie produktu. Szczegóły techniczne harmonogramu
 oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
@@ -16,9 +16,24 @@ oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
 2. **Gotowe:** SQLite, migracja `0007_add_vehicle_reminders.sql`, repozytorium, operacje
    aplikacyjne i [eksport JSON v4](data-export-v4.md).
 3. **Gotowe:** adapter lokalnych powiadomień, obsługa uprawnień i konfiguracja natywna.
-4. **Następne:** uzgadnianie harmonogramu po zmianach danych, restarcie i zmianie uprawnień.
-5. Interfejs telefonu i tabletu oraz lokalizacja.
-6. Weryfikacja natywna, poprawki i dokumentacja końcowa.
+4. **Gotowe:** uzgadnianie harmonogramu po zmianach danych, restarcie i zmianie uprawnień.
+5. **Następne:** interfejs telefonu i tabletu oraz lokalizacja.
+6. Aktualizacja wszystkich zależności produkcyjnych i deweloperskich repozytorium do najnowszych
+   zgodnych wersji, wraz z koniecznymi dostosowaniami kodu i testami automatycznymi.
+7. Pełna weryfikacja natywna po aktualizacji pakietów, poprawki regresji i dokumentacja końcowa.
+
+Etap 6 obejmuje root repozytorium i workspace mobilny, przegląd zależności przechodnich oraz
+overrides i aktualizację `nub.lock`. Pakiety Expo, React i React Native aktualizujemy jako zgodny
+zestaw wspierany przez SDK, nie niezależnie do dowolnych wersji `latest`. Pozostałe pakiety również
+wymagają oceny zmian niekompatybilnych. Wyjątki od aktualizacji trzeba jawnie udokumentować.
+Zachowujemy NUB, SFW, dokładne wersje, okres karencji 24 godzin oraz istniejące wersje toolchainu;
+ewentualna konieczność zmiany Node/NUB wymaga osobnej decyzji. Nie zmieniamy świadomego wyboru
+TypeScript 7 wyłącznie w celu wyciszenia Expo Doctor.
+
+Przed i po aktualizacji uruchamiamy testy automatyczne; po niej również React Doctor i Expo Doctor.
+Etap 7 sprawdza całą Fazę 6 oraz regresje dotychczasowych funkcji na iPhonie, iPadzie, telefonie
+z Androidem i tablecie z Androidem, na buildach uwzględniających zaktualizowane moduły natywne.
+Expo Go może służyć do szybkich prób, ale nie zastępuje weryfikacji własnego buildu aplikacji.
 
 Domena nie odczytuje systemowej strefy ani bieżącego czasu samodzielnie: otrzymuje je jawnie.
 Edycja przyjmuje wyłącznie datę i wyprzedzenia; zachowuje właściciela, rodzaj, identyfikator,
@@ -31,7 +46,8 @@ Każde lokalne 09:00 jest przeliczane i sprawdzane przez konwersję zwrotną. Br
 (np. pominięty dzień w strefie) zwraca błąd `notificationSchedule`, zamiast przesuwać termin.
 Jeżeli 09:00 występuje dwukrotnie, wybierana jest pierwsza chwila. Plan nie zawiera chwil
 równych bieżącemu czasowi ani wcześniejszych. Stabilne klucze pary przypomnienie–wyprzedzenie
-posłużą do uzgadniania harmonogramu, ale nie są identyfikatorami systemowych powiadomień.
+służą do uzgadniania harmonogramu. Adapter używa ich również jako identyfikatorów żądań
+systemowych; nie zapisujemy stanu harmonogramu w rekordzie domenowym ani eksporcie.
 
 Etap 1 nie zmienia zależności, schematu SQLite ani UI i nie planuje rzeczywistych powiadomień.
 Zgodność obliczeń z natywnym silnikiem aplikacji pozostaje częścią dalszej weryfikacji.
@@ -53,6 +69,16 @@ zgodę iOS oraz blokadę kanału Androida i udostępnia przejście do ustawień 
 Nie wprowadzamy zdalnych powiadomień ani dodatkowej zgody na alarmy dokładne. Powiadomienie
 może być opóźnione przez system operacyjny. Konfigurację, granice integracji oraz dalsze testy
 opisuje [local-reminder-notifications.md](local-reminder-notifications.md).
+
+Etap 4 uruchamia uzgadnianie przy starcie, powrocie aplikacji do foreground, zmianie języka,
+zakończeniu jawnego żądania zgody oraz udanych zapisach i usunięciach terminów lub pojazdu.
+Zapis SQLite nie czeka na system powiadomień. Kolejne przebiegi są szeregowe i odczytują aktualne
+dane oraz rzeczywistą listę alertów. Pasujące alerty pozostają bez zmian, a nieaktualne są usuwane.
+Błędy zachowujemy w wyniku ostatniego przebiegu; ponowienie następuje jawnie lub przy kolejnym
+zdarzeniu. Nie ma automatycznej pętli retry w tle. Brak zgody nie usuwa terminów.
+Treść powiadomień jest po polsku lub angielsku z angielskim fallbackiem. Testy automatyczne
+obejmują częściowe awarie, restart koordynatora i usunięcie podczas planowania; dostarczanie
+przez system operacyjny pozostaje do sprawdzenia natywnie w etapie 7.
 
 ## Zakres i własność
 

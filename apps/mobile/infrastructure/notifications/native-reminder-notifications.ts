@@ -22,6 +22,7 @@ export class NativeReminderNotifications implements ReminderNotifications {
   constructor(
     private readonly clock: Clock,
     private readonly channelName: () => string,
+    private readonly onPermissionChanged: () => void = () => undefined,
   ) {}
 
   getPermission(): Promise<NotificationResult<ReminderNotificationPermission>> {
@@ -42,6 +43,7 @@ export class NativeReminderNotifications implements ReminderNotifications {
       return this.readPermission();
     }).finally(() => {
       this.permissionRequest = undefined;
+      this.onPermissionChanged();
     });
     return this.permissionRequest;
   }
@@ -87,10 +89,12 @@ export class NativeReminderNotifications implements ReminderNotifications {
   list(): Promise<NotificationResult<readonly ScheduledReminderNotification[]>> {
     return this.perform("notifications.list", async () => {
       const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-      return scheduled.filter(isOwned).map((notification) => ({
-        identifier: notification.identifier,
-        request: readRequest(notification),
-      }));
+      const owned: ScheduledReminderNotification[] = [];
+      for (const notification of scheduled) {
+        if (isOwned(notification))
+          owned.push({ identifier: notification.identifier, request: readRequest(notification) });
+      }
+      return owned;
     });
   }
 

@@ -9,8 +9,9 @@ installed Expo 57.0.18 package's `bundledNativeModules.json`. Installation uses 
 permission inspection, explicit permission requests, settings navigation, one-shot scheduling,
 listing, and cancellation. Domain code does not import Expo or React Native.
 
-This stage does not reconcile stored reminders with native schedules or connect reminder forms.
-These are stages 4 and 5. Native delivery and four-device verification remain pending.
+Stage 4 adds reconciliation between stored reminders and native schedules. Reminder forms and
+permission education remain stage 5. Dependency updates are stage 6; native delivery and full four-device
+regression verification follow in stage 7 and remain pending.
 
 ## Permissions and presentation
 
@@ -43,9 +44,38 @@ metadata version, vehicle/reminder identity, offset and intended UTC instant. It
 metadata, excluded from the JSON v4 manifest.
 
 Listing filters to owned requests and preserves malformed owned metadata as a nullable request so
-the future reconciler can remove it. Cancellation operates on one reserved identifier, never all
-application notifications. The reconciler must handle partial failures and inspect native state
-before deciding whether a retry is needed.
+the reconciler can remove it. Cancellation operates on one reserved identifier, never all
+application notifications.
+
+## Reconciliation and recovery
+
+`ReminderSchedule` reads the current vehicle, reminders, permissions and native pending requests.
+It preserves matching alerts, removes obsolete/malformed/duplicate owned requests, and schedules
+only missing or changed alerts. Title and body use the current application language (English
+fallback), vehicle make/model and the calendar deadline, without relative countdown wording.
+
+- Passes run serially. A request arriving during a native operation queues a fresh read after that
+  pass, so a concurrent edit or deletion is not lost.
+- Successful reminder and vehicle writes trigger reconciliation through repository decorators.
+  SQLite commits first; notification failures neither roll back nor delay the saved data.
+- Application startup, foreground transitions, language changes and completion of an explicit
+  permission request also trigger reconciliation. Returning from system settings is covered by
+  the foreground event. No trigger implicitly requests permission.
+- Denied permission or a blocked Android channel produces an empty desired schedule. The deadline
+  remains stored; granting permission later rebuilds future alerts. Disabled offsets, deleted
+  reminders/vehicles and past alerts are also removed from the pending schedule.
+- Data, permission and listing failures leave native state untouched. A cancellation failure
+  prevents replacement scheduling in that pass. Scheduling failures may leave a partial schedule;
+  the next pass reads actual native state before retrying, including uncertain successful writes.
+- `getLastResult()` exposes the last pass's permission, counters and typed issue stages for the
+  upcoming UI. Results are in-memory diagnostics, not persisted reminder data or JSON export.
+  Explicit `reconcile()` calls and subsequent lifecycle/data events retry; there is no background
+  retry worker or guarantee of immediate recovery while the application is closed.
+
+Unit tests cover idempotency, coordinator restart, concurrent deletion, permissions, date/offset
+changes, localized content refresh, stale/malformed/duplicate requests, partial failures, and
+non-blocking post-commit hooks. Lifecycle and adapter tests use mocked native APIs. These tests do
+not prove notification delivery, OS restart behavior or application-specific permissions on devices.
 
 ## Native configuration and limits
 
@@ -68,6 +98,27 @@ Native configuration changes require a rebuilt development/release app. Expo Go 
 the app's generated entitlements or manifest. Before phase completion, verify permission grant,
 denial/revocation, foreground/background delivery, cancellation, restart and travel on iOS/iPadOS
 and Android phone/tablet targets, using physical devices wherever simulator behavior is insufficient.
+
+## Expo Go 57 availability — 2026-09-03
+
+The project-wide fast-iteration and final-acceptance rules are in the
+[verification matrix](technology.md#verification-matrix).
+
+The App Store now distributes Expo Go with SDK 57 support. For this SDK 57 project, this enables
+quick checks on physical iPhones and iPads using the store app and Metro, without preparing a
+separate native app merely to load the JavaScript project. It does not update repository packages
+or validate this project's custom native configuration.
+
+The new iOS store version requires the same Expo account to be signed in both in Expo CLI and
+Expo Go. CLI login uses `nub exec expo login` from `apps/mobile`. According to Expo's announcement,
+this requirement does not apply to simulator versions or development builds. See the
+[Expo announcement](https://expo.dev/changelog/expo-go-57-login) and
+[App Store listing](https://apps.apple.com/us/app/expo-go/id982107779).
+
+Local notifications remain available in Expo Go, but the host app owns its permissions, entitlements
+and bundled native modules. Final stage 7 acceptance must also use our rebuilt native app to verify
+the local-only plugin, application-specific permissions and upgraded native dependencies. See
+[development builds](https://docs.expo.dev/develop/development-builds/introduction/).
 
 ## Verification recorded for stage 3
 
