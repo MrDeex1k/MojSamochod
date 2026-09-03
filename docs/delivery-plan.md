@@ -152,9 +152,9 @@ adaptive phone/tablet UI have automated and native coverage.
 
 ## Phase 6 — Reminders
 
-**Status:** Domain decisions accepted; implementation stages 1–2 (domain rules, persistence,
-application services, JSON v4 export, and automated tests) are complete. Native notifications,
-reconciliation, and UI remain pending. See
+**Status:** Domain decisions accepted; implementation stages 1–3 (domain rules, persistence,
+application services, JSON v4 export, native notification adapter/configuration, and automated tests)
+are complete. Schedule reconciliation, UI, and native delivery verification remain pending. See
 [reminder-domain-decisions.md](reminder-domain-decisions.md) for the working contract.
 
 ### Steps
@@ -256,6 +256,7 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Implement Phase 6 stage 3: native local notification integration and permission handling on
-`feat/reminders`, following [reminder-domain-decisions.md](reminder-domain-decisions.md).
-Then implement schedule reconciliation, reminder UI, and native verification.
+Implement Phase 6 stage 4: reconcile stored reminder plans with native notifications after edits,
+deletion, restart, and permission changes, without duplicates or implicit permission prompts.
+Then implement reminder UI and native verification, following
+[reminder-domain-decisions.md](reminder-domain-decisions.md).

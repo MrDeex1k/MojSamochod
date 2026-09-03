@@ -189,8 +189,14 @@ Etap 2 również jest gotowy: migracja `0007_add_vehicle_reminders.sql`, repozyt
 przypomnień, unikalność rodzaju dla pojazdu, kaskadowe usuwanie oraz eksport JSON v4.
 Testy na rzeczywistym SQLite potwierdzają zachowanie danych po migracji i ponownym otwarciu,
 izolację pojazdów, odrzucanie konfliktów i rollback błędu zapisu.
-Pełne `nub run check` przechodzi: 50 zestawów, 316 testów. React Doctor: 100/100, bez uwag.
-Nie zmieniano układu UI ani zależności i nie uruchamiano testów natywnych w tym etapie.
+Etap 3 dodaje `expo-notifications` 57.0.15, adapter lokalnych powiadomień i obsługę uprawnień.
+Powiadomienia są jednorazowe i korzystają z chwil UTC domeny. Start aplikacji nie pyta o zgodę.
+Konfiguracja pozostaje lokalna: bez APNs, zdalnych powiadomień w tle i dodatkowej zgody na alarmy
+dokładne. Test introspekcji sprawdza wynik działania wszystkich pluginów.
+Pełne `nub run check` przechodzi: 52 zestawy, 344 testy. React Doctor: 100/100, bez uwag.
+Expo Doctor: 19/21 kontroli — brak rozpoznania `nub.lock`, TypeScript 7 i dostępne nowsze patche
+pakietów Expo. Szczegóły: `local-reminder-notifications.md`. Nie aktualizowano całego SDK.
+Nie zmieniano układu UI i nie weryfikowano jeszcze dostarczania na urządzeniach w tym etapie.
 
-Następny krok to etap 3: integracja natywnych powiadomień i uprawnień. Następnie uzgadnianie
-harmonogramu oraz interfejs z weryfikacją natywną.
+Następny krok to etap 4: uzgadnianie harmonogramu z danymi i uprawnieniami po zmianach,
+usuwaniu oraz restarcie, bez duplikatów. Następnie interfejs i weryfikacja natywna.

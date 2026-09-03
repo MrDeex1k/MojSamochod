@@ -4,7 +4,7 @@
 
 **Status:** ustalenia zaakceptowane przez użytkownika.
 
-**Faza:** 6 — przypomnienia. Etapy 1–2 (domena, persystencja i eksport) zaimplementowane.
+**Faza:** 6 — przypomnienia. Etapy 1–3 zaimplementowane; weryfikacja dostarczania na urządzeniach pozostaje do wykonania.
 
 Dokument zapisuje uzgodniony zakres i zachowanie produktu. Szczegóły techniczne harmonogramu
 oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
@@ -15,8 +15,8 @@ oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
    utworzenia i aktualizacji, walidacja dat i stref, stany terminu oraz obliczanie planu powiadomień.
 2. **Gotowe:** SQLite, migracja `0007_add_vehicle_reminders.sql`, repozytorium, operacje
    aplikacyjne i [eksport JSON v4](data-export-v4.md).
-3. **Następne:** integracja natywnych powiadomień i uprawnień.
-4. Uzgadnianie harmonogramu po zmianach danych, restarcie i zmianie uprawnień.
+3. **Gotowe:** adapter lokalnych powiadomień, obsługa uprawnień i konfiguracja natywna.
+4. **Następne:** uzgadnianie harmonogramu po zmianach danych, restarcie i zmianie uprawnień.
 5. Interfejs telefonu i tabletu oraz lokalizacja.
 6. Weryfikacja natywna, poprawki i dokumentacja końcowa.
 
@@ -44,6 +44,15 @@ Testy wykonują SQL, migracje i transakcje sterownika Expo Drizzle na rzeczywist
 testowy adapter transportu. Obejmują migrację istniejących danych, ponowne uruchomienie migratora,
 ponowne otwarcie pliku, konflikty, izolację pojazdów i rollback błędu zapisu.
 Nie zastępuje to testów silnika SQLite i powiadomień na urządzeniach, zaplanowanych na dalsze etapy.
+
+Etap 3 wprowadza `expo-notifications` 57.0.15 i port `ReminderNotifications`. Harmonogram domeny
+jest przekazywany jako jednorazowe chwile UTC. Start aplikacji rejestruje tylko prezentację
+powiadomień w foreground; nie pyta o zgodę ani nie planuje terminów. Żądanie zgody jest osobną
+operacją przeznaczoną dla kontekstowego objaśnienia w UI etapu 5. Adapter rozróżnia prowizoryczną
+zgodę iOS oraz blokadę kanału Androida i udostępnia przejście do ustawień systemowych.
+Nie wprowadzamy zdalnych powiadomień ani dodatkowej zgody na alarmy dokładne. Powiadomienie
+może być opóźnione przez system operacyjny. Konfigurację, granice integracji oraz dalsze testy
+opisuje [local-reminder-notifications.md](local-reminder-notifications.md).
 
 ## Zakres i własność
 

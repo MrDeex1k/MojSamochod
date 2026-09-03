@@ -147,7 +147,10 @@ records without storing derived consumption values.
 Phase 6 stages 1–2 add pure reminder-domain rules, a vehicle-owned SQLite reminder table,
 and application services. Migration `0007_add_vehicle_reminders.sql` enforces one current deadline
 per vehicle and kind. JSON export v4 adds reminder source data without device notification state.
-Native notification integration and reminder UI are not implemented yet.
+Stage 3 adds `expo-notifications` 57.0.15 behind an application port, explicit permission handling,
+an Android notification channel, and one-shot absolute-time scheduling. The local-only config
+removes the APNs entitlement introduced by the default plugin. Schedule reconciliation, reminder
+UI and native delivery verification remain pending; see [local-reminder-notifications.md](local-reminder-notifications.md).
 
 ## Planned capabilities and open selections
 
@@ -156,7 +159,6 @@ yet. A short technical spike should confirm each choice before it becomes a prod
 
 | Capability              | Planned direction                                                           | Decision still required                                                          |
 | ----------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Reminders               | Local notifications scheduled from stored deadlines                         | Permission flow, rescheduling rules, timezone and overdue behavior.              |
 | Purchases               | Monthly and annual App Store and Google Play subscriptions                  | Purchase library, products, entitlement model, restore flow, receipt validation. |
 | Premium synchronization | User-initiated, encrypted direct transfer established by scanning a QR code | Serverless transport, identity, encryption, conflicts, retries, and recovery.    |
 

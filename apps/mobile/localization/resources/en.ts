@@ -1,4 +1,7 @@
 export const en = {
+  notifications: {
+    channelName: "Vehicle reminders",
+  },
   common: {
     appName: "My Car",
   },

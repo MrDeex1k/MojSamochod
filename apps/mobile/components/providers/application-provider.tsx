@@ -2,6 +2,9 @@ import { createContext, type PropsWithChildren, useContext, useEffect, useState 
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
+import type { ReminderNotifications } from "@/application/notifications/reminder-notifications";
+import { NativeReminderNotifications } from "@/infrastructure/notifications/native-reminder-notifications";
+import { appI18n } from "@/localization/i18n";
 import { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 import { RefuellingService } from "@/application/refuelling/refuelling-service";
 import { ReminderService } from "@/application/reminders/reminder-service";
@@ -46,6 +49,7 @@ export type ApplicationServices = Readonly<{
   photoPicker: VehiclePhotoPicker;
   refuellings: RefuellingService;
   reminders: ReminderService;
+  reminderNotifications: ReminderNotifications;
   vehicles: VehicleRepository;
 }>;
 
@@ -121,6 +125,9 @@ function createApplicationServices(database: AppDatabase): ApplicationServices {
     photoPicker: new GalleryVehiclePhotoPicker(),
     refuellings: new RefuellingService(clock, idGenerator, refuellingRepository),
     reminders: new ReminderService(clock, idGenerator, new DrizzleReminderRepository(database)),
+    reminderNotifications: new NativeReminderNotifications(clock, () =>
+      appI18n.t("notifications.channelName"),
+    ),
     vehicles: vehicleHistory,
   };
 }
