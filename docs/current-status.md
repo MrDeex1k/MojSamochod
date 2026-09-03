@@ -182,7 +182,12 @@ opisywanego etapu.
 
 Ustalenia Fazy 6 zostały zaakceptowane i zapisane w
 [reminder-domain-decisions.md](reminder-domain-decisions.md). Branch `feat/reminders` jest utworzony.
-Implementacja nie została rozpoczęta. Następny krok to domena przypomnień i testy: opcjonalne
-terminy ubezpieczenia i badania technicznego, stany daty oraz strefa urządzenia zapamiętana przy
-utworzeniu przypomnienia i zachowywana po podróży. Następnie persystencja, harmonogram, uprawnienia
-i interfejs z weryfikacją natywną.
+Etap 1 jest zaimplementowany: domena przypomnień, walidacja dat i stref, tworzenie i edycja,
+stany daty oraz plan powiadomień na 09:00 w zapamiętanej strefie. Testy obejmują zmiany czasu,
+granice dnia, niestandardowe przesunięcia stref i pomijanie minionych powiadomień.
+Pełne `nub run check` przechodzi: 48 zestawów, 283 testy. Na tym etapie nie zmieniano UI,
+zależności ani schematu bazy i nie uruchamiano testów natywnych.
+
+Następny krok to etap 2: persystencja, unikalność rodzaju przypomnienia dla pojazdu, operacje
+aplikacyjne i eksport JSON. Następnie integracja powiadomień, uzgadnianie harmonogramu,
+uprawnienia i interfejs z weryfikacją natywną.

@@ -152,7 +152,8 @@ adaptive phone/tablet UI have automated and native coverage.
 
 ## Phase 6 — Reminders
 
-**Status:** Domain decisions accepted; implementation not started. See
+**Status:** Domain decisions accepted; implementation stage 1 (domain rules and automated tests)
+is complete. Persistence, native notifications, reconciliation, and UI remain pending. See
 [reminder-domain-decisions.md](reminder-domain-decisions.md) for the working contract.
 
 ### Steps
@@ -254,6 +255,7 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Implement the Phase 6 reminder domain and its tests on `feat/reminders`, following the accepted
-decisions in [reminder-domain-decisions.md](reminder-domain-decisions.md), then add persistence,
-permission handling, deterministic scheduling, and native UI verification.
+Implement Phase 6 persistence and versioned JSON export on `feat/reminders`, following the domain
+rules and accepted decisions in [reminder-domain-decisions.md](reminder-domain-decisions.md).
+Enforce one reminder per vehicle and kind before adding native notification integration,
+schedule reconciliation, and UI.

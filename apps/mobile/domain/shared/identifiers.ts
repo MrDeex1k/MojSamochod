@@ -2,11 +2,13 @@ declare const documentIdBrand: unique symbol;
 declare const historyEntryIdBrand: unique symbol;
 declare const managedFileIdBrand: unique symbol;
 declare const refuellingIdBrand: unique symbol;
+declare const reminderIdBrand: unique symbol;
 declare const vehicleIdBrand: unique symbol;
 
 export type HistoryEntryId = string & { readonly [historyEntryIdBrand]: true };
 export type ManagedFileId = string & { readonly [managedFileIdBrand]: true };
 export type RefuellingId = string & { readonly [refuellingIdBrand]: true };
+export type ReminderId = string & { readonly [reminderIdBrand]: true };
 export type VehicleId = string & { readonly [vehicleIdBrand]: true };
 
 const uuidV7Pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -44,5 +46,10 @@ export function refuellingIdFromUuidV7(value: string): RefuellingId {
 export function vehicleIdFromUuidV7(value: string): VehicleId {
   assertUuidV7(value);
   return value as VehicleId;
+}
+
+export function reminderIdFromUuidV7(value: string): ReminderId {
+  assertUuidV7(value);
+  return value as ReminderId;
 }
 export type DocumentId = string & { readonly [documentIdBrand]: true };
