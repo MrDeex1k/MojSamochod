@@ -188,6 +188,12 @@ it("requires a date and preserves drafts after picker dismissal and save failure
   await userEvent.press(screen.getByRole("button", { name: "Save deadline" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(/Could not save the deadline/);
   expect(screen.getByText("Dec 1, 2026")).toBeOnTheScreen();
+  expect(screen.getByRole("button", { name: "Save deadline" })).toBeEnabled();
+  repository.create.mockRejectedValueOnce(new Error("Storage unavailable"));
+  await userEvent.press(screen.getByRole("button", { name: "Save deadline" }));
+  expect(screen.getByRole("button", { name: "Save deadline" })).toBeEnabled();
+  await userEvent.press(screen.getByRole("button", { name: "Save deadline" }));
+  expect(await screen.findByRole("button", { name: "Edit deadline: Insurance" })).toBeOnTheScreen();
 });
 
 it("preserves the original zone during editing and permits disabling every offset", async () => {
@@ -209,29 +215,36 @@ it("preserves the original zone during editing and permits disabling every offse
   expect(notifications.requestPermissionAfterExplanation).not.toHaveBeenCalled();
 });
 
-it("requires confirmation before deletion and keeps the form on storage failure", async () => {
-  const { repository } = await setup([fixture()]);
-  const alert = jest.spyOn(Alert, "alert");
-  await userEvent.press(screen.getByRole("button", { name: "Edit deadline: Insurance" }));
-  await userEvent.press(screen.getByRole("button", { name: "Delete deadline" }));
-  expect(repository.delete).not.toHaveBeenCalled();
-  repository.delete.mockResolvedValueOnce(repositoryFailure("unavailable", "delete"));
-  await act(() => {
-    alert.mock.calls
-      .at(-1)?.[2]
-      ?.find((button) => button.style === "destructive")
-      ?.onPress?.();
-  });
-  expect(await screen.findByRole("alert")).toHaveTextContent(/Could not delete the deadline/);
-  await userEvent.press(screen.getByRole("button", { name: "Delete deadline" }));
-  await act(() => {
-    alert.mock.calls
-      .at(-1)?.[2]
-      ?.find((button) => button.style === "destructive")
-      ?.onPress?.();
-  });
-  expect(await screen.findByRole("button", { name: "Add deadline: Insurance" })).toBeOnTheScreen();
-});
+it.each(["result", "exception"])(
+  "allows retrying deletion after a storage %s failure",
+  async (failure) => {
+    const { repository } = await setup([fixture()]);
+    const alert = jest.spyOn(Alert, "alert");
+    await userEvent.press(screen.getByRole("button", { name: "Edit deadline: Insurance" }));
+    await userEvent.press(screen.getByRole("button", { name: "Delete deadline" }));
+    expect(repository.delete).not.toHaveBeenCalled();
+    if (failure === "exception")
+      repository.delete.mockRejectedValueOnce(new Error("Storage unavailable"));
+    else repository.delete.mockResolvedValueOnce(repositoryFailure("unavailable", "delete"));
+    await act(() => {
+      alert.mock.calls
+        .at(-1)?.[2]
+        ?.find((button) => button.style === "destructive")
+        ?.onPress?.();
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Could not delete the deadline/);
+    await userEvent.press(screen.getByRole("button", { name: "Delete deadline" }));
+    await act(() => {
+      alert.mock.calls
+        .at(-1)?.[2]
+        ?.find((button) => button.style === "destructive")
+        ?.onPress?.();
+    });
+    expect(
+      await screen.findByRole("button", { name: "Add deadline: Insurance" }),
+    ).toBeOnTheScreen();
+  },
+);
 
 it("requires confirmation for a dirty draft and returns directly for an unchanged form", async () => {
   await setup();
@@ -314,4 +327,34 @@ it("renders Polish labels when the selected language changes", async () => {
   });
   expect(screen.getByRole("header", { name: "Przypomnienia" })).toBeOnTheScreen();
   expect(screen.getByRole("button", { name: "Edytuj termin: Ubezpieczenie" })).toBeOnTheScreen();
+});
+
+it.each([
+  ["requestPermissionAfterExplanation", "Allow notifications"],
+  ["openSettings", "Open notification settings"],
+] as const)("unlocks controls after a rejected %s operation", async (operation, label) => {
+  const { notifications } = await setup([fixture()]);
+  notifications[operation].mockRejectedValueOnce(new Error("Native operation failed"));
+  await userEvent.press(screen.getByRole("button", { name: label }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(/Your deadlines are safe/);
+  expect(screen.getByRole("button", { name: label })).toBeEnabled();
+  await userEvent.press(screen.getByRole("button", { name: label }));
+  expect(notifications[operation]).toHaveBeenCalledTimes(2);
+  expect(screen.queryByRole("alert")).not.toBeOnTheScreen();
+});
+
+it("allows another retry after an unexpected reconciliation rejection", async () => {
+  const { notifications, schedule } = await setup([fixture()]);
+  notifications.getPermission.mockResolvedValueOnce({
+    ok: false,
+    error: { kind: "unavailable", operation: "permission" },
+  });
+  await act(async () => {
+    await schedule.reconcile();
+  });
+  jest.spyOn(schedule, "reconcile").mockRejectedValueOnce(new Error("Unexpected failure"));
+  await userEvent.press(screen.getByRole("button", { name: "Try again" }));
+  expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+  await userEvent.press(screen.getByRole("button", { name: "Try again" }));
+  expect(screen.queryByRole("alert")).not.toBeOnTheScreen();
 });

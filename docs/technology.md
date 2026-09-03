@@ -23,10 +23,10 @@ versions.
 
 | Area                  | Current choice                                                           | Role                                                              |
 | --------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| Application framework | Expo SDK 57 (`expo` 57.0.18)                                             | Cross-platform runtime, native modules, and development workflow. |
+| Application framework | Expo SDK 57 (`expo` 57.0.19)                                             | Cross-platform runtime, native modules, and development workflow. |
 | UI runtime            | React Native 0.86.3 and React 19.2.3                                     | Shared Android phone/tablet, iOS, and iPadOS application code.    |
 | Language              | TypeScript 7.0.2                                                         | Static typing for application and domain code.                    |
-| Navigation            | Expo Router 57.0.17                                                      | File-based navigation and typed routes.                           |
+| Navigation            | Expo Router 57.0.18                                                      | File-based navigation and typed routes.                           |
 | Styling               | NativeWind 5.0.0-preview.4, Tailwind CSS 4.3.3, `react-native-css` 3.0.7 | Shared utility styling and CSS interoperability.                  |
 | Animation runtime     | React Native Reanimated 4.5.1 and React Native Worklets 0.10.1           | Performant native-thread interaction and motion where justified.  |
 | Gestures              | React Native Gesture Handler 2.32.0                                      | Platform-aware touch interactions.                                |
@@ -36,10 +36,18 @@ versions.
 | Database migrations   | Drizzle Kit 0.31.10                                                      | Generates reviewable SQL migrations bundled with the application. |
 | Record identifiers    | UUID 14.0.2 and Expo Crypto 57.0.2                                       | UUIDv7 generation backed by native secure randomness.             |
 | Document import       | Expo Document Picker 57.0.1                                              | Native PDF/JPEG/PNG selection with platform-granted file access.  |
-| Native file export    | Expo Sharing 57.0.16                                                     | Platform share/export surface for managed documents.              |
+| Native file export    | Expo Sharing 57.0.17                                                     | Platform share/export surface for managed documents.              |
 
 NativeWind 5 is intentionally a preview dependency. Its compatibility with the active Expo SDK
 must be rechecked before SDK upgrades and before a production release.
+
+Phase 6 stage 6 refreshes compatible dependencies without changing the SDK major, Node pin or
+NUB pin. Keep the `lightningcss` 1.30.1 override: the
+[NativeWind v5 installation guide](https://www.nativewind.dev/v5/getting-started/installation)
+still requires it to avoid CSS deserialization failures. React/RN and native modules follow the
+installed Expo compatibility matrix; Jest 29 matches the Jest 29 internals of `jest-expo` 57.0.5.
+The working [dependency report](phase-6-step-6-dependencies.md) records exact changes, exceptions
+and verification. Newer registry versions alone are not a reason to bypass SDK compatibility.
 
 ## Theme source of truth
 
@@ -54,7 +62,8 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
 ## Current repository tooling
 
 - Node.js 24.18.0 is pinned in `.node-version`.
-- NUB 0.8.0 is the only Node.js package manager and script runner used by the repository.
+- NUB is the only Node.js package manager and script runner; the manifest pins 0.8.0.
+  The local executable used during the stage 6 update reported 0.8.3. No toolchain pin was changed.
 - NUB uses the hoisted `node_modules` layout required by the NativeWind 5 and React Native CSS
   Metro resolver.
 - Socket Firewall protects dependency mutations and enforces a 24-hour dependency cooling period.
@@ -147,10 +156,12 @@ records without storing derived consumption values.
 Phase 6 stages 1–2 add pure reminder-domain rules, a vehicle-owned SQLite reminder table,
 and application services. Migration `0007_add_vehicle_reminders.sql` enforces one current deadline
 per vehicle and kind. JSON export v4 adds reminder source data without device notification state.
-Stage 3 adds `expo-notifications` 57.0.15 behind an application port, explicit permission handling,
+Stage 3 adds `expo-notifications` (updated to 57.0.16 in stage 6) behind an application port, explicit permission handling,
 an Android notification channel, and one-shot absolute-time scheduling. The local-only config
-removes the APNs entitlement introduced by the default plugin. Schedule reconciliation, reminder
-UI and native delivery verification remain pending; see [local-reminder-notifications.md](local-reminder-notifications.md).
+removes the APNs entitlement introduced by the default plugin. Stages 4–5 add schedule reconciliation
+and localized reminder UI. Stage 6 updates dependencies and verifies tests and native bundles;
+final native delivery and application-wide regression acceptance remain stage 7. See
+[local-reminder-notifications.md](local-reminder-notifications.md).
 
 ## Planned capabilities and open selections
 

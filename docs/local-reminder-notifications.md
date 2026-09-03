@@ -151,3 +151,14 @@ an explicit inspection/scheduling error and retry without losing the saved deadl
 pretend permission was granted or silently skip channel checks. Apple Expo Go permission denial
 and grant were exercised successfully. These findings do not prove behavior in our own build.
 Stage 7 must repeat the permission and delivery matrix using rebuilt application binaries.
+
+## Stage 6 dependency verification
+
+Updated to Expo 57.0.19 and `expo-notifications` 57.0.16. The latter's changelog records no
+user-facing changes; source inspection still shows eager remote registration and the Android
+Expo Go exception. The local-only facade remains, with passing import/adapter tests and Hermes
+bundle exports for both platforms. This source check does not assert that Android Go's native
+channel-provider failure was repaired. Rebuilt app verification remains stage 7.
+
+Expo Doctor 1.20.4 passes 19/21 checks: only unrecognized `nub.lock` and the intentional
+TypeScript 7 choice remain. No newer Expo patch mismatch remains in the checked dependency set.

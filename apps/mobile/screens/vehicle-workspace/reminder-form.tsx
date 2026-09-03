@@ -90,15 +90,14 @@ export function ReminderForm({
         setError(
           t(result.error.kind === "conflict" ? "reminders.conflictError" : "reminders.saveError"),
         );
-        return;
+      } else {
+        onSaved();
       }
-      onSaved();
     } catch {
       setError(t("reminders.saveError"));
-    } finally {
-      pending.current = false;
-      setBusy(false);
     }
+    pending.current = false;
+    setBusy(false);
   };
   const remove = () =>
     Alert.alert(t("reminders.deleteTitle"), t("reminders.deleteDescription"), [
@@ -118,10 +117,9 @@ export function ReminderForm({
               else setError(t("reminders.deleteError"));
             } catch {
               setError(t("reminders.deleteError"));
-            } finally {
-              pending.current = false;
-              setBusy(false);
             }
+            pending.current = false;
+            setBusy(false);
           })();
         },
       },

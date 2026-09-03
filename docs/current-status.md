@@ -68,7 +68,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 57 zestawów i 386 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 57 zestawów i 390 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -211,16 +211,22 @@ tworzenie/edycję/usuwanie, wybór wyprzedzeń i stany daty. Zapis i usunięcie 
 przypomnień. Formularz zachowuje strefę istniejącego terminu, ostrzega przed porzuceniem zmian,
 a zgoda jest osobną, opcjonalną czynnością po zapisie. UI reaguje na wynik uzgadniania,
 odmowę i błąd odczytu uprawnień; błąd nie usuwa ani nie blokuje terminów.
-Pełne `nub run check` przechodzi: 57 zestawów, 386 testów. React Doctor 0.9.13: 87/100;
-dwie uwagi dotyczą celowo szeregowych operacji anulowania/planowania z etapu 4,
-trzecia istniejącej złożoności nawigacji `HistoryWorkspaceView`. Bez wyciszania reguł.
-Expo Doctor: 19/21 kontroli — brak rozpoznania `nub.lock`, TypeScript 7 i dostępne nowsze patche
-pakietów Expo. Szczegóły: `local-reminder-notifications.md`. Nie aktualizowano całego SDK.
+Etap 6 aktualizuje 15 bezpośrednich pakietów i zależności przechodnie, zachowując zgodność SDK 57,
+przypięte wersje, SFW i karencję 24 godzin. Expo ma teraz wersję 57.0.19, powiadomienia 57.0.16.
+Usunięto pięć konstrukcji `try/finally`, które blokowały optymalizację nowych formularzy przez
+React Compiler; testy potwierdzają odblokowanie przycisków po błędach i możliwość ponowienia.
+Pełne `nub run check` przechodzi: 57 zestawów, 390 testów. React Doctor 0.9.13: 83/100,
+bez błędów, 11 opisanych ostrzeżeń. Wynik 87/100 z etapu 5 obejmował mniej plików; pełniejszy
+skan w etapie 6 wykrył i pozwolił poprawić pominięte wcześniej problemy kompilatora.
+Expo Doctor: 19/21 kontroli — tylko brak rozpoznania `nub.lock` i świadomy TypeScript 7.
+Instalacja z zamrożonego lockfile'a i eksporty Hermes dla obu platform przechodzą.
+Audyt podatności nie uzyskał odpowiedzi z rejestru po dwóch próbach; brak wyniku nie oznacza
+braku podatności. Szczegóły i wyjątki: [phase-6-step-6-dependencies.md](phase-6-step-6-dependencies.md).
 UI sprawdzono w Expo Go 57.0.9 na iPhonie 17 Pro, iPadzie Air 11 (M4), Pixelu 9 i Pixel Tablet.
 Zakres, wyniki i ograniczenia: [phase-6-step-5-verification.md](phase-6-step-5-verification.md).
 Na Androidzie Expo Go zgłasza błąd natywnego dostawcy kanałów powiadomień; nie traktujemy tego
 hosta jako dowodu poprawności uprawnień ani harmonogramu własnej aplikacji.
 
-Następny krok to etap 6 (aktualizacja wszystkich pakietów do najnowszego zgodnego zestawu),
-a następnie etap 7 (pełna weryfikacja natywna po aktualizacji, także we własnych buildach).
-Aktualizacji zależności jeszcze nie rozpoczęto.
+Następny krok to etap 7: pełna weryfikacja natywna po aktualizacji, także we własnych buildach.
+Obejmie rzeczywiste powiadomienia, uprawnienia, restart, zmianę strefy oraz regresje pojazdu,
+historii, dokumentów, tankowań, jednostek i eksportu. Próby UI z etapu 5 tego nie zastąpiły.

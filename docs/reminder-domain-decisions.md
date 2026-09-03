@@ -4,7 +4,7 @@
 
 **Status:** ustalenia zaakceptowane przez użytkownika.
 
-**Faza:** 6 — przypomnienia. Etapy 1–5 zaimplementowane; końcowa weryfikacja dostarczania na urządzeniach pozostaje do wykonania.
+**Faza:** 6 — przypomnienia. Etapy 1–6 zaimplementowane; końcowa weryfikacja dostarczania na urządzeniach pozostaje do wykonania.
 
 Dokument zapisuje uzgodniony zakres i zachowanie produktu. Szczegóły techniczne harmonogramu
 oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
@@ -20,9 +20,10 @@ oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
 5. **Gotowe:** interfejs telefonu i tabletu, lokalizacja PL/EN, kontekstowe objaśnienie zgody,
    stany uprawnień i błędów oraz testy UI. Zakres prób natywnych opisuje
    [raport etapu 5](phase-6-step-5-verification.md); nie zamykają one etapu 7.
-6. **Następne:** aktualizacja wszystkich zależności produkcyjnych i deweloperskich repozytorium do najnowszych
-   zgodnych wersji, wraz z koniecznymi dostosowaniami kodu i testami automatycznymi.
-7. Pełna weryfikacja natywna po aktualizacji pakietów, poprawki regresji i dokumentacja końcowa.
+6. **Gotowe:** przegląd wszystkich zależności, aktualizacja 15 bezpośrednich pakietów i grafu
+   przechodniego, poprawki zgodności React Compiler i testy automatyczne. Zgodność SDK, karencja
+   i wyjątki: [raport zależności](phase-6-step-6-dependencies.md).
+7. **Następne:** pełna weryfikacja natywna po aktualizacji pakietów, poprawki regresji i dokumentacja końcowa.
 
 Etap 6 obejmuje root repozytorium i workspace mobilny, przegląd zależności przechodnich oraz
 overrides i aktualizację `nub.lock`. Pakiety Expo, React i React Native aktualizujemy jako zgodny

@@ -31,18 +31,18 @@ export function ReminderNotificationStatus({
       await schedule.reconcile();
     } catch {
       setError(true);
-    } finally {
-      setBusy(false);
     }
+    setBusy(false);
   };
   const retry = async () => {
     setBusy(true);
     setError(false);
     try {
       await schedule.reconcile();
-    } finally {
-      setBusy(false);
+    } catch {
+      setError(true);
     }
+    setBusy(false);
   };
   const settings = async () => {
     setBusy(true);
@@ -52,9 +52,8 @@ export function ReminderNotificationStatus({
       if (!response.ok) setError(true);
     } catch {
       setError(true);
-    } finally {
-      setBusy(false);
     }
+    setBusy(false);
   };
   const canRequest =
     permission && !permission.canSchedule && permission.canAskAgain && !permission.channelBlocked;

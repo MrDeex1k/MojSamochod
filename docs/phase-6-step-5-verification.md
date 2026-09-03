@@ -41,3 +41,9 @@ trwałymi artefaktami repozytorium. Nie używano Expo Web do akceptacji UI.
   anulowania i planowania z etapu 4; równoległe operacje zmieniłyby kontrakt odzyskiwania po błędzie.
   Trzecia dotyczy istniejącej złożoności przełączania widoków w `HistoryWorkspaceView`.
   Nie dodano wyciszeń i nie rozszerzano kroku o przebudowę całej nawigacji.
+
+Uzupełnienie z etapu 6: powyższy skan przed commitem objął 34 pliki i nie uwzględnił wszystkich
+nowych plików nieśledzonych. Pełniejszy skan po commicie objął 40 plików i wykrył dodatkowe
+diagnostyki; pięć problemów React Compiler poprawiono w etapie 6. Wynik 87/100 nie oznaczał
+pełnego audytu nowych formularzy. Aktualny wynik i zakres opisuje
+[raport etapu 6](phase-6-step-6-dependencies.md).
