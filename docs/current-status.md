@@ -180,6 +180,9 @@ opisywanego etapu.
 
 ## Następny krok
 
-Rozpocząć Fazę 6 na dedykowanym branchu od ustalenia modelu terminów przeglądu i ubezpieczenia,
-stanów przypomnień, przepływu uprawnień oraz zasad deterministycznego planowania lokalnych
-powiadomień. Persystencja i interfejs powinny powstać dopiero po zatwierdzeniu tych decyzji.
+Ustalenia Fazy 6 zostały zaakceptowane i zapisane w
+[reminder-domain-decisions.md](reminder-domain-decisions.md). Branch `feat/reminders` jest utworzony.
+Implementacja nie została rozpoczęta. Następny krok to domena przypomnień i testy: opcjonalne
+terminy ubezpieczenia i badania technicznego, stany daty oraz strefa urządzenia zapamiętana przy
+utworzeniu przypomnienia i zachowywana po podróży. Następnie persystencja, harmonogram, uprawnienia
+i interfejs z weryfikacją natywną.

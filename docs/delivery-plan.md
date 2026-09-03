@@ -152,21 +152,25 @@ adaptive phone/tablet UI have automated and native coverage.
 
 ## Phase 6 — Reminders
 
-**Status:** Not started. Domain ownership, deadline semantics, reminder states, notification
-permission flow, and deterministic local scheduling must be agreed before implementation.
+**Status:** Domain decisions accepted; implementation not started. See
+[reminder-domain-decisions.md](reminder-domain-decisions.md) for the working contract.
 
 ### Steps
 
-1. Add inspection and insurance deadlines to the vehicle model.
+1. Add optional insurance and technical-inspection reminders as separate vehicle-owned records,
+   with at most one current reminder per type.
 2. Design notification permission as contextual education, not an onboarding demand.
 3. Schedule and reschedule local notifications deterministically.
-4. Handle timezone changes, edited dates, overdue states, permission denial, and removed vehicles.
+4. Preserve each reminder's creation-time device timezone across travel, honor that zone's daylight
+   saving rules, and handle edited dates, overdue states, permission denial, and removed vehicles.
 5. Provide an in-app reminder list so notifications are not the only source of truth.
 
 ### Exit criteria
 
 - Deadlines work offline and remain visible without notification permission.
 - Editing or deleting a deadline updates scheduled notifications correctly.
+- Notifications remain at 09:00 in the retained reminder timezone; calendar-day offsets and
+  deadline states use that same zone. JSON export includes reminder data, not device scheduling state.
 - Platform-specific notification behavior is verified on simulators and physical devices where
   required.
 
@@ -250,6 +254,6 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Start Phase 6 on a dedicated branch by defining the inspection and insurance deadline model,
-reminder states, notification-permission flow, and local notification scheduling rules before
-implementing persistence or UI.
+Implement the Phase 6 reminder domain and its tests on `feat/reminders`, following the accepted
+decisions in [reminder-domain-decisions.md](reminder-domain-decisions.md), then add persistence,
+permission handling, deterministic scheduling, and native UI verification.
