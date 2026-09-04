@@ -192,7 +192,7 @@ results remain unavailable; this is not a clean security audit or store-release 
 
 ## Phase 7 — Production hardening of the free application
 
-**Status:** Next phase; FREE scope agreed: one vehicle per device, no user-facing data export,
+**Status:** In progress; FREE scope agreed: one vehicle per device, no user-facing data export,
 database import, backup or restore, and no added analytics. Existing JSON contracts remain internal.
 Provide a confirmed erase-all action returning to first-vehicle setup, including managed file
 copies and owned scheduled alerts; do not delete users' original gallery or document files.
@@ -204,6 +204,12 @@ separately from app-level export. The publisher currently has no active Apple De
 membership or paid Google Play publisher registration; store distribution is not configured.
 The five steps below remain the roadmap; retry and assess the unavailable vulnerability audit
 before release, alongside documented diagnostic exceptions.
+
+Step 1 is implemented on `feat/free-release-hardening`: localized settings/privacy guidance,
+permission reduction and targeted accessibility checks. See the [step 1 report](phase-7-step-1-verification.md)
+for native coverage and an unresolved Android database-initialization incident after changing font
+scale; investigate it in lifecycle hardening before release. Published privacy information still
+requires publisher details. Next implementation step: safe erase-all and removal of outbound document actions.
 
 ### Steps
 
@@ -288,7 +294,8 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Agree Phase 7 scope and acceptance criteria, then start production hardening. Phase 6 is merged.
+Implement Phase 7 step 2: safe erase-all and removal of outbound document actions. Step 1 is
+implemented; see the [step 1 report](phase-7-step-1-verification.md). Phase 6 is merged.
 Native acceptance after dependency
 updates is recorded in the [stage 7 report](phase-6-step-7-verification.md); local build instructions
 are in [native-qa-builds.md](native-qa-builds.md). Retry the unavailable registry vulnerability audit

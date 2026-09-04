@@ -71,7 +71,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 59 zestawów i 398 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw na branchu Fazy 7 zawiera 60 zestawów i 403 testy komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -250,6 +250,11 @@ konfiguracja wydania oraz testy na fizycznych urządzeniach. Zakończenie Fazy 6
 jeszcze gotowości aplikacji do publikacji w sklepach.
 
 ### Ustalenia wejściowe Fazy 7
+
+Krok 1 zaimplementowano na `feat/free-release-hardening`: ustawienia i treści prywatności PL/EN,
+ograniczenie uprawnień, podpowiedzi dostępności i testy. Zakres natywny, diagnostyki i otwarty
+incydent inicjalizacji SQLite po zmianie skali Androida: [raport kroku 1](phase-7-step-1-verification.md).
+Następny jest krok 2. Pełna polityka prywatności i akceptacja fizycznych urządzeń pozostają przed nami.
 
 - Pierwsze wydanie to FREE: jeden pojazd na urządzenie, bez kont, synchronizacji i premium.
 - Nie udostępniamy użytkownikowi eksportu danych, backupu, importu ani odtwarzania bazy.

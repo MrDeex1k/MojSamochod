@@ -1,4 +1,28 @@
 export const en = {
+  settings: {
+    title: "Settings and privacy",
+    back: "Back to history",
+    free: {
+      title: "FREE version",
+      body: "One vehicle on this device. No account or subscription is required.",
+    },
+    data: {
+      title: "Your data",
+      body: "Vehicle records and copies of your attachments are stored locally. There is no database export, import or restore feature. Keep original invoices and photos outside the app. Deleting app data can permanently remove your records.",
+    },
+    permissions: {
+      title: "Permissions",
+      body: "You choose which photos and documents to add. The app does not use your camera or microphone. Notification permission is optional and is requested only when you choose to enable reminders.",
+    },
+    privacy: {
+      title: "Privacy",
+      body: "No analytics service is added to the app. There is no account or in-app cloud sync. Your device's backup and diagnostic settings are managed by the operating system.",
+    },
+    units: {
+      title: "Vehicle units",
+      body: "Change distance, fuel volume and consumption units in Edit vehicle. Existing records keep their stored values; displayed values are converted to your chosen units.",
+    },
+  },
   reminders: {
     title: "Reminders",
     kinds: { insurance: "Insurance", technicalInspection: "Technical inspection" },

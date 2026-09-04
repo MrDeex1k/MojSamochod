@@ -1,4 +1,28 @@
 export const pl = {
+  settings: {
+    title: "Ustawienia i prywatność",
+    back: "Wróć do historii",
+    free: {
+      title: "Wersja FREE",
+      body: "Jeden pojazd na tym urządzeniu. Nie potrzebujesz konta ani subskrypcji.",
+    },
+    data: {
+      title: "Twoje dane",
+      body: "Dane pojazdu i kopie załączników są przechowywane lokalnie. Nie ma funkcji eksportu, importu ani odtwarzania bazy. Zachowaj oryginały faktur i zdjęć poza aplikacją. Usunięcie danych aplikacji może bezpowrotnie usunąć Twoją ewidencję.",
+    },
+    permissions: {
+      title: "Uprawnienia",
+      body: "Samodzielnie wybierasz zdjęcia i dokumenty do dodania. Aplikacja nie używa aparatu ani mikrofonu. Zgoda na powiadomienia jest opcjonalna — prosimy o nią dopiero po wybraniu włączenia przypomnień.",
+    },
+    privacy: {
+      title: "Prywatność",
+      body: "Do aplikacji nie dodano usługi analitycznej. Nie ma konta ani synchronizacji z chmurą w aplikacji. Ustawieniami kopii zapasowych i diagnostyki urządzenia zarządza system operacyjny.",
+    },
+    units: {
+      title: "Jednostki pojazdu",
+      body: "Jednostki odległości, paliwa i zużycia zmienisz w Edytuj pojazd. Istniejące wpisy zachowują zapisane wartości; prezentowane liczby są przeliczane na wybrane jednostki.",
+    },
+  },
   reminders: {
     title: "Przypomnienia",
     kinds: { insurance: "Ubezpieczenie", technicalInspection: "Badanie techniczne" },

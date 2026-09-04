@@ -21,12 +21,22 @@ describe("TextField", () => {
 
     expect(screen.getByText("Brand is required")).toBeOnTheScreen();
     expect(screen.queryByText("Enter the manufacturer")).not.toBeOnTheScreen();
+    expect(screen.getByLabelText("Brand")).toHaveProp("accessibilityHint", "Brand is required");
   });
 
   it("can be disabled", async () => {
     await render(<TextField editable={false} label="Brand" />);
 
     expect(screen.getByLabelText("Brand")).toBeDisabled();
+  });
+
+  it("exposes helper text to assistive technology without disabling text scaling", async () => {
+    await render(<TextField label="Brand" helperText="Enter the manufacturer" />);
+    expect(screen.getByLabelText("Brand")).toHaveProp(
+      "accessibilityHint",
+      "Enter the manufacturer",
+    );
+    expect(screen.getByLabelText("Brand").props.allowFontScaling).not.toBe(false);
   });
 
   it("centers a single-line value without native padding or extra line height", async () => {

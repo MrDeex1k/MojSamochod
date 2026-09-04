@@ -8,6 +8,7 @@ type TextFieldProps = TextInputProps & {
 };
 
 export function TextField({
+  accessibilityHint,
   accessibilityState,
   className,
   editable = true,
@@ -30,6 +31,7 @@ export function TextField({
         {label}
       </Text>
       <TextInput
+        accessibilityHint={error ?? accessibilityHint ?? helperText}
         accessibilityLabel={label}
         accessibilityLabelledBy={labelId}
         accessibilityState={{ ...accessibilityState, disabled: !editable }}

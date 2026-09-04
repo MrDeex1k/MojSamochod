@@ -93,6 +93,7 @@ async function renderView(
       onEditVehicle={jest.fn()}
       onFuel={jest.fn()}
       onReminders={jest.fn()}
+      onSettings={jest.fn()}
       onFuelChanged={callbacks.onFuelChanged}
       onSaved={callbacks.onSaved}
       onSelectDocument={jest.fn()}

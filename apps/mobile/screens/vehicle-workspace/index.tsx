@@ -35,6 +35,7 @@ import { RefuellingDetail } from "./refuelling-detail";
 import { RefuellingForm } from "./refuelling-form";
 import { RefuellingList } from "./refuelling-list";
 import { RemindersSection } from "./reminders-section";
+import { SettingsSection } from "./settings-section";
 
 type WorkspaceData = Readonly<{
   documents: readonly VehicleDocument[];
@@ -53,6 +54,7 @@ type WorkspaceMode =
   | Readonly<{ kind: "history" }>
   | Readonly<{ kind: "fuel" }>
   | Readonly<{ kind: "reminders" }>
+  | Readonly<{ kind: "settings" }>
   | Readonly<{ kind: "refuelling-form"; refuelling?: Refuelling }>
   | Readonly<{ kind: "refuelling-detail"; refuelling: Refuelling }>
   | Readonly<{ kind: "select-type" }>
@@ -74,6 +76,7 @@ type VehicleWorkspaceViewProps = WorkspaceData &
     onEditVehicle: () => void;
     onFuel: () => void;
     onReminders: () => void;
+    onSettings: () => void;
     onFuelChanged: () => void;
     onAddRefuelling: () => void;
     onSaved: () => void;
@@ -151,6 +154,7 @@ export function VehicleWorkspaceScreen() {
       onEditVehicle={() => setMode({ kind: "vehicle-form", returnTo: "history" })}
       onFuel={() => setMode({ kind: "fuel" })}
       onReminders={() => setMode({ kind: "reminders" })}
+      onSettings={() => setMode({ kind: "settings" })}
       onFuelChanged={() => {
         setMode({ kind: "fuel" });
         setState({ status: "loading" });
@@ -170,6 +174,22 @@ export function VehicleWorkspaceScreen() {
 }
 
 export function VehicleWorkspaceView(props: VehicleWorkspaceViewProps) {
+  if (props.mode.kind === "settings") {
+    return (
+      <AdaptiveWorkspace
+        phone={<SettingsSection onBack={props.onCancelFlow} />}
+        primaryPane={<SettingsSection embedded onBack={props.onCancelFlow} />}
+        vehiclePane={
+          <VehicleSummary
+            onEdit={props.onEditVehicle}
+            photoUri={props.photoUri}
+            tablet
+            vehicle={props.vehicle}
+          />
+        }
+      />
+    );
+  }
   if (props.mode.kind === "reminders") {
     const { services, vehicle, onCancelFlow, onEditVehicle, photoUri } = props;
     return (
@@ -205,6 +225,7 @@ function HistoryWorkspaceView({
   onEditVehicle,
   onFuel,
   onReminders,
+  onSettings,
   onFuelChanged,
   onSaved,
   onSelectEntry,
@@ -309,6 +330,7 @@ function HistoryWorkspaceView({
         onEditVehicle={onEditVehicle}
         onFuel={onFuel}
         onReminders={onReminders}
+        onSettings={onSettings}
         onDocuments={onDocuments}
         onSelectEntry={onSelectEntry}
         photoUri={photoUri}
@@ -385,6 +407,7 @@ function HistoryWorkspaceView({
         onDocuments={onDocuments}
         onFuel={onFuel}
         onReminders={onReminders}
+        onSettings={onSettings}
         onSelectEntry={onSelectEntry}
         vehicle={vehicle}
       />
@@ -447,6 +470,7 @@ function PhoneWorkspace(
     | "onEditVehicle"
     | "onFuel"
     | "onReminders"
+    | "onSettings"
     | "onSelectEntry"
     | "photoUri"
     | "vehicle"
@@ -461,6 +485,7 @@ function PhoneWorkspace(
         <Button label={t("documents.title")} onPress={props.onDocuments} variant="secondary" />
         <Button label={t("refuelling.title")} onPress={props.onFuel} variant="secondary" />
         <Button label={t("reminders.title")} onPress={props.onReminders} variant="secondary" />
+        <Button label={t("settings.title")} onPress={props.onSettings} variant="secondary" />
         <HistoryContent
           entries={props.entries}
           onAddEntry={props.onAddEntry}
@@ -553,11 +578,19 @@ function HistoryCard({
   onDocuments,
   onFuel,
   onReminders,
+  onSettings,
   onSelectEntry,
   vehicle,
 }: Pick<
   VehicleWorkspaceViewProps,
-  "entries" | "onAddEntry" | "onDocuments" | "onFuel" | "onReminders" | "onSelectEntry" | "vehicle"
+  | "entries"
+  | "onAddEntry"
+  | "onDocuments"
+  | "onFuel"
+  | "onReminders"
+  | "onSettings"
+  | "onSelectEntry"
+  | "vehicle"
 >) {
   const { t } = useAppTranslation();
   return (
@@ -567,6 +600,7 @@ function HistoryCard({
         <Button label={t("documents.title")} onPress={onDocuments} variant="secondary" />
         <Button label={t("refuelling.title")} onPress={onFuel} variant="secondary" />
         <Button label={t("reminders.title")} onPress={onReminders} variant="secondary" />
+        <Button label={t("settings.title")} onPress={onSettings} variant="secondary" />
         <HistoryContent
           entries={entries}
           onAddEntry={onAddEntry}
