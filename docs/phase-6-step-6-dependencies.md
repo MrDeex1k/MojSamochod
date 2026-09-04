@@ -88,10 +88,14 @@ Uprawnienia i harmonogram trzeba zweryfikować we własnej aplikacji w etapie 7.
 
 ## Następny etap
 
-Etap 7 nie został wykonany. Wymaga własnych przebudowanych aplikacji i testów na iPhonie,
+W momencie zamykania etapu 6 etap 7 nie był wykonany. Wymagał własnych przebudowanych aplikacji i testów na iPhonie,
 iPadzie, telefonie Android i tablecie Android. Oprócz przypomnień obejmuje regresje wcześniejszych
 funkcji, uprawnienia, rzeczywiste dostarczanie/anulowanie, restart i zmianę strefy. Testy UI
 wykonane w etapie 5 w Expo Go nie są akceptacją całej fazy.
+
+Aktualizacja: etap 7 wykonano 2026-09-04. Wyniki własnych buildów, próby powiadomień,
+poprawki i nadal niedostępny wynik ponowionego audytu opisuje
+[raport końcowy](phase-6-step-7-verification.md).
 
 Procedura aktualizacji opiera się na
 [oficjalnym przewodniku Expo](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/).

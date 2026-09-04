@@ -4,10 +4,11 @@
 
 **Status:** ustalenia zaakceptowane przez użytkownika.
 
-**Faza:** 6 — przypomnienia. Etapy 1–6 zaimplementowane; końcowa weryfikacja dostarczania na urządzeniach pozostaje do wykonania.
+**Faza:** 6 — przypomnienia. Etapy 1–7 zakończone; gotowe do review/PR. Zakres weryfikacji
+i otwarte ograniczenia: [raport etapu 7](phase-6-step-7-verification.md).
 
 Dokument zapisuje uzgodniony zakres i zachowanie produktu. Szczegóły techniczne harmonogramu
-oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
+oraz ograniczenia platform opisują dokumentacja techniczna i raport końcowej weryfikacji.
 
 ## Postęp wdrożenia
 
@@ -23,7 +24,9 @@ oraz ograniczenia platform wymagają weryfikacji podczas implementacji.
 6. **Gotowe:** przegląd wszystkich zależności, aktualizacja 15 bezpośrednich pakietów i grafu
    przechodniego, poprawki zgodności React Compiler i testy automatyczne. Zgodność SDK, karencja
    i wyjątki: [raport zależności](phase-6-step-6-dependencies.md).
-7. **Następne:** pełna weryfikacja natywna po aktualizacji pakietów, poprawki regresji i dokumentacja końcowa.
+7. **Gotowe:** własne buildy na czterech formatach, zgody i dostarczanie powiadomień, restart,
+   strefy, reprezentatywne regresje, poprawka lokalizacji natywnych i dokumentacja końcowa.
+   Audyt podatności nadal bez wyniku; fizyczne urządzenia i akceptacja sklepowa należą do Fazy 7.
 
 Etap 6 obejmuje root repozytorium i workspace mobilny, przegląd zależności przechodnich oraz
 overrides i aktualizację `nub.lock`. Pakiety Expo, React i React Native aktualizujemy jako zgodny
@@ -81,7 +84,7 @@ Błędy zachowujemy w wyniku ostatniego przebiegu; ponowienie następuje jawnie 
 zdarzeniu. Nie ma automatycznej pętli retry w tle. Brak zgody nie usuwa terminów.
 Treść powiadomień jest po polsku lub angielsku z angielskim fallbackiem. Testy automatyczne
 obejmują częściowe awarie, restart koordynatora i usunięcie podczas planowania; dostarczanie
-przez system operacyjny pozostaje do sprawdzenia natywnie w etapie 7.
+przez system operacyjny sprawdzono natywnie w etapie 7, w zakresie opisanym w raporcie.
 
 ## Zakres i własność
 

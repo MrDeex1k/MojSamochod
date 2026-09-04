@@ -152,11 +152,13 @@ adaptive phone/tablet UI have automated and native coverage.
 
 ## Phase 6 — Reminders
 
-**Status:** Domain decisions accepted; implementation stages 1–6 (domain rules, persistence,
+**Status:** Domain decisions accepted; stages 1–7 (domain rules, persistence,
 application services, JSON v4 export, native notification adapter/configuration, schedule
-reconciliation, localized phone/tablet UI, compatible dependency updates, and automated tests) are complete.
-Final native acceptance remains pending. Stage 5 UI checks used Expo Go; Android notification-channel
-support failed in that host and must be rechecked in our rebuilt app. See
+reconciliation, localized phone/tablet UI, compatible dependency updates, automated tests and
+native acceptance) are complete and ready for review. Our rebuilt applications passed the recorded
+four-device acceptance scope, including Android notification channels. Registry vulnerability audit
+results remain unavailable; this is not a clean security audit or store-release approval. See the
+[stage 7 report](phase-6-step-7-verification.md) for coverage and limitations, and
 [reminder-domain-decisions.md](reminder-domain-decisions.md) for the working contract.
 
 ### Steps
@@ -270,8 +272,8 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Run Phase 6 stage 7: rebuild native applications with the updated dependency set, then verify
-reminder permissions, delivery, cancellation, restarts and time-zone behavior, plus existing
-application workflows on all four native targets. Stage 5 UI checks and stage 6 bundle exports
-do not replace this acceptance. Follow
-[reminder-domain-decisions.md](reminder-domain-decisions.md).
+Review and merge Phase 6, then start Phase 7 production hardening. Native acceptance after dependency
+updates is recorded in the [stage 7 report](phase-6-step-7-verification.md); local build instructions
+are in [native-qa-builds.md](native-qa-builds.md). Retry the unavailable registry vulnerability audit
+before release. Physical-device notification reliability, signing and store acceptance are still
+release gates, not conclusions drawn from simulator testing.

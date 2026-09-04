@@ -162,3 +162,18 @@ channel-provider failure was repaired. Rebuilt app verification remains stage 7.
 
 Expo Doctor 1.20.4 passes 19/21 checks: only unrecognized `nub.lock` and the intentional
 TypeScript 7 choice remain. No newer Expo patch mismatch remains in the checked dependency set.
+
+## Stage 7 native acceptance
+
+Our own `dev.mojeauto.qa` release-configuration builds were tested on iPhone, iPad, Android phone
+and Android tablet on 2026-09-04. Android channel creation, permission handling and scheduling work
+in this host; the earlier Expo Go provider failure was not reproduced. The local-only API facade
+remains necessary for the supported Go iteration path.
+
+Native probes confirmed owned notification delivery, cancellation, restart persistence and retained
+timezone behavior. Apple transport probes used shortened native triggers; Android delivery used
+a temporary emulator-clock advance with clock settings restored afterward. These are not claims
+of exact 09:00 delivery under arbitrary real-world device policies. Domain/DST/JSON checks remain
+automated; physical-device power-management and release-signing acceptance remain release gates.
+See the [acceptance report](phase-6-step-7-verification.md) and
+[local QA build procedure](native-qa-builds.md) for the exact scope and reproduction constraints.

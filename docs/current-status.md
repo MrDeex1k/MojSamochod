@@ -16,6 +16,9 @@ opisywanego etapu.
   preferencjami pojazdu, formularz tankowania nie powtarza ich wyboru, a listy, szczegóły,
   formularze edycji, pojemność zbiornika i ceny jednostkowe przeliczają prezentację z danych
   kanonicznych bez przepisywania historii.
+- Faza 6, czyli przypomnienia, ma zakończone etapy 1–7 na branchu `feat/reminders` i jest gotowa
+  do review/PR. Nie została jeszcze w tym raporcie uznana za zmergowaną. Otwarty pozostaje wynik
+  audytu podatności rejestru; ograniczenia opisuje [raport etapu 7](phase-6-step-7-verification.md).
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -68,7 +71,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 57 zestawów i 390 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 59 zestawów i 395 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -185,7 +188,7 @@ opisywanego etapu.
   polskiego locale symulatora. Lokalizację natywnych tekstów trzeba potwierdzić w docelowym buildzie,
   ponieważ interfejs Expo Go nie jest konfigurowany przez zasoby natywne aplikacji.
 
-## Następny krok
+## Zakończenie Fazy 6 i następny krok
 
 Ustalenia Fazy 6 zostały zaakceptowane i zapisane w
 [reminder-domain-decisions.md](reminder-domain-decisions.md). Branch `feat/reminders` jest utworzony.
@@ -215,7 +218,7 @@ Etap 6 aktualizuje 15 bezpośrednich pakietów i zależności przechodnie, zacho
 przypięte wersje, SFW i karencję 24 godzin. Expo ma teraz wersję 57.0.19, powiadomienia 57.0.16.
 Usunięto pięć konstrukcji `try/finally`, które blokowały optymalizację nowych formularzy przez
 React Compiler; testy potwierdzają odblokowanie przycisków po błędach i możliwość ponowienia.
-Pełne `nub run check` przechodzi: 57 zestawów, 390 testów. React Doctor 0.9.13: 83/100,
+Pełne `nub run check` po etapie 7 przechodzi: 59 zestawów, 395 testów. React Doctor 0.9.13: 83/100,
 bez błędów, 11 opisanych ostrzeżeń. Wynik 87/100 z etapu 5 obejmował mniej plików; pełniejszy
 skan w etapie 6 wykrył i pozwolił poprawić pominięte wcześniej problemy kompilatora.
 Expo Doctor: 19/21 kontroli — tylko brak rozpoznania `nub.lock` i świadomy TypeScript 7.
@@ -227,6 +230,17 @@ Zakres, wyniki i ograniczenia: [phase-6-step-5-verification.md](phase-6-step-5-v
 Na Androidzie Expo Go zgłasza błąd natywnego dostawcy kanałów powiadomień; nie traktujemy tego
 hosta jako dowodu poprawności uprawnień ani harmonogramu własnej aplikacji.
 
-Następny krok to etap 7: pełna weryfikacja natywna po aktualizacji, także we własnych buildach.
-Obejmie rzeczywiste powiadomienia, uprawnienia, restart, zmianę strefy oraz regresje pojazdu,
-historii, dokumentów, tankowań, jednostek i eksportu. Próby UI z etapu 5 tego nie zastąpiły.
+Etap 7 zakończono we własnych buildach `dev.mojeauto.qa` na wszystkich czterech formatach.
+Kanały Androida działają poza Expo Go. Sprawdzono zgody/odmowy, dostarczanie i anulowanie,
+restart aplikacji/systemu, zachowanie zapamiętanej strefy, minione terminy oraz reprezentatywne
+regresje historii, dokumentów, tankowań, jednostek i zdjęć. JSON v4 pozostaje zweryfikowany
+automatycznie, nie przez nieistniejący przycisk eksportu w UI.
+Poprawiono platformowe pliki lokalizacji blokujące release lint Androida, dodano testy resolvera
+Expo i konfiguracji QA. Procedura: [native-qa-builds.md](native-qa-builds.md).
+Zakres i ograniczenia, w tym przyspieszone próby transportu powiadomień i nadal niedostępny
+audyt podatności: [phase-6-step-7-verification.md](phase-6-step-7-verification.md).
+
+Następny krok to review/PR Fazy 6, a po integracji Faza 7 — utwardzenie darmowej aplikacji:
+prywatność, zarządzanie danymi i odzyskiwanie, dostępność, sytuacje awaryjne, wydajność,
+konfiguracja wydania oraz testy na fizycznych urządzeniach. Gotowość Fazy 6 do review nie oznacza
+jeszcze gotowości aplikacji do publikacji w sklepach.
