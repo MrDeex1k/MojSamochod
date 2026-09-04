@@ -27,13 +27,19 @@ the agreed boundary for the current delivery plan.
 - Create inspection, replacement, and repair history entries.
 - Record event date and UTC time, mileage, notes, monetary amounts, and relevant entry details.
 - Attach invoices or other documents to the vehicle or a specific history entry.
-- Import, preview, export, replace, and safely delete managed documents.
+- Add PDFs/invoices as attachments, preview them inside the app, replace them, and safely delete
+  managed copies. Do not expose document export, sharing or opening in an external app.
 - Record refuelling events and calculate average fuel consumption from valid records.
 - Display upcoming and overdue insurance and technical-inspection reminders.
 - Schedule local notifications while keeping reminders usable when notification permission is
   denied.
 - Persist all core data in an embedded local database and app-managed document storage.
-- Provide local data export and a documented recovery path before production release.
+- Provide a confirmed erase-all action returning to first-vehicle setup; remove user records,
+  managed file copies and owned scheduled notifications, not original files outside the app.
+- Keep the first FREE release limited to one vehicle per device, without user-facing database
+  export, import, backup or restore. Internal versioned JSON contracts do not expose a product feature.
+- Do not add analytics. Minimize permissions and select vehicle photos from the gallery only;
+  do not capture photos or video with the camera.
 - Support Android phones and tablets, iPhone, and adaptive tablet layouts. Phone layouts target
   portrait orientation and tablet layouts target landscape orientation.
 - Support the dark appearance, accessibility settings, and locale-aware units and values.
@@ -47,6 +53,11 @@ the agreed boundary for the current delivery plan.
 - Cloud backup, remote storage, background synchronization, and real-time synchronization.
 - A synchronization server or any required remote service for core application behavior.
 - A production web application.
+
+The export restriction includes individual attachments and all user-facing outbound data actions.
+Importing a photo or PDF/invoice as an attachment remains allowed; importing a database, backup or
+vehicle-history dataset from another application does not. Existing outbound document actions must
+be removed from the FREE release UI in Phase 7, including indirect sharing through preview surfaces.
 
 ## Target product scope
 
@@ -116,7 +127,7 @@ or modals on phones and contextual panels on tablets.
 | History entry editor      | Create or edit an inspection, replacement, or repair with UTC event date and time plus relevant fields.                          | Sheet, modal, or full-screen form depending on platform and complexity. |
 | History entry details     | Review all entry information, related amount, document, edit action, and safe deletion.                                          | Secondary screen or tablet detail pane.                                 |
 | Vehicle documents         | Scan invoices and files related to the vehicle and its entries.                                                                  | Secondary list from the vehicle workspace.                              |
-| Document preview          | Preview metadata and supported content; export, replace, reassign, or delete the file.                                           | Full-screen preview or platform document surface.                       |
+| Document preview          | Preview metadata and supported content in-app; replace, reassign, or delete the file. No export or sharing.                      | In-app preview without outbound actions.                                |
 | Fuel workspace            | Show consumption summary, refuelling history, data sufficiency, and add action.                                                  | Main destination.                                                       |
 | Refuelling editor         | Record date, odometer, quantity, total or unit price, and fill state using the vehicle's saved unit preferences.                 | Focused form without repeated per-entry unit selection.                 |
 | Reminders workspace       | Show upcoming, overdue, and unavailable notification states.                                                                     | Main destination.                                                       |

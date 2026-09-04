@@ -126,9 +126,10 @@ Faza 2 dostarcza wersję 1 JSON z pojazdem i historią. Faza 4 wprowadza wersję
 metadane dokumentów, a Faza 5 wersję 3 z konfiguracją paliwową i źródłowymi rekordami tankowań.
 Faza 6 wprowadza [wersję 4](data-export-v4.md) z terminami przypomnień, zachowaną strefą i wybranymi
 wyprzedzeniami, bez uprawnień i identyfikatorów powiadomień systemowych.
-Żadna z tych wersji nie zawiera plików binarnych ani wyliczonego spalania. Przenośny backup zostanie
-później rozszerzony do archiwum z manifestem JSON oraz katalogiem obiektów, bez umieszczania
-binarnej zawartości w bazie SQLite ani kodowania jej jako Base64 w JSON.
+Żadna z tych wersji nie zawiera plików binarnych ani wyliczonego spalania. Pierwsze wydanie FREE
+nie udostępnia użytkownikowi eksportu, backupu ani odtwarzania/importu bazy. Kontrakty pozostają
+wewnętrzne. Archiwum z manifestem JSON i katalogiem obiektów jest wyłącznie odłożonym kierunkiem
+architektonicznym, nie zakresem Fazy 7; ewentualne wdrożenie wymaga osobnej decyzji.
 
 ## Granice implementacji
 

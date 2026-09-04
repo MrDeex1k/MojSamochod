@@ -16,8 +16,8 @@ opisywanego etapu.
   preferencjami pojazdu, formularz tankowania nie powtarza ich wyboru, a listy, szczegóły,
   formularze edycji, pojemność zbiornika i ceny jednostkowe przeliczają prezentację z danych
   kanonicznych bez przepisywania historii.
-- Faza 6, czyli przypomnienia, ma zakończone etapy 1–7 na branchu `feat/reminders` i jest gotowa
-  do review/PR. Nie została jeszcze w tym raporcie uznana za zmergowaną. Otwarty pozostaje wynik
+- Faza 6, czyli przypomnienia, została zintegrowana z `main` w commicie `522c2cf`, razem
+  z poprawką izolacji subskrybentów harmonogramu po review CodeRabbit. Otwarty pozostaje wynik
   audytu podatności rejestru; ograniczenia opisuje [raport etapu 7](phase-6-step-7-verification.md).
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
@@ -71,7 +71,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 59 zestawów i 395 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 59 zestawów i 398 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -191,7 +191,7 @@ opisywanego etapu.
 ## Zakończenie Fazy 6 i następny krok
 
 Ustalenia Fazy 6 zostały zaakceptowane i zapisane w
-[reminder-domain-decisions.md](reminder-domain-decisions.md). Branch `feat/reminders` jest utworzony.
+[reminder-domain-decisions.md](reminder-domain-decisions.md). Implementacja jest już na `main`.
 Etap 1 jest zaimplementowany: domena przypomnień, walidacja dat i stref, tworzenie i edycja,
 stany daty oraz plan powiadomień na 09:00 w zapamiętanej strefie. Testy obejmują zmiany czasu,
 granice dnia, niestandardowe przesunięcia stref i pomijanie minionych powiadomień.
@@ -218,7 +218,7 @@ Etap 6 aktualizuje 15 bezpośrednich pakietów i zależności przechodnie, zacho
 przypięte wersje, SFW i karencję 24 godzin. Expo ma teraz wersję 57.0.19, powiadomienia 57.0.16.
 Usunięto pięć konstrukcji `try/finally`, które blokowały optymalizację nowych formularzy przez
 React Compiler; testy potwierdzają odblokowanie przycisków po błędach i możliwość ponowienia.
-Pełne `nub run check` po etapie 7 przechodzi: 59 zestawów, 395 testów. React Doctor 0.9.13: 83/100,
+Pełne `nub run check` po poprawce review przechodzi: 59 zestawów, 398 testów. React Doctor 0.9.13: 83/100,
 bez błędów, 11 opisanych ostrzeżeń. Wynik 87/100 z etapu 5 obejmował mniej plików; pełniejszy
 skan w etapie 6 wykrył i pozwolił poprawić pominięte wcześniej problemy kompilatora.
 Expo Doctor: 19/21 kontroli — tylko brak rozpoznania `nub.lock` i świadomy TypeScript 7.
@@ -240,7 +240,48 @@ Expo i konfiguracji QA. Procedura: [native-qa-builds.md](native-qa-builds.md).
 Zakres i ograniczenia, w tym przyspieszone próby transportu powiadomień i nadal niedostępny
 audyt podatności: [phase-6-step-7-verification.md](phase-6-step-7-verification.md).
 
-Następny krok to review/PR Fazy 6, a po integracji Faza 7 — utwardzenie darmowej aplikacji:
+Poprawka po review izoluje wyjątki subskrybentów od wyniku uzgadniania i zabezpiecza kolejkę przed
+trwałym odrzuceniem. Trzy regresje sprawdzają publikację wyniku, kolejne przebiegi i wywołania
+po zapisie repozytorium. Nie zmienia to UI, konfiguracji natywnej ani zakresu prób na urządzeniach.
+
+Następny krok to ustalenia Fazy 7 — utwardzenie darmowej aplikacji:
 prywatność, zarządzanie danymi i odzyskiwanie, dostępność, sytuacje awaryjne, wydajność,
-konfiguracja wydania oraz testy na fizycznych urządzeniach. Gotowość Fazy 6 do review nie oznacza
+konfiguracja wydania oraz testy na fizycznych urządzeniach. Zakończenie Fazy 6 nie oznacza
 jeszcze gotowości aplikacji do publikacji w sklepach.
+
+### Ustalenia wejściowe Fazy 7
+
+- Pierwsze wydanie to FREE: jeden pojazd na urządzenie, bez kont, synchronizacji i premium.
+- Nie udostępniamy użytkownikowi eksportu danych, backupu, importu ani odtwarzania bazy.
+  Istniejący kontrakt JSON v4 i jego testy pozostają wewnętrzne; nie są obietnicą funkcji wydania.
+- Udostępniamy potwierdzane, nieodwracalne wyczyszczenie wszystkich danych i powrót do dodawania
+  pierwszego pojazdu. Docelowo usuwamy dane użytkownika, zarządzane kopie zdjęć/dokumentów i własne
+  zaplanowane powiadomienia, bez kasowania oryginałów z galerii/plików użytkownika. Schema i stan
+  migracji są infrastrukturą, nie danymi użytkownika. Bezpieczny reset ma tolerować przerwanie.
+- Bez dodawania analityki. Minimalne uprawnienia, proszenie o nie tylko w kontekście czynności;
+  zdjęcie wyłącznie z galerii, bez aparatu i nagrywania. Trzeba sprawdzić faktyczny manifest
+  i zachowanie SDK, a nie tylko deklaracje konfiguracji. Powiadomienia pozostają opcjonalne.
+- Dostępne urządzenie fizyczne: iPhone 15 Pro / iOS 26.6 (informacja użytkownika, nie wynik testu).
+  Android: możliwe testy APK przez rodzinę/znajomych. Tablety najpierw w symulatorze/emulatorze;
+  fizyczny tablet Android będzie dostępny później, iPad znajomego jest potencjalnym celem testów.
+
+Do ustalenia pozostają kanał bety/publikacji, konta wydawcy, identyfikatory produkcyjne i kontakt
+do polityki prywatności. TestFlight dla iPhone/iPad jest rekomendacją do zatwierdzenia, nie
+wykonaną konfiguracją. `dev.mojeauto.qa` nie jest docelowym identyfikatorem sklepowym.
+Przed publikacją trzeba też ocenić kopie/przenoszenie danych wykonywane przez sam system:
+brak eksportu w aplikacji nie oznacza automatycznie braku backupu iOS/Android.
+
+Zakaz eksportu został doprecyzowany: obejmuje także pojedyncze załączniki, udostępnianie i otwieranie
+pliku w innej aplikacji. Faza 7 musi usunąć istniejące akcje wyprowadzania danych z UI oraz sprawdzić
+przyciski udostępniania w natywnym podglądzie. Dodawanie zdjęć i PDF/faktur jako załączników pozostaje
+dozwolone; import bazy, backupu lub historii z innej aplikacji jest wykluczony. To zakres do wdrożenia,
+nie twierdzenie, że obecny kod nie umożliwia już udostępniania dokumentów.
+
+Użytkownik ma konto Apple Developer bez aktywnego członkostwa i nie ma opłaconego konta wydawcy
+Google Play. Nie skonfigurowano TestFlight ani dystrybucji sklepowej. Nie blokuje to implementacji
+i testów w symulatorach/emulatorach; etap dystrybucji wymaga oddzielnego przygotowania kont.
+
+Nie ma zidentyfikowanej, nienaprawionej uwagi funkcjonalnej CodeRabbit blokującej rozpoczęcie
+Fazy 7. Audyt podatności nadal trzeba uzyskać i ocenić przed wydaniem; znane diagnostyki Expo
+Doctor i ostrzeżenia React Doctor pozostają jawne. Faza 7 ma w planie pięć kroków; powyższe
+ustalenia doprecyzowują ich zakres, nie dodają automatycznie kolejnych funkcji.

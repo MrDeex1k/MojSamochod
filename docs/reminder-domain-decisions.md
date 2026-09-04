@@ -4,7 +4,7 @@
 
 **Status:** ustalenia zaakceptowane przez użytkownika.
 
-**Faza:** 6 — przypomnienia. Etapy 1–7 zakończone; gotowe do review/PR. Zakres weryfikacji
+**Faza:** 6 — przypomnienia. Etapy 1–7 zakończone i zintegrowane z `main` (`522c2cf`). Zakres weryfikacji
 i otwarte ograniczenia: [raport etapu 7](phase-6-step-7-verification.md).
 
 Dokument zapisuje uzgodniony zakres i zachowanie produktu. Szczegóły techniczne harmonogramu
@@ -27,6 +27,10 @@ oraz ograniczenia platform opisują dokumentacja techniczna i raport końcowej w
 7. **Gotowe:** własne buildy na czterech formatach, zgody i dostarczanie powiadomień, restart,
    strefy, reprezentatywne regresje, poprawka lokalizacji natywnych i dokumentacja końcowa.
    Audyt podatności nadal bez wyniku; fizyczne urządzenia i akceptacja sklepowa należą do Fazy 7.
+
+Po review CodeRabbit odizolowano wyjątki subskrybentów od uzgadniania i zabezpieczono kolejkę.
+Trzy dodatkowe testy regresyjne podniosły wynik do 398 testów w 59 zestawach. Zmiana nie wpływa
+na kontrakt domenowy ani natywne wyprzedzenia; jest częścią zintegrowanej Fazy 6.
 
 Etap 6 obejmuje root repozytorium i workspace mobilny, przegląd zależności przechodnich oraz
 overrides i aktualizację `nub.lock`. Pakiety Expo, React i React Native aktualizujemy jako zgodny

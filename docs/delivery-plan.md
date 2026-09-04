@@ -155,7 +155,8 @@ adaptive phone/tablet UI have automated and native coverage.
 **Status:** Domain decisions accepted; stages 1–7 (domain rules, persistence,
 application services, JSON v4 export, native notification adapter/configuration, schedule
 reconciliation, localized phone/tablet UI, compatible dependency updates, automated tests and
-native acceptance) are complete and ready for review. Our rebuilt applications passed the recorded
+native acceptance) are complete and merged into `main` in `522c2cf`, including the post-review
+subscriber-isolation fix and its regression tests (398 tests across 59 suites). Our rebuilt applications passed the recorded
 four-device acceptance scope, including Android notification channels. Registry vulnerability audit
 results remain unavailable; this is not a clean security audit or store-release approval. See the
 [stage 7 report](phase-6-step-7-verification.md) for coverage and limitations, and
@@ -191,12 +192,27 @@ results remain unavailable; this is not a clean security audit or store-release 
 
 ## Phase 7 — Production hardening of the free application
 
+**Status:** Next phase; FREE scope agreed: one vehicle per device, no user-facing data export,
+database import, backup or restore, and no added analytics. Existing JSON contracts remain internal.
+Provide a confirmed erase-all action returning to first-vehicle setup, including managed file
+copies and owned scheduled alerts; do not delete users' original gallery or document files.
+Use minimal contextual permissions and gallery-only vehicle photos, with no camera capture.
+Distribution channel, production identity and publisher/privacy details remain open. The export
+restriction includes single-document sharing and external-open actions; attachment selection remains
+allowed, but importing datasets from other applications does not. Review OS backup behavior
+separately from app-level export. The publisher currently has no active Apple Developer Program
+membership or paid Google Play publisher registration; store distribution is not configured.
+The five steps below remain the roadmap; retry and assess the unavailable vulnerability audit
+before release, alongside documented diagnostic exceptions.
+
 ### Steps
 
 1. Add privacy information, data-management guidance, accessibility review, and localized product
    copy.
-2. Validate database migrations, export and restore, document storage pressure, and recovery paths.
-3. Test application lifecycle, low storage, interrupted imports, device rotation where supported,
+2. Implement and verify safe erase-all, database migrations, document storage pressure and recovery
+   from interrupted operations. Remove existing outbound document actions and verify that preview
+   surfaces cannot export/share files. Do not add user-facing backup, export or database restore.
+3. Test application lifecycle, low storage, interrupted attachment imports, device rotation where supported,
    and background transitions.
 4. Establish release builds, signing, store metadata, screenshots, and a physical-device test
    matrix.
@@ -272,7 +288,8 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Review and merge Phase 6, then start Phase 7 production hardening. Native acceptance after dependency
+Agree Phase 7 scope and acceptance criteria, then start production hardening. Phase 6 is merged.
+Native acceptance after dependency
 updates is recorded in the [stage 7 report](phase-6-step-7-verification.md); local build instructions
 are in [native-qa-builds.md](native-qa-builds.md). Retry the unavailable registry vulnerability audit
 before release. Physical-device notification reliability, signing and store acceptance are still

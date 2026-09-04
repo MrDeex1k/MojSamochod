@@ -7,7 +7,8 @@ Data: 2026-09-04. Branch: `feat/reminders`, po aktualizacji zależności z `8d90
 Etap 7 wykonany: własne aplikacje natywne uruchomione na czterech formatach urządzeń,
 sprawdzone przypomnienia i reprezentatywne regresje wcześniejszych funkcji. Usunięto problem
 blokujący build Androida i dodano pięć testów regresyjnych konfiguracji. Faza 6 jest gotowa do
-review/PR; nie oznacza to gotowości do publikacji w sklepach ani kompletnego audytu bezpieczeństwa.
+review/PR w momencie zakończenia tych prób; późniejszy merge opisuje uzupełnienie poniżej.
+Nie oznacza to gotowości do publikacji w sklepach ani kompletnego audytu bezpieczeństwa.
 
 Nie wykryto blokującego błędu działania przypomnień we własnych buildach. Audyt podatności nadal
 nie zwrócił wyniku z endpointu rejestru; pozostaje otwartą kontrolą, a nie wynikiem „brak podatności”.
@@ -99,9 +100,19 @@ identyczny i jest objęty regresją. Android przebudowano po poprawce jego zasob
   sprawdzane są automatycznie. Eksport JSON nie ma osobnego przycisku w obecnym UI: jego
   zgodność zweryfikowano testami, nie ręcznym eksportem na czterech urządzeniach.
 
+## Uzupełnienie po review i integracji
+
+Faza 6 została zintegrowana z `main` w commicie `522c2cf`. Przed mergem poprawiono zgłoszony
+przez CodeRabbit problem: wyjątek subskrybenta nie przerywa powiadamiania pozostałych odbiorców
+ani nie blokuje kolejnych uzgodnień. Wewnętrzna kolejka zachowuje spełnioną obietnicę.
+Dodano trzy regresje: izolację listenera/publikację wyniku, kolejne przebiegi i uzgadnianie
+wywołane po zapisie repozytorium. `nub run check` przeszedł z 398 testami w 59 zestawach;
+React Doctor pozostał na 83/100 i 11 ostrzeżeniach. Wynik 395 powyżej opisuje wcześniejszą próbę.
+Po tej izolowanej zmianie logiki nie powtarzano macierzy natywnej; nie zmieniono UI ani konfiguracji.
+
 ## Dalsze działania
 
-Review i merge Fazy 6, następnie Faza 7 — utwardzenie aplikacji: prywatność i zarządzanie danymi,
+Ustalenia Fazy 7 — utwardzenie aplikacji: prywatność i zarządzanie danymi,
 odzyskiwanie, dostępność, skrajne warunki, pomiary wydajności, podpisy/buildy sklepowe i testy
 na fizycznych urządzeniach. Zachowanie powiadomień przy politykach OEM/baterii oraz rzeczywiste
 dostarczenie w docelowych warunkach muszą wejść do checklisty wydania.

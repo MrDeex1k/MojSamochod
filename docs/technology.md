@@ -194,7 +194,9 @@ explicit product-scope decision.
 - Keep odometer and fuel calculations in testable domain functions.
 - Treat document metadata and file writes as one recoverable operation; detect and clean orphaned
   files safely.
-- Define export and restore behavior before calling the local-first data model production-ready.
+- The first FREE release has no user-facing database export, import, backup or restore. Verify
+  safe erase-all and interrupted-operation recovery instead; retain internal JSON contract tests.
+  Review OS-managed backup/transfer separately and describe data-loss limitations accurately.
 - Synchronization must not be added until stable identifiers and conflict rules exist.
 
 Binary vehicle photos and documents live in app-managed file storage rather than SQLite BLOB
