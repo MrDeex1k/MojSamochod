@@ -2,8 +2,19 @@ import { createContext, type PropsWithChildren, useContext, useEffect, useState 
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
+import type { ReminderNotifications } from "@/application/notifications/reminder-notifications";
+import { ReminderSchedule } from "@/application/notifications/reminder-schedule";
+import {
+  scheduleAwareReminderRepository,
+  scheduleAwareVehicleRepository,
+} from "@/application/notifications/schedule-aware-repositories";
+import { startReminderScheduleLifecycle } from "@/infrastructure/notifications/reminder-schedule-lifecycle";
+import { reminderNotificationContent } from "@/localization/reminder-notification-content";
+import { NativeReminderNotifications } from "@/infrastructure/notifications/native-reminder-notifications";
+import { appI18n } from "@/localization/i18n";
 import { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 import { RefuellingService } from "@/application/refuelling/refuelling-service";
+import { ReminderService } from "@/application/reminders/reminder-service";
 import { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { Screen } from "@/components/layout/screen";
 import { ErrorState } from "@/components/states/error-state";
@@ -11,6 +22,7 @@ import { LoadingState } from "@/components/states/loading-state";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
 import { DrizzleManagedFileRepository } from "@/infrastructure/database/drizzle-managed-file-repository";
 import { DrizzleRefuellingRepository } from "@/infrastructure/database/drizzle-refuelling-repository";
+import { DrizzleReminderRepository } from "@/infrastructure/database/drizzle-reminder-repository";
 import { DrizzleVehicleDocumentRepository } from "@/infrastructure/database/drizzle-vehicle-document-repository";
 import { DrizzleVehicleHistoryRepository } from "@/infrastructure/database/drizzle-vehicle-history-repository";
 import type { AppDatabase } from "@/infrastructure/database/database";
@@ -43,6 +55,9 @@ export type ApplicationServices = Readonly<{
   managedFiles: ManagedFileCoordinator;
   photoPicker: VehiclePhotoPicker;
   refuellings: RefuellingService;
+  reminders: ReminderService;
+  reminderNotifications: ReminderNotifications;
+  reminderSchedule: ReminderSchedule;
   vehicles: VehicleRepository;
 }>;
 
@@ -54,6 +69,8 @@ export function ApplicationProvider({ children }: PropsWithChildren) {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<"error" | "loading" | "ready">("loading");
   const [services] = useState(() => createApplicationServices(database));
+
+  useEffect(() => startReminderScheduleLifecycle(services.reminderSchedule, appI18n), [services]);
 
   useEffect(() => {
     let active = true;
@@ -97,6 +114,21 @@ function createApplicationServices(database: AppDatabase): ApplicationServices {
   const vehicleHistory = new DrizzleVehicleHistoryRepository(database);
   const refuellingRepository = new DrizzleRefuellingRepository(database);
   const idGenerator = new UuidV7IdGenerator();
+  const reminderRepository = new DrizzleReminderRepository(database);
+  const reminderNotifications = new NativeReminderNotifications(
+    clock,
+    () => appI18n.t("notifications.channelName"),
+    () => {
+      void reminderSchedule.reconcile();
+    },
+  );
+  const reminderSchedule = new ReminderSchedule(
+    clock,
+    vehicleHistory,
+    reminderRepository,
+    reminderNotifications,
+    reminderNotificationContent,
+  );
   const managedFiles = new ManagedFileCoordinator(
     clock,
     new DrizzleManagedFileRepository(database),
@@ -117,7 +149,14 @@ function createApplicationServices(database: AppDatabase): ApplicationServices {
     managedFiles,
     photoPicker: new GalleryVehiclePhotoPicker(),
     refuellings: new RefuellingService(clock, idGenerator, refuellingRepository),
-    vehicles: vehicleHistory,
+    reminders: new ReminderService(
+      clock,
+      idGenerator,
+      scheduleAwareReminderRepository(reminderRepository, reminderSchedule),
+    ),
+    reminderNotifications,
+    reminderSchedule,
+    vehicles: scheduleAwareVehicleRepository(vehicleHistory, reminderSchedule),
   };
 }
 

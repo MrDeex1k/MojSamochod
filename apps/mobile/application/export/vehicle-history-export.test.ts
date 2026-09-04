@@ -1,6 +1,7 @@
 import { repositoryFailure, repositorySuccess } from "@/application/repositories/repository-result";
 import { createDevelopmentVehicleHistoryFixture } from "@/development/fixtures/vehicle-history";
 import { createRefuelling, type Refuelling } from "@/domain/refuelling/refuelling";
+import { createReminder, type Reminder } from "@/domain/reminders/reminder";
 
 import {
   createVehicleHistoryExport,
@@ -12,7 +13,47 @@ import {
 const exportedAt = new Date("2026-08-30T18:30:00.000Z");
 
 describe("vehicle history export", () => {
-  it("exports domain data as the documented version 3 format", async () => {
+  it("propagates reminder failures instead of producing an incomplete manifest", async () => {
+    const dependencies = exportDependencies();
+    const failure = repositoryFailure("corrupt-data", "reminder.list");
+    dependencies.reminderRepository.list.mockResolvedValue(failure);
+    expect(await createVehicleHistoryExport(dependencies)).toBe(failure);
+    expect(dependencies.vehicleDocumentRepository.list).not.toHaveBeenCalled();
+  });
+
+  it("whitelists reminder source fields and omits device scheduling state", async () => {
+    const dependencies = exportDependencies();
+    const reminder = reminderFixture(createDevelopmentVehicleHistoryFixture().vehicle.id);
+    dependencies.reminderRepository.list.mockResolvedValue(
+      repositorySuccess([
+        {
+          ...reminder,
+          permission: "granted",
+          notificationId: "device-only",
+          status: "upcoming",
+          scheduledAt: "device-only",
+        },
+      ]),
+    );
+    const result = await createVehicleHistoryExport(dependencies);
+    if (!result.ok) throw new Error("Expected export");
+    expect(result.value.data.reminders).toEqual([reminder]);
+    expect(Object.keys(result.value.data.reminders[0]!).sort()).toEqual([
+      "createdAt",
+      "dueDate",
+      "id",
+      "kind",
+      "notificationDaysBefore",
+      "timeZone",
+      "updatedAt",
+      "vehicleId",
+    ]);
+    expect(result.value.data.reminders[0]!.notificationDaysBefore).not.toBe(
+      reminder.notificationDaysBefore,
+    );
+  });
+
+  it("exports domain data as the documented version 4 format", async () => {
     const fixture = createDevelopmentVehicleHistoryFixture();
     const refuelling = refuellingFixture(fixture.vehicle.id);
     const dependencies = {
@@ -26,6 +67,7 @@ describe("vehicle history export", () => {
       },
       managedFileRepository: managedFilesFake(),
       refuellingRepository: refuellingsFake([refuelling]),
+      reminderRepository: remindersFake([reminderFixture(fixture.vehicle.id)]),
       vehicleDocumentRepository: documentsFake(),
       vehicleRepository: {
         create: jest.fn(),
@@ -58,6 +100,9 @@ describe("vehicle history export", () => {
     });
     expect(result.value.data.historyEntries).toHaveLength(3);
     expect(result.value.data.documents).toEqual([]);
+    expect(result.value.formatVersion).toBe(4);
+    expect(result.value.data.reminders).toEqual([reminderFixture(fixture.vehicle.id)]);
+    expect(dependencies.reminderRepository.list).toHaveBeenCalledWith(fixture.vehicle.id);
     expect(result.value.data.refuellings).toEqual([
       {
         createdAt: refuelling.createdAt,
@@ -97,6 +142,7 @@ describe("vehicle history export", () => {
       },
       managedFileRepository: managedFilesFake(),
       refuellingRepository: refuellingsFake(),
+      reminderRepository: remindersFake(),
       vehicleDocumentRepository: documentsFake(),
       vehicleRepository: {
         create: jest.fn(),
@@ -110,7 +156,7 @@ describe("vehicle history export", () => {
       ok: true,
       value: {
         binaryFilesIncluded: false,
-        data: { documents: [], historyEntries: [], refuellings: [], vehicle: null },
+        data: { documents: [], historyEntries: [], refuellings: [], reminders: [], vehicle: null },
         exportedAt: exportedAt.toISOString(),
         format: vehicleHistoryExportFormat,
         formatVersion: vehicleHistoryExportVersion,
@@ -133,6 +179,7 @@ describe("vehicle history export", () => {
       },
       managedFileRepository: managedFilesFake(),
       refuellingRepository: refuellingsFake(),
+      reminderRepository: remindersFake(),
       vehicleDocumentRepository: documentsFake(),
       vehicleRepository: {
         create: jest.fn(),
@@ -165,6 +212,7 @@ describe("vehicle history export", () => {
       },
       managedFileRepository: managedFilesFake(),
       refuellingRepository,
+      reminderRepository: remindersFake(),
       vehicleDocumentRepository: documentRepository,
       vehicleRepository: {
         create: jest.fn(),
@@ -199,6 +247,7 @@ describe("vehicle history export", () => {
       },
       managedFileRepository: managedFilesFake(),
       refuellingRepository: refuellingsFake(),
+      reminderRepository: remindersFake(),
       vehicleDocumentRepository: documentsFake(),
       vehicleRepository: {
         create: jest.fn(),
@@ -235,6 +284,7 @@ describe("vehicle history export", () => {
       },
       managedFileRepository: managedFilesFake(),
       refuellingRepository: refuellingsFake(),
+      reminderRepository: remindersFake(),
       vehicleDocumentRepository: documentsFake(),
       vehicleRepository: {
         create: jest.fn(),
@@ -261,6 +311,58 @@ function documentsFake() {
     list: jest.fn().mockResolvedValue(repositorySuccess([])),
     update: jest.fn(),
   };
+}
+
+function exportDependencies() {
+  const fixture = createDevelopmentVehicleHistoryFixture();
+  return {
+    clock: { now: () => exportedAt },
+    historyEntryRepository: {
+      create: jest.fn(),
+      delete: jest.fn(),
+      get: jest.fn(),
+      update: jest.fn(),
+      list: jest.fn().mockResolvedValue(repositorySuccess(fixture.entries)),
+    },
+    managedFileRepository: managedFilesFake(),
+    refuellingRepository: refuellingsFake(),
+    reminderRepository: remindersFake(),
+    vehicleDocumentRepository: documentsFake(),
+    vehicleRepository: {
+      create: jest.fn(),
+      delete: jest.fn(),
+      update: jest.fn(),
+      get: jest.fn().mockResolvedValue(repositorySuccess(fixture.vehicle)),
+    },
+  };
+}
+
+function remindersFake(reminders: readonly Reminder[] = []) {
+  return {
+    create: jest.fn(),
+    delete: jest.fn(),
+    get: jest.fn(),
+    update: jest.fn(),
+    list: jest.fn().mockResolvedValue(repositorySuccess(reminders)),
+  };
+}
+
+function reminderFixture(vehicleId: Reminder["vehicleId"]): Reminder {
+  const result = createReminder(
+    {
+      dueDate: "2026-12-01",
+      kind: "insurance",
+      timeZone: "Europe/Warsaw",
+      vehicleId,
+      notificationDaysBefore: [7, 0],
+    },
+    {
+      clock: { now: () => exportedAt },
+      idGenerator: { generate: () => "018f47e2-7b37-7658-b336-34613389d00f" },
+    },
+  );
+  if (!result.ok) throw new Error("Invalid reminder fixture");
+  return result.value;
 }
 
 function managedFilesFake() {

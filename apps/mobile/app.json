@@ -56,7 +56,9 @@
           }
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "./plugins/with-local-only-notifications.cjs",
+      ["expo-notifications", { "enableBackgroundRemoteNotifications": false }]
     ],
     "experiments": {
       "typedRoutes": true,

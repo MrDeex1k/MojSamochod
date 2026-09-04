@@ -16,6 +16,9 @@ opisywanego etapu.
   preferencjami pojazdu, formularz tankowania nie powtarza ich wyboru, a listy, szczegóły,
   formularze edycji, pojemność zbiornika i ceny jednostkowe przeliczają prezentację z danych
   kanonicznych bez przepisywania historii.
+- Faza 6, czyli przypomnienia, ma zakończone etapy 1–7 na branchu `feat/reminders` i jest gotowa
+  do review/PR. Nie została jeszcze w tym raporcie uznana za zmergowaną. Otwarty pozostaje wynik
+  audytu podatności rejestru; ograniczenia opisuje [raport etapu 7](phase-6-step-7-verification.md).
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -58,12 +61,19 @@ opisywanego etapu.
 
 ### Testy i jakość
 
+- Do szybkich iteracji natywnych używamy Expo Go zgodnego z SDK 57, również na fizycznym iPhonie
+  i iPadzie dzięki wersji z App Store. Dotyczy to funkcji obsługiwanych przez moduły tego klienta;
+  nie zastępuje testów automatycznych ani sprawdzenia obu platform i rozmiarów urządzeń.
+- Wersja sklepowa iOS wymaga tego samego konta Expo w CLI i Expo Go. Zmiany modułów natywnych,
+  konfiguracji, uprawnień aplikacji i końcową akceptację po aktualizacji pakietów sprawdzamy także
+  we własnym przebudowanym buildzie. Raporty testów wskazują host (Expo Go lub własny build),
+  wersję i urządzenie. Zasady opisuje [technology.md](technology.md#verification-matrix).
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 46 zestawów i 227 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw zawiera 59 zestawów i 395 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
-  dokumentów oraz lokalizacji.
+  dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
 - React Doctor 0.9.12 dla zmian Fazy 5 zakończył się wynikiem 100/100 bez wykrytych problemów.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
@@ -130,10 +140,10 @@ opisywanego etapu.
   pełny rollback przerwanego zapisu oraz odrzucanie rekordów łamiących ograniczenia schematu.
 - Błąd migracji zamyka połączenie i pozostaje błędem źródłowym również wtedy, gdy samo zamknięcie
   połączenia także się nie powiedzie.
-- Eksport `moje-auto-vehicle-history` w wersji 3 tworzy czytelny JSON pojazdu, historii, metadanych
-  dokumentów, konfiguracji paliwowej i źródłowych rekordów tankowań, także dla pustej bazy. Nie
-  zawiera zdjęć, plików binarnych ani wyliczonego spalania; pole `binaryFilesIncluded` pozostaje
-  równe `false`, a kontrakt ma osobną dokumentację kompatybilności.
+- Eksport `moje-auto-vehicle-history` w wersji 4 tworzy czytelny JSON pojazdu, historii, metadanych
+  dokumentów, konfiguracji paliwowej, źródłowych rekordów tankowań i przypomnień, także dla pustej
+  bazy. Nie zawiera zdjęć, plików binarnych, wyliczonego spalania ani stanu powiadomień urządzenia;
+  pole `binaryFilesIncluded` pozostaje równe `false`. Kontrakt opisuje `data-export-v4.md`.
 - Kontrakt `ObjectStorage` rozdziela etapowanie, trwałe zatwierdzenie, odrzucenie, usunięcie i eksport
   obiektu. Metadane definiują rozmiar, SHA-256 i bezpieczny względny klucz magazynu, a dokumentacja
   opisuje odzyskiwanie po przerwaniu operacji między SQLite i systemem plików.
@@ -178,8 +188,59 @@ opisywanego etapu.
   polskiego locale symulatora. Lokalizację natywnych tekstów trzeba potwierdzić w docelowym buildzie,
   ponieważ interfejs Expo Go nie jest konfigurowany przez zasoby natywne aplikacji.
 
-## Następny krok
+## Zakończenie Fazy 6 i następny krok
 
-Rozpocząć Fazę 6 na dedykowanym branchu od ustalenia modelu terminów przeglądu i ubezpieczenia,
-stanów przypomnień, przepływu uprawnień oraz zasad deterministycznego planowania lokalnych
-powiadomień. Persystencja i interfejs powinny powstać dopiero po zatwierdzeniu tych decyzji.
+Ustalenia Fazy 6 zostały zaakceptowane i zapisane w
+[reminder-domain-decisions.md](reminder-domain-decisions.md). Branch `feat/reminders` jest utworzony.
+Etap 1 jest zaimplementowany: domena przypomnień, walidacja dat i stref, tworzenie i edycja,
+stany daty oraz plan powiadomień na 09:00 w zapamiętanej strefie. Testy obejmują zmiany czasu,
+granice dnia, niestandardowe przesunięcia stref i pomijanie minionych powiadomień.
+Etap 2 również jest gotowy: migracja `0007_add_vehicle_reminders.sql`, repozytorium i usługa
+przypomnień, unikalność rodzaju dla pojazdu, kaskadowe usuwanie oraz eksport JSON v4.
+Testy na rzeczywistym SQLite potwierdzają zachowanie danych po migracji i ponownym otwarciu,
+izolację pojazdów, odrzucanie konfliktów i rollback błędu zapisu.
+Etap 3 dodaje `expo-notifications` 57.0.15, adapter lokalnych powiadomień i obsługę uprawnień.
+Powiadomienia są jednorazowe i korzystają z chwil UTC domeny. Start aplikacji nie pyta o zgodę.
+Konfiguracja pozostaje lokalna: bez APNs, zdalnych powiadomień w tle i dodatkowej zgody na alarmy
+dokładne. Test introspekcji sprawdza wynik działania wszystkich pluginów.
+Etap 4 dodaje szeregowe uzgadnianie harmonogramu przy starcie, powrocie do foreground,
+zmianie języka i zgody oraz po udanych zapisach/usunięciach danych. Nie zmienia pasujących alertów,
+usuwa nieaktualne i uzupełnia brakujące. Błędy powiadomień nie blokują zapisu SQLite; wynik
+ostatniego przebiegu pozostaje dostępny do prezentacji w UI i ponowienia.
+Testy obejmują m.in. częściowe błędy, odmowę/przywrócenie zgody, restart koordynatora i usuwanie
+pojazdu podczas trwającego planowania.
+Etap 5 dodaje osobną sekcję „Przypomnienia”, dwie karty terminów, natywny wybór daty,
+tworzenie/edycję/usuwanie, wybór wyprzedzeń i stany daty. Zapis i usunięcie wracają do listy
+przypomnień. Formularz zachowuje strefę istniejącego terminu, ostrzega przed porzuceniem zmian,
+a zgoda jest osobną, opcjonalną czynnością po zapisie. UI reaguje na wynik uzgadniania,
+odmowę i błąd odczytu uprawnień; błąd nie usuwa ani nie blokuje terminów.
+Etap 6 aktualizuje 15 bezpośrednich pakietów i zależności przechodnie, zachowując zgodność SDK 57,
+przypięte wersje, SFW i karencję 24 godzin. Expo ma teraz wersję 57.0.19, powiadomienia 57.0.16.
+Usunięto pięć konstrukcji `try/finally`, które blokowały optymalizację nowych formularzy przez
+React Compiler; testy potwierdzają odblokowanie przycisków po błędach i możliwość ponowienia.
+Pełne `nub run check` po etapie 7 przechodzi: 59 zestawów, 395 testów. React Doctor 0.9.13: 83/100,
+bez błędów, 11 opisanych ostrzeżeń. Wynik 87/100 z etapu 5 obejmował mniej plików; pełniejszy
+skan w etapie 6 wykrył i pozwolił poprawić pominięte wcześniej problemy kompilatora.
+Expo Doctor: 19/21 kontroli — tylko brak rozpoznania `nub.lock` i świadomy TypeScript 7.
+Instalacja z zamrożonego lockfile'a i eksporty Hermes dla obu platform przechodzą.
+Audyt podatności nie uzyskał odpowiedzi z rejestru po dwóch próbach; brak wyniku nie oznacza
+braku podatności. Szczegóły i wyjątki: [phase-6-step-6-dependencies.md](phase-6-step-6-dependencies.md).
+UI sprawdzono w Expo Go 57.0.9 na iPhonie 17 Pro, iPadzie Air 11 (M4), Pixelu 9 i Pixel Tablet.
+Zakres, wyniki i ograniczenia: [phase-6-step-5-verification.md](phase-6-step-5-verification.md).
+Na Androidzie Expo Go zgłasza błąd natywnego dostawcy kanałów powiadomień; nie traktujemy tego
+hosta jako dowodu poprawności uprawnień ani harmonogramu własnej aplikacji.
+
+Etap 7 zakończono we własnych buildach `dev.mojeauto.qa` na wszystkich czterech formatach.
+Kanały Androida działają poza Expo Go. Sprawdzono zgody/odmowy, dostarczanie i anulowanie,
+restart aplikacji/systemu, zachowanie zapamiętanej strefy, minione terminy oraz reprezentatywne
+regresje historii, dokumentów, tankowań, jednostek i zdjęć. JSON v4 pozostaje zweryfikowany
+automatycznie, nie przez nieistniejący przycisk eksportu w UI.
+Poprawiono platformowe pliki lokalizacji blokujące release lint Androida, dodano testy resolvera
+Expo i konfiguracji QA. Procedura: [native-qa-builds.md](native-qa-builds.md).
+Zakres i ograniczenia, w tym przyspieszone próby transportu powiadomień i nadal niedostępny
+audyt podatności: [phase-6-step-7-verification.md](phase-6-step-7-verification.md).
+
+Następny krok to review/PR Fazy 6, a po integracji Faza 7 — utwardzenie darmowej aplikacji:
+prywatność, zarządzanie danymi i odzyskiwanie, dostępność, sytuacje awaryjne, wydajność,
+konfiguracja wydania oraz testy na fizycznych urządzeniach. Gotowość Fazy 6 do review nie oznacza
+jeszcze gotowości aplikacji do publikacji w sklepach.

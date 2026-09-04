@@ -113,6 +113,39 @@ export const vehicles = sqliteTable(
   ],
 );
 
+export const reminders = sqliteTable(
+  "reminders",
+  {
+    id: text("id").primaryKey(),
+    vehicleId: text("vehicle_id")
+      .notNull()
+      .references(() => vehicles.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ["insurance", "technicalInspection"] }).notNull(),
+    dueDate: text("due_date").notNull(),
+    timeZone: text("time_zone").notNull(),
+    notifySevenDaysBefore: integer("notify_seven_days_before").notNull(),
+    notifyOneDayBefore: integer("notify_one_day_before").notNull(),
+    notifyOnDueDate: integer("notify_on_due_date").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("reminders_vehicle_kind_unique").on(table.vehicleId, table.kind),
+    check("reminders_kind", sql`${table.kind} in ('insurance', 'technicalInspection')`),
+    check(
+      "reminders_due_date",
+      sql`${table.dueDate} glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' and ${table.dueDate} >= '0001-01-01' and date(${table.dueDate}, '+0 days') is not null and date(${table.dueDate}, '+0 days') = ${table.dueDate}`,
+    ),
+    check(
+      "reminders_time_zone",
+      sql`length(trim(${table.timeZone})) > 0 and trim(${table.timeZone}) = ${table.timeZone}`,
+    ),
+    check("reminders_notify_seven_days", sql`${table.notifySevenDaysBefore} in (0, 1)`),
+    check("reminders_notify_one_day", sql`${table.notifyOneDayBefore} in (0, 1)`),
+    check("reminders_notify_due_date", sql`${table.notifyOnDueDate} in (0, 1)`),
+  ],
+);
+
 export const refuellings = sqliteTable(
   "refuellings",
   {

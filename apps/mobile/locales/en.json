@@ -1,4 +1,9 @@
 {
-  "CFBundleDisplayName": "My Car",
-  "NSPhotoLibraryUsageDescription": "Allow My Car to select a vehicle photo from your library."
+  "ios": {
+    "CFBundleDisplayName": "My Car",
+    "NSPhotoLibraryUsageDescription": "Allow My Car to select a vehicle photo from your library."
+  },
+  "android": {
+    "app_name": "My Car"
+  }
 }

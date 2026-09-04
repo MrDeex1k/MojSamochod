@@ -1,4 +1,9 @@
 {
-  "CFBundleDisplayName": "Moje Auto",
-  "NSPhotoLibraryUsageDescription": "Zezwól aplikacji Moje Auto wybrać zdjęcie pojazdu z galerii."
+  "ios": {
+    "CFBundleDisplayName": "Moje Auto",
+    "NSPhotoLibraryUsageDescription": "Zezwól aplikacji Moje Auto wybrać zdjęcie pojazdu z galerii."
+  },
+  "android": {
+    "app_name": "Moje Auto"
+  }
 }

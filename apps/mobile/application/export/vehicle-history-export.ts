@@ -1,5 +1,6 @@
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import type { RefuellingRepository } from "@/application/repositories/refuelling-repository";
+import type { ReminderRepository } from "@/application/repositories/reminder-repository";
 import type { RepositoryResult } from "@/application/repositories/repository-result";
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
 import type { ManagedFileRepository } from "@/application/repositories/managed-file-repository";
@@ -9,12 +10,13 @@ import type { VehicleDocument } from "@/domain/documents/vehicle-document";
 import type { ReadyManagedFileMetadata } from "@/domain/files/managed-file";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { Refuelling } from "@/domain/refuelling/refuelling";
+import type { Reminder } from "@/domain/reminders/reminder";
 import type { Clock } from "@/domain/shared/ports";
 import { utcTimestampFromDate } from "@/domain/shared/value-objects";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 
 export const vehicleHistoryExportFormat = "moje-auto-vehicle-history";
-export const vehicleHistoryExportVersion = 3;
+export const vehicleHistoryExportVersion = 4;
 
 type ExportMoneyV1 = Readonly<{
   currency: string;
@@ -119,12 +121,24 @@ type ExportRefuellingV3 = Readonly<{
   vehicleId: string;
 }>;
 
-export type VehicleHistoryExportV3 = Readonly<{
+type ExportReminderV4 = Readonly<{
+  createdAt: string;
+  dueDate: string;
+  id: string;
+  kind: "insurance" | "technicalInspection";
+  notificationDaysBefore: readonly (7 | 1 | 0)[];
+  timeZone: string;
+  updatedAt: string;
+  vehicleId: string;
+}>;
+
+export type VehicleHistoryExportV4 = Readonly<{
   binaryFilesIncluded: false;
   data: Readonly<{
     documents: readonly ExportDocumentV2[];
     historyEntries: readonly ExportHistoryEntryV1[];
     refuellings: readonly ExportRefuellingV3[];
+    reminders: readonly ExportReminderV4[];
     vehicle: ExportVehicleV3 | null;
   }>;
   exportedAt: string;
@@ -137,13 +151,14 @@ export type CreateVehicleHistoryExportDependencies = Readonly<{
   historyEntryRepository: HistoryEntryRepository;
   managedFileRepository: ManagedFileRepository;
   refuellingRepository: RefuellingRepository;
+  reminderRepository: ReminderRepository;
   vehicleDocumentRepository: VehicleDocumentRepository;
   vehicleRepository: VehicleRepository;
 }>;
 
 export async function createVehicleHistoryExport(
   dependencies: CreateVehicleHistoryExportDependencies,
-): Promise<RepositoryResult<VehicleHistoryExportV3>> {
+): Promise<RepositoryResult<VehicleHistoryExportV4>> {
   const vehicleResult = await dependencies.vehicleRepository.get();
   if (!vehicleResult.ok) return vehicleResult;
 
@@ -151,7 +166,7 @@ export async function createVehicleHistoryExport(
   if (!vehicle) {
     return {
       ok: true,
-      value: buildExport(dependencies.clock, null, [], [], []),
+      value: buildExport(dependencies.clock, null, [], [], [], []),
     };
   }
 
@@ -160,6 +175,9 @@ export async function createVehicleHistoryExport(
 
   const refuellingsResult = await dependencies.refuellingRepository.list(vehicle.id);
   if (!refuellingsResult.ok) return refuellingsResult;
+
+  const remindersResult = await dependencies.reminderRepository.list(vehicle.id);
+  if (!remindersResult.ok) return remindersResult;
 
   const documentsResult = await dependencies.vehicleDocumentRepository.list(vehicle.id);
   if (!documentsResult.ok) return documentsResult;
@@ -181,11 +199,12 @@ export async function createVehicleHistoryExport(
       historyResult.value,
       exportedDocuments,
       refuellingsResult.value,
+      remindersResult.value,
     ),
   };
 }
 
-export function serializeVehicleHistoryExport(value: VehicleHistoryExportV3): string {
+export function serializeVehicleHistoryExport(value: VehicleHistoryExportV4): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
@@ -195,13 +214,15 @@ function buildExport(
   historyEntries: readonly HistoryEntry[],
   documents: readonly ExportDocumentV2[],
   refuellings: readonly Refuelling[],
-): VehicleHistoryExportV3 {
+  reminders: readonly Reminder[],
+): VehicleHistoryExportV4 {
   return {
     binaryFilesIncluded: false,
     data: {
       documents,
       historyEntries: historyEntries.map(mapHistoryEntry),
       refuellings: refuellings.map(mapRefuelling),
+      reminders: reminders.map(mapReminder),
       vehicle: vehicle ? mapVehicle(vehicle) : null,
     },
     exportedAt: utcTimestampFromDate(clock.now()),
@@ -249,6 +270,19 @@ function mapVehicle(vehicle: Vehicle): ExportVehicleV3 {
     updatedAt: vehicle.updatedAt,
     variant: vehicle.variant ?? null,
     vin: vehicle.vin ?? null,
+  };
+}
+
+function mapReminder(reminder: Reminder): ExportReminderV4 {
+  return {
+    createdAt: reminder.createdAt,
+    dueDate: reminder.dueDate,
+    id: reminder.id,
+    kind: reminder.kind,
+    notificationDaysBefore: [...reminder.notificationDaysBefore],
+    timeZone: reminder.timeZone,
+    updatedAt: reminder.updatedAt,
+    vehicleId: reminder.vehicleId,
   };
 }
 

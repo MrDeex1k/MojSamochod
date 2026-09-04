@@ -152,23 +152,42 @@ adaptive phone/tablet UI have automated and native coverage.
 
 ## Phase 6 — Reminders
 
-**Status:** Not started. Domain ownership, deadline semantics, reminder states, notification
-permission flow, and deterministic local scheduling must be agreed before implementation.
+**Status:** Domain decisions accepted; stages 1–7 (domain rules, persistence,
+application services, JSON v4 export, native notification adapter/configuration, schedule
+reconciliation, localized phone/tablet UI, compatible dependency updates, automated tests and
+native acceptance) are complete and ready for review. Our rebuilt applications passed the recorded
+four-device acceptance scope, including Android notification channels. Registry vulnerability audit
+results remain unavailable; this is not a clean security audit or store-release approval. See the
+[stage 7 report](phase-6-step-7-verification.md) for coverage and limitations, and
+[reminder-domain-decisions.md](reminder-domain-decisions.md) for the working contract.
 
 ### Steps
 
-1. Add inspection and insurance deadlines to the vehicle model.
-2. Design notification permission as contextual education, not an onboarding demand.
-3. Schedule and reschedule local notifications deterministically.
-4. Handle timezone changes, edited dates, overdue states, permission denial, and removed vehicles.
-5. Provide an in-app reminder list so notifications are not the only source of truth.
+1. Implement reminder domain rules and tests, retaining the creation-time device timezone and
+   its daylight-saving rules.
+2. Persist optional vehicle-owned insurance and inspection reminders, enforce one per kind,
+   and extend versioned JSON export.
+3. Integrate native local notifications and explicit permission handling without startup prompts.
+4. Reconcile schedules after edits, removal, restart, and permission changes without duplicates.
+5. Implement phone/tablet reminder UI, localization, and contextual permission education.
+6. Update all production and development dependencies across the repository to the newest compatible
+   versions, review transitive dependencies and overrides, adapt affected code, and update `nub.lock`.
+   Keep Expo/React Native packages SDK-compatible, exact pins, SFW and the 24-hour cooling period;
+   document exceptions. Run automated checks, React Doctor and Expo Doctor before native acceptance.
+7. Verify the entire phase and existing application functionality after dependency updates on iPhone,
+   iPad, Android phone and Android tablet. Rebuild native apps as required, fix regressions,
+   and update final documentation.
 
 ### Exit criteria
 
 - Deadlines work offline and remain visible without notification permission.
 - Editing or deleting a deadline updates scheduled notifications correctly.
+- Notifications remain at 09:00 in the retained reminder timezone; calendar-day offsets and
+  deadline states use that same zone. JSON export includes reminder data, not device scheduling state.
 - Platform-specific notification behavior is verified on simulators and physical devices where
   required.
+- Final native acceptance uses the updated dependency set; Expo Go alone does not validate the
+  application's generated native configuration or signing capabilities.
 
 ## Phase 7 — Production hardening of the free application
 
@@ -244,12 +263,17 @@ review the scope instead of introducing remote infrastructure implicitly.
 4. Add automated tests in proportion to business and migration risk.
 5. Run `nub run check`; also run Expo Doctor or React Doctor when required by `AGENTS.md`.
 6. Verify user-visible behavior on the relevant iPhone, iPad, Android phone, and Android tablet
-   targets.
+   targets. Prefer SDK-compatible Expo Go 57 for fast native iterations supported by its bundled
+   modules. Use rebuilt development/release apps for native configuration, dependency changes and
+   final acceptance; record which host was tested. Follow the
+   [verification matrix](technology.md#verification-matrix).
 7. Update these documents when a decision changes.
 8. Commit using Conventional Commits and keep unrelated phases in separate changes.
 
 ## Recommended next step
 
-Start Phase 6 on a dedicated branch by defining the inspection and insurance deadline model,
-reminder states, notification-permission flow, and local notification scheduling rules before
-implementing persistence or UI.
+Review and merge Phase 6, then start Phase 7 production hardening. Native acceptance after dependency
+updates is recorded in the [stage 7 report](phase-6-step-7-verification.md); local build instructions
+are in [native-qa-builds.md](native-qa-builds.md). Retry the unavailable registry vulnerability audit
+before release. Physical-device notification reliability, signing and store acceptance are still
+release gates, not conclusions drawn from simulator testing.
