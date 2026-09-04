@@ -31,7 +31,7 @@ type NotificationContent = (
 ) => Pick<ReminderNotificationRequest, "title" | "body">;
 
 export class ReminderSchedule {
-  private tail: Promise<unknown> = Promise.resolve();
+  private tail: Promise<void> = Promise.resolve();
   private lastResult: ReconciliationResult | null = null;
   private readonly listeners = new Set<() => void>();
 
@@ -62,10 +62,20 @@ export class ReminderSchedule {
     const next = this.tail.then(async () => {
       const result = await this.runSafely();
       this.lastResult = result;
-      for (const listener of this.listeners) listener();
+      for (const listener of this.listeners) {
+        try {
+          listener();
+        } catch {
+          // A subscriber cannot invalidate native work or prevent other subscribers updating.
+        }
+      }
       return result;
     });
-    this.tail = next;
+    // Keep the serial queue usable even if a pass unexpectedly rejects; callers retain its result.
+    this.tail = next.then(
+      () => undefined,
+      () => undefined,
+    );
     return next;
   }
 

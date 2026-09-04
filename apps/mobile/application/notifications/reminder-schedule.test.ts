@@ -89,6 +89,35 @@ function setup() {
 }
 
 describe("reminder schedule reconciliation", () => {
+  it("isolates throwing subscribers while publishing successful snapshots", async () => {
+    const { schedule } = setup();
+    schedule.subscribe(() => {
+      throw new Error("subscriber failure");
+    });
+    const snapshots: unknown[] = [];
+    schedule.subscribe(() => snapshots.push(schedule.getSnapshot()));
+
+    const result = await schedule.reconcile();
+    expect(result).toMatchObject({ ok: true, scheduled: 3, issues: [] });
+    expect(snapshots).toEqual([result]);
+    expect(schedule.getLastResult()).toBe(result);
+  });
+
+  it("continues queued and later passes after subscriber failures", async () => {
+    const { schedule, notifications } = setup();
+    const listener = jest.fn(() => {
+      throw new Error("subscriber failure");
+    });
+    schedule.subscribe(listener);
+    const results = await Promise.all([schedule.reconcile(), schedule.reconcile()]);
+    expect(results[0]).toMatchObject({ ok: true, scheduled: 3 });
+    expect(results[1]).toMatchObject({ ok: true, scheduled: 0, unchanged: 3 });
+    await expect(schedule.reconcile()).resolves.toMatchObject({ ok: true, unchanged: 3 });
+    expect(listener).toHaveBeenCalledTimes(3);
+    expect(notifications.list).toHaveBeenCalledTimes(3);
+    expect(notifications.schedule).toHaveBeenCalledTimes(3);
+  });
+
   it("publishes completed snapshots and removes UI subscriptions", async () => {
     const { schedule } = setup();
     const listener = jest.fn();
@@ -274,6 +303,25 @@ describe("reminder schedule reconciliation", () => {
 });
 
 describe("schedule-aware repository commit boundaries", () => {
+  it("keeps post-commit reconciliation alive when a subscriber throws", async () => {
+    const { schedule, reminders, state, notifications } = setup();
+    schedule.subscribe(() => {
+      throw new Error("subscriber failure");
+    });
+    const wrapped = scheduleAwareReminderRepository(reminders, schedule);
+    await expect(wrapped.update(reminder)).resolves.toEqual(repositorySuccess(undefined));
+    // This pass waits behind the fire-and-forget pass triggered by the committed write.
+    await expect(schedule.reconcile()).resolves.toMatchObject({ ok: true, unchanged: 3 });
+    state.reminders = [];
+    await expect(wrapped.delete(vehicle.id, reminder.id)).resolves.toEqual(
+      repositorySuccess(undefined),
+    );
+    await expect(schedule.reconcile()).resolves.toMatchObject({ ok: true, unchanged: 0 });
+    expect(notifications.list).toHaveBeenCalledTimes(4);
+    expect(notifications.cancel).toHaveBeenCalledTimes(3);
+    expect(state.pending).toEqual([]);
+  });
+
   it("refreshes after each successful write, not after reads or failed writes", async () => {
     const { schedule, reminders, vehicles } = setup();
     const refresh = jest
