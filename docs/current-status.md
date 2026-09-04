@@ -286,6 +286,8 @@ Zaakceptowana tożsamość produkcyjna to nazwa `Moje Auto`, wydawca `Jakub Baty
 identyfikator iOS/Android `pl.jakubbatycki.mojeauto`. Polski jest głównym językiem sklepowym,
 a angielski dodatkowym. `dev.mojeauto.qa` pozostaje identyfikatorem buildów testowych. Obecna
 wersja przedwydaniowa to `0.8.0`; numer `1.0.0` jest zarezerwowany dla pierwszego wydania sklepowego.
+Konfiguracja Expo używa już tej tożsamości domyślnie, z początkowym `ios.buildNumber = 1` oraz
+`android.versionCode = 1`; jawny tryb QA nadpisuje tylko identyfikatory aplikacji.
 Przed publikacją trzeba też ocenić kopie/przenoszenie danych wykonywane przez sam system:
 brak eksportu w aplikacji nie oznacza automatycznie braku backupu iOS/Android.
 

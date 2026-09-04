@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "MojeAuto",
+    "name": "Moje Auto",
     "slug": "MojeAuto",
     "version": "0.8.0",
     "orientation": "default",
@@ -12,9 +12,13 @@
       "pl": "./locales/pl.json"
     },
     "ios": {
+      "bundleIdentifier": "pl.jakubbatycki.mojeauto",
+      "buildNumber": "1",
       "supportsTablet": true
     },
     "android": {
+      "package": "pl.jakubbatycki.mojeauto",
+      "versionCode": 1,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
         "com.google.android.c2dm.permission.RECEIVE",

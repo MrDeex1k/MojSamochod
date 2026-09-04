@@ -6,10 +6,11 @@ generated application, native modules, permissions and notification channels.
 ## Local identity
 
 Set `MOJE_AUTO_NATIVE_QA=1` to use `dev.mojeauto.qa` on both platforms. This opt-in is implemented
-in `apps/mobile/app.config.js`; normal configuration is unchanged without it. This is a local QA
-identity, not a decision about production bundle identifiers, signing, store accounts or releases.
-It gives the test app separate storage and permissions from Expo Go. Never clear another app's data
-to prepare these tests.
+in `apps/mobile/app.config.js`; normal configuration uses the accepted production identifier
+`pl.jakubbatycki.mojeauto` without it. The QA override retains the same application version and build
+counters while giving the test app separate storage and permissions from production and Expo Go.
+It does not configure signing, store accounts or distribution. Never clear another app's data to
+prepare these tests.
 
 ## Build procedure
 
