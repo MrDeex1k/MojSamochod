@@ -1,4 +1,4 @@
-import { ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ const sections = ["free", "data", "permissions", "privacy", "units"] as const;
 export function SettingsSection({
   embedded = false,
   onBack,
-}: Readonly<{ embedded?: boolean; onBack: () => void }>) {
+  onErase,
+}: Readonly<{ embedded?: boolean; onBack: () => void; onErase: () => void }>) {
   const { t } = useAppTranslation();
   const content = (
     <View className="gap-content">
@@ -18,6 +19,19 @@ export function SettingsSection({
         {t("settings.title")}
       </Text>
       <Button label={t("settings.back")} onPress={onBack} variant="secondary" />
+      <Card>
+        <Text className="text-body text-secondary">{t("settings.reset.description")}</Text>
+        <Button
+          label={t("settings.reset.action")}
+          variant="danger"
+          onPress={() =>
+            Alert.alert(t("settings.reset.title"), t("settings.reset.description"), [
+              { text: t("documents.cancel"), style: "cancel" },
+              { text: t("settings.reset.confirm"), style: "destructive", onPress: onErase },
+            ])
+          }
+        />
+      </Card>
       {sections.map((section) => (
         <Card key={section}>
           <Text accessibilityRole="header" className="text-label font-semibold text-primary">

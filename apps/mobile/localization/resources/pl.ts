@@ -1,5 +1,15 @@
 export const pl = {
   settings: {
+    reset: {
+      action: "Wyczyść wszystkie dane aplikacji",
+      title: "Trwale usunąć wszystkie dane aplikacji?",
+      description:
+        "Usuniemy pojazd, wpisy, tankowania, przypomnienia i wszystkie kopie załączników z aplikacji. Nie można tego cofnąć ani odtworzyć danych. Oryginalne pliki i PDF zapisane poza aplikacją pozostaną bez zmian.",
+      confirm: "Usuń trwale",
+      loading: "Usuwanie danych aplikacji…",
+      error:
+        "Nie udało się zakończyć usuwania danych. Ponów operację, aby móc korzystać z aplikacji.",
+    },
     title: "Ustawienia i prywatność",
     back: "Wróć do historii",
     free: {
@@ -118,7 +128,6 @@ export const pl = {
     editTitle: "Edytuj metadane dokumentu",
     empty: "Brak dokumentów",
     emptyDescription: "Dodaj fakturę, paragon lub inny plik związany z pojazdem.",
-    export: "Eksportuj dokument",
     file: "Plik",
     fileHelper: "Obsługiwane formaty: PDF, JPEG i PNG. Maksymalny rozmiar: 20 MB.",
     fileMissing: "Zarządzany plik jest niedostępny.",
@@ -128,7 +137,11 @@ export const pl = {
     keepEditing: "Kontynuuj edycję",
     name: "Nazwa",
     notes: "Notatki",
-    openPdf: "Otwórz lub eksportuj PDF",
+    downloadPdf: "Pobierz PDF",
+    downloadSaved:
+      "PDF zapisany w wybranym folderze. Możesz go otworzyć w systemowej aplikacji Pliki.",
+    downloadError:
+      "Nie udało się zapisać PDF. Wybierz folder z prawem zapisu i sprawdź wolne miejsce.",
     pickError: "Nie udało się otworzyć systemowego selektora plików.",
     relation: "Powiązanie",
     replace: "Zastąp plik",
@@ -136,8 +149,6 @@ export const pl = {
     required: "To pole jest wymagane.",
     save: "Zapisz dokument",
     saveError: "Nie udało się zapisać dokumentu. Zmiany pozostają w formularzu.",
-    shareError: "Nie udało się otworzyć lub wyeksportować dokumentu.",
-    shareUnavailable: "Udostępnianie dokumentów jest niedostępne na tym urządzeniu.",
     title: "Dokumenty i faktury",
     unsupportedFile: "Wybierz plik PDF, JPEG lub PNG.",
     vehicleOnly: "Tylko pojazd",

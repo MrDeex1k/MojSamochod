@@ -8,8 +8,20 @@ details and store declarations must be completed and verified before release.
 The Settings and privacy section explains the one-vehicle FREE scope, local records and attachment
 copies, absence of database export/import/restore, retention of original documents, optional
 notifications and the existing vehicle-unit preferences. It is available from the history screen
-on phones and tablets in Polish and English. Erase-all and removal of existing document sharing
-belong to Phase 7 step 2; the information screen does not claim those changes are implemented.
+on phones and tablets in Polish and English. Phase 7 step 2 adds a destructive confirmation for
+erase-all and replaces general document sharing with downloading an individual PDF attachment
+to a user-selected device location. Database export remains unavailable. The application does
+not automatically open the saved PDF or provide an in-app PDF viewer. User-saved external copies
+are outside erase-all scope, just like original gallery and document files.
+
+Reset stops new data operations, waits for accepted writes/pickers and notification scheduling,
+then persists an intent marker before cancelling owned scheduled/delivered notifications and
+deleting user records, managed files and app-owned picker/image caches. The marker is removed
+only after cleanup succeeds. Startup resumes an interrupted reset before exposing records or
+starting scheduling. Errors offer retry, never an automatic unrequested database wipe. Schema and
+migration metadata remain; OS permissions and external copies are not reset. This is logical
+application-data deletion, not a claim of forensic erasure from flash storage or OS backups.
+See the [step 2 verification report](phase-7-step-2-verification.md).
 
 No analytics service is added by application code. The first release has no account or in-app
 cloud synchronization. This does not imply that platform diagnostics, store beta diagnostics,

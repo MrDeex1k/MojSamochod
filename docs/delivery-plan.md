@@ -197,27 +197,43 @@ database import, backup or restore, and no added analytics. Existing JSON contra
 Provide a confirmed erase-all action returning to first-vehicle setup, including managed file
 copies and owned scheduled alerts; do not delete users' original gallery or document files.
 Use minimal contextual permissions and gallery-only vehicle photos, with no camera capture.
-Distribution channel, production identity and publisher/privacy details remain open. The export
-restriction includes single-document sharing and external-open actions; attachment selection remains
+Distribution channel and publisher/privacy contact details remain open. The accepted production
+identity is `Moje Auto`, publisher `Jakub Batycki`, and the shared iOS/Android identifier
+`pl.jakubbatycki.mojeauto`; Polish is the primary store language and English is additional. The export
+restriction applies to database/dataset export, not downloading an individual PDF attachment.
+Selecting a PDF should offer saving a copy to a user-selected device location, without an in-app
+PDF viewer or automatic external opening. Users may open that saved copy with a system application.
+Do not expose general sharing or image-export actions. Attachment selection remains
 allowed, but importing datasets from other applications does not. Review OS backup behavior
 separately from app-level export. The publisher currently has no active Apple Developer Program
 membership or paid Google Play publisher registration; store distribution is not configured.
+The current pre-release application version is `0.8.0`; reserve `1.0.0` for the first store release.
 The five steps below remain the roadmap; retry and assess the unavailable vulnerability audit
 before release, alongside documented diagnostic exceptions.
 
 Step 1 is implemented on `feat/free-release-hardening`: localized settings/privacy guidance,
 permission reduction and targeted accessibility checks. See the [step 1 report](phase-7-step-1-verification.md)
-for native coverage and an unresolved Android database-initialization incident after changing font
-scale; investigate it in lifecycle hardening before release. Published privacy information still
-requires publisher details. Next implementation step: safe erase-all and removal of outbound document actions.
+for native coverage and the isolated Android database-initialization incident after changing font
+scale. The incident remains a known, non-reproduced defect; by product decision it does not block
+the current phase progression. Published privacy information still requires publisher details.
+Step 2 implements safe erase-all and PDF-only device downloads; see the
+[step 2 report](phase-7-step-2-verification.md).
+
+At the user's request, step 3 work preceded step 2: deferred storage-directory creation, failure
+and interruption regression tests, and four-target native lifecycle checks. See the
+[step 3 report](phase-7-step-3-verification.md). The earlier Android initialization incident was
+not reproduced or proven fixed and remains tracked as one known defect. Step 3 is accepted by
+product decision and does not block proceeding to step 4. Step 2 is implemented.
 
 ### Steps
 
 1. Add privacy information, data-management guidance, accessibility review, and localized product
    copy.
 2. Implement and verify safe erase-all, database migrations, document storage pressure and recovery
-   from interrupted operations. Remove existing outbound document actions and verify that preview
-   surfaces cannot export/share files. Do not add user-facing backup, export or database restore.
+   from interrupted operations. Replace general outbound document actions with PDF-only downloads
+   to a user-selected device location. Keep image previews in-app and do not add an in-app PDF
+   viewer or automatic external opening. Erase-all must preserve user-downloaded external copies.
+   Do not add user-facing database backup, export or restore.
 3. Test application lifecycle, low storage, interrupted attachment imports, device rotation where supported,
    and background transitions.
 4. Establish release builds, signing, store metadata, screenshots, and a physical-device test
@@ -294,8 +310,11 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Implement Phase 7 step 2: safe erase-all and removal of outbound document actions. Step 1 is
-implemented; see the [step 1 report](phase-7-step-1-verification.md). Phase 6 is merged.
+Proceed with Phase 7 step 4: establish release builds, signing, store metadata, screenshots and the
+physical-device test matrix. Steps 1-3 are implemented and accepted; the non-reproduced Android
+SQLite initialization incident remains tracked as one known, non-blocking defect. See the
+[step 1 report](phase-7-step-1-verification.md), [step 2 report](phase-7-step-2-verification.md) and
+[step 3 report](phase-7-step-3-verification.md). Phase 6 is merged.
 Native acceptance after dependency
 updates is recorded in the [stage 7 report](phase-6-step-7-verification.md); local build instructions
 are in [native-qa-builds.md](native-qa-builds.md). Retry the unavailable registry vulnerability audit

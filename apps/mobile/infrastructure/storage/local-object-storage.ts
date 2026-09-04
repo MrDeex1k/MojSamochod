@@ -153,13 +153,14 @@ export class LocalObjectStorage implements ObjectStorage {
 export class ExpoFileSystemDriver implements ObjectStorageDriver {
   private readonly root = new Directory(Paths.document, "managed-objects");
 
-  constructor() {
+  private ensureDirectories(): void {
     this.root.create({ idempotent: true, intermediates: true });
     new Directory(this.root, "staging").create({ idempotent: true, intermediates: true });
     new Directory(this.root, "objects").create({ idempotent: true, intermediates: true });
   }
 
   async copyFrom(sourceUri: string, key: string): Promise<void> {
+    this.ensureDirectories();
     await new File(sourceUri).copy(this.file(key), { overwrite: true });
   }
 
@@ -176,7 +177,8 @@ export class ExpoFileSystemDriver implements ObjectStorageDriver {
   }
 
   list(prefix: string): readonly string[] {
-    return new Directory(this.root, prefix).list().map((entry) => entry.name);
+    const directory = new Directory(this.root, prefix);
+    return directory.exists ? directory.list().map((entry) => entry.name) : [];
   }
 
   async move(fromKey: string, toKey: string): Promise<void> {

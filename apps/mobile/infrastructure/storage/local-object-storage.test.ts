@@ -86,6 +86,55 @@ describe("LocalObjectStorage", () => {
     });
   });
 
+  it("cleans up a partial copy after a disk-full failure without touching the original", async () => {
+    const driver = new MemoryDriver(new Uint8Array([1, 2, 3]));
+    const copy = driver.copyFrom.bind(driver);
+    const cause = new Error("ENOSPC");
+    driver.copyFrom = async (uri, key) => {
+      await copy(uri, key);
+      throw cause;
+    };
+    const remove = jest.spyOn(driver, "delete");
+    const storage = new LocalObjectStorage(driver);
+
+    const result = await storage.stage({
+      extension: "jpg",
+      managedFileId,
+      maximumBytes: maximumVehiclePhotoBytes,
+      sourceUri: "file:///original.jpg",
+    });
+
+    expect(result).toMatchObject({ ok: false, error: { cause, kind: "unavailable" } });
+    expect(driver.files.size).toBe(0);
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledWith(`staging/${managedFileId}.jpg`);
+  });
+
+  it("leaves failed cleanup discoverable and retries it after storage is available", async () => {
+    const driver = new MemoryDriver(new Uint8Array([1]));
+    const storage = new LocalObjectStorage(driver);
+    mockDigest.mockRejectedValueOnce(new Error("Read interrupted"));
+    const remove = jest.spyOn(driver, "delete").mockRejectedValueOnce(new Error("I/O error"));
+
+    const result = await storage.stage({
+      extension: "jpg",
+      managedFileId,
+      maximumBytes: maximumVehiclePhotoBytes,
+      sourceUri: "file:///original.jpg",
+    });
+    expect(result.ok).toBe(false);
+    const reopened = new LocalObjectStorage(driver);
+    const pending = await reopened.listStagedKeys();
+    expect(pending).toEqual({ ok: true, value: [`staging/${managedFileId}.jpg`] });
+    if (!pending.ok) throw new Error("Expected pending cleanup");
+    remove.mockRestore();
+    await expect(reopened.discard(pending.value[0]!)).resolves.toEqual({
+      ok: true,
+      value: undefined,
+    });
+    expect(driver.files.size).toBe(0);
+  });
+
   it("resolves a committed photo after the storage service is recreated", async () => {
     const driver = new MemoryDriver(new Uint8Array([1, 2, 3]));
     const firstStorage = new LocalObjectStorage(driver);

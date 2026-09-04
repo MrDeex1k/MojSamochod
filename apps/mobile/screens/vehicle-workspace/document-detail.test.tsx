@@ -42,8 +42,8 @@ const document = expectValid(
 );
 
 describe("DocumentDetail", () => {
-  it("renders an image preview and exports through the native presenter", async () => {
-    const share = jest.fn(async () => true);
+  it("renders an image preview without an export action", async () => {
+    const downloadPdf = jest.fn();
     await render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
         <DocumentDetail
@@ -54,17 +54,15 @@ describe("DocumentDetail", () => {
           onChanged={jest.fn()}
           onEdit={jest.fn()}
           picker={{ pick: jest.fn() }}
-          presenter={{ share }}
+          presenter={{ downloadPdf }}
           vehicle={vehicle}
         />
       </SafeAreaProvider>,
     );
 
     expect(await screen.findByLabelText("Repair invoice")).toBeOnTheScreen();
-    await userEvent.press(screen.getByRole("button", { name: "Export document" }));
-    await waitFor(() =>
-      expect(share).toHaveBeenCalledWith(expect.objectContaining({ mimeType: "image/png" })),
-    );
+    expect(screen.queryByRole("button", { name: /Export|Download/ })).not.toBeOnTheScreen();
+    expect(downloadPdf).not.toHaveBeenCalled();
   });
 
   it("deletes metadata and managed content only after confirmation", async () => {
@@ -83,7 +81,7 @@ describe("DocumentDetail", () => {
           onChanged={onChanged}
           onEdit={jest.fn()}
           picker={{ pick: jest.fn() }}
-          presenter={{ share: jest.fn() }}
+          presenter={{ downloadPdf: jest.fn() }}
           vehicle={vehicle}
         />
       </SafeAreaProvider>,
@@ -93,6 +91,40 @@ describe("DocumentDetail", () => {
 
     await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
     expect(services.delete).toHaveBeenCalledWith(vehicle.id, document.id);
+  });
+  it.each(["saved", "cancelled", "error"])("handles PDF download outcome %s", async (outcome) => {
+    const services = service();
+    const file = {
+      mimeType: "application/pdf",
+      name: "invoice.pdf",
+      uri: "file:///managed/invoice.pdf",
+    };
+    services.getFile.mockResolvedValue(repositorySuccess(file));
+    const downloadPdf = jest.fn(async (): Promise<"saved" | "cancelled"> => {
+      if (outcome === "error") throw new Error("ENOSPC");
+      return outcome as "saved" | "cancelled";
+    });
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <DocumentDetail
+          document={document}
+          documents={services}
+          entries={[]}
+          onBack={jest.fn()}
+          onChanged={jest.fn()}
+          onEdit={jest.fn()}
+          picker={{ pick: jest.fn() }}
+          presenter={{ downloadPdf }}
+          vehicle={vehicle}
+        />
+      </SafeAreaProvider>,
+    );
+    await userEvent.press(await screen.findByRole("button", { name: "Download PDF" }));
+    expect(downloadPdf).toHaveBeenCalledWith(file);
+    if (outcome === "saved") expect(await screen.findByText(/PDF saved in/)).toBeOnTheScreen();
+    else if (outcome === "error")
+      expect(await screen.findByText(/PDF could not be saved/)).toBeOnTheScreen();
+    else expect(screen.queryByText(/PDF saved in|PDF could not be saved/)).not.toBeOnTheScreen();
   });
 });
 

@@ -9,6 +9,12 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+export const pendingDataReset = sqliteTable(
+  "pending_data_reset",
+  { id: integer("id").primaryKey() },
+  (table) => [check("pending_data_reset_singleton", sql`${table.id} = 1`)],
+);
+
 export const managedFiles = sqliteTable(
   "managed_files",
   {

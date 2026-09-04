@@ -141,11 +141,15 @@ JPEG processing, `expo-image` for native rendering, `expo-file-system` for priva
 and `@react-native-community/datetimepicker` for separate native date and UTC-time controls. Direct
 dependencies are pinned to Expo SDK-compatible versions in the application manifest.
 
-Phase 4 uses `expo-document-picker` for system PDF/JPEG/PNG selection and `expo-sharing` for native
-export. Android imports preserve the picker-granted `content://` URI until `expo-file-system` copies
+Document selection uses `expo-document-picker`. Android imports preserve the picker-granted `content://` URI until `expo-file-system` copies
 the file into private managed storage; copying first into Expo Go's shared cache can lose scoped
-read permission. Before sharing, the application creates a cache alias with the original file name
-so the platform surface does not expose the internal UUID storage key.
+read permission. iOS uses `copyToCacheDirectory: true` so a selected document remains readable
+after picker dismissal. Phase 7 replaces general sharing with PDF-only downloads using
+`Directory.pickDirectoryAsync`; existing destination files are preserved. Android SAF writes use
+the native asynchronous legacy base64 writer because SDK 57's overwrite-copy deletes the target
+document URI. Apple uses native file copying. No PDF viewer or automatic external opening is added.
+The previously installed `expo-sharing` package remains in the dependency graph, but application
+code no longer calls it. No dependency upgrade/removal is bundled with this behavior change.
 
 Phase 5 uses pure TypeScript domain functions for canonical distance and volume conversion,
 refuelling validation, exact price derivation, and auditable fuel-consumption calculation. Vehicle

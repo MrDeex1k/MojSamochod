@@ -37,7 +37,8 @@ opisywanego etapu.
 - Przestrzeń pojazdu udostępnia listę dokumentów i faktur. Użytkownik może zaimportować plik PDF,
   JPEG albo PNG z systemowego selektora, nadać mu nazwę i opcjonalnie uzupełnić datę, kwotę,
   walutę, notatki oraz relację z jednym wpisem historii.
-- Szczegóły dokumentu obsługują podgląd obrazu w aplikacji, natywny eksport PDF, edycję metadanych,
+- Szczegóły dokumentu obsługują podgląd obrazu w aplikacji, pobranie pojedynczego PDF do wybranego
+  folderu systemowego bez automatycznego otwierania, edycję metadanych,
   zastąpienie pliku z zachowaniem tożsamości i relacji oraz trwałe usunięcie po potwierdzeniu.
 - Główny layout zapewnia `SafeAreaProvider`, ciemny pasek stanu i wspólny import stylów.
 - Telefon jest obecnie obsługiwany w pionie, a tablet w poziomie. Pozostałe układy pokazują
@@ -71,7 +72,7 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw na branchu Fazy 7 zawiera 60 zestawów i 403 testy komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw na branchu Fazy 7 zawiera 64 zestawy i 444 testy komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
@@ -244,7 +245,7 @@ Poprawka po review izoluje wyjątki subskrybentów od wyniku uzgadniania i zabez
 trwałym odrzuceniem. Trzy regresje sprawdzają publikację wyniku, kolejne przebiegi i wywołania
 po zapisie repozytorium. Nie zmienia to UI, konfiguracji natywnej ani zakresu prób na urządzeniach.
 
-Następny krok to ustalenia Fazy 7 — utwardzenie darmowej aplikacji:
+Trwa Faza 7 — utwardzenie darmowej aplikacji:
 prywatność, zarządzanie danymi i odzyskiwanie, dostępność, sytuacje awaryjne, wydajność,
 konfiguracja wydania oraz testy na fizycznych urządzeniach. Zakończenie Fazy 6 nie oznacza
 jeszcze gotowości aplikacji do publikacji w sklepach.
@@ -254,15 +255,24 @@ jeszcze gotowości aplikacji do publikacji w sklepach.
 Krok 1 zaimplementowano na `feat/free-release-hardening`: ustawienia i treści prywatności PL/EN,
 ograniczenie uprawnień, podpowiedzi dostępności i testy. Zakres natywny, diagnostyki i otwarty
 incydent inicjalizacji SQLite po zmianie skali Androida: [raport kroku 1](phase-7-step-1-verification.md).
-Następny jest krok 2. Pełna polityka prywatności i akceptacja fizycznych urządzeń pozostają przed nami.
+Na prośbę użytkownika wykonano prace kroku 3 przed krokiem 2: poprawkę obsługi braku miejsca,
+testy przerwań oraz próby cyklu życia na czterech urządzeniach. Dawny incydent SQLite pozostaje
+nieodtworzony i nie został uznany za naprawiony, ale decyzją produktową traktujemy go jako jeden
+znany błąd, który nie blokuje zamknięcia kroku 3 ani przejścia dalej. Szczegóły i granice:
+[raport kroku 3](phase-7-step-3-verification.md). Krok 2 jest zaimplementowany: potwierdzany reset,
+trwały znacznik wznowienia, blokada nowych operacji, usuwanie własnych powiadomień i plików oraz
+pobieranie pojedynczego PDF. Wyniki i ograniczenia: [raport kroku 2](phase-7-step-2-verification.md).
+Kroki 1-3 są zaakceptowane. Następny jest krok 4: buildy wydaniowe, podpisywanie, metadane sklepowe,
+zrzuty ekranu i macierz testów na fizycznych urządzeniach. Pełna polityka prywatności i akceptacja
+fizycznych urządzeń pozostają przed nami.
 
 - Pierwsze wydanie to FREE: jeden pojazd na urządzenie, bez kont, synchronizacji i premium.
 - Nie udostępniamy użytkownikowi eksportu danych, backupu, importu ani odtwarzania bazy.
   Istniejący kontrakt JSON v4 i jego testy pozostają wewnętrzne; nie są obietnicą funkcji wydania.
 - Udostępniamy potwierdzane, nieodwracalne wyczyszczenie wszystkich danych i powrót do dodawania
-  pierwszego pojazdu. Docelowo usuwamy dane użytkownika, zarządzane kopie zdjęć/dokumentów i własne
+  pierwszego pojazdu. Usuwamy dane użytkownika, zarządzane kopie zdjęć/dokumentów i własne
   zaplanowane powiadomienia, bez kasowania oryginałów z galerii/plików użytkownika. Schema i stan
-  migracji są infrastrukturą, nie danymi użytkownika. Bezpieczny reset ma tolerować przerwanie.
+  migracji są infrastrukturą, nie danymi użytkownika. Przerwany reset jest wznawiany przy starcie.
 - Bez dodawania analityki. Minimalne uprawnienia, proszenie o nie tylko w kontekście czynności;
   zdjęcie wyłącznie z galerii, bez aparatu i nagrywania. Trzeba sprawdzić faktyczny manifest
   i zachowanie SDK, a nie tylko deklaracje konfiguracji. Powiadomienia pozostają opcjonalne.
@@ -270,17 +280,21 @@ Następny jest krok 2. Pełna polityka prywatności i akceptacja fizycznych urz�
   Android: możliwe testy APK przez rodzinę/znajomych. Tablety najpierw w symulatorze/emulatorze;
   fizyczny tablet Android będzie dostępny później, iPad znajomego jest potencjalnym celem testów.
 
-Do ustalenia pozostają kanał bety/publikacji, konta wydawcy, identyfikatory produkcyjne i kontakt
-do polityki prywatności. TestFlight dla iPhone/iPad jest rekomendacją do zatwierdzenia, nie
-wykonaną konfiguracją. `dev.mojeauto.qa` nie jest docelowym identyfikatorem sklepowym.
+Do ustalenia pozostają kanał bety/publikacji, konta wydawcy oraz kontakt do wsparcia i polityki
+prywatności. TestFlight dla iPhone/iPad jest rekomendacją do zatwierdzenia, nie wykonaną konfiguracją.
+Zaakceptowana tożsamość produkcyjna to nazwa `Moje Auto`, wydawca `Jakub Batycki` oraz wspólny
+identyfikator iOS/Android `pl.jakubbatycki.mojeauto`. Polski jest głównym językiem sklepowym,
+a angielski dodatkowym. `dev.mojeauto.qa` pozostaje identyfikatorem buildów testowych. Obecna
+wersja przedwydaniowa to `0.8.0`; numer `1.0.0` jest zarezerwowany dla pierwszego wydania sklepowego.
 Przed publikacją trzeba też ocenić kopie/przenoszenie danych wykonywane przez sam system:
 brak eksportu w aplikacji nie oznacza automatycznie braku backupu iOS/Android.
 
-Zakaz eksportu został doprecyzowany: obejmuje także pojedyncze załączniki, udostępnianie i otwieranie
-pliku w innej aplikacji. Faza 7 musi usunąć istniejące akcje wyprowadzania danych z UI oraz sprawdzić
-przyciski udostępniania w natywnym podglądzie. Dodawanie zdjęć i PDF/faktur jako załączników pozostaje
-dozwolone; import bazy, backupu lub historii z innej aplikacji jest wykluczony. To zakres do wdrożenia,
-nie twierdzenie, że obecny kod nie umożliwia już udostępniania dokumentów.
+Ustalenie zmienione 2026-09-04: zakaz eksportu dotyczy całej bazy/zestawu danych, nie pobierania
+pojedynczego PDF. Kliknięcie PDF ma umożliwiać zapis kopii w miejscu wybranym przez użytkownika.
+Nie dodajemy podglądu PDF w aplikacji ani automatycznego otwierania innej aplikacji; zapisaną kopię
+użytkownik może sam otworzyć systemowo. Reset nie usuwa takich zewnętrznych kopii.
+Ogólne udostępnianie i eksport obrazów usunięto z interfejsu. Dodawanie zdjęć i PDF/faktur jako
+załączników pozostaje dozwolone; import bazy, backupu lub historii z innej aplikacji jest wykluczony.
 
 Użytkownik ma konto Apple Developer bez aktywnego członkostwa i nie ma opłaconego konta wydawcy
 Google Play. Nie skonfigurowano TestFlight ani dystrybucji sklepowej. Nie blokuje to implementacji

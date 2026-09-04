@@ -177,8 +177,16 @@ export function VehicleWorkspaceView(props: VehicleWorkspaceViewProps) {
   if (props.mode.kind === "settings") {
     return (
       <AdaptiveWorkspace
-        phone={<SettingsSection onBack={props.onCancelFlow} />}
-        primaryPane={<SettingsSection embedded onBack={props.onCancelFlow} />}
+        phone={
+          <SettingsSection onBack={props.onCancelFlow} onErase={props.services.eraseAllData} />
+        }
+        primaryPane={
+          <SettingsSection
+            embedded
+            onBack={props.onCancelFlow}
+            onErase={props.services.eraseAllData}
+          />
+        }
         vehiclePane={
           <VehicleSummary
             onEdit={props.onEditVehicle}

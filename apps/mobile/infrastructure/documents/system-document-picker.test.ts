@@ -7,8 +7,17 @@ jest.mock("expo-document-picker", () => ({
 import { maximumDocumentBytes } from "@/application/storage/object-storage";
 
 import { SystemDocumentPicker } from "./system-document-picker";
+import { Platform } from "react-native";
 
 describe("SystemDocumentPicker", () => {
+  it("preserves Android URI permission without copying through the picker cache", async () => {
+    jest.replaceProperty(Platform, "OS", "android");
+    mockGetDocumentAsync.mockResolvedValue({ canceled: true });
+    await new SystemDocumentPicker().pick();
+    expect(mockGetDocumentAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ copyToCacheDirectory: false }),
+    );
+  });
   it("returns a supported PDF selected from the system picker", async () => {
     mockGetDocumentAsync.mockResolvedValue({
       assets: [
@@ -27,7 +36,7 @@ describe("SystemDocumentPicker", () => {
       kind: "selected",
     });
     expect(mockGetDocumentAsync).toHaveBeenCalledWith({
-      copyToCacheDirectory: false,
+      copyToCacheDirectory: true,
       multiple: false,
       type: ["application/pdf", "image/jpeg", "image/png"],
     });

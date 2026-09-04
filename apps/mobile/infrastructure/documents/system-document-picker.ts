@@ -1,4 +1,5 @@
 import * as DocumentPicker from "expo-document-picker";
+import { Platform } from "react-native";
 
 import { maximumDocumentBytes } from "@/application/storage/object-storage";
 
@@ -24,7 +25,8 @@ export interface DocumentFilePicker {
 export class SystemDocumentPicker implements DocumentFilePicker {
   async pick(): Promise<DocumentPickResult> {
     const result = await DocumentPicker.getDocumentAsync({
-      copyToCacheDirectory: false,
+      // iOS needs a stable private copy after dismissal; Android retains its granted URI.
+      copyToCacheDirectory: Platform.OS === "ios",
       multiple: false,
       type: [...supportedDocumentMimeTypes],
     });

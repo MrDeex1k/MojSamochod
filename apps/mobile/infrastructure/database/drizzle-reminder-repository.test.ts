@@ -15,6 +15,7 @@ import {
 } from "@/domain/reminders/reminder";
 import { reminderIdFromUuidV7, vehicleIdFromUuidV7 } from "@/domain/shared/identifiers";
 import { DrizzleReminderRepository } from "./drizzle-reminder-repository";
+import { DrizzleDataResetStore } from "./drizzle-data-reset-store";
 import { mapReminderRow, reminderValues } from "./reminder-row-mapper";
 import journal from "./migrations/meta/_journal.json";
 import * as schema from "./schema";
@@ -79,7 +80,7 @@ describe("Reminder persistence with real SQLite and the Expo Drizzle driver", ()
     expect(database.select().from(schema.reminders).all()).toEqual([]);
     expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
     expect(sqlite.prepare("SELECT count(*) AS count FROM __drizzle_migrations").get()).toEqual({
-      count: 8,
+      count: journal.entries.length,
     });
   });
 
@@ -270,6 +271,105 @@ describe("Reminder persistence with real SQLite and the Expo Drizzle driver", ()
     expect(await service.list(vehicleId)).toMatchObject({ value: [{ id }] });
     expect((await service.delete(vehicleId, id)).ok).toBe(true);
     expect((await service.create(input)).ok).toBe(true);
+  });
+});
+
+describe("Persistent data reset with real SQLite", () => {
+  it("cascades user records, keeps the marker until cleanup and accepts a new vehicle", async () => {
+    const { database, sqlite, repository } = await open();
+    seedVehicle(database);
+    await repository.create(fixture());
+    const timestamps = {
+      createdAt: clock.now().toISOString(),
+      updatedAt: clock.now().toISOString(),
+    };
+    database
+      .insert(schema.managedFiles)
+      .values({
+        id: otherId,
+        kind: "document",
+        status: "ready",
+        storageKey: "objects/invoice.pdf",
+        mimeType: "application/pdf",
+        originalName: "invoice.pdf",
+        byteSize: 128,
+        sha256: "a".repeat(64),
+        ...timestamps,
+      })
+      .run();
+    database
+      .insert(schema.historyEntries)
+      .values({ id, vehicleId, type: "repair", occurredAt: timestamps.createdAt, ...timestamps })
+      .run();
+    database
+      .insert(schema.vehicleDocuments)
+      .values({
+        id,
+        vehicleId,
+        historyEntryId: id,
+        fileReference: otherId,
+        name: "Invoice",
+        ...timestamps,
+      })
+      .run();
+    database
+      .insert(schema.refuellings)
+      .values({
+        id,
+        vehicleId,
+        occurredAt: timestamps.createdAt,
+        quantityMicrolitres: 1_000_000,
+        inputVolumeUnit: "litres",
+        fillKind: "full",
+        ...timestamps,
+      })
+      .run();
+    const reset = new DrizzleDataResetStore(database);
+    expect(await reset.isPending()).toBe(false);
+    await reset.markPending();
+    await reset.markPending();
+    await reset.eraseRecords();
+    await reset.eraseRecords();
+    expect(await reset.isPending()).toBe(true);
+    for (const table of [
+      schema.vehicles,
+      schema.historyEntries,
+      schema.vehicleDocuments,
+      schema.managedFiles,
+      schema.refuellings,
+      schema.reminders,
+      schema.inspectionDetails,
+      schema.replacementDetails,
+      schema.repairDetails,
+    ]) {
+      expect(database.select().from(table).all()).toEqual([]);
+    }
+    expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    expect(
+      sqlite.prepare("SELECT COUNT(*) AS count FROM __drizzle_migrations").get(),
+    ).toMatchObject({ count: journal.entries.length });
+    await reset.finish();
+    expect(await reset.isPending()).toBe(false);
+    seedVehicle(database);
+    expect(database.select().from(schema.vehicles).all()).toHaveLength(1);
+  });
+
+  it("persists an interrupted reset across closing and reopening the database", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "moje-auto-reset-"));
+    directories.push(directory);
+    const path = join(directory, "reset.db");
+    const first = await open(path);
+    seedVehicle(first.database);
+    await new DrizzleDataResetStore(first.database).markPending();
+    first.sqlite.close();
+    connections.delete(first.sqlite);
+    const second = await open(path);
+    const reset = new DrizzleDataResetStore(second.database);
+    expect(await reset.isPending()).toBe(true);
+    await reset.eraseRecords();
+    await reset.finish();
+    expect(second.database.select().from(schema.vehicles).all()).toEqual([]);
+    expect(await reset.isPending()).toBe(false);
   });
 });
 

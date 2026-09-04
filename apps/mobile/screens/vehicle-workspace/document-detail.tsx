@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type ComponentProps, useEffect, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
@@ -16,7 +16,16 @@ import { useAppTranslation } from "@/localization/use-app-translation";
 
 type ResolvedFile = Readonly<{ mimeType: string; name: string; uri: string }>;
 
-export function DocumentDetail({
+export function DocumentDetail(props: ComponentProps<typeof DocumentDetailContent>) {
+  return (
+    <DocumentDetailContent
+      key={`${props.document.id}:${props.document.updatedAt}:${props.document.fileReference}`}
+      {...props}
+    />
+  );
+}
+
+function DocumentDetailContent({
   document,
   documents,
   embedded = false,
@@ -43,6 +52,7 @@ export function DocumentDetail({
   const [file, setFile] = useState<ResolvedFile | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const formattedAmount = document.amount
     ? formatCurrencyMinorUnits(document.amount.minorUnits, document.amount.currency, i18n.language)
     : null;
@@ -60,16 +70,15 @@ export function DocumentDetail({
     };
   }, [document, documents, t]);
 
-  const share = () => {
+  const download = () => {
     if (!file || busy) return;
     setBusy(true);
     setError(null);
+    setSaved(false);
     void presenter
-      .share(file)
-      .then((available) => {
-        if (!available) setError(t("documents.shareUnavailable"));
-      })
-      .catch(() => setError(t("documents.shareError")))
+      .downloadPdf(file)
+      .then((result) => setSaved(result === "saved"))
+      .catch(() => setError(t("documents.downloadError")))
       .finally(() => setBusy(false));
   };
 
@@ -174,13 +183,14 @@ export function DocumentDetail({
           {error}
         </Text>
       ) : null}
-      <Button
-        disabled={!file || busy}
-        label={
-          file?.mimeType === "application/pdf" ? t("documents.openPdf") : t("documents.export")
-        }
-        onPress={share}
-      />
+      {saved ? (
+        <Text accessibilityLiveRegion="polite" className="text-body text-secondary">
+          {t("documents.downloadSaved")}
+        </Text>
+      ) : null}
+      {file?.mimeType === "application/pdf" ? (
+        <Button disabled={busy} label={t("documents.downloadPdf")} onPress={download} />
+      ) : null}
       <Button
         disabled={busy}
         label={t("documents.replace")}

@@ -1,5 +1,14 @@
 export const en = {
   settings: {
+    reset: {
+      action: "Erase all app data",
+      title: "Permanently erase all app data?",
+      description:
+        "This removes your vehicle, entries, refuellings, reminders and all attachment copies from this app. There is no undo or restore. Original files and PDFs saved outside the app are not removed.",
+      confirm: "Erase permanently",
+      loading: "Erasing app data…",
+      error: "Data erasure could not finish. Retry to complete it before using the app.",
+    },
     title: "Settings and privacy",
     back: "Back to history",
     free: {
@@ -115,7 +124,6 @@ export const en = {
     editTitle: "Edit document metadata",
     empty: "No documents",
     emptyDescription: "Add an invoice, receipt, or other file related to this vehicle.",
-    export: "Export document",
     file: "File",
     fileHelper: "Supported formats: PDF, JPEG, and PNG. Maximum size: 20 MB.",
     fileMissing: "The managed file is unavailable.",
@@ -125,7 +133,11 @@ export const en = {
     keepEditing: "Keep editing",
     name: "Name",
     notes: "Notes",
-    openPdf: "Open or export PDF",
+    downloadPdf: "Download PDF",
+    downloadSaved:
+      "PDF saved in the selected folder. You can open it using your device's Files app.",
+    downloadError:
+      "The PDF could not be saved. Choose a writable folder and check available storage.",
     pickError: "The system file picker could not be opened.",
     relation: "Related to",
     replace: "Replace file",
@@ -133,8 +145,6 @@ export const en = {
     required: "This field is required.",
     save: "Save document",
     saveError: "The document could not be saved. Your changes remain in the form.",
-    shareError: "The document could not be opened or exported.",
-    shareUnavailable: "Document sharing is unavailable on this device.",
     title: "Documents and invoices",
     unsupportedFile: "Choose a PDF, JPEG, or PNG file.",
     vehicleOnly: "Vehicle only",
