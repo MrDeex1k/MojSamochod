@@ -2,9 +2,7 @@ import type { ReactNode } from "react";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Screen } from "@/components/layout/screen";
-import { EmptyState } from "@/components/states/empty-state";
-import { useAppTranslation } from "@/localization/use-app-translation";
+import { OrientationGate } from "./orientation-gate";
 
 const TABLET_MIN_SHORTEST_SIDE = 600;
 
@@ -40,31 +38,25 @@ export function AdaptiveWorkspace({
   primaryPane,
   vehiclePane,
 }: AdaptiveWorkspaceProps) {
-  const { t } = useAppTranslation();
   const { height, width } = useWindowDimensions();
   const layout = resolveWindowLayout(width, height);
 
-  if (layout === "phone-portrait") {
-    return phone;
-  }
-
-  if (layout !== "tablet-landscape") {
-    return (
-      <Screen contentClassName="items-center justify-center">
-        <EmptyState
-          description={
-            layout === "phone-landscape"
-              ? t("orientation.phoneDescription")
-              : t("orientation.tabletDescription")
-          }
-          title={t("orientation.title")}
-        />
-      </Screen>
-    );
-  }
-
+  const isPhone = layout.startsWith("phone");
   return (
-    <TabletWorkspace detailPane={detailPane} primaryPane={primaryPane} vehiclePane={vehiclePane} />
+    <OrientationGate
+      blocked={layout === "phone-landscape" || layout === "tablet-portrait"}
+      phone={isPhone}
+    >
+      {isPhone ? (
+        phone
+      ) : (
+        <TabletWorkspace
+          detailPane={detailPane}
+          primaryPane={primaryPane}
+          vehiclePane={vehiclePane}
+        />
+      )}
+    </OrientationGate>
   );
 }
 

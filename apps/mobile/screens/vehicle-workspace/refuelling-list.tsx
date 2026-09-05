@@ -1,9 +1,8 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ListScreen } from "@/components/layout/list-screen";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { RefuellingHistory } from "@/application/refuelling/refuelling-service";
-import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { fuelConsumptionValue } from "@/domain/refuelling/fuel-consumption";
 import type { Refuelling } from "@/domain/refuelling/refuelling";
 import {
@@ -44,52 +43,56 @@ export function RefuellingList({
   const { t } = useAppTranslation();
   const includedRefuellingIds = new Set(history.consumption.includedRefuellingIds);
   const configuredVehicle = hasFuelConfiguration(vehicle) ? vehicle : undefined;
-  const content = (
-    <Card className={embedded ? "h-full" : undefined}>
-      <Text accessibilityRole="header" className="text-title font-bold text-primary">
-        {t("refuelling.title")}
-      </Text>
-      {!configuredVehicle ? (
+  return (
+    <ListScreen
+      scrollKey="fuel"
+      embedded={embedded}
+      data={configuredVehicle ? history.refuellings : []}
+      keyExtractor={(item) => item.id}
+      ListHeaderComponent={
         <View className="gap-content">
-          <Text className="text-body text-secondary">{t("refuelling.configurationRequired")}</Text>
-          <Button label={t("refuelling.configureVehicle")} onPress={onConfigureFuel} />
-        </View>
-      ) : (
-        <>
-          <ConsumptionSummary history={history} vehicle={configuredVehicle} />
-          <Button label={`+ ${t("refuelling.add")}`} onPress={onAdd} />
-          {history.refuellings.length === 0 ? (
-            <View className="gap-compact">
-              <Text className="text-heading font-semibold text-primary">
-                {t("refuelling.empty")}
-              </Text>
-              <Text className="text-body text-secondary">{t("refuelling.emptyDescription")}</Text>
-            </View>
+          <Text accessibilityRole="header" className="text-title font-bold text-primary">
+            {t("refuelling.title")}
+          </Text>
+          {configuredVehicle ? (
+            <>
+              <ConsumptionSummary history={history} vehicle={configuredVehicle} />
+              <Button label={`+ ${t("refuelling.add")}`} onPress={onAdd} />
+            </>
           ) : (
-            <View>
-              {history.refuellings.map((refuelling) => (
-                <RefuellingRow
-                  included={includedRefuellingIds.has(refuelling.id)}
-                  key={refuelling.id}
-                  onPress={() => onSelect(refuelling)}
-                  refuelling={refuelling}
-                  vehicle={configuredVehicle}
-                />
-              ))}
-            </View>
+            <>
+              <Text className="text-body text-secondary">
+                {t("refuelling.configurationRequired")}
+              </Text>
+              <Button label={t("refuelling.configureVehicle")} onPress={onConfigureFuel} />
+            </>
           )}
-        </>
-      )}
-      {!embedded ? (
-        <Button label={t("refuelling.back")} onPress={onBack} variant="secondary" />
-      ) : null}
-    </Card>
-  );
-
-  return embedded ? (
-    <ScrollView contentContainerClassName="grow">{content}</ScrollView>
-  ) : (
-    <Screen>{content}</Screen>
+        </View>
+      }
+      ListEmptyComponent={
+        configuredVehicle ? (
+          <View className="gap-compact">
+            <Text className="text-heading font-semibold text-primary">{t("refuelling.empty")}</Text>
+            <Text className="text-body text-secondary">{t("refuelling.emptyDescription")}</Text>
+          </View>
+        ) : null
+      }
+      ListFooterComponent={
+        !embedded ? (
+          <Button label={t("refuelling.back")} onPress={onBack} variant="secondary" />
+        ) : null
+      }
+      renderItem={({ item }) =>
+        configuredVehicle ? (
+          <RefuellingRow
+            included={includedRefuellingIds.has(item.id)}
+            onPress={() => onSelect(item)}
+            refuelling={item}
+            vehicle={configuredVehicle}
+          />
+        ) : null
+      }
+    />
   );
 }
 

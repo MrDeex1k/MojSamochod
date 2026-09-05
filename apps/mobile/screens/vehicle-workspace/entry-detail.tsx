@@ -118,7 +118,13 @@ export function EntryDetail({
   );
 
   return embedded ? (
-    <ScrollView contentContainerClassName="grow">{content}</ScrollView>
+    <ScrollView
+      contentContainerClassName="grow"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
+      {content}
+    </ScrollView>
   ) : (
     <Screen>{content}</Screen>
   );

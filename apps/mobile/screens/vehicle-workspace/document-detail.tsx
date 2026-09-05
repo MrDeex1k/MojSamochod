@@ -1,3 +1,4 @@
+import { PdfPreview } from "@/components/ui/pdf-preview";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 
@@ -9,7 +10,6 @@ import { Image } from "@/components/ui/image";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
-import type { DocumentPresenter } from "@/infrastructure/documents/native-document-presenter";
 import type { DocumentFilePicker } from "@/infrastructure/documents/system-document-picker";
 import { formatCalendarDate, formatCurrencyMinorUnits } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
@@ -25,7 +25,6 @@ export function DocumentDetail({
   onChanged,
   onEdit,
   picker,
-  presenter,
   vehicle,
 }: Readonly<{
   document: VehicleDocument;
@@ -36,11 +35,16 @@ export function DocumentDetail({
   onChanged: () => void;
   onEdit: () => void;
   picker: DocumentFilePicker;
-  presenter: DocumentPresenter;
   vehicle: Vehicle;
 }>) {
   const { t, i18n } = useAppTranslation();
-  const [file, setFile] = useState<ResolvedFile | null>(null);
+  const [resolved, setResolved] = useState<{
+    reference: string;
+    file: ResolvedFile | null;
+    failed: boolean;
+  } | null>(null);
+  const file = resolved?.reference === document.fileReference ? resolved.file : null;
+  const loadingFile = resolved?.reference !== document.fileReference;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formattedAmount = document.amount
@@ -49,29 +53,24 @@ export function DocumentDetail({
 
   useEffect(() => {
     let active = true;
-    void documents.getFile(document).then((result) => {
-      if (active) {
-        if (result.ok) setFile(result.value);
-        else setError(t("documents.fileMissing"));
-      }
-    });
+    void documents
+      .getFile(document)
+      .then((result) => {
+        if (active) {
+          setResolved({
+            reference: document.fileReference,
+            file: result.ok ? result.value : null,
+            failed: !result.ok || !result.value,
+          });
+        }
+      })
+      .catch(() => {
+        if (active) setResolved({ reference: document.fileReference, file: null, failed: true });
+      });
     return () => {
       active = false;
     };
   }, [document, documents, t]);
-
-  const share = () => {
-    if (!file || busy) return;
-    setBusy(true);
-    setError(null);
-    void presenter
-      .share(file)
-      .then((available) => {
-        if (!available) setError(t("documents.shareUnavailable"));
-      })
-      .catch(() => setError(t("documents.shareError")))
-      .finally(() => setBusy(false));
-  };
 
   const replace = () => {
     if (busy) return;
@@ -145,11 +144,13 @@ export function DocumentDetail({
             source={{ uri: file.uri }}
           />
         </View>
+      ) : file?.mimeType === "application/pdf" ? (
+        <PdfPreview key={document.fileReference} uri={file.uri} name={document.name} />
       ) : (
         <View className="items-center rounded-control bg-surface-muted p-section">
           <Text className="text-heading font-semibold text-primary">PDF</Text>
           <Text className="text-caption text-secondary">
-            {file?.name ?? t("documents.fileMissing")}
+            {file?.name ?? t(loadingFile ? "documents.loading" : "documents.fileMissing")}
           </Text>
         </View>
       )}
@@ -175,13 +176,6 @@ export function DocumentDetail({
         </Text>
       ) : null}
       <Button
-        disabled={!file || busy}
-        label={
-          file?.mimeType === "application/pdf" ? t("documents.openPdf") : t("documents.export")
-        }
-        onPress={share}
-      />
-      <Button
         disabled={busy}
         label={t("documents.replace")}
         onPress={replace}
@@ -201,7 +195,13 @@ export function DocumentDetail({
     </Card>
   );
   return embedded ? (
-    <ScrollView contentContainerClassName="grow">{content}</ScrollView>
+    <ScrollView
+      contentContainerClassName="grow"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
+      {content}
+    </ScrollView>
   ) : (
     <Screen>{content}</Screen>
   );

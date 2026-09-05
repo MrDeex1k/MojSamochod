@@ -255,7 +255,9 @@ it("requires confirmation for a dirty draft and returns directly for an unchange
   await userEvent.press(screen.getByRole("button", { name: "Add deadline: Insurance" }));
   await userEvent.press(screen.getByRole("checkbox", { name: "7 days before" }));
   await userEvent.press(screen.getByRole("button", { name: "Cancel" }));
-  expect(alert).toHaveBeenCalledWith("Discard changes?", expect.any(String), expect.any(Array));
+  expect(alert).toHaveBeenCalledWith("Discard changes?", expect.any(String), expect.any(Array), {
+    cancelable: false,
+  });
   expect(screen.getByRole("button", { name: "Save deadline" })).toBeOnTheScreen();
 });
 

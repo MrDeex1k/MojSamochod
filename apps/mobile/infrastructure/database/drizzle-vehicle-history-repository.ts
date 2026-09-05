@@ -1,4 +1,8 @@
-import { and, asc, desc, eq, isNull, lt, or } from "drizzle-orm";
+import type {
+  HistoryCursor,
+  HistoryPage,
+} from "@/application/repositories/history-entry-repository";
+import { and, asc, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
 
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { HistoryEntryId, VehicleId } from "@/domain/shared/identifiers";
@@ -70,6 +74,56 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
         .all();
 
       return repositorySuccess(rows.map(mapHistoryRow));
+    } catch (error) {
+      return mapFailure(operation, error);
+    }
+  }
+
+  async listPage(
+    vehicleId: VehicleId,
+    cursor?: HistoryCursor,
+    limit = 50,
+  ): Promise<RepositoryResult<HistoryPage>> {
+    const operation = "historyEntry.listPage";
+    const pageSize = Math.max(1, Math.min(100, Number.isFinite(limit) ? Math.trunc(limit) : 50));
+    try {
+      const after = cursor
+        ? or(
+            lt(historyEntries.occurredAt, cursor.occurredAt),
+            and(
+              eq(historyEntries.occurredAt, cursor.occurredAt),
+              lt(historyEntries.createdAt, cursor.createdAt),
+            ),
+            and(
+              eq(historyEntries.occurredAt, cursor.occurredAt),
+              eq(historyEntries.createdAt, cursor.createdAt),
+              gt(historyEntries.id, cursor.id),
+            ),
+          )
+        : undefined;
+      const rows = this.database
+        .select(historySelection)
+        .from(historyEntries)
+        .leftJoin(inspectionDetails, eq(inspectionDetails.historyEntryId, historyEntries.id))
+        .leftJoin(replacementDetails, eq(replacementDetails.historyEntryId, historyEntries.id))
+        .leftJoin(repairDetails, eq(repairDetails.historyEntryId, historyEntries.id))
+        .where(and(eq(historyEntries.vehicleId, vehicleId), after))
+        .orderBy(
+          desc(historyEntries.occurredAt),
+          desc(historyEntries.createdAt),
+          asc(historyEntries.id),
+        )
+        .limit(pageSize + 1)
+        .all();
+      const entries = rows.slice(0, pageSize).map(mapHistoryRow);
+      const last = entries.at(-1);
+      return repositorySuccess({
+        entries,
+        nextCursor:
+          rows.length > pageSize && last
+            ? { occurredAt: last.occurredAt, createdAt: last.createdAt, id: last.id }
+            : null,
+      });
     } catch (error) {
       return mapFailure(operation, error);
     }

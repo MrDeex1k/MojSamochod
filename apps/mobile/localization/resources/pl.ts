@@ -1,4 +1,23 @@
 export const pl = {
+  dataManagement: {
+    title: "Twoje dane",
+    privacy:
+      "Historia pojazdu i załączniki są przechowywane na tym urządzeniu. Nie ma konta, synchronizacji ani analityki. Aplikacja nie oferuje eksportu ani odtwarzania. Kopiami urządzenia zarządza system operacyjny.",
+    confirmTitle: "Usunąć wszystkie dane?",
+    confirmDescription:
+      "Trwale usuniesz pojazd, historię, dokumenty, zdjęcia i zaplanowane przypomnienia z aplikacji. Oryginały w galerii i źródłowych plikach pozostaną bez zmian. Tej operacji nie można cofnąć.",
+    erase: "Usuń wszystkie dane",
+    erasing: "Usuwanie danych…",
+    error:
+      "Nie udało się zakończyć usuwania. Część danych mogła już zostać usunięta. Ponów operację; ponowne uruchomienie aplikacji również wznowi usuwanie.",
+  },
+  formGuard: {
+    title: "Odrzucić zmiany?",
+    description: "Niezapisane zmiany zostaną utracone.",
+    keepEditing: "Edytuj dalej",
+    discard: "Odrzuć",
+    saving: "Zapisywanie…",
+  },
   reminders: {
     title: "Przypomnienia",
     kinds: { insurance: "Ubezpieczenie", technicalInspection: "Badanie techniczne" },
@@ -71,6 +90,14 @@ export const pl = {
     loading: "Przygotowywanie danych",
   },
   documents: {
+    clearDate: "Usuń datę",
+    previewError: "Nie udało się wyświetlić PDF. Spróbuj ponownie.",
+    page: "Strona {{page}} z {{count}}",
+    previousPage: "Poprzednia strona",
+    nextPage: "Następna strona",
+
+    invalidDate: "Wybierz prawidłową datę.",
+    loading: "Wczytywanie dokumentu…",
     add: "Dodaj dokument",
     addTitle: "Dodaj dokument lub fakturę",
     amount: "Kwota",

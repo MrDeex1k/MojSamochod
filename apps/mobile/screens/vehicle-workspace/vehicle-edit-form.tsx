@@ -1,3 +1,5 @@
+import { useFormExitGuard } from "@/components/layout/navigation-guard";
+import { repositoryFailure } from "@/application/repositories/repository-result";
 import { useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
@@ -86,6 +88,24 @@ export function VehicleEditForm({
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const cancel = useFormExitGuard(
+    {
+      make,
+      model,
+      variant,
+      manufactureYear,
+      registrationNumber,
+      vin,
+      initialOdometer,
+      distanceUnit,
+      fuelVolumeUnit,
+      fuelConsumptionUnit,
+      fuelTankCapacity,
+      photoChange,
+    },
+    saving,
+    onCancel,
+  );
   const photoUri =
     photoChange.kind === "new"
       ? photoChange.photo.uri
@@ -162,7 +182,9 @@ export function VehicleEditForm({
       updatedVehicle: result.value,
       vehicle,
       vehicles,
-    }).finally(() => setSaving(false));
+    })
+      .catch((cause: unknown) => repositoryFailure("unavailable", "form.save", cause))
+      .finally(() => setSaving(false));
     if (!outcome) {
       setFormError(t("vehicleEdit.error"));
       return;
@@ -277,12 +299,18 @@ export function VehicleEditForm({
       />
       {formError ? <Text className="text-body text-danger">{formError}</Text> : null}
       <Button disabled={saving} label={t("vehicleEdit.save")} onPress={() => void save()} />
-      <Button label={t("vehicleEdit.cancel")} onPress={onCancel} variant="secondary" />
+      <Button label={t("vehicleEdit.cancel")} onPress={cancel} variant="secondary" />
     </Card>
   );
 
   return embedded ? (
-    <ScrollView contentContainerClassName="grow">{content}</ScrollView>
+    <ScrollView
+      contentContainerClassName="grow"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
+      {content}
+    </ScrollView>
   ) : (
     <Screen>{content}</Screen>
   );

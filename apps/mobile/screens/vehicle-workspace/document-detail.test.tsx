@@ -1,4 +1,4 @@
-import { render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import { act, render, screen, userEvent, waitFor } from "@testing-library/react-native";
 import { Alert } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -42,8 +42,7 @@ const document = expectValid(
 );
 
 describe("DocumentDetail", () => {
-  it("renders an image preview and exports through the native presenter", async () => {
-    const share = jest.fn(async () => true);
+  it("renders an image preview without outbound document actions", async () => {
     await render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
         <DocumentDetail
@@ -54,17 +53,52 @@ describe("DocumentDetail", () => {
           onChanged={jest.fn()}
           onEdit={jest.fn()}
           picker={{ pick: jest.fn() }}
-          presenter={{ share }}
           vehicle={vehicle}
         />
       </SafeAreaProvider>,
     );
 
     expect(await screen.findByLabelText("Repair invoice")).toBeOnTheScreen();
-    await userEvent.press(screen.getByRole("button", { name: "Export document" }));
-    await waitFor(() =>
-      expect(share).toHaveBeenCalledWith(expect.objectContaining({ mimeType: "image/png" })),
+    expect(screen.queryByRole("button", { name: "Export document" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open PDF" })).toBeNull();
+  });
+
+  it("never retains the previous image when a tablet selection fails to resolve", async () => {
+    const services = service();
+    const second = {
+      ...document,
+      name: "Second invoice",
+      fileReference: managedFileIdFromUuidV7("018f47e2-7b39-7658-b336-34613389d00f"),
+    };
+    let reject: (error: Error) => void = () => undefined;
+    const view = (selected: typeof document) => (
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <DocumentDetail
+          embedded
+          document={selected}
+          documents={services}
+          entries={[]}
+          onBack={jest.fn()}
+          onChanged={jest.fn()}
+          onEdit={jest.fn()}
+          picker={{ pick: jest.fn() }}
+          vehicle={vehicle}
+        />
+      </SafeAreaProvider>
     );
+    const rendered = await render(view(document));
+    expect(await screen.findByLabelText("Repair invoice")).toBeOnTheScreen();
+    services.getFile.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, rejectPromise) => {
+          reject = rejectPromise;
+        }),
+    );
+    await rendered.rerender(view(second));
+    expect(screen.queryByLabelText("Repair invoice")).toBeNull();
+    expect(screen.queryByLabelText("Second invoice")).toBeNull();
+    await act(() => reject(new Error("Missing file")));
+    expect(screen.queryByLabelText("Second invoice")).toBeNull();
   });
 
   it("deletes metadata and managed content only after confirmation", async () => {
@@ -83,7 +117,6 @@ describe("DocumentDetail", () => {
           onChanged={onChanged}
           onEdit={jest.fn()}
           picker={{ pick: jest.fn() }}
-          presenter={{ share: jest.fn() }}
           vehicle={vehicle}
         />
       </SafeAreaProvider>,

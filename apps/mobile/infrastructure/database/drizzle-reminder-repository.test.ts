@@ -14,6 +14,9 @@ import {
   type Reminder,
 } from "@/domain/reminders/reminder";
 import { reminderIdFromUuidV7, vehicleIdFromUuidV7 } from "@/domain/shared/identifiers";
+import { clearUserData } from "./clear-user-data";
+import { DrizzleVehicleHistoryRepository } from "./drizzle-vehicle-history-repository";
+import { createHistoryEntry } from "@/domain/history/history-entry";
 import { DrizzleReminderRepository } from "./drizzle-reminder-repository";
 import { mapReminderRow, reminderValues } from "./reminder-row-mapper";
 import journal from "./migrations/meta/_journal.json";
@@ -301,6 +304,71 @@ function fixture(patch: Partial<CreateReminderInput> & { id?: Reminder["id"] } =
   if (!result.ok) throw new Error("Invalid reminder fixture");
   return result.value;
 }
+
+it("paginates tied timeline dates without duplicates, gaps or another vehicle's records", async () => {
+  const { database } = await open();
+  seedVehicle(database);
+  seedVehicle(database, otherVehicleId);
+  const repository = new DrizzleVehicleHistoryRepository(database);
+  for (let index = 0; index < 123; index += 1) {
+    const entry = createHistoryEntry(
+      {
+        type: "repair",
+        details: { subject: `Repair ${index}` },
+        occurredAt: clock.now().toISOString(),
+        vehicleId,
+      },
+      {
+        clock,
+        idGenerator: {
+          generate: () => `018f47e2-7b33-7000-8000-${String(index).padStart(12, "0")}`,
+        },
+      },
+    );
+    if (!entry.ok) throw new Error("Invalid timeline fixture");
+    expect(await repository.create(entry.value)).toMatchObject({ ok: true });
+  }
+  const ids: string[] = [];
+  let cursor: Parameters<typeof repository.listPage>[1];
+  do {
+    const page = await repository.listPage(vehicleId, cursor, 17);
+    if (!page.ok) throw new Error("Expected a timeline page");
+    expect(page.value.entries.length).toBeLessThanOrEqual(17);
+    ids.push(...page.value.entries.map((entry) => entry.id));
+    cursor = page.value.nextCursor ?? undefined;
+  } while (cursor);
+  const all = await repository.list(vehicleId);
+  if (!all.ok) throw new Error("Expected timeline");
+  expect(ids).toEqual(all.value.map((entry) => entry.id));
+  expect(new Set(ids).size).toBe(123);
+  expect(await repository.listPage(otherVehicleId)).toMatchObject({
+    ok: true,
+    value: { entries: [], nextCursor: null },
+  });
+});
+
+it("clears user records atomically while retaining migrations and allowing a new vehicle", async () => {
+  const { database, sqlite, repository } = await open();
+  seedVehicle(database);
+  expect(await repository.create(fixture())).toMatchObject({ ok: true });
+  const before = sqlite.prepare("SELECT count(*) AS count FROM __drizzle_migrations").get();
+  sqlite.exec(
+    "CREATE TRIGGER reject_erase BEFORE DELETE ON reminders BEGIN SELECT RAISE(ABORT, 'interrupted'); END;",
+  );
+  expect(() => clearUserData(database)).toThrow();
+  expect(database.select().from(schema.vehicles).all()).toHaveLength(1);
+  expect(database.select().from(schema.reminders).all()).toHaveLength(1);
+  sqlite.exec("DROP TRIGGER reject_erase;");
+  clearUserData(database);
+  clearUserData(database);
+  expect(database.select().from(schema.vehicles).all()).toHaveLength(0);
+  expect(database.select().from(schema.reminders).all()).toHaveLength(0);
+  expect(sqlite.prepare("SELECT count(*) AS count FROM __drizzle_migrations").get()).toEqual(
+    before,
+  );
+  seedVehicle(database);
+  expect(database.select().from(schema.vehicles).all()).toHaveLength(1);
+});
 
 function migrations(count = journal.entries.length) {
   const entries = journal.entries.slice(0, count);
