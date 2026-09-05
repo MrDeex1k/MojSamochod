@@ -98,6 +98,7 @@ export const pl = {
 
     invalidDate: "Wybierz prawidłową datę.",
     loading: "Wczytywanie dokumentu…",
+    loadError: "Nie udało się odczytać dokumentu. Spróbuj ponownie.",
     add: "Dodaj dokument",
     addTitle: "Dodaj dokument lub fakturę",
     amount: "Kwota",

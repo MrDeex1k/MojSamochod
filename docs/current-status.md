@@ -290,7 +290,8 @@ ustalenia doprecyzowują ich zakres, nie dodają automatycznie kolejnych funkcji
 
 Phase 7 hardening is prepared on `feat/harden-mobile-workspace` for review. Resumable user-data deletion, internal PDF
 previews without outbound sharing, form draft preservation, cursor-based history loading,
-section-level caching, initial accessibility fixes and CI checks are implemented. This supersedes
+section-level caching and initial accessibility fixes are implemented. The GitHub Actions workflow
+was subsequently removed; repository checks currently rely on local runs. This supersedes
 the earlier statements above that document sharing removal and erase-all are still only planned.
 The changes are not merged or published to stores. See
 [code-review-improvements.md](code-review-improvements.md) for verification and remaining release gates.

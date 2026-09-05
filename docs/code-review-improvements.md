@@ -32,8 +32,8 @@ The review fixes are prepared on `feat/harden-mobile-workspace` for review. Loca
 - Form fields expose validation messages and focus the first newly invalid text field. Save buttons
   expose busy state. Embedded forms adjust for keyboards; text input line heights use the existing
   scalable typography tokens instead of fixed native line heights.
-- GitHub Actions runs the frozen NUB/SFW install and repository checks on pull requests and main.
-  Actions are pinned to verified commits. Node, NUB, exact dependency pins and the cooling policy
+- The repository currently has no GitHub Actions workflow; the previously added workflow was removed.
+  Local verification results are recorded below. Node, NUB, exact dependency pins and the cooling policy
   remain unchanged. Native build output is ignored.
 
 ## Automated verification
@@ -58,7 +58,8 @@ manipulator, notifications and router. Those upgrades were not folded into this 
 No alternate lockfile, TypeScript downgrade or dependency-policy exception was introduced.
 
 Both native QA builds succeeded: iOS simulator Release and Android ARM64 release-configuration APK.
-The CI workflow is prepared locally; no hosted GitHub run was triggered in this task.
+No GitHub Actions workflow currently runs repository checks on pull requests or main.
+The recorded `nub run check` result comes from local verification.
 
 ## Native verification
 
@@ -82,6 +83,27 @@ migration rows retained, and no remaining managed directory or erase marker. The
 application storage remained present. The UI returned to first-vehicle creation and remained there
 after a fresh application launch. Android's document calendar opened and confirmed September 5,
 2026 with the expected localized date in the form.
+
+## PR #11 review follow-up
+
+Document reads now distinguish missing content from storage/repository errors and offer an in-place
+retry after an error. History accessibility labels include the displayed date, mileage and cost,
+including zero values. History refresh uses pages up to 100 records while initial loading remains
+50 records; the final refresh page is limited to the remaining cached range. Regression tests cover
+empty, 50-, 250- and 500-record ranges and continued cursor loading. Refreshing 500 cached records
+now uses five page requests instead of ten; this measures query count, not device frame rate.
+
+Local `nub run check` passed with 63 suites and 423 tests after these fixes. React Doctor 0.9.13
+completed its changed-scope analysis against `origin/main`: 82/100, no errors and eight warnings.
+This is a different scope from the earlier incomplete full scan, so the scores are not comparable.
+The removed GitHub Actions workflow remains removed; local checks are not reported as hosted CI.
+
+Updated native QA builds succeeded on Apple and Android. On iPhone 17 Pro and iPad Air 11-inch (M4)
+simulators, a controlled invalid storage key on a synthetic attachment produced the read-error UI;
+restoring its metadata and pressing retry displayed the PDF in place. The temporary corruption was
+removed afterward. A missing-file case was separately verified on iPhone. Accessibility snapshots
+confirmed date, distance and zero-cost labels on iPhone, iPad, Pixel 9 and Pixel Tablet. These are native
+accessibility-tree checks, not a replacement for physical VoiceOver/TalkBack acceptance.
 
 ## Remaining release work
 

@@ -88,13 +88,14 @@ export class WorkspaceDataSource {
       if (!this.data) return { status: "missing" };
       const vehicle = this.data.vehicle;
       if (section === "history" && !this.loaded.has("history")) {
+        const targetCount = this.data.entries.length;
+        const initialLimit = targetCount > 0 ? Math.min(targetCount, 100) : 50;
         let page = this.services.historyEntries.listPage
-          ? unwrap(await this.services.historyEntries.listPage(vehicle.id))
+          ? unwrap(await this.services.historyEntries.listPage(vehicle.id, undefined, initialLimit))
           : {
               entries: unwrap(await this.services.historyEntries.list(vehicle.id)),
               nextCursor: null,
             };
-        const targetCount = this.data.entries.length;
         while (
           page.nextCursor &&
           page.entries.length < targetCount &&
@@ -102,7 +103,11 @@ export class WorkspaceDataSource {
         ) {
           await new Promise<void>((resolve) => setTimeout(resolve, 0));
           const next = unwrap(
-            await this.services.historyEntries.listPage(vehicle.id, page.nextCursor),
+            await this.services.historyEntries.listPage(
+              vehicle.id,
+              page.nextCursor,
+              Math.min(targetCount - page.entries.length, 100),
+            ),
           );
           page = { entries: [...page.entries, ...next.entries], nextCursor: next.nextCursor };
         }

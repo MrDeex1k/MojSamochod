@@ -232,30 +232,30 @@ function HistoryRow({
 }: Readonly<{ entry: HistoryEntry; onPress: () => void; vehicle: Vehicle }>) {
   const { t, i18n } = useAppTranslation();
   const title = `${t(`workspace.entryType.${entry.type}`)} — ${entrySubject(entry, t)}`;
+  const date = formatOccurredAt(entry, i18n.language);
+  const distance =
+    entry.odometerMetres === undefined
+      ? null
+      : formatEntryDistance(entry.odometerMetres, vehicle, i18n.language);
+  const cost = entry.cost
+    ? formatCurrencyMinorUnits(entry.cost.minorUnits, entry.cost.currency, i18n.language)
+    : null;
   return (
     <Pressable
-      accessibilityLabel={title}
+      accessibilityLabel={[title, date, distance, cost]
+        .filter((value) => value !== null)
+        .join(", ")}
       accessibilityRole="button"
       className="gap-compact border-b border-divider py-control active:opacity-70"
       onPress={onPress}
     >
       <View className="flex-row justify-between gap-content">
         <Text className="flex-1 text-body font-semibold text-primary">{title}</Text>
-        <Text className="text-caption text-secondary">
-          {formatOccurredAt(entry, i18n.language)}
-        </Text>
+        <Text className="text-caption text-secondary">{date}</Text>
       </View>
       <View className="flex-row gap-content">
-        {entry.odometerMetres === undefined ? null : (
-          <Text className="text-caption text-secondary">
-            {formatEntryDistance(entry.odometerMetres, vehicle, i18n.language)}
-          </Text>
-        )}
-        {entry.cost ? (
-          <Text className="text-caption text-secondary">
-            {formatCurrencyMinorUnits(entry.cost.minorUnits, entry.cost.currency, i18n.language)}
-          </Text>
-        ) : null}
+        {distance === null ? null : <Text className="text-caption text-secondary">{distance}</Text>}
+        {cost !== null ? <Text className="text-caption text-secondary">{cost}</Text> : null}
       </View>
     </Pressable>
   );

@@ -38,6 +38,7 @@ export function DocumentDetail({
   vehicle: Vehicle;
 }>) {
   const { t, i18n } = useAppTranslation();
+  const [attempt, setAttempt] = useState(0);
   const [resolved, setResolved] = useState<{
     reference: string;
     file: ResolvedFile | null;
@@ -60,7 +61,7 @@ export function DocumentDetail({
           setResolved({
             reference: document.fileReference,
             file: result.ok ? result.value : null,
-            failed: !result.ok || !result.value,
+            failed: !result.ok && result.error.kind !== "not-found",
           });
         }
       })
@@ -70,7 +71,7 @@ export function DocumentDetail({
     return () => {
       active = false;
     };
-  }, [document, documents, t]);
+  }, [document, documents, attempt]);
 
   const replace = () => {
     if (busy) return;
@@ -146,6 +147,19 @@ export function DocumentDetail({
         </View>
       ) : file?.mimeType === "application/pdf" ? (
         <PdfPreview key={document.fileReference} uri={file.uri} name={document.name} />
+      ) : !loadingFile && resolved?.failed ? (
+        <View className="gap-content rounded-control bg-surface-muted p-section">
+          <Text accessibilityRole="alert" className="text-body text-danger">
+            {t("documents.loadError")}
+          </Text>
+          <Button
+            label={t("database.errorAction")}
+            onPress={() => {
+              setResolved(null);
+              setAttempt((value) => value + 1);
+            }}
+          />
+        </View>
       ) : (
         <View className="items-center rounded-control bg-surface-muted p-section">
           <Text className="text-heading font-semibold text-primary">PDF</Text>

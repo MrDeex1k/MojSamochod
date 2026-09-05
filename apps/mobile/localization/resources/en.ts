@@ -95,6 +95,7 @@ export const en = {
 
     invalidDate: "Choose a valid date.",
     loading: "Loading document…",
+    loadError: "Could not read this document. Try again.",
     add: "Add document",
     addTitle: "Add document or invoice",
     amount: "Amount",
