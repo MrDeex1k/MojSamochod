@@ -1,7 +1,9 @@
+import { useFormExitGuard } from "@/components/layout/navigation-guard";
+import { repositoryFailure } from "@/application/repositories/repository-result";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { getLocales } from "expo-localization";
 import { useRef, useState } from "react";
-import { Alert, Platform, ScrollView, Text, View } from "react-native";
+import { Platform, ScrollView, Text, View } from "react-native";
 
 import type { RefuellingService } from "@/application/refuelling/refuelling-service";
 import { Screen } from "@/components/layout/screen";
@@ -96,6 +98,11 @@ export function RefuellingForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState(false);
   const [saving, setSaving] = useState(false);
+  const cancel = useFormExitGuard(
+    { occurredAt, quantity, fillKind, odometer, priceInputMode, price, currency },
+    saving,
+    onCancel,
+  );
 
   const save = async () => {
     if (saving) return;
@@ -125,7 +132,9 @@ export function RefuellingForm({
     setSaving(true);
     const result = await (
       refuelling ? refuellings.update(refuelling, parsed.value) : refuellings.create(parsed.value)
-    ).finally(() => setSaving(false));
+    )
+      .catch((cause: unknown) => repositoryFailure("unavailable", "form.save", cause))
+      .finally(() => setSaving(false));
     if (!result.ok) {
       const issues = validationIssues(result.error.cause);
       if (issues) setErrors(mapIssues(issues, t));
@@ -133,13 +142,6 @@ export function RefuellingForm({
       return;
     }
     onSaved();
-  };
-
-  const cancel = () => {
-    Alert.alert(t("refuelling.discardTitle"), t("refuelling.discardDescription"), [
-      { style: "cancel", text: t("refuelling.keepEditing") },
-      { onPress: onCancel, style: "destructive", text: t("refuelling.discard") },
-    ]);
   };
 
   const content = (
@@ -273,7 +275,11 @@ export function RefuellingForm({
   );
 
   return embedded ? (
-    <ScrollView contentContainerClassName="grow" keyboardShouldPersistTaps="handled">
+    <ScrollView
+      contentContainerClassName="grow"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
       {content}
     </ScrollView>
   ) : (

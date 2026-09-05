@@ -1,3 +1,4 @@
+import { CorruptStoredDataError } from "./row-mappers";
 import { and, eq, isNull, ne, or } from "drizzle-orm";
 
 import type { ManagedFileRepository } from "@/application/repositories/managed-file-repository";
@@ -84,7 +85,11 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
         ? repositorySuccess(metadata)
         : repositoryFailure("corrupt-data", operation);
     } catch (error) {
-      return repositoryFailure("corrupt-data", operation, error);
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 
@@ -112,7 +117,11 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
         ? repositorySuccess(metadata)
         : repositoryFailure("corrupt-data", operation);
     } catch (error) {
-      return repositoryFailure("corrupt-data", operation, error);
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 
@@ -134,7 +143,11 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
         ),
       );
     } catch (error) {
-      return repositoryFailure("corrupt-data", operation, error);
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 
@@ -163,7 +176,11 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
         metadata.filter((value): value is ReadyManagedFileMetadata => value.status === "ready"),
       );
     } catch (error) {
-      return repositoryFailure("corrupt-data", operation, error);
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 
@@ -216,6 +233,14 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
 }
 
 function mapManagedFileRow(row: ManagedFileRow): ManagedFileMetadata {
+  try {
+    return parseStoredRow(row);
+  } catch {
+    throw new CorruptStoredDataError("ManagedFileMetadata");
+  }
+}
+
+function parseStoredRow(row: ManagedFileRow): ManagedFileMetadata {
   const common = {
     byteSize: expect(byteSize(row.byteSize)),
     createdAt: expect(utcTimestamp(row.createdAt, "createdAt")),

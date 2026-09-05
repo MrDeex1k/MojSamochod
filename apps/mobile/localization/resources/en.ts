@@ -1,4 +1,23 @@
 export const en = {
+  dataManagement: {
+    title: "Your data",
+    privacy:
+      "Your vehicle history and attachments are stored on this device. There is no account, synchronization or analytics. The app does not offer export or restore. Device backups are controlled by your operating system.",
+    confirmTitle: "Erase all data?",
+    confirmDescription:
+      "This permanently removes your vehicle, history, documents, photos and scheduled reminders from this app. Original files in your gallery and file provider remain unchanged. This cannot be undone.",
+    erase: "Erase all data",
+    erasing: "Erasing data…",
+    error:
+      "Erasing could not finish. Some data may already be removed. Retry to finish; restarting the app also resumes erasing.",
+  },
+  formGuard: {
+    title: "Discard changes?",
+    description: "Your unsaved changes will be lost.",
+    keepEditing: "Keep editing",
+    discard: "Discard",
+    saving: "Saving…",
+  },
   reminders: {
     title: "Reminders",
     kinds: { insurance: "Insurance", technicalInspection: "Technical inspection" },
@@ -68,6 +87,15 @@ export const en = {
     loading: "Preparing data",
   },
   documents: {
+    clearDate: "Clear date",
+    previewError: "Could not display this PDF. Try again.",
+    page: "Page {{page}} of {{count}}",
+    previousPage: "Previous page",
+    nextPage: "Next page",
+
+    invalidDate: "Choose a valid date.",
+    loading: "Loading document…",
+    loadError: "Could not read this document. Try again.",
     add: "Add document",
     addTitle: "Add document or invoice",
     amount: "Amount",

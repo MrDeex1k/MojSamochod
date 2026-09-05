@@ -1,3 +1,4 @@
+import { ActivityIndicator, View } from "react-native";
 import { Pressable, type PressableProps, Text } from "react-native";
 
 type ButtonVariant = "primary" | "secondary" | "danger";
@@ -41,7 +42,12 @@ export function Button({
       disabled={isDisabled}
       {...props}
     >
-      <Text className={`text-body font-semibold ${classes.label}`}>{label}</Text>
+      <View className="flex-row items-center gap-compact">
+        {accessibilityState?.busy ? (
+          <ActivityIndicator accessibilityElementsHidden importantForAccessibility="no" />
+        ) : null}
+        <Text className={`text-body font-semibold ${classes.label}`}>{label}</Text>
+      </View>
     </Pressable>
   );
 }

@@ -21,6 +21,20 @@ const picked = {
 };
 
 describe("VehicleDocumentService", () => {
+  it("rejects invalid metadata before any file operation", async () => {
+    const events: string[] = [];
+    const service = new VehicleDocumentService(
+      { now: () => now },
+      { generate: () => fileId },
+      repositoryFake(events),
+      managedFilesFake(events),
+    );
+    expect(
+      await service.create(vehicleId, picked, { name: "Invoice", documentDate: "2026-02-30" }),
+    ).toMatchObject({ ok: false, error: { kind: "unsupported" } });
+    expect(events).toEqual([]);
+  });
+
   it("imports the managed file before creating document metadata", async () => {
     const events: string[] = [];
     const managedFiles = managedFilesFake(events);

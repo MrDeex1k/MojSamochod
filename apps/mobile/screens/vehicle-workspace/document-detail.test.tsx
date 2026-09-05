@@ -1,9 +1,9 @@
-import { render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import { act, render, screen, userEvent, waitFor } from "@testing-library/react-native";
 import { Alert } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
-import { repositorySuccess } from "@/application/repositories/repository-result";
+import { repositoryFailure, repositorySuccess } from "@/application/repositories/repository-result";
 import { createVehicleDocument } from "@/domain/documents/vehicle-document";
 import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
 import { createVehicle } from "@/domain/vehicle/vehicle";
@@ -42,8 +42,58 @@ const document = expectValid(
 );
 
 describe("DocumentDetail", () => {
-  it("renders an image preview and exports through the native presenter", async () => {
-    const share = jest.fn(async () => true);
+  it.each(["unavailable", "corrupt-data", "rejected"] as const)(
+    "allows retry after a %s read failure without reporting a missing file",
+    async (failure) => {
+      const services = service();
+      if (failure === "rejected") services.getFile.mockRejectedValueOnce(new Error("Read failed"));
+      else services.getFile.mockResolvedValueOnce(repositoryFailure(failure, "test"));
+      await renderDocument(services);
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Could not read this document. Try again.",
+      );
+      expect(screen.queryByText("The managed file is unavailable.")).toBeNull();
+      let finish: (value: Awaited<ReturnType<VehicleDocumentService["getFile"]>>) => void = () =>
+        undefined;
+      services.getFile.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      );
+      await userEvent.press(screen.getByRole("button", { name: "Try again" }));
+      expect(screen.getByText("Loading document…")).toBeOnTheScreen();
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+      await act(() =>
+        finish(
+          repositorySuccess({
+            mimeType: "image/png",
+            name: "invoice.png",
+            uri: "file:///invoice.png",
+          }),
+        ),
+      );
+      expect(await screen.findByLabelText("Repair invoice")).toBeOnTheScreen();
+      expect(services.getFile).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it.each(["null", "not-found"] as const)(
+    "reports a genuinely missing file for %s",
+    async (missing) => {
+      const services = service();
+      services.getFile.mockResolvedValueOnce(
+        missing === "null" ? repositorySuccess(null) : repositoryFailure("not-found", "test"),
+      );
+      await renderDocument(services);
+      expect(await screen.findByText("The managed file is unavailable.")).toBeOnTheScreen();
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    },
+  );
+
+  it("renders an image preview without outbound document actions", async () => {
     await render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
         <DocumentDetail
@@ -54,17 +104,52 @@ describe("DocumentDetail", () => {
           onChanged={jest.fn()}
           onEdit={jest.fn()}
           picker={{ pick: jest.fn() }}
-          presenter={{ share }}
           vehicle={vehicle}
         />
       </SafeAreaProvider>,
     );
 
     expect(await screen.findByLabelText("Repair invoice")).toBeOnTheScreen();
-    await userEvent.press(screen.getByRole("button", { name: "Export document" }));
-    await waitFor(() =>
-      expect(share).toHaveBeenCalledWith(expect.objectContaining({ mimeType: "image/png" })),
+    expect(screen.queryByRole("button", { name: "Export document" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open PDF" })).toBeNull();
+  });
+
+  it("never retains the previous image when a tablet selection fails to resolve", async () => {
+    const services = service();
+    const second = {
+      ...document,
+      name: "Second invoice",
+      fileReference: managedFileIdFromUuidV7("018f47e2-7b39-7658-b336-34613389d00f"),
+    };
+    let reject: (error: Error) => void = () => undefined;
+    const view = (selected: typeof document) => (
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <DocumentDetail
+          embedded
+          document={selected}
+          documents={services}
+          entries={[]}
+          onBack={jest.fn()}
+          onChanged={jest.fn()}
+          onEdit={jest.fn()}
+          picker={{ pick: jest.fn() }}
+          vehicle={vehicle}
+        />
+      </SafeAreaProvider>
     );
+    const rendered = await render(view(document));
+    expect(await screen.findByLabelText("Repair invoice")).toBeOnTheScreen();
+    services.getFile.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, rejectPromise) => {
+          reject = rejectPromise;
+        }),
+    );
+    await rendered.rerender(view(second));
+    expect(screen.queryByLabelText("Repair invoice")).toBeNull();
+    expect(screen.queryByLabelText("Second invoice")).toBeNull();
+    await act(() => reject(new Error("Missing file")));
+    expect(screen.queryByLabelText("Second invoice")).toBeNull();
   });
 
   it("deletes metadata and managed content only after confirmation", async () => {
@@ -83,7 +168,6 @@ describe("DocumentDetail", () => {
           onChanged={onChanged}
           onEdit={jest.fn()}
           picker={{ pick: jest.fn() }}
-          presenter={{ share: jest.fn() }}
           vehicle={vehicle}
         />
       </SafeAreaProvider>,
@@ -103,6 +187,23 @@ function service(): jest.Mocked<VehicleDocumentService> {
       repositorySuccess({ mimeType: "image/png", name: "invoice.png", uri: "file:///invoice.png" }),
     ),
   } as unknown as jest.Mocked<VehicleDocumentService>;
+}
+
+async function renderDocument(services: VehicleDocumentService) {
+  return render(
+    <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+      <DocumentDetail
+        document={document}
+        documents={services}
+        entries={[]}
+        onBack={jest.fn()}
+        onChanged={jest.fn()}
+        onEdit={jest.fn()}
+        picker={{ pick: jest.fn() }}
+        vehicle={vehicle}
+      />
+    </SafeAreaProvider>,
+  );
 }
 
 function expectValid<T>(result: { ok: false } | { ok: true; value: T }): T {

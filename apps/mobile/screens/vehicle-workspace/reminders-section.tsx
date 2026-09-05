@@ -175,7 +175,13 @@ export function RemindersSection({
     </Card>
   );
   return embedded ? (
-    <ScrollView contentContainerClassName="grow">{content}</ScrollView>
+    <ScrollView
+      contentContainerClassName="grow"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
+      {content}
+    </ScrollView>
   ) : (
     <Screen>{content}</Screen>
   );

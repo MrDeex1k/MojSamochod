@@ -1,3 +1,5 @@
+import { EraseAllData } from "@/application/storage/erase-all-data";
+import { LocalEraseDataStorage } from "@/infrastructure/storage/local-erase-data-storage";
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from "react";
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
@@ -32,14 +34,13 @@ import {
   type VehiclePhotoPicker,
 } from "@/infrastructure/media/gallery-vehicle-photo-picker";
 import {
-  NativeDocumentPresenter,
-  type DocumentPresenter,
-} from "@/infrastructure/documents/native-document-presenter";
-import {
   SystemDocumentPicker,
   type DocumentFilePicker,
 } from "@/infrastructure/documents/system-document-picker";
-import { LocalObjectStorage } from "@/infrastructure/storage/local-object-storage";
+import {
+  LocalObjectStorage,
+  cleanTransientDocumentFiles,
+} from "@/infrastructure/storage/local-object-storage";
 import { SystemClock } from "@/infrastructure/time/system-clock";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
@@ -47,8 +48,8 @@ import { useDatabase } from "./database-provider";
 
 export type ApplicationServices = Readonly<{
   clock: Clock;
+  eraseData: EraseAllData;
   documentPicker: DocumentFilePicker;
-  documentPresenter: DocumentPresenter;
   documents: VehicleDocumentService;
   historyEntries: HistoryEntryRepository;
   idGenerator: IdGenerator;
@@ -74,9 +75,23 @@ export function ApplicationProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     let active = true;
-    void services.managedFiles.reconcile().then((result) => {
-      if (active) setStatus(result.ok ? "ready" : "error");
-    });
+    let recovered = false;
+    cleanTransientDocumentFiles();
+    void services.eraseData
+      .resume()
+      .then((result) => {
+        if (!result.ok) return result;
+        return services.managedFiles.reconcile(() => {
+          recovered = true;
+          if (active) setStatus("ready");
+        });
+      })
+      .then((result) => {
+        if (active && !recovered) setStatus(result.ok ? "ready" : "error");
+      })
+      .catch(() => {
+        if (active && !recovered) setStatus("error");
+      });
     return () => {
       active = false;
     };
@@ -136,8 +151,10 @@ function createApplicationServices(database: AppDatabase): ApplicationServices {
   );
   return {
     clock,
+    eraseData: new EraseAllData(new LocalEraseDataStorage(database), () =>
+      reminderSchedule.reconcile(),
+    ),
     documentPicker: new SystemDocumentPicker(),
-    documentPresenter: new NativeDocumentPresenter(),
     documents: new VehicleDocumentService(
       clock,
       idGenerator,

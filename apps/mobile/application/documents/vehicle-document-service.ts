@@ -34,16 +34,16 @@ export class VehicleDocumentService {
     file: PickedDocument,
     metadata: DocumentMetadataInput,
   ): Promise<RepositoryResult<VehicleDocument>> {
-    const imported = await this.importFile(file);
-    if (!imported.ok) return imported;
+    const fileReference = managedFileIdFromUuidV7(this.idGenerator.generate());
     const document = createVehicleDocument(
-      { ...metadata, fileReference: imported.value.id, vehicleId },
+      { ...metadata, fileReference, vehicleId },
       { clock: this.clock, idGenerator: this.idGenerator },
     );
     if (!document.ok) {
-      await this.managedFiles.remove(imported.value.id);
       return repositoryFailure("unsupported", "vehicleDocument.create", document.issues);
     }
+    const imported = await this.importFile(file, fileReference);
+    if (!imported.ok) return imported;
     const created = await this.repository.create(document.value);
     if (!created.ok) {
       await this.managedFiles.remove(imported.value.id);
@@ -125,10 +125,13 @@ export class VehicleDocumentService {
     return saved.ok ? repositorySuccess(updated.value) : saved;
   }
 
-  private async importFile(file: PickedDocument) {
+  private async importFile(
+    file: PickedDocument,
+    id = managedFileIdFromUuidV7(this.idGenerator.generate()),
+  ) {
     return this.managedFiles.import({
       kind: "document",
-      managedFileId: managedFileIdFromUuidV7(this.idGenerator.generate()),
+      managedFileId: id,
       mimeType: file.mimeType,
       originalName: file.name,
       sourceUri: file.uri,

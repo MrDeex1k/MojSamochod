@@ -76,6 +76,8 @@ async function renderView(
 ) {
   await render(
     <VehicleWorkspaceView
+      onDataManagement={jest.fn()}
+      onErased={jest.fn()}
       documents={[]}
       entries={[]}
       mode={{ kind: "vehicle-form", returnTo }}

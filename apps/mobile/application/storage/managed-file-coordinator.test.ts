@@ -156,7 +156,28 @@ describe("ManagedFileCoordinator", () => {
       ok: true,
       value: undefined,
     });
-    expect(events).toEqual(["storage.discard", "storage.commit", "repository.markReady"]);
+    expect(events).toEqual(["storage.commit", "repository.markReady", "storage.discard"]);
+  });
+
+  it("exposes recovered data before cleanup and never scans newly imported files", async () => {
+    const events: string[] = [];
+    const repository = repositoryFake(events);
+    const storage = storageFake(events);
+    storage.listStagedKeys = async () =>
+      objectStorageSuccess(["staging/orphan.jpg" as StagedObjectKey]);
+    storage.discard = async () => {
+      events.push("cleanup");
+      return objectStorageFailure("unavailable", "test");
+    };
+    repository.listUnreferencedReadyFiles = async () => {
+      events.push("snapshot");
+      return repositorySuccess([]);
+    };
+    const result = await new ManagedFileCoordinator(clock, repository, storage).reconcile(() =>
+      events.push("ready"),
+    );
+    expect(events).toEqual(["snapshot", "ready", "cleanup"]);
+    expect(result).toMatchObject({ ok: false });
   });
 
   it("removes stale metadata when its staged copy disappeared", async () => {

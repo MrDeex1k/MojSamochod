@@ -1,3 +1,4 @@
+import { CorruptStoredDataError } from "./row-mappers";
 import { and, asc, desc, eq, ne, type SQL } from "drizzle-orm";
 
 import type { VehicleDocumentRepository } from "@/application/repositories/vehicle-document-repository";
@@ -115,7 +116,11 @@ export class DrizzleVehicleDocumentRepository implements VehicleDocumentReposito
           .map(mapRow),
       );
     } catch (error) {
-      return repositoryFailure("corrupt-data", operation, error);
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 
@@ -169,7 +174,11 @@ export class DrizzleVehicleDocumentRepository implements VehicleDocumentReposito
       const row = this.database.select().from(vehicleDocuments).where(where).limit(1).get();
       return repositorySuccess(row ? mapRow(row) : null);
     } catch (error) {
-      return repositoryFailure("corrupt-data", operation, error);
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 }
@@ -238,6 +247,14 @@ function mutableValues(document: VehicleDocument) {
 }
 
 function mapRow(row: VehicleDocumentRow): VehicleDocument {
+  try {
+    return parseStoredRow(row);
+  } catch {
+    throw new CorruptStoredDataError("VehicleDocument");
+  }
+}
+
+function parseStoredRow(row: VehicleDocumentRow): VehicleDocument {
   const hasAmount = row.amountMinorUnits !== null || row.amountCurrency !== null;
   if (hasAmount && (row.amountMinorUnits === null || row.amountCurrency === null)) {
     throw new Error("Stored document amount is incomplete");

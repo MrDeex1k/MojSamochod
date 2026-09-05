@@ -1,6 +1,7 @@
+import { useFormExitGuard } from "@/components/layout/navigation-guard";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useEffect, useRef, useState } from "react";
-import { Alert, BackHandler, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import { Alert, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import type { ReminderService } from "@/application/reminders/reminder-service";
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
@@ -49,29 +50,7 @@ export function ReminderForm({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
-  const initialOffsets = reminder?.notificationDaysBefore ?? defaultNotificationDaysBefore;
-  const dirty =
-    dueDate !== (reminder?.dueDate ?? "") ||
-    offsets.length !== initialOffsets.length ||
-    offsets.some((offset) => !initialOffsets.includes(offset));
-  const cancel = () => {
-    if (pending.current) return;
-    if (!dirty) {
-      onCancel();
-      return;
-    }
-    Alert.alert(t("reminders.discardTitle"), t("reminders.discardDescription"), [
-      { text: t("reminders.keepEditing"), style: "cancel" },
-      { text: t("reminders.discard"), style: "destructive", onPress: onCancel },
-    ]);
-  };
-  useEffect(() => {
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      cancel();
-      return true;
-    });
-    return () => subscription.remove();
-  });
+  const cancel = useFormExitGuard({ dueDate, offsets: [...offsets].sort() }, busy, onCancel);
   const save = async () => {
     if (pending.current) return;
     if (!calendarDate(dueDate).ok) {
@@ -241,7 +220,13 @@ export function ReminderForm({
     </Card>
   );
   return embedded ? (
-    <ScrollView contentContainerClassName="grow">{content}</ScrollView>
+    <ScrollView
+      contentContainerClassName="grow"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
+      {content}
+    </ScrollView>
   ) : (
     <Screen>{content}</Screen>
   );
