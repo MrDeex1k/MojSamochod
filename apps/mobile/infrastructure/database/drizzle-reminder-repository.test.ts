@@ -14,8 +14,10 @@ import {
   type Reminder,
 } from "@/domain/reminders/reminder";
 import { reminderIdFromUuidV7, vehicleIdFromUuidV7 } from "@/domain/shared/identifiers";
+import { clearUserData } from "./clear-user-data";
+import { DrizzleVehicleHistoryRepository } from "./drizzle-vehicle-history-repository";
+import { createHistoryEntry } from "@/domain/history/history-entry";
 import { DrizzleReminderRepository } from "./drizzle-reminder-repository";
-import { DrizzleDataResetStore } from "./drizzle-data-reset-store";
 import { mapReminderRow, reminderValues } from "./reminder-row-mapper";
 import journal from "./migrations/meta/_journal.json";
 import * as schema from "./schema";
@@ -274,105 +276,6 @@ describe("Reminder persistence with real SQLite and the Expo Drizzle driver", ()
   });
 });
 
-describe("Persistent data reset with real SQLite", () => {
-  it("cascades user records, keeps the marker until cleanup and accepts a new vehicle", async () => {
-    const { database, sqlite, repository } = await open();
-    seedVehicle(database);
-    await repository.create(fixture());
-    const timestamps = {
-      createdAt: clock.now().toISOString(),
-      updatedAt: clock.now().toISOString(),
-    };
-    database
-      .insert(schema.managedFiles)
-      .values({
-        id: otherId,
-        kind: "document",
-        status: "ready",
-        storageKey: "objects/invoice.pdf",
-        mimeType: "application/pdf",
-        originalName: "invoice.pdf",
-        byteSize: 128,
-        sha256: "a".repeat(64),
-        ...timestamps,
-      })
-      .run();
-    database
-      .insert(schema.historyEntries)
-      .values({ id, vehicleId, type: "repair", occurredAt: timestamps.createdAt, ...timestamps })
-      .run();
-    database
-      .insert(schema.vehicleDocuments)
-      .values({
-        id,
-        vehicleId,
-        historyEntryId: id,
-        fileReference: otherId,
-        name: "Invoice",
-        ...timestamps,
-      })
-      .run();
-    database
-      .insert(schema.refuellings)
-      .values({
-        id,
-        vehicleId,
-        occurredAt: timestamps.createdAt,
-        quantityMicrolitres: 1_000_000,
-        inputVolumeUnit: "litres",
-        fillKind: "full",
-        ...timestamps,
-      })
-      .run();
-    const reset = new DrizzleDataResetStore(database);
-    expect(await reset.isPending()).toBe(false);
-    await reset.markPending();
-    await reset.markPending();
-    await reset.eraseRecords();
-    await reset.eraseRecords();
-    expect(await reset.isPending()).toBe(true);
-    for (const table of [
-      schema.vehicles,
-      schema.historyEntries,
-      schema.vehicleDocuments,
-      schema.managedFiles,
-      schema.refuellings,
-      schema.reminders,
-      schema.inspectionDetails,
-      schema.replacementDetails,
-      schema.repairDetails,
-    ]) {
-      expect(database.select().from(table).all()).toEqual([]);
-    }
-    expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
-    expect(
-      sqlite.prepare("SELECT COUNT(*) AS count FROM __drizzle_migrations").get(),
-    ).toMatchObject({ count: journal.entries.length });
-    await reset.finish();
-    expect(await reset.isPending()).toBe(false);
-    seedVehicle(database);
-    expect(database.select().from(schema.vehicles).all()).toHaveLength(1);
-  });
-
-  it("persists an interrupted reset across closing and reopening the database", async () => {
-    const directory = mkdtempSync(join(tmpdir(), "moje-auto-reset-"));
-    directories.push(directory);
-    const path = join(directory, "reset.db");
-    const first = await open(path);
-    seedVehicle(first.database);
-    await new DrizzleDataResetStore(first.database).markPending();
-    first.sqlite.close();
-    connections.delete(first.sqlite);
-    const second = await open(path);
-    const reset = new DrizzleDataResetStore(second.database);
-    expect(await reset.isPending()).toBe(true);
-    await reset.eraseRecords();
-    await reset.finish();
-    expect(second.database.select().from(schema.vehicles).all()).toEqual([]);
-    expect(await reset.isPending()).toBe(false);
-  });
-});
-
 describe("Reminder row validation", () => {
   it.each([
     { id: "invalid" },
@@ -401,6 +304,71 @@ function fixture(patch: Partial<CreateReminderInput> & { id?: Reminder["id"] } =
   if (!result.ok) throw new Error("Invalid reminder fixture");
   return result.value;
 }
+
+it("paginates tied timeline dates without duplicates, gaps or another vehicle's records", async () => {
+  const { database } = await open();
+  seedVehicle(database);
+  seedVehicle(database, otherVehicleId);
+  const repository = new DrizzleVehicleHistoryRepository(database);
+  for (let index = 0; index < 123; index += 1) {
+    const entry = createHistoryEntry(
+      {
+        type: "repair",
+        details: { subject: `Repair ${index}` },
+        occurredAt: clock.now().toISOString(),
+        vehicleId,
+      },
+      {
+        clock,
+        idGenerator: {
+          generate: () => `018f47e2-7b33-7000-8000-${String(index).padStart(12, "0")}`,
+        },
+      },
+    );
+    if (!entry.ok) throw new Error("Invalid timeline fixture");
+    expect(await repository.create(entry.value)).toMatchObject({ ok: true });
+  }
+  const ids: string[] = [];
+  let cursor: Parameters<typeof repository.listPage>[1];
+  do {
+    const page = await repository.listPage(vehicleId, cursor, 17);
+    if (!page.ok) throw new Error("Expected a timeline page");
+    expect(page.value.entries.length).toBeLessThanOrEqual(17);
+    ids.push(...page.value.entries.map((entry) => entry.id));
+    cursor = page.value.nextCursor ?? undefined;
+  } while (cursor);
+  const all = await repository.list(vehicleId);
+  if (!all.ok) throw new Error("Expected timeline");
+  expect(ids).toEqual(all.value.map((entry) => entry.id));
+  expect(new Set(ids).size).toBe(123);
+  expect(await repository.listPage(otherVehicleId)).toMatchObject({
+    ok: true,
+    value: { entries: [], nextCursor: null },
+  });
+});
+
+it("clears user records atomically while retaining migrations and allowing a new vehicle", async () => {
+  const { database, sqlite, repository } = await open();
+  seedVehicle(database);
+  expect(await repository.create(fixture())).toMatchObject({ ok: true });
+  const before = sqlite.prepare("SELECT count(*) AS count FROM __drizzle_migrations").get();
+  sqlite.exec(
+    "CREATE TRIGGER reject_erase BEFORE DELETE ON reminders BEGIN SELECT RAISE(ABORT, 'interrupted'); END;",
+  );
+  expect(() => clearUserData(database)).toThrow();
+  expect(database.select().from(schema.vehicles).all()).toHaveLength(1);
+  expect(database.select().from(schema.reminders).all()).toHaveLength(1);
+  sqlite.exec("DROP TRIGGER reject_erase;");
+  clearUserData(database);
+  clearUserData(database);
+  expect(database.select().from(schema.vehicles).all()).toHaveLength(0);
+  expect(database.select().from(schema.reminders).all()).toHaveLength(0);
+  expect(sqlite.prepare("SELECT count(*) AS count FROM __drizzle_migrations").get()).toEqual(
+    before,
+  );
+  seedVehicle(database);
+  expect(database.select().from(schema.vehicles).all()).toHaveLength(1);
+});
 
 function migrations(count = journal.entries.length) {
   const entries = journal.entries.slice(0, count);

@@ -57,13 +57,6 @@
       "when": 1788469792808,
       "tag": "0007_add_vehicle_reminders",
       "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "6",
-      "when": 1788541641546,
-      "tag": "0008_add_pending_data_reset",
-      "breakpoints": true
     }
   ]
 }

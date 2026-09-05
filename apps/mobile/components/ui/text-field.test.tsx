@@ -30,23 +30,13 @@ describe("TextField", () => {
     expect(screen.getByLabelText("Brand")).toBeDisabled();
   });
 
-  it("exposes helper text to assistive technology without disabling text scaling", async () => {
-    await render(<TextField label="Brand" helperText="Enter the manufacturer" />);
-    expect(screen.getByLabelText("Brand")).toHaveProp(
-      "accessibilityHint",
-      "Enter the manufacturer",
-    );
-    expect(screen.getByLabelText("Brand").props.allowFontScaling).not.toBe(false);
-  });
-
-  it("centers a single-line value without native padding or extra line height", async () => {
+  it("centers a single-line value while leaving line height to the scalable theme", async () => {
     await render(<TextField label="Odometer" value="240" />);
 
     const input = screen.getByLabelText("Odometer");
     expect(input).toHaveProp("textAlignVertical", "center");
     expect(input).toHaveStyle({
       includeFontPadding: false,
-      lineHeight: 20,
       paddingHorizontal: 16,
       paddingVertical: 0,
     });

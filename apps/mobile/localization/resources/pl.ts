@@ -1,37 +1,22 @@
 export const pl = {
-  settings: {
-    reset: {
-      action: "Wyczyść wszystkie dane aplikacji",
-      title: "Trwale usunąć wszystkie dane aplikacji?",
-      description:
-        "Usuniemy pojazd, wpisy, tankowania, przypomnienia i wszystkie kopie załączników z aplikacji. Nie można tego cofnąć ani odtworzyć danych. Oryginalne pliki i PDF zapisane poza aplikacją pozostaną bez zmian.",
-      confirm: "Usuń trwale",
-      loading: "Usuwanie danych aplikacji…",
-      error:
-        "Nie udało się zakończyć usuwania danych. Ponów operację, aby móc korzystać z aplikacji.",
-    },
-    title: "Ustawienia i prywatność",
-    back: "Wróć do historii",
-    free: {
-      title: "Wersja FREE",
-      body: "Jeden pojazd na tym urządzeniu. Nie potrzebujesz konta ani subskrypcji.",
-    },
-    data: {
-      title: "Twoje dane",
-      body: "Dane pojazdu i kopie załączników są przechowywane lokalnie. Nie ma funkcji eksportu, importu ani odtwarzania bazy. Zachowaj oryginały faktur i zdjęć poza aplikacją. Usunięcie danych aplikacji może bezpowrotnie usunąć Twoją ewidencję.",
-    },
-    permissions: {
-      title: "Uprawnienia",
-      body: "Samodzielnie wybierasz zdjęcia i dokumenty do dodania. Aplikacja nie używa aparatu ani mikrofonu. Zgoda na powiadomienia jest opcjonalna — prosimy o nią dopiero po wybraniu włączenia przypomnień.",
-    },
-    privacy: {
-      title: "Prywatność",
-      body: "Do aplikacji nie dodano usługi analitycznej. Nie ma konta ani synchronizacji z chmurą w aplikacji. Ustawieniami kopii zapasowych i diagnostyki urządzenia zarządza system operacyjny.",
-    },
-    units: {
-      title: "Jednostki pojazdu",
-      body: "Jednostki odległości, paliwa i zużycia zmienisz w Edytuj pojazd. Istniejące wpisy zachowują zapisane wartości; prezentowane liczby są przeliczane na wybrane jednostki.",
-    },
+  dataManagement: {
+    title: "Twoje dane",
+    privacy:
+      "Historia pojazdu i załączniki są przechowywane na tym urządzeniu. Nie ma konta, synchronizacji ani analityki. Aplikacja nie oferuje eksportu ani odtwarzania. Kopiami urządzenia zarządza system operacyjny.",
+    confirmTitle: "Usunąć wszystkie dane?",
+    confirmDescription:
+      "Trwale usuniesz pojazd, historię, dokumenty, zdjęcia i zaplanowane przypomnienia z aplikacji. Oryginały w galerii i źródłowych plikach pozostaną bez zmian. Tej operacji nie można cofnąć.",
+    erase: "Usuń wszystkie dane",
+    erasing: "Usuwanie danych…",
+    error:
+      "Nie udało się zakończyć usuwania. Część danych mogła już zostać usunięta. Ponów operację; ponowne uruchomienie aplikacji również wznowi usuwanie.",
+  },
+  formGuard: {
+    title: "Odrzucić zmiany?",
+    description: "Niezapisane zmiany zostaną utracone.",
+    keepEditing: "Edytuj dalej",
+    discard: "Odrzuć",
+    saving: "Zapisywanie…",
   },
   reminders: {
     title: "Przypomnienia",
@@ -105,6 +90,15 @@ export const pl = {
     loading: "Przygotowywanie danych",
   },
   documents: {
+    clearDate: "Usuń datę",
+    previewError: "Nie udało się wyświetlić PDF. Spróbuj ponownie.",
+    page: "Strona {{page}} z {{count}}",
+    previousPage: "Poprzednia strona",
+    nextPage: "Następna strona",
+
+    invalidDate: "Wybierz prawidłową datę.",
+    loading: "Wczytywanie dokumentu…",
+    loadError: "Nie udało się odczytać dokumentu. Spróbuj ponownie.",
     add: "Dodaj dokument",
     addTitle: "Dodaj dokument lub fakturę",
     amount: "Kwota",
@@ -128,6 +122,7 @@ export const pl = {
     editTitle: "Edytuj metadane dokumentu",
     empty: "Brak dokumentów",
     emptyDescription: "Dodaj fakturę, paragon lub inny plik związany z pojazdem.",
+    export: "Eksportuj dokument",
     file: "Plik",
     fileHelper: "Obsługiwane formaty: PDF, JPEG i PNG. Maksymalny rozmiar: 20 MB.",
     fileMissing: "Zarządzany plik jest niedostępny.",
@@ -137,11 +132,7 @@ export const pl = {
     keepEditing: "Kontynuuj edycję",
     name: "Nazwa",
     notes: "Notatki",
-    downloadPdf: "Pobierz PDF",
-    downloadSaved:
-      "PDF zapisany w wybranym folderze. Możesz go otworzyć w systemowej aplikacji Pliki.",
-    downloadError:
-      "Nie udało się zapisać PDF. Wybierz folder z prawem zapisu i sprawdź wolne miejsce.",
+    openPdf: "Otwórz lub eksportuj PDF",
     pickError: "Nie udało się otworzyć systemowego selektora plików.",
     relation: "Powiązanie",
     replace: "Zastąp plik",
@@ -149,6 +140,8 @@ export const pl = {
     required: "To pole jest wymagane.",
     save: "Zapisz dokument",
     saveError: "Nie udało się zapisać dokumentu. Zmiany pozostają w formularzu.",
+    shareError: "Nie udało się otworzyć lub wyeksportować dokumentu.",
+    shareUnavailable: "Udostępnianie dokumentów jest niedostępne na tym urządzeniu.",
     title: "Dokumenty i faktury",
     unsupportedFile: "Wybierz plik PDF, JPEG lub PNG.",
     vehicleOnly: "Tylko pojazd",

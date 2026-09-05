@@ -92,7 +92,7 @@ export class ManagedFileCoordinator {
     return this.repository.getReady(id);
   }
 
-  async reconcile(): Promise<RepositoryResult<void>> {
+  async reconcile(onRecovered?: () => void): Promise<RepositoryResult<void>> {
     const pending = await this.repository.listRecoverable();
     if (!pending.ok) return pending;
 
@@ -102,20 +102,8 @@ export class ManagedFileCoordinator {
     }
     const stagedKeys = await this.storage.listStagedKeys();
     if (!stagedKeys.ok) return storageFailure(stagedKeys.error, "managedFile.reconcile");
-    for (const stagingKey of stagedKeys.value) {
-      if (trackedStagingKeys.has(stagingKey)) continue;
-      const discarded = await this.storage.discard(stagingKey);
-      if (!discarded.ok) return storageFailure(discarded.error, "managedFile.reconcile");
-    }
-
     for (const metadata of pending.value) {
-      if (metadata.status === "deleting") {
-        const removed = await this.storage.delete(metadata.storageKey);
-        if (!removed.ok) return storageFailure(removed.error, "managedFile.reconcile");
-        const deleted = await this.repository.delete(metadata.id);
-        if (!deleted.ok && deleted.error.kind !== "not-found") return deleted;
-        continue;
-      }
+      if (metadata.status === "deleting") continue;
 
       const staged: StagedObject = {
         byteSize: metadata.byteSize,
@@ -143,6 +131,24 @@ export class ManagedFileCoordinator {
 
     const unreferencedFiles = await this.repository.listUnreferencedReadyFiles();
     if (!unreferencedFiles.ok) return unreferencedFiles;
+    // Capture all cleanup candidates before exposing the application. Newly imported files
+    // cannot become candidates while the asynchronous cleanup is running.
+    onRecovered?.();
+    for (const stagingKey of stagedKeys.value) {
+      if (trackedStagingKeys.has(stagingKey)) continue;
+      const discarded = await this.storage.discard(stagingKey);
+      if (!discarded.ok) return storageFailure(discarded.error, "managedFile.reconcile");
+    }
+
+    for (const metadata of pending.value) {
+      if (metadata.status === "deleting") {
+        const removed = await this.storage.delete(metadata.storageKey);
+        if (!removed.ok) return storageFailure(removed.error, "managedFile.reconcile");
+        const deleted = await this.repository.delete(metadata.id);
+        if (!deleted.ok && deleted.error.kind !== "not-found") return deleted;
+        continue;
+      }
+    }
     for (const metadata of unreferencedFiles.value) {
       const removed = await this.remove(metadata.id);
       if (!removed.ok) return removed;

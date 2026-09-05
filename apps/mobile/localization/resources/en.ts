@@ -1,36 +1,22 @@
 export const en = {
-  settings: {
-    reset: {
-      action: "Erase all app data",
-      title: "Permanently erase all app data?",
-      description:
-        "This removes your vehicle, entries, refuellings, reminders and all attachment copies from this app. There is no undo or restore. Original files and PDFs saved outside the app are not removed.",
-      confirm: "Erase permanently",
-      loading: "Erasing app data…",
-      error: "Data erasure could not finish. Retry to complete it before using the app.",
-    },
-    title: "Settings and privacy",
-    back: "Back to history",
-    free: {
-      title: "FREE version",
-      body: "One vehicle on this device. No account or subscription is required.",
-    },
-    data: {
-      title: "Your data",
-      body: "Vehicle records and copies of your attachments are stored locally. There is no database export, import or restore feature. Keep original invoices and photos outside the app. Deleting app data can permanently remove your records.",
-    },
-    permissions: {
-      title: "Permissions",
-      body: "You choose which photos and documents to add. The app does not use your camera or microphone. Notification permission is optional and is requested only when you choose to enable reminders.",
-    },
-    privacy: {
-      title: "Privacy",
-      body: "No analytics service is added to the app. There is no account or in-app cloud sync. Your device's backup and diagnostic settings are managed by the operating system.",
-    },
-    units: {
-      title: "Vehicle units",
-      body: "Change distance, fuel volume and consumption units in Edit vehicle. Existing records keep their stored values; displayed values are converted to your chosen units.",
-    },
+  dataManagement: {
+    title: "Your data",
+    privacy:
+      "Your vehicle history and attachments are stored on this device. There is no account, synchronization or analytics. The app does not offer export or restore. Device backups are controlled by your operating system.",
+    confirmTitle: "Erase all data?",
+    confirmDescription:
+      "This permanently removes your vehicle, history, documents, photos and scheduled reminders from this app. Original files in your gallery and file provider remain unchanged. This cannot be undone.",
+    erase: "Erase all data",
+    erasing: "Erasing data…",
+    error:
+      "Erasing could not finish. Some data may already be removed. Retry to finish; restarting the app also resumes erasing.",
+  },
+  formGuard: {
+    title: "Discard changes?",
+    description: "Your unsaved changes will be lost.",
+    keepEditing: "Keep editing",
+    discard: "Discard",
+    saving: "Saving…",
   },
   reminders: {
     title: "Reminders",
@@ -101,6 +87,15 @@ export const en = {
     loading: "Preparing data",
   },
   documents: {
+    clearDate: "Clear date",
+    previewError: "Could not display this PDF. Try again.",
+    page: "Page {{page}} of {{count}}",
+    previousPage: "Previous page",
+    nextPage: "Next page",
+
+    invalidDate: "Choose a valid date.",
+    loading: "Loading document…",
+    loadError: "Could not read this document. Try again.",
     add: "Add document",
     addTitle: "Add document or invoice",
     amount: "Amount",
@@ -124,6 +119,7 @@ export const en = {
     editTitle: "Edit document metadata",
     empty: "No documents",
     emptyDescription: "Add an invoice, receipt, or other file related to this vehicle.",
+    export: "Export document",
     file: "File",
     fileHelper: "Supported formats: PDF, JPEG, and PNG. Maximum size: 20 MB.",
     fileMissing: "The managed file is unavailable.",
@@ -133,11 +129,7 @@ export const en = {
     keepEditing: "Keep editing",
     name: "Name",
     notes: "Notes",
-    downloadPdf: "Download PDF",
-    downloadSaved:
-      "PDF saved in the selected folder. You can open it using your device's Files app.",
-    downloadError:
-      "The PDF could not be saved. Choose a writable folder and check available storage.",
+    openPdf: "Open or export PDF",
     pickError: "The system file picker could not be opened.",
     relation: "Related to",
     replace: "Replace file",
@@ -145,6 +137,8 @@ export const en = {
     required: "This field is required.",
     save: "Save document",
     saveError: "The document could not be saved. Your changes remain in the form.",
+    shareError: "The document could not be opened or exported.",
+    shareUnavailable: "Document sharing is unavailable on this device.",
     title: "Documents and invoices",
     unsupportedFile: "Choose a PDF, JPEG, or PNG file.",
     vehicleOnly: "Vehicle only",

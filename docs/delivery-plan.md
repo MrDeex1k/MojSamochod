@@ -192,7 +192,12 @@ results remain unavailable; this is not a clean security audit or store-release 
 
 ## Phase 7 — Production hardening of the free application
 
-**Status:** In progress; FREE scope agreed: one vehicle per device, no user-facing data export,
+**Status:** In progress; the latest workspace-hardening implementation from `MAIN` is merged into this
+branch. It delivers
+resumable erase-all, internal PDF previews without outbound document actions, draft preservation,
+paginated history and initial accessibility improvements. See the
+[implementation and verification report](code-review-improvements.md) for coverage and remaining gates.
+FREE scope agreed: one vehicle per device, no user-facing data export,
 database import, backup or restore, and no added analytics. Existing JSON contracts remain internal.
 Provide a confirmed erase-all action returning to first-vehicle setup, including managed file
 copies and owned scheduled alerts; do not delete users' original gallery or document files.
@@ -200,10 +205,9 @@ Use minimal contextual permissions and gallery-only vehicle photos, with no came
 Distribution channel and publisher/privacy contact details remain open. The accepted production
 identity is `Moje Auto`, publisher `Jakub Batycki`, and the shared iOS/Android identifier
 `pl.jakubbatycki.mojeauto`; Polish is the primary store language and English is additional. The export
-restriction applies to database/dataset export, not downloading an individual PDF attachment.
-Selecting a PDF should offer saving a copy to a user-selected device location, without an in-app
-PDF viewer or automatic external opening. Users may open that saved copy with a system application.
-Do not expose general sharing or image-export actions. Attachment selection remains
+restriction applies to database/dataset export and outbound attachment actions. Documents are
+previewed inside the app; do not expose general sharing, external opening or image-export actions.
+Attachment selection remains
 allowed, but importing datasets from other applications does not. Review OS backup behavior
 separately from app-level export. The publisher currently has no active Apple Developer Program
 membership or paid Google Play publisher registration; store distribution is not configured.
@@ -211,12 +215,12 @@ The current pre-release application version is `0.8.0`; reserve `1.0.0` for the 
 The five steps below remain the roadmap; retry and assess the unavailable vulnerability audit
 before release, alongside documented diagnostic exceptions.
 
-Step 1 is implemented on `feat/free-release-hardening`: localized settings/privacy guidance,
+Step 1 is implemented on this branch: localized data-management/privacy guidance,
 permission reduction and targeted accessibility checks. See the [step 1 report](phase-7-step-1-verification.md)
 for native coverage and the isolated Android database-initialization incident after changing font
 scale. The incident remains a known, non-reproduced defect; by product decision it does not block
 the current phase progression. Published privacy information still requires publisher details.
-Step 2 implements safe erase-all and PDF-only device downloads; see the
+Step 2 implements resumable safe erase-all and internal PDF previews; see the
 [step 2 report](phase-7-step-2-verification.md).
 
 At the user's request, step 3 work preceded step 2: deferred storage-directory creation, failure

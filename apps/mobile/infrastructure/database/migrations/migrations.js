@@ -9,7 +9,6 @@ import m0004 from "./0004_enforce_document_entry_vehicle_consistency.sql";
 import m0005 from "./0005_enforce_history_entry_document_vehicle_consistency.sql";
 import m0006 from "./0006_add_refuelling_persistence.sql";
 import m0007 from "./0007_add_vehicle_reminders.sql";
-import m0008 from "./0008_add_pending_data_reset.sql";
 
 export default {
   journal,
@@ -22,6 +21,5 @@ export default {
     m0005,
     m0006,
     m0007,
-    m0008,
   },
 };

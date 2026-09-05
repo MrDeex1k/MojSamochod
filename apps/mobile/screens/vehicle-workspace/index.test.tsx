@@ -76,6 +76,8 @@ async function renderView(
 ) {
   await render(
     <VehicleWorkspaceView
+      onDataManagement={jest.fn()}
+      onErased={jest.fn()}
       documents={[]}
       entries={[]}
       mode={{ kind: "vehicle-form", returnTo }}
@@ -93,7 +95,6 @@ async function renderView(
       onEditVehicle={jest.fn()}
       onFuel={jest.fn()}
       onReminders={jest.fn()}
-      onSettings={jest.fn()}
       onFuelChanged={callbacks.onFuelChanged}
       onSaved={callbacks.onSaved}
       onSelectDocument={jest.fn()}

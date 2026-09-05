@@ -1,7 +1,9 @@
+import { useFormExitGuard } from "@/components/layout/navigation-guard";
+import { repositoryFailure } from "@/application/repositories/repository-result";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { getLocales } from "expo-localization";
 import { useRef, useState } from "react";
-import { Alert, Platform, ScrollView, Text, View } from "react-native";
+import { Platform, ScrollView, Text, View } from "react-native";
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import { Screen } from "@/components/layout/screen";
@@ -83,6 +85,25 @@ export function EntryForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const cancel = useFormExitGuard(
+    {
+      occurredAt,
+      odometer,
+      cost,
+      currency,
+      serviceProvider,
+      notes,
+      description,
+      item,
+      manufacturer,
+      partNumber,
+      subject,
+      inspectionKind,
+      inspectionResult,
+    },
+    saving,
+    onCancel,
+  );
 
   const input = (): CreateHistoryEntryInput => {
     const common = {
@@ -121,19 +142,14 @@ export function EntryForm({
     setSaving(true);
     const result = await (
       entry ? historyEntries.update(validated.value) : historyEntries.create(validated.value)
-    ).finally(() => setSaving(false));
+    )
+      .catch((cause: unknown) => repositoryFailure("unavailable", "form.save", cause))
+      .finally(() => setSaving(false));
     if (!result.ok) {
       setFormError(t("entryForm.saveError"));
       return;
     }
     onSaved();
-  };
-
-  const cancel = () => {
-    Alert.alert(t("entryForm.discardTitle"), t("entryForm.discardDescription"), [
-      { style: "cancel", text: t("entryForm.keepEditing") },
-      { onPress: onCancel, style: "destructive", text: t("entryForm.discardChanges") },
-    ]);
   };
 
   const content = (
@@ -247,7 +263,11 @@ export function EntryForm({
   );
 
   return embedded ? (
-    <ScrollView contentContainerClassName="grow" keyboardShouldPersistTaps="handled">
+    <ScrollView
+      contentContainerClassName="grow"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
       {content}
     </ScrollView>
   ) : (

@@ -1,5 +1,6 @@
-import { useId } from "react";
-import { Platform, StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
+import { useValidationFocus } from "./validation-focus";
+import { useId, useRef } from "react";
+import { StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
 
 type TextFieldProps = TextInputProps & {
   error?: string;
@@ -24,6 +25,8 @@ export function TextField({
   const inputId = nativeID ?? `text-field-${generatedId}`;
   const labelId = `${inputId}-label`;
   const supportingText = error ?? helperText;
+  const inputRef = useRef<TextInput>(null);
+  useValidationFocus(inputId, inputRef, error);
 
   return (
     <View className="gap-compact">
@@ -31,6 +34,8 @@ export function TextField({
         {label}
       </Text>
       <TextInput
+        ref={inputRef}
+        aria-invalid={Boolean(error)}
         accessibilityHint={error ?? accessibilityHint ?? helperText}
         accessibilityLabel={label}
         accessibilityLabelledBy={labelId}
@@ -61,7 +66,6 @@ export function TextField({
 const styles = StyleSheet.create({
   singleLineInput: {
     includeFontPadding: false,
-    lineHeight: Platform.OS === "ios" ? 20 : 16,
     paddingHorizontal: 16,
     paddingVertical: 0,
   },

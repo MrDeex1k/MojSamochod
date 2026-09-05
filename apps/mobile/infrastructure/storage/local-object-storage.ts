@@ -121,9 +121,13 @@ export class LocalObjectStorage implements ObjectStorage {
   }
 
   getUri(storageKey: Parameters<ObjectStorage["getUri"]>[0]): ObjectStorageResult<string> {
-    return this.driver.exists(storageKey)
-      ? objectStorageSuccess(this.driver.uri(storageKey))
-      : objectStorageFailure("not-found", "objectStorage.getUri");
+    try {
+      return this.driver.exists(storageKey)
+        ? objectStorageSuccess(this.driver.uri(storageKey))
+        : objectStorageFailure("not-found", "objectStorage.getUri");
+    } catch (error) {
+      return objectStorageFailure("unavailable", "objectStorage.getUri", error);
+    }
   }
 
   async copyTo(
@@ -177,6 +181,7 @@ export class ExpoFileSystemDriver implements ObjectStorageDriver {
   }
 
   list(prefix: string): readonly string[] {
+    this.ensureDirectories();
     const directory = new Directory(this.root, prefix);
     return directory.exists ? directory.list().map((entry) => entry.name) : [];
   }
@@ -212,4 +217,15 @@ async function safelyDelete(driver: ObjectStorageDriver, key: string): Promise<v
 
 function toHex(value: ArrayBuffer): string {
   return [...new Uint8Array(value)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export function cleanTransientDocumentFiles(): void {
+  for (const name of ["document-previews", "document-exports"]) {
+    try {
+      const directory = new Directory(Paths.cache, name);
+      if (directory.exists) directory.delete();
+    } catch {
+      // Cache cleanup is retried at the next start and must not block usable records.
+    }
+  }
 }

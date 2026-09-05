@@ -1,4 +1,5 @@
-import { type ComponentProps, useEffect, useState } from "react";
+import { PdfPreview } from "@/components/ui/pdf-preview";
+import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
@@ -9,23 +10,13 @@ import { Image } from "@/components/ui/image";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
-import type { DocumentPresenter } from "@/infrastructure/documents/native-document-presenter";
 import type { DocumentFilePicker } from "@/infrastructure/documents/system-document-picker";
 import { formatCalendarDate, formatCurrencyMinorUnits } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
 type ResolvedFile = Readonly<{ mimeType: string; name: string; uri: string }>;
 
-export function DocumentDetail(props: ComponentProps<typeof DocumentDetailContent>) {
-  return (
-    <DocumentDetailContent
-      key={`${props.document.id}:${props.document.updatedAt}:${props.document.fileReference}`}
-      {...props}
-    />
-  );
-}
-
-function DocumentDetailContent({
+export function DocumentDetail({
   document,
   documents,
   embedded = false,
@@ -34,7 +25,6 @@ function DocumentDetailContent({
   onChanged,
   onEdit,
   picker,
-  presenter,
   vehicle,
 }: Readonly<{
   document: VehicleDocument;
@@ -45,42 +35,43 @@ function DocumentDetailContent({
   onChanged: () => void;
   onEdit: () => void;
   picker: DocumentFilePicker;
-  presenter: DocumentPresenter;
   vehicle: Vehicle;
 }>) {
   const { t, i18n } = useAppTranslation();
-  const [file, setFile] = useState<ResolvedFile | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [resolved, setResolved] = useState<{
+    reference: string;
+    file: ResolvedFile | null;
+    failed: boolean;
+  } | null>(null);
+  const file = resolved?.reference === document.fileReference ? resolved.file : null;
+  const loadingFile = resolved?.reference !== document.fileReference;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const formattedAmount = document.amount
     ? formatCurrencyMinorUnits(document.amount.minorUnits, document.amount.currency, i18n.language)
     : null;
 
   useEffect(() => {
     let active = true;
-    void documents.getFile(document).then((result) => {
-      if (active) {
-        if (result.ok) setFile(result.value);
-        else setError(t("documents.fileMissing"));
-      }
-    });
+    void documents
+      .getFile(document)
+      .then((result) => {
+        if (active) {
+          setResolved({
+            reference: document.fileReference,
+            file: result.ok ? result.value : null,
+            failed: !result.ok && result.error.kind !== "not-found",
+          });
+        }
+      })
+      .catch(() => {
+        if (active) setResolved({ reference: document.fileReference, file: null, failed: true });
+      });
     return () => {
       active = false;
     };
-  }, [document, documents, t]);
-
-  const download = () => {
-    if (!file || busy) return;
-    setBusy(true);
-    setError(null);
-    setSaved(false);
-    void presenter
-      .downloadPdf(file)
-      .then((result) => setSaved(result === "saved"))
-      .catch(() => setError(t("documents.downloadError")))
-      .finally(() => setBusy(false));
-  };
+  }, [document, documents, attempt]);
 
   const replace = () => {
     if (busy) return;
@@ -154,11 +145,26 @@ function DocumentDetailContent({
             source={{ uri: file.uri }}
           />
         </View>
+      ) : file?.mimeType === "application/pdf" ? (
+        <PdfPreview key={document.fileReference} uri={file.uri} name={document.name} />
+      ) : !loadingFile && resolved?.failed ? (
+        <View className="gap-content rounded-control bg-surface-muted p-section">
+          <Text accessibilityRole="alert" className="text-body text-danger">
+            {t("documents.loadError")}
+          </Text>
+          <Button
+            label={t("database.errorAction")}
+            onPress={() => {
+              setResolved(null);
+              setAttempt((value) => value + 1);
+            }}
+          />
+        </View>
       ) : (
         <View className="items-center rounded-control bg-surface-muted p-section">
           <Text className="text-heading font-semibold text-primary">PDF</Text>
           <Text className="text-caption text-secondary">
-            {file?.name ?? t("documents.fileMissing")}
+            {file?.name ?? t(loadingFile ? "documents.loading" : "documents.fileMissing")}
           </Text>
         </View>
       )}
@@ -183,14 +189,6 @@ function DocumentDetailContent({
           {error}
         </Text>
       ) : null}
-      {saved ? (
-        <Text accessibilityLiveRegion="polite" className="text-body text-secondary">
-          {t("documents.downloadSaved")}
-        </Text>
-      ) : null}
-      {file?.mimeType === "application/pdf" ? (
-        <Button disabled={busy} label={t("documents.downloadPdf")} onPress={download} />
-      ) : null}
       <Button
         disabled={busy}
         label={t("documents.replace")}
@@ -211,7 +209,13 @@ function DocumentDetailContent({
     </Card>
   );
   return embedded ? (
-    <ScrollView contentContainerClassName="grow">{content}</ScrollView>
+    <ScrollView
+      contentContainerClassName="grow"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
+      {content}
+    </ScrollView>
   ) : (
     <Screen>{content}</Screen>
   );

@@ -1,6 +1,10 @@
+import { CalendarDateField } from "@/components/ui/calendar-date-field";
+import { documentDate } from "@/domain/documents/vehicle-document";
+import { useFormExitGuard } from "@/components/layout/navigation-guard";
+import { repositoryFailure } from "@/application/repositories/repository-result";
 import { getLocales } from "expo-localization";
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 import { Screen } from "@/components/layout/screen";
@@ -55,10 +59,16 @@ export function DocumentForm({
   const [notes, setNotes] = useState(document?.notes ?? "");
   const [entryId, setEntryId] = useState<string>(document?.historyEntryId ?? "");
   const [fileError, setFileError] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | undefined>();
   const [nameError, setNameError] = useState<string | null>(null);
   const [amountError, setAmountError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const cancel = useFormExitGuard(
+    { file, name, date, amount, currency, notes, entryId },
+    saving,
+    onCancel,
+  );
 
   const chooseFile = async () => {
     setFileError(null);
@@ -90,6 +100,11 @@ export function DocumentForm({
       setFileError(t("documents.fileRequired"));
       return;
     }
+    if (!documentDate(date).ok) {
+      setDateError(t("documents.invalidDate"));
+      return;
+    }
+    setDateError(undefined);
     const parsedAmount = parseCurrencyInput(amount, currency, i18n.language);
     if (parsedAmount.kind === "invalid") {
       setAmountError(t("documents.invalidAmount"));
@@ -114,7 +129,9 @@ export function DocumentForm({
       document
         ? documents.update(document, metadata)
         : documents.create(vehicle.id, file!, metadata)
-    ).finally(() => setSaving(false));
+    )
+      .catch((cause: unknown) => repositoryFailure("unavailable", "form.save", cause))
+      .finally(() => setSaving(false));
     if (!result.ok) {
       setFormError(
         result.error.kind === "conflict" ? t("documents.duplicateError") : t("documents.saveError"),
@@ -145,15 +162,18 @@ export function DocumentForm({
         error={nameError ?? undefined}
         label={t("documents.name")}
         onChangeText={setName}
+        maxLength={255}
         value={name}
       />
-      <TextField
-        autoCapitalize="none"
-        helperText={t("documents.dateHelper")}
+      <CalendarDateField
         label={t("documents.date")}
-        onChangeText={setDate}
-        placeholder="YYYY-MM-DD"
         value={date}
+        onChange={(value) => {
+          setDate(value);
+          setDateError(undefined);
+        }}
+        error={dateError}
+        disabled={saving}
       />
       <View className="flex-row gap-compact">
         <View className="flex-[2]">
@@ -201,20 +221,15 @@ export function DocumentForm({
         </Text>
       ) : null}
       <Button disabled={saving} label={t("documents.save")} onPress={() => void save()} />
-      <Button
-        label={t("documents.cancel")}
-        onPress={() =>
-          Alert.alert(t("documents.discardTitle"), t("documents.discardDescription"), [
-            { style: "cancel", text: t("documents.keepEditing") },
-            { onPress: onCancel, style: "destructive", text: t("documents.discard") },
-          ])
-        }
-        variant="secondary"
-      />
+      <Button label={t("documents.cancel")} onPress={cancel} variant="secondary" />
     </Card>
   );
   return embedded ? (
-    <ScrollView contentContainerClassName="grow" keyboardShouldPersistTaps="handled">
+    <ScrollView
+      contentContainerClassName="grow"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+    >
       {content}
     </ScrollView>
   ) : (
