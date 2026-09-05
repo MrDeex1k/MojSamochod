@@ -192,7 +192,11 @@ results remain unavailable; this is not a clean security audit or store-release 
 
 ## Phase 7 — Production hardening of the free application
 
-**Status:** Next phase; FREE scope agreed: one vehicle per device, no user-facing data export,
+**Status:** In progress on `feat/harden-mobile-workspace`, pending review. The repository-review implementation delivers
+resumable erase-all, internal PDF previews without outbound document actions, draft preservation,
+paginated history and initial accessibility improvements. See the
+[implementation and verification report](code-review-improvements.md) for coverage and remaining gates.
+FREE scope agreed: one vehicle per device, no user-facing data export,
 database import, backup or restore, and no added analytics. Existing JSON contracts remain internal.
 Provide a confirmed erase-all action returning to first-vehicle setup, including managed file
 copies and owned scheduled alerts; do not delete users' original gallery or document files.
@@ -288,7 +292,8 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Agree Phase 7 scope and acceptance criteria, then start production hardening. Phase 6 is merged.
+Continue Phase 7 hardening from the [repository-review implementation](code-review-improvements.md).
+Phase 6 is merged; the new changes are on `feat/harden-mobile-workspace`, pending review.
 Native acceptance after dependency
 updates is recorded in the [stage 7 report](phase-6-step-7-verification.md); local build instructions
 are in [native-qa-builds.md](native-qa-builds.md). Retry the unavailable registry vulnerability audit

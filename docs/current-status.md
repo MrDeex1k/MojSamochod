@@ -285,3 +285,12 @@ Nie ma zidentyfikowanej, nienaprawionej uwagi funkcjonalnej CodeRabbit blokując
 Fazy 7. Audyt podatności nadal trzeba uzyskać i ocenić przed wydaniem; znane diagnostyki Expo
 Doctor i ostrzeżenia React Doctor pozostają jawne. Faza 7 ma w planie pięć kroków; powyższe
 ustalenia doprecyzowują ich zakres, nie dodają automatycznie kolejnych funkcji.
+
+### Repository review implementation — 2026-09-05
+
+Phase 7 hardening is prepared on `feat/harden-mobile-workspace` for review. Resumable user-data deletion, internal PDF
+previews without outbound sharing, form draft preservation, cursor-based history loading,
+section-level caching, initial accessibility fixes and CI checks are implemented. This supersedes
+the earlier statements above that document sharing removal and erase-all are still only planned.
+The changes are not merged or published to stores. See
+[code-review-improvements.md](code-review-improvements.md) for verification and remaining release gates.
