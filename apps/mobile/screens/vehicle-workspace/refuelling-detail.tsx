@@ -5,6 +5,7 @@ import type { RefuellingService } from "@/application/refuelling/refuelling-serv
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ContextualActions } from "@/components/ui/contextual-actions";
 import type { Refuelling } from "@/domain/refuelling/refuelling";
 import type { FuelConfiguredVehicle } from "@/domain/vehicle/vehicle";
 import { formatCurrencyMinorUnits, formatUtcDateTime } from "@/localization/formatters";
@@ -139,13 +140,15 @@ export function RefuellingDetail({
           {t("refuelling.deleteError")}
         </Text>
       ) : null}
-      <Button label={t("refuelling.edit")} onPress={onEdit} />
-      <Button
-        className="w-1/2 self-start"
+      <ContextualActions
+        cancelLabel={t("common.cancel")}
+        deleteLabel={t("refuelling.delete")}
         disabled={deleting}
-        label={t("refuelling.delete")}
-        onPress={confirmDelete}
-        variant="danger"
+        editLabel={t("refuelling.edit")}
+        menuLabel={t("common.moreActions")}
+        menuTitle={t("refuelling.actionsTitle")}
+        onDelete={confirmDelete}
+        onEdit={onEdit}
       />
       {!embedded ? (
         <Button label={t("refuelling.backToFuel")} onPress={onBack} variant="secondary" />

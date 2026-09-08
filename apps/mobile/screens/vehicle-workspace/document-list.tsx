@@ -10,6 +10,7 @@ import { useAppTranslation } from "@/localization/use-app-translation";
 export function DocumentList({
   documents,
   embedded = false,
+  selectedId,
   entries,
   onAdd,
   onBack,
@@ -17,6 +18,7 @@ export function DocumentList({
 }: Readonly<{
   documents: readonly VehicleDocument[];
   embedded?: boolean;
+  selectedId?: string;
   entries: readonly HistoryEntry[];
   onAdd: () => void;
   onBack: () => void;
@@ -55,6 +57,8 @@ export function DocumentList({
           : undefined;
         return (
           <Pressable
+            accessibilityState={{ selected: document.id === selectedId }}
+            style={document.id === selectedId ? { backgroundColor: "#252527" } : undefined}
             accessibilityLabel={document.name}
             accessibilityRole="button"
             className="gap-compact border-b border-divider py-control active:opacity-70"

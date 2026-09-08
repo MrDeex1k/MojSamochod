@@ -3,7 +3,7 @@ import { AppState, BackHandler, ScrollView, Text, View } from "react-native";
 import type { ApplicationServices } from "@/components/providers/application-provider";
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { reminderStatus, type Reminder, type ReminderKind } from "@/domain/reminders/reminder";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 import { formatCalendarDate } from "@/localization/formatters";
@@ -94,7 +94,7 @@ export function RemindersSection({
       />
     );
   const content = (
-    <Card className={embedded ? "min-h-full" : undefined}>
+    <FormSection className={embedded ? "p-screen" : undefined}>
       <Text accessibilityRole="header" className="text-title font-bold text-primary">
         {t("reminders.title")}
       </Text>
@@ -119,7 +119,7 @@ export function RemindersSection({
             const reminder = state.reminders.find((item) => item.kind === kind);
             const status = reminder ? reminderStatus(reminder, now) : null;
             return (
-              <View key={kind} className="gap-content rounded-control bg-surface-muted p-content">
+              <View key={kind} className="gap-compact border-b border-divider py-content">
                 <Text
                   accessibilityRole="header"
                   className="text-heading font-semibold text-primary"
@@ -172,7 +172,7 @@ export function RemindersSection({
         </>
       )}
       <Button label={t("reminders.back")} onPress={onBack} variant="secondary" />
-    </Card>
+    </FormSection>
   );
   return embedded ? (
     <ScrollView

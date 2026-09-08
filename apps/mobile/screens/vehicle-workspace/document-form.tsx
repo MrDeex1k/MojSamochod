@@ -1,15 +1,16 @@
+import { DocumentEntrySelector } from "./document-entry-selector";
 import { CalendarDateField } from "@/components/ui/calendar-date-field";
 import { documentDate } from "@/domain/documents/vehicle-document";
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
 import { repositoryFailure } from "@/application/repositories/repository-result";
 import { getLocales } from "expo-localization";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { TextField } from "@/components/ui/text-field";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";
 import type { HistoryEntry } from "@/domain/history/history-entry";
@@ -142,7 +143,7 @@ export function DocumentForm({
   };
 
   const content = (
-    <Card className={embedded ? "min-h-full" : undefined}>
+    <FormSection className={embedded ? "p-screen" : undefined}>
       <Text accessibilityRole="header" className="text-title font-bold text-primary">
         {t(document ? "documents.editTitle" : "documents.addTitle")}
       </Text>
@@ -198,35 +199,21 @@ export function DocumentForm({
           />
         </View>
       </View>
-      <View className="gap-compact">
-        <Text className="text-label font-semibold text-primary">{t("documents.relation")}</Text>
-        <RelationOption
-          label={t("documents.vehicleOnly")}
-          onPress={() => setEntryId("")}
-          selected={!entryId}
-        />
-        {entries.map((entry) => (
-          <RelationOption
-            key={entry.id}
-            label={entryLabel(entry, t)}
-            onPress={() => setEntryId(entry.id)}
-            selected={entryId === entry.id}
-          />
-        ))}
-      </View>
+      <DocumentEntrySelector entries={entries} selectedId={entryId} onSelect={setEntryId} />
       <TextField label={t("documents.notes")} multiline onChangeText={setNotes} value={notes} />
       {formError ? (
         <Text accessibilityLiveRegion="polite" className="text-body text-danger">
           {formError}
         </Text>
       ) : null}
-      <Button disabled={saving} label={t("documents.save")} onPress={() => void save()} />
+      <Button busy={saving} label={t("documents.save")} onPress={() => void save()} />
       <Button label={t("documents.cancel")} onPress={cancel} variant="secondary" />
-    </Card>
+    </FormSection>
   );
   return embedded ? (
     <ScrollView
       contentContainerClassName="grow"
+      keyboardDismissMode="on-drag"
       automaticallyAdjustKeyboardInsets
       keyboardShouldPersistTaps="handled"
     >
@@ -237,33 +224,6 @@ export function DocumentForm({
   );
 }
 
-function RelationOption({
-  label,
-  onPress,
-  selected,
-}: Readonly<{ label: string; onPress: () => void; selected: boolean }>) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ checked: selected }}
-      className={`rounded-control border px-content py-control ${selected ? "border-accent bg-surface-strong" : "border-divider bg-surface-muted"}`}
-      onPress={onPress}
-    >
-      <Text className="text-body text-primary">{label}</Text>
-    </Pressable>
-  );
-}
-
 function withoutExtension(value: string): string {
   return value.replace(/\.[^.]+$/, "");
-}
-
-function entryLabel(entry: HistoryEntry, t: (key: string) => string): string {
-  const subject =
-    entry.type === "replacement"
-      ? entry.details.item
-      : entry.type === "repair"
-        ? entry.details.subject
-        : (entry.details.description ?? t(`entryForm.inspectionKinds.${entry.details.kind}`));
-  return `${t(`workspace.entryType.${entry.type}`)} — ${subject}`;
 }

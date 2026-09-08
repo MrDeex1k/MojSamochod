@@ -23,6 +23,7 @@ import {
 
 type RefuellingListProps = Readonly<{
   embedded?: boolean;
+  selectedId?: string;
   history: RefuellingHistory;
   onAdd: () => void;
   onBack: () => void;
@@ -33,6 +34,7 @@ type RefuellingListProps = Readonly<{
 
 export function RefuellingList({
   embedded = false,
+  selectedId,
   history,
   onAdd,
   onBack,
@@ -85,6 +87,7 @@ export function RefuellingList({
       renderItem={({ item }) =>
         configuredVehicle ? (
           <RefuellingRow
+            selected={item.id === selectedId}
             included={includedRefuellingIds.has(item.id)}
             onPress={() => onSelect(item)}
             refuelling={item}
@@ -150,12 +153,14 @@ const styles = StyleSheet.create({
 });
 
 function RefuellingRow({
+  selected,
   included,
   onPress,
   refuelling,
   vehicle,
 }: Readonly<{
   included: boolean;
+  selected: boolean;
   onPress: () => void;
   refuelling: Refuelling;
   vehicle: FuelConfiguredVehicle;
@@ -169,6 +174,8 @@ function RefuellingRow({
   return (
     <Pressable
       accessibilityLabel={`${t(`refuelling.fillKind.${refuelling.fillKind}`)}, ${quantity}`}
+      accessibilityState={{ selected }}
+      style={selected ? { backgroundColor: "#252527" } : undefined}
       accessibilityRole="button"
       className="gap-compact border-b border-divider py-control active:opacity-70"
       onPress={onPress}

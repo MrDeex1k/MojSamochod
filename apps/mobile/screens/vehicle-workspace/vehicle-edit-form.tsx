@@ -7,7 +7,7 @@ import type { VehicleRepository } from "@/application/repositories/vehicle-repos
 import type { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { Image } from "@/components/ui/image";
 import { TextField } from "@/components/ui/text-field";
 import { FuelConfigurationFields } from "@/components/vehicle/fuel-configuration-fields";
@@ -193,7 +193,7 @@ export function VehicleEditForm({
   };
 
   const content = (
-    <Card>
+    <FormSection className={embedded ? "p-screen" : undefined}>
       <Text accessibilityRole="header" className="text-title font-bold text-primary">
         {t("vehicleEdit.title")}
       </Text>
@@ -298,14 +298,15 @@ export function VehicleEditForm({
         volumeUnit={fuelVolumeUnit}
       />
       {formError ? <Text className="text-body text-danger">{formError}</Text> : null}
-      <Button disabled={saving} label={t("vehicleEdit.save")} onPress={() => void save()} />
+      <Button busy={saving} label={t("vehicleEdit.save")} onPress={() => void save()} />
       <Button label={t("vehicleEdit.cancel")} onPress={cancel} variant="secondary" />
-    </Card>
+    </FormSection>
   );
 
   return embedded ? (
     <ScrollView
       contentContainerClassName="grow"
+      keyboardDismissMode="on-drag"
       automaticallyAdjustKeyboardInsets
       keyboardShouldPersistTaps="handled"
     >

@@ -8,7 +8,7 @@ import { Platform, ScrollView, Text, View } from "react-native";
 import type { RefuellingService } from "@/application/refuelling/refuelling-service";
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { TextField } from "@/components/ui/text-field";
 import {
   parseUnitPriceMilliUnits,
@@ -145,7 +145,7 @@ export function RefuellingForm({
   };
 
   const content = (
-    <Card className={embedded ? "h-full" : undefined}>
+    <FormSection className={embedded ? "p-screen" : undefined}>
       <Text accessibilityRole="header" className="text-title font-bold text-primary">
         {t(refuelling ? "refuelling.editTitle" : "refuelling.addTitle")}
       </Text>
@@ -269,14 +269,15 @@ export function RefuellingForm({
           {t("refuelling.saveError")}
         </Text>
       ) : null}
-      <Button disabled={saving} label={t("refuelling.save")} onPress={() => void save()} />
+      <Button busy={saving} label={t("refuelling.save")} onPress={() => void save()} />
       <Button label={t("refuelling.cancel")} onPress={cancel} variant="secondary" />
-    </Card>
+    </FormSection>
   );
 
   return embedded ? (
     <ScrollView
       contentContainerClassName="grow"
+      keyboardDismissMode="on-drag"
       automaticallyAdjustKeyboardInsets
       keyboardShouldPersistTaps="handled"
     >
