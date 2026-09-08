@@ -73,11 +73,12 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw na branchu Fazy 7 zawiera 64 zestawy i 444 testy komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw na branchu Fazy 7 zawiera 68 zestawów i 461 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
-- React Doctor 0.9.12 dla zmian Fazy 5 zakończył się wynikiem 100/100 bez wykrytych problemów.
+- Ostatnia weryfikacja 2026-09-08: `nub run check` przechodzi, a React Doctor 0.9.13 uzyskuje
+  83/100 bez błędów i z pięcioma istniejącymi ostrzeżeniami utrzymaniowymi.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
 - Po implementacji Fazy 3 bundle'e Hermes zostały ponownie poprawnie wygenerowane osobno dla iOS i
   Androida, wraz z nowymi modułami zdjęć, systemu plików i selektora daty oraz czasu.
@@ -319,7 +320,8 @@ cursor-based history loading, section-level caching and initial accessibility fi
 the final branch. The GitHub Actions workflow was subsequently removed; repository checks currently
 rely on local runs. This supersedes the earlier statements above that document sharing removal and
 erase-all are still only planned. The changes are prepared for `main`, but not published to stores.
-The final local check passes with 63 suites and 436 tests; React Doctor reports 87/100 with no issues.
+The most recent verification on 2026-09-08 confirms that `nub run check` passes with 68 suites and
+461 tests. React Doctor 0.9.13 reports 83/100 with no errors and five existing maintainability warnings.
 Expo Doctor passes 19/21 checks and reports two diagnostics: it does not recognize the intentional
 `nub.lock` lockfile, and its version check expects TypeScript 6 plus newer Expo patch versions.
 The TypeScript 7 choice and current exact Expo-compatible pins are intentional. See
