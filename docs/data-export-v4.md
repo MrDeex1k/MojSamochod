@@ -1,13 +1,14 @@
-# Vehicle History Data Export v4
+# Internal Vehicle History Data Export v4
 
 ## Purpose and compatibility
 
-Version 4 is the current JSON portability manifest. It extends [version 3](data-export-v3.md)
-with a required `data.reminders` array. Vehicle, history-entry, document and refuelling record
-shapes retain their version 3 meaning. This manifest is not a complete backup or an import promise.
+Version 4 is the current internal diagnostic manifest. No user-facing action exposes it in the FREE
+release. It is not a complete backup, portability promise or import format, and it never includes
+binary file contents.
 
 Consumers must check both `format` and `formatVersion`, and reject unsupported versions rather
-than interpreting version 4 as version 3. Earlier contracts remain documented for existing exports.
+than interpreting another version as version 4. The TypeScript types and mapping functions in
+`apps/mobile/application/export/vehicle-history-export.ts` are the executable source of truth.
 
 ## Envelope
 
@@ -29,6 +30,18 @@ than interpreting version 4 as version 3. Earlier contracts remain documented fo
 
 An absent vehicle produces `vehicle: null` and empty arrays. A vehicle with no reminders produces
 `reminders: []`. Failure to read any required repository fails the export rather than omitting data.
+
+## Record groups
+
+- `vehicle` contains identity, optional registration/manufacture data, canonical odometer values,
+  fuel-tank capacity, unit preferences and audit timestamps.
+- `historyEntries` contains inspection, replacement and repair records with their type-specific
+  details, optional costs, odometer values and audit timestamps.
+- `documents` contains document metadata and file integrity metadata. It excludes storage keys,
+  local paths and file bytes.
+- `refuellings` contains canonical fuel quantity, input-unit history, optional canonical odometer,
+  fill kind, optional pricing and audit timestamps. Derived consumption is excluded.
+- `reminders` contains the source fields described below. Native scheduling state is excluded.
 
 ## Reminder records
 
@@ -56,7 +69,7 @@ an explicit compatibility decision.
 - System notification permissions, scheduled notification identifiers and scheduling bookkeeping.
 - Derived deadline states and calculated notification instants.
 - Vehicle photo or document bytes, Base64, local file paths and storage keys.
-- Derived fuel-consumption results, as in version 3.
+- Derived fuel-consumption results.
 
 A future importer must validate source fields and obtain device permissions separately. It must
 not interpret exported preferences as proof that the destination device can deliver notifications.

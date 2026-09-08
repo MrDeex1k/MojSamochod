@@ -5,14 +5,13 @@ details and store declarations must be completed and verified before release.
 
 ## User-facing information
 
-The Settings and privacy section explains the one-vehicle FREE scope, local records and attachment
+The data management section explains the one-vehicle FREE scope, local records and attachment
 copies, absence of database export/import/restore, retention of original documents, optional
 notifications and the existing vehicle-unit preferences. It is available from the history screen
 on phones and tablets in Polish and English. Phase 7 step 2 adds a destructive confirmation for
-erase-all and replaces general document sharing with downloading an individual PDF attachment
-to a user-selected device location. Database export remains unavailable. The application does
-not automatically open the saved PDF or provide an in-app PDF viewer. User-saved external copies
-are outside erase-all scope, just like original gallery and document files.
+erase-all and previews PDF attachments inside the application without outbound sharing, export,
+download or automatic opening in another app. Database export remains unavailable. Original gallery
+and document files remain outside erase-all scope.
 
 Reset stops new data operations, waits for accepted writes/pickers and notification scheduling,
 then persists an intent marker before cancelling owned scheduled/delivered notifications and
@@ -21,7 +20,6 @@ only after cleanup succeeds. Startup resumes an interrupted reset before exposin
 starting scheduling. Errors offer retry, never an automatic unrequested database wipe. Schema and
 migration metadata remain; OS permissions and external copies are not reset. This is logical
 application-data deletion, not a claim of forensic erasure from flash storage or OS backups.
-See the [step 2 verification report](phase-7-step-2-verification.md).
 
 No analytics service is added by application code. The first release has no account or in-app
 cloud synchronization. This does not imply that platform diagnostics, store beta diagnostics,
@@ -62,10 +60,10 @@ permission changes; Expo Go cannot validate the app's final manifest.
 
 ## Accessibility scope
 
-Settings headings are exposed to assistive technology, content wraps and scrolls, and buttons use
+Data-management headings are exposed to assistive technology, content wraps and scrolls, and buttons use
 the shared minimum-height control. Text fields expose helper/error content as accessibility hints,
 with errors taking precedence. Existing labels, disabled states and text scaling are retained.
 
 Component tests and native accessibility-tree inspection are not substitutes for a complete
 VoiceOver/TalkBack user journey or a formal accessibility conformance claim. Those release checks
-remain necessary on physical devices. See the [step 1 report](phase-7-step-1-verification.md).
+remain necessary on physical devices.

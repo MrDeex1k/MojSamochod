@@ -1,7 +1,17 @@
 # Repository review improvements — 2026-09-05
 
-The review fixes are prepared on `feat/harden-mobile-workspace` for review. Local release-configuration QA builds use
-`dev.mojeauto.qa`; this is not a store release or completion of all Phase 7 release gates.
+The review fixes from `feat/harden-mobile-workspace` are merged into `feat/free-release-hardening`.
+Local release-configuration QA builds use `dev.mojeauto.qa`; this is not a store release or
+completion of all Phase 7 release gates.
+
+## Post-merge native smoke — 2026-09-05
+
+The current merge commit `48ac7a6` was rebuilt as a local Release QA application and installed on
+iPhone 17 Pro, iPad Air 11-inch (M4), Pixel 9 and Pixel Tablet. All four targets launched the
+workspace and exposed the localized data-management screen. Phone landscape and tablet portrait
+showed the expected orientation gate, while tablet landscape rendered the adaptive workspace.
+The two-page PDF preview rendered internally on iPhone, iPad and Android phone; no outbound document
+action appeared in the preview surface.
 
 ## Delivered behavior
 
@@ -38,24 +48,18 @@ The review fixes are prepared on `feat/harden-mobile-workspace` for review. Loca
 
 ## Automated verification
 
-`nub run check` passed: lint, formatting, TypeScript, Drizzle migration checks and **62 suites /
-411 tests**. Added coverage includes dirty-form navigation, orientation draft retention, stale
+`nub run check` passed: lint, formatting, TypeScript, Drizzle migration checks and **63 suites /
+436 tests**. Added coverage includes dirty-form navigation, orientation draft retention, stale
 document lookup rejection, metadata validation before file operations, selective data loading,
 cursor pagination across timestamp ties, startup recovery ordering, transactional deletion and
 interrupted deletion retries. `git diff --check` passed.
 
-React Doctor 0.9.13 scanned all 177 source files: no reported errors, 18 warnings. It did not produce
-a score because maintainability analysis failed; this is an incomplete diagnostic, not a clean
-health score. Remaining warnings cover complex existing forms/workspace branches, related state,
-subscription churn, a component-file helper export, safe-area padding and small bounded reminder
-offset lookups. Sequential notification operations intentionally preserve scheduling order. The
-erase coordinator converts failures to results, so its caller's busy reset is not exposed to an
-uncaught storage rejection. The lockfile warning does not recognize NUB. No rule was suppressed.
+React Doctor 0.9.13 reported **87/100** with no issues. No rule was suppressed.
 
-Expo Doctor 1.20.4 passed 19/21 checks. It does not recognize `nub.lock` and recommends TypeScript 6,
-while TypeScript 7 is intentional. It also recommends patch upgrades for Expo, image picker/image
-manipulator, notifications and router. Those upgrades were not folded into this behavioral change.
-No alternate lockfile, TypeScript downgrade or dependency-policy exception was introduced.
+Expo Doctor 1.20.4 passed 19/21 checks and reports two diagnostics: it does not recognize the
+intentional `nub.lock` lockfile, and its version check expects TypeScript 6 plus newer Expo patch
+versions. The TypeScript 7 choice and current exact Expo-compatible pins are intentional; no
+alternate lockfile or dependency-policy exception was introduced.
 
 Both native QA builds succeeded: iOS simulator Release and Android ARM64 release-configuration APK.
 No GitHub Actions workflow currently runs repository checks on pull requests or main.
@@ -84,7 +88,7 @@ application storage remained present. The UI returned to first-vehicle creation 
 after a fresh application launch. Android's document calendar opened and confirmed September 5,
 2026 with the expected localized date in the form.
 
-## PR #11 review follow-up
+## PR #11 review follow-up — intermediate checkpoint
 
 Document reads now distinguish missing content from storage/repository errors and offer an in-place
 retry after an error. History accessibility labels include the displayed date, mileage and cost,
@@ -105,6 +109,32 @@ removed afterward. A missing-file case was separately verified on iPhone. Access
 confirmed date, distance and zero-cost labels on iPhone, iPad, Pixel 9 and Pixel Tablet. These are native
 accessibility-tree checks, not a replacement for physical VoiceOver/TalkBack acceptance.
 
+## Native UI refinement — 2026-09-08
+
+The follow-up replaces duplicated screen-level navigation with shared phone and tablet shells,
+safe-area-aware navigation surfaces, reusable contextual actions and consistent form sections.
+Entry and refuelling details retain Edit as the visible primary action; destructive actions move to
+a labelled menu and still require a separate confirmation. Android Back dismisses the menu before
+leaving details, while dirty-form protection remains active on both platforms.
+
+The internal PDF reader now supports full-screen presentation, page navigation, 50% zoom steps from
+100% to 300%, fit-page behavior and two-axis scrolling. The current page survives closing and reopening
+the reader, while another document begins on page one. Page changes reset zoom, rotation recomputes the
+fit and stale render results are discarded and cleaned up. The reader remains raster-based and local;
+pinch zoom, text selection, annotation and outbound sharing are outside this change.
+
+Local Release QA builds passed on iPhone 17, iPad (A16), Pixel 9 and Pixel Tablet. The checks covered
+phone and tablet navigation, both supported device orientations, real Android software keyboards,
+safe areas, contextual action dismissal, dirty forms, multi-page PDFs, mixed page aspect ratios, zoom,
+fit and scrolling. Simulator evidence does not replace physical-device acceptance or coverage of every
+keyboard provider.
+
+The current `nub run check` passes with **68 suites / 460 tests**. React Doctor 0.9.13 reports 83/100
+and four existing warnings: high control-flow complexity in three forms and related `useState` calls in
+the document form. Expo Doctor 1.20.4 passes 19/21 checks; the two known diagnostics are the unsupported
+`nub.lock` detection and dependency-version recommendations that include intentional TypeScript 7 and
+available Expo patch releases. No alternate lockfile, trust-policy exception or suppression was added.
+
 ## Remaining release work
 
 This verification establishes behavior, not a measured FPS or startup-speed improvement. There is
@@ -114,6 +144,7 @@ query pagination should be driven by larger representative datasets and profilin
 
 Physical-device accessibility, large text and screen-reader acceptance, dense/encrypted/damaged
 PDF samples, platform backup policy, vulnerability audit, production signing and store distribution
-remain release work. PDF previews currently provide page navigation, not text selection or zoom.
-Interruption and notification cancellation failure paths are covered automatically; native process
-termination at every deletion step and notification delivery were not exhaustively repeated here.
+remain release work. The PDF reader provides page navigation, stepped raster zoom and fit-page behavior,
+but not pinch zoom, text selection or annotation. Interruption and notification cancellation failure
+paths are covered automatically; native process termination at every deletion step and notification
+delivery were not exhaustively repeated here.

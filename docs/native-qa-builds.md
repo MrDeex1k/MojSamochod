@@ -12,6 +12,10 @@ counters while giving the test app separate storage and permissions from product
 It does not configure signing, store accounts or distribution. Never clear another app's data to
 prepare these tests.
 
+Release builds, signing and store uploads are also performed locally on the publisher's MacBook.
+The current release process does not use EAS Build, Submit, Update or Workflows and must not upload
+the project to EAS. This can be reconsidered separately after the application is stable.
+
 ## Build procedure
 
 Run from `apps/mobile`, with the repository-pinned Node runtime selected through NUB. Use
@@ -67,4 +71,3 @@ acceptance belong to the release checklist.
 
 Native metadata translations use platform-scoped `ios` and `android` objects: Apple plist keys
 must not become Android string resources. Regression tests exercise Expo's actual locale resolver.
-See the [Phase 6 acceptance report](phase-6-step-7-verification.md) for results and limitations.

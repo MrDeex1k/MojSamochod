@@ -133,7 +133,7 @@ or modals on phones and contextual panels on tablets.
 | Reminders workspace       | Show upcoming, overdue, and unavailable notification states.                                                                     | Main destination.                                                       |
 | Reminder editor           | Create or edit insurance and technical-inspection deadlines and notification preferences.                                        | Focused form.                                                           |
 | Settings                  | Configure per-vehicle units, locale-sensitive preferences, privacy, and help.                                                    | Main destination with grouped plain lists.                              |
-| Data management           | Export data and documents, inspect storage, and perform explicitly confirmed destructive actions.                                | Secondary settings screen.                                              |
+| Data management           | Inspect storage and perform explicitly confirmed destructive actions; no user-facing export in the FREE release.                 | Secondary settings screen.                                              |
 
 ## Additional target-product screens and surfaces
 
