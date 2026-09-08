@@ -217,7 +217,7 @@ function HistoryRow({
   vehicle,
 }: Readonly<{ selected: boolean; entry: HistoryEntry; onPress: () => void; vehicle: Vehicle }>) {
   const { t, i18n } = useAppTranslation();
-  const title = `${t(`workspace.entryType.${entry.type}`)} — ${entrySubject(entry, t)}`;
+  const title = `${t(`workspace.entryType.${entry.type}`)} - ${entrySubject(entry, t)}`;
   const date = formatOccurredAt(entry, i18n.language);
   const distance =
     entry.odometerMetres === undefined

@@ -84,7 +84,7 @@ export const en = {
     channelName: "Vehicle reminders",
     insuranceTitle: "Insurance deadline",
     inspectionTitle: "Technical inspection deadline",
-    validUntil: "{{vehicle}} — valid until {{date}}.",
+    validUntil: "{{vehicle}} - valid until {{date}}.",
   },
   common: {
     appName: "My Car",
@@ -290,7 +290,7 @@ export const en = {
     dateLabel: "Refuelling date",
     dateTime: "Date and time",
     delete: "Delete refuelling",
-    deleteDescription: "{{date}} — {{quantity}}{{odometer}}. This operation cannot be undone.",
+    deleteDescription: "{{date}} - {{quantity}}{{odometer}}. This operation cannot be undone.",
     deleteError: "The refuelling could not be deleted. Try again.",
     deleteTitle: "Delete this refuelling?",
     discard: "Discard changes",

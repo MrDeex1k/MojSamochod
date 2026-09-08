@@ -222,7 +222,7 @@ React Compiler; testy potwierdzają odblokowanie przycisków po błędach i moż
 Pełne `nub run check` po poprawce review przechodzi: 59 zestawów, 398 testów. React Doctor 0.9.13: 83/100,
 bez błędów, 11 opisanych ostrzeżeń. Wynik 87/100 z etapu 5 obejmował mniej plików; pełniejszy
 skan w etapie 6 wykrył i pozwolił poprawić pominięte wcześniej problemy kompilatora.
-Expo Doctor: 19/21 kontroli — tylko brak rozpoznania `nub.lock` i świadomy TypeScript 7.
+Expo Doctor: 19/21 kontroli - tylko brak rozpoznania `nub.lock` i świadomy TypeScript 7.
 Instalacja z zamrożonego lockfile'a i eksporty Hermes dla obu platform przechodzą.
 Audyt podatności nie uzyskał odpowiedzi z rejestru po dwóch próbach; brak wyniku nie oznacza
 braku podatności.
@@ -244,7 +244,7 @@ Poprawka po review izoluje wyjątki subskrybentów od wyniku uzgadniania i zabez
 trwałym odrzuceniem. Trzy regresje sprawdzają publikację wyniku, kolejne przebiegi i wywołania
 po zapisie repozytorium. Nie zmienia to UI, konfiguracji natywnej ani zakresu prób na urządzeniach.
 
-Faza 7 — utwardzenie darmowej aplikacji — została zakończona i zaakceptowana implementacyjnie.
+Faza 7 - utwardzenie darmowej aplikacji - została zakończona i zaakceptowana implementacyjnie.
 Obejmuje prywatność, zarządzanie danymi i odzyskiwanie, dostępność, sytuacje awaryjne, wydajność,
 adaptacyjną nawigację oraz wewnętrzny czytnik PDF. Końcowy pakiet zmian jest przygotowany na
 dedykowanym branchu do integracji z `main`. Nie oznacza to jeszcze gotowości do publikacji:
@@ -311,7 +311,7 @@ Fazy 7. Audyt podatności nadal trzeba uzyskać i ocenić przed wydaniem. Pięć
 zaakceptowany zakres oraz jawnie odłożone bramki publikacyjne; nie dodają one automatycznie
 kolejnych funkcji.
 
-### Repository review implementation — 2026-09-05
+### Repository review implementation - 2026-09-05
 
 Phase 7 hardening from `origin/main` was merged into the working history in merge commit `48ac7a6`.
 Resumable user-data deletion, internal PDF previews without outbound sharing, form draft preservation,

@@ -1,10 +1,10 @@
-# Repository review improvements — 2026-09-05
+# Repository review improvements - 2026-09-05
 
 The review fixes from `feat/harden-mobile-workspace` are merged into `feat/free-release-hardening`.
 Local release-configuration QA builds use `dev.mojeauto.qa`; this is not a store release or
 completion of all Phase 7 release gates.
 
-## Post-merge native smoke — 2026-09-05
+## Post-merge native smoke - 2026-09-05
 
 The current merge commit `48ac7a6` was rebuilt as a local Release QA application and installed on
 iPhone 17 Pro, iPad Air 11-inch (M4), Pixel 9 and Pixel Tablet. All four targets launched the
@@ -88,7 +88,7 @@ application storage remained present. The UI returned to first-vehicle creation 
 after a fresh application launch. Android's document calendar opened and confirmed September 5,
 2026 with the expected localized date in the form.
 
-## PR #11 review follow-up — intermediate checkpoint
+## PR #11 review follow-up - intermediate checkpoint
 
 Document reads now distinguish missing content from storage/repository errors and offer an in-place
 retry after an error. History accessibility labels include the displayed date, mileage and cost,
@@ -109,7 +109,7 @@ removed afterward. A missing-file case was separately verified on iPhone. Access
 confirmed date, distance and zero-cost labels on iPhone, iPad, Pixel 9 and Pixel Tablet. These are native
 accessibility-tree checks, not a replacement for physical VoiceOver/TalkBack acceptance.
 
-## Native UI refinement — 2026-09-08
+## Native UI refinement - 2026-09-08
 
 The follow-up replaces duplicated screen-level navigation with shared phone and tablet shells,
 safe-area-aware navigation surfaces, reusable contextual actions and consistent form sections.

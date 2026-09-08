@@ -4,9 +4,9 @@ import { createAppI18n } from "./i18n";
 import { reminderNotificationContent } from "./reminder-notification-content";
 
 it.each([
-  ["en", "insurance", "Insurance deadline", "Volvo V60 — valid until Dec 1, 2026."],
-  ["pl", "technicalInspection", "Termin badania technicznego", "Volvo V60 — ważne do 1 gru 2026."],
-  ["de", "insurance", "Insurance deadline", "Volvo V60 — valid until Dec 1, 2026."],
+  ["en", "insurance", "Insurance deadline", "Volvo V60 - valid until Dec 1, 2026."],
+  ["pl", "technicalInspection", "Termin badania technicznego", "Volvo V60 - ważne do 1 gru 2026."],
+  ["de", "insurance", "Insurance deadline", "Volvo V60 - valid until Dec 1, 2026."],
 ] as const)(
   "formats %s %s content with a calendar date and English fallback",
   (language, kind, title, body) => {

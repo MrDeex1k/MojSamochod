@@ -104,10 +104,10 @@ Phone navigation should begin with four destinations. If prototype testing shows
 does not justify permanent navigation, it may become secondary navigation without changing its
 functional scope.
 
-1. **Vehicle** — selected vehicle, immediate status, history, costs, and documents.
-2. **Fuel** — refuelling history, consumption summary, and add action.
-3. **Reminders** — upcoming and overdue insurance and inspection deadlines.
-4. **Settings** — units, data management, privacy, and help.
+1. **Vehicle** - selected vehicle, immediate status, history, costs, and documents.
+2. **Fuel** - refuelling history, consumption summary, and add action.
+3. **Reminders** - upcoming and overdue insurance and inspection deadlines.
+4. **Settings** - units, data management, privacy, and help.
 
 On iPad and Android tablets, the same information architecture should use a sidebar and list-detail
 presentation where it adds context. Tablets should not introduce different product concepts.

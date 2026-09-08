@@ -64,19 +64,19 @@ include accounts, cloud storage, background synchronization, or a real-time sync
 
 ## Documentation map
 
-- [Current project status](./current-status.md) — Polish working summary of the active phase,
+- [Current project status](./current-status.md) - Polish working summary of the active phase,
   implemented foundation, known limitations, and immediate next step.
-- [Internal data export v4](./data-export-v4.md) — current internal JSON diagnostic contract; it is
+- [Internal data export v4](./data-export-v4.md) - current internal JSON diagnostic contract; it is
   not a user-facing export, backup or import feature.
-- [Local reminder notifications](./local-reminder-notifications.md) — current scheduling,
+- [Local reminder notifications](./local-reminder-notifications.md) - current scheduling,
   permission and recovery contract for local reminders.
-- [Technology](./technology.md) — platforms, current stack, tooling, and planned native
+- [Technology](./technology.md) - platforms, current stack, tooling, and planned native
   capabilities.
-- [Product scope and screen map](./product-scope.md) — explicit MVP and target-product boundaries,
+- [Product scope and screen map](./product-scope.md) - explicit MVP and target-product boundaries,
   navigation, and required surfaces.
-- [Design direction](./design-direction.md) — visual thesis, information hierarchy, responsive
+- [Design direction](./design-direction.md) - visual thesis, information hierarchy, responsive
   behavior, and motion principles.
-- [Delivery plan](./delivery-plan.md) — phases, implementation steps, and completion criteria.
+- [Delivery plan](./delivery-plan.md) - phases, implementation steps, and completion criteria.
 
 ## Decision discipline
 

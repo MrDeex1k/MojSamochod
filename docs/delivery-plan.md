@@ -17,7 +17,7 @@ stable MVP into the target product with monthly or annual Premium, additional ve
 user-initiated QR synchronization. The detailed feature boundary and screen inventory are defined
 in [Product Scope and Screen Map](./product-scope.md).
 
-## Phase 0 — Product and domain decisions
+## Phase 0 - Product and domain decisions
 
 **Status:** Complete. The domain model, first vehicle flow, responsive phone/tablet behavior, and
 initial visual direction have been approved.
@@ -37,7 +37,7 @@ initial visual direction have been approved.
 - The free one-vehicle boundary is unambiguous.
 - The first vertical slice has acceptance criteria and no dependency on premium or synchronization.
 
-## Phase 1 — Application and design-system foundation
+## Phase 1 - Application and design-system foundation
 
 **Status:** Complete and integrated into `main`.
 
@@ -60,7 +60,7 @@ initial visual direction have been approved.
 - The application remains accessible with large text and reduced motion.
 - Quality checks and simulator smoke tests pass.
 
-## Phase 2 — Local persistence foundation
+## Phase 2 - Local persistence foundation
 
 **Status:** Complete and integrated into `main`. Drizzle ORM, UUIDv7, transactional repositories,
 persistence resilience, the version 1 JSON export, and the managed-file boundary are implemented
@@ -81,7 +81,7 @@ and documented.
 - Screens do not issue database queries directly.
 - Data can be exported in a documented, user-owned form.
 
-## Phase 3 — First complete vehicle-history slice
+## Phase 3 - First complete vehicle-history slice
 
 **Status:** Complete and integrated into `main`. Automated checks and native verification cover
 iPhone, iPad, Android phone, and Android tablet. Polish and English localization uses an English
@@ -102,7 +102,7 @@ fallback; vehicle photos are gallery-only.
 - Money and mileage rules are covered by automated tests.
 - The workflow passes iPhone, iPad, Android phone, and Android tablet emulator verification.
 
-## Phase 4 — Documents and invoices
+## Phase 4 - Documents and invoices
 
 **Status:** Complete and integrated into `main`. The implementation includes managed PDF/JPEG/PNG
 imports up to 20 MB, optional metadata and history-entry relations, duplicate detection, internal
@@ -125,7 +125,7 @@ native sharing was removed as part of the Phase 7 hardening.
 - Users can preview managed documents offline, export document metadata only through internal JSON v2,
   and understand destructive actions.
 
-## Phase 5 — Refuelling and fuel consumption
+## Phase 5 - Refuelling and fuel consumption
 
 **Status:** Complete and integrated into `main`. Domain decisions, canonical unit conversions,
 vehicle fuel preferences, refuelling persistence, JSON v3 export, application workflows, and
@@ -152,7 +152,7 @@ adaptive phone/tablet UI have automated and native coverage.
 - Changing a unit preference preserves canonical data and consistently converts all affected
   presentation and editing surfaces.
 
-## Phase 6 — Reminders
+## Phase 6 - Reminders
 
 **Status:** Domain decisions accepted; stages 1–7 (domain rules, persistence,
 application services, JSON v4 export, native notification adapter/configuration, schedule
@@ -191,7 +191,7 @@ technical contract is in [local reminder notifications](local-reminder-notificat
 - Final native acceptance uses the updated dependency set; Expo Go alone does not validate the
   application's generated native configuration or signing capabilities.
 
-## Phase 7 — Production hardening of the free application
+## Phase 7 - Production hardening of the free application
 
 **Status:** Implementation complete and accepted. The final native UI refinement is prepared on its
 dedicated branch for integration into `main`. The phase delivers resumable erase-all, internal PDF
@@ -255,7 +255,7 @@ gates are recorded explicitly rather than presented as completed device or store
 - No known data-loss path remains unresolved.
 - Android and Apple release candidates pass their platform checklists.
 
-## Phase 8 — User-feedback stabilization
+## Phase 8 - User-feedback stabilization
 
 **Status:** Planned after the FREE release candidate has been distributed to external testers.
 This phase fixes verified product defects reported by users; it is not a general feature-expansion
@@ -288,7 +288,7 @@ telemetry are outside the FREE release scope.
   the release.
 - A refreshed FREE release candidate is ready for the automated E2E foundation in Phase 9.
 
-## Phase 9 — Automated native E2E testing with Maestro
+## Phase 9 - Automated native E2E testing with Maestro
 
 **Status:** Planned. Use the open-source Maestro CLI locally on the publisher's MacBook. Do not use
 Maestro Cloud, EAS Build, EAS Submit, EAS Update, or EAS Workflows. Tests must exercise locally
@@ -374,7 +374,7 @@ them. Begin with the three smoke flows and expand only after they run reliably o
 - Maestro complements rather than replaces Jest, React Native Testing Library, database checks,
   and final manual native acceptance.
 
-## Phase 10 — Premium subscriptions and additional vehicles
+## Phase 10 - Premium subscriptions and additional vehicles
 
 ### Steps
 
@@ -392,7 +392,7 @@ them. Begin with the three smoke flows and expand only after they run reliably o
 - Premium expiry never destroys vehicle data.
 - Purchase and restore flows meet App Store and Google Play requirements.
 
-## Phase 11 — Premium synchronization discovery and implementation
+## Phase 11 - Premium synchronization discovery and implementation
 
 ### Discovery steps
 

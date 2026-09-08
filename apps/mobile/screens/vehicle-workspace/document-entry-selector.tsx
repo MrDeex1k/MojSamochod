@@ -27,7 +27,7 @@ export function DocumentEntrySelector({
         : entry.type === "repair"
           ? entry.details.subject
           : (entry.details.description ?? t(`entryForm.inspectionKinds.${entry.details.kind}`));
-    return `${t(`workspace.entryType.${entry.type}`)} — ${subject}`;
+    return `${t(`workspace.entryType.${entry.type}`)} - ${subject}`;
   };
   const selected = entries.find((entry) => entry.id === selectedId);
   const filtered = entries.filter((entry) =>

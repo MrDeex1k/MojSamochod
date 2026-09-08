@@ -48,7 +48,7 @@ export const pl = {
     zoneHelper: "O 09:00 w strefie {{zone}}. Ta strefa nie zmieni się podczas podróży.",
     alertsOff: "Powiadomienia dla tego terminu są wyłączone. Data pozostaje na liście.",
     permissionOnSave:
-      "Najpierw zapisz termin. Potem możesz zezwolić na powiadomienia — zgoda jest opcjonalna.",
+      "Najpierw zapisz termin. Potem możesz zezwolić na powiadomienia - zgoda jest opcjonalna.",
     save: "Zapisz termin",
     cancel: "Anuluj",
     delete: "Usuń termin",
@@ -86,7 +86,7 @@ export const pl = {
     channelName: "Przypomnienia o pojeździe",
     insuranceTitle: "Termin ubezpieczenia",
     inspectionTitle: "Termin badania technicznego",
-    validUntil: "{{vehicle}} — ważne do {{date}}.",
+    validUntil: "{{vehicle}} - ważne do {{date}}.",
   },
   common: {
     appName: "Moje Auto",
@@ -293,7 +293,7 @@ export const pl = {
     dateLabel: "Data tankowania",
     dateTime: "Data i godzina",
     delete: "Usuń tankowanie",
-    deleteDescription: "{{date}} — {{quantity}}{{odometer}}. Tej operacji nie można cofnąć.",
+    deleteDescription: "{{date}} - {{quantity}}{{odometer}}. Tej operacji nie można cofnąć.",
     deleteError: "Nie udało się usunąć tankowania. Spróbuj ponownie.",
     deleteTitle: "Usunąć to tankowanie?",
     discard: "Odrzuć zmiany",
