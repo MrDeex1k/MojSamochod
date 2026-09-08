@@ -1,4 +1,3 @@
-import { ValidationFocusProvider } from "./validation-focus";
 import { View, type ViewProps } from "react-native";
 
 type CardVariant = "default" | "strong";
@@ -14,11 +13,9 @@ const variantClasses: Record<CardVariant, string> = {
 
 export function Card({ className, variant = "default", ...props }: CardProps) {
   return (
-    <ValidationFocusProvider>
-      <View
-        className={`gap-content rounded-panel border border-divider p-screen ${variantClasses[variant]} ${className ?? ""}`}
-        {...props}
-      />
-    </ValidationFocusProvider>
+    <View
+      className={`gap-content rounded-panel p-content ${variantClasses[variant]} ${className ?? ""}`}
+      {...props}
+    />
   );
 }

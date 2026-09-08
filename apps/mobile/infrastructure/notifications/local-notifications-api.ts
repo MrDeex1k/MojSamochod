@@ -10,6 +10,8 @@ export { setNotificationChannelAsync } from "expo-notifications/build/setNotific
 export { scheduleNotificationAsync } from "expo-notifications/build/scheduleNotificationAsync";
 export { getAllScheduledNotificationsAsync } from "expo-notifications/build/getAllScheduledNotificationsAsync";
 export { cancelScheduledNotificationAsync } from "expo-notifications/build/cancelScheduledNotificationAsync";
+export { getPresentedNotificationsAsync } from "expo-notifications/build/getPresentedNotificationsAsync";
+export { dismissNotificationAsync } from "expo-notifications/build/dismissNotificationAsync";
 export {
   AndroidImportance,
   type NotificationChannel,

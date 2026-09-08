@@ -60,7 +60,7 @@ it.each([
       </SafeAreaProvider>,
     );
     const button = screen.getByRole("button", {
-      name: new RegExp(`^Repair — Brake repair, .*${escapeRegExp(suffix)}$`),
+      name: new RegExp(`^Repair - Brake repair, .*${escapeRegExp(suffix)}$`),
     });
     expect(button.props.accessibilityLabel).toContain("2026");
     await userEvent.press(button);

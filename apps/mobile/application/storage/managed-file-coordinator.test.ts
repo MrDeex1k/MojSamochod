@@ -10,6 +10,7 @@ import {
   byteSize,
   sha256Digest,
   storageObjectKey,
+  type ManagedFileMetadata,
   type StagedManagedFileMetadata,
 } from "@/domain/files/managed-file";
 import { managedFileIdFromUuidV7, type ManagedFileId } from "@/domain/shared/identifiers";
@@ -29,6 +30,95 @@ const storedKey = expectValid(storageObjectKey(`objects/${id}.jpg`));
 const clock: Clock = { now: () => new Date(timestamp) };
 
 describe("ManagedFileCoordinator", () => {
+  it.each(["move", "markReady"] as const)(
+    "recovers an import interrupted at %s and removes the unattached copy after restart",
+    async (boundary) => {
+      const events: string[] = [];
+      const repository = repositoryFake(events);
+      const storage = storageFake(events);
+      let metadata: ManagedFileMetadata | undefined;
+      let stagedExists = false;
+      let durableExists = false;
+      let interrupted = true;
+      repository.createStaged = async (value) => {
+        metadata = value;
+        return repositorySuccess(undefined);
+      };
+      repository.listRecoverable = async () =>
+        repositorySuccess(metadata && metadata.status !== "ready" ? [metadata] : []);
+      repository.markReady = async (_id, storageKey, updatedAt) => {
+        if (boundary === "markReady" && interrupted)
+          return repositoryFailure("unavailable", "markReady");
+        if (!metadata) throw new Error("Expected reserved metadata");
+        const { byteSize, createdAt, id: fileId, kind, mimeType, originalName, sha256 } = metadata;
+        metadata = {
+          byteSize,
+          createdAt,
+          id: fileId,
+          kind,
+          mimeType,
+          originalName,
+          sha256,
+          status: "ready",
+          storageKey,
+          updatedAt,
+        };
+        return repositorySuccess(undefined);
+      };
+      repository.listUnreferencedReadyFiles = async () =>
+        repositorySuccess(metadata?.status === "ready" ? [metadata] : []);
+      repository.getReady = async () =>
+        repositorySuccess(metadata?.status === "ready" ? metadata : null);
+      repository.markDeleting = async () => {
+        if (metadata?.status !== "ready") throw new Error("Expected ready metadata");
+        metadata = { ...metadata, status: "deleting" };
+        return repositorySuccess(undefined);
+      };
+      repository.delete = async () => {
+        metadata = undefined;
+        return repositorySuccess(undefined);
+      };
+      const stage = storage.stage;
+      storage.stage = async (input) => {
+        stagedExists = true;
+        return stage(input);
+      };
+      storage.listStagedKeys = async () => objectStorageSuccess(stagedExists ? [stagingKey] : []);
+      storage.commit = async (staged) => {
+        if (boundary === "move" && interrupted) return objectStorageFailure("unavailable", "move");
+        if (!durableExists && !stagedExists) return objectStorageFailure("not-found", "move");
+        durableExists = true;
+        stagedExists = false;
+        return objectStorageSuccess({ ...staged, storageKey: storedKey });
+      };
+      storage.delete = async () => {
+        durableExists = false;
+        return objectStorageSuccess(undefined);
+      };
+      const first = new ManagedFileCoordinator(clock, repository, storage);
+
+      expect(
+        await first.import({
+          kind: "vehicle-photo",
+          managedFileId: id,
+          mimeType: "image/jpeg",
+          originalName: "car.jpg",
+          sourceUri: "file:///original.jpg",
+        }),
+      ).toMatchObject({ ok: false });
+      expect(metadata).toMatchObject({ status: "staged" });
+      expect(stagedExists || durableExists).toBe(true);
+
+      interrupted = false;
+      const restarted = new ManagedFileCoordinator(clock, repository, storage);
+      await expect(restarted.reconcile()).resolves.toEqual({ ok: true, value: undefined });
+      expect(metadata).toBeUndefined();
+      expect(stagedExists).toBe(false);
+      expect(durableExists).toBe(false);
+      await expect(restarted.reconcile()).resolves.toEqual({ ok: true, value: undefined });
+    },
+  );
+
   it("imports a photo through staged metadata before marking it ready", async () => {
     const events: string[] = [];
     const repository = repositoryFake(events);

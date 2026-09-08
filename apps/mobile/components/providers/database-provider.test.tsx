@@ -1,4 +1,4 @@
-import { render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import { act, render, screen, userEvent, waitFor } from "@testing-library/react-native";
 import type { ReactElement } from "react";
 import { Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -73,5 +73,63 @@ describe("DatabaseProvider", () => {
 
     expect(await screen.findByText("Vehicle history")).toBeOnTheScreen();
     expect(initialize).toHaveBeenCalledTimes(2);
+  });
+
+  it("closes late initialization without closing a replacement provider's handle", async () => {
+    const oldHandle = createDatabaseHandle();
+    const newHandle = createDatabaseHandle();
+    let finish!: (handle: DatabaseHandle) => void;
+    const pending = new Promise<DatabaseHandle>((resolve) => {
+      finish = resolve;
+    });
+    const initialize = jest.fn().mockReturnValueOnce(pending).mockResolvedValueOnce(newHandle);
+    const first = await renderWithSafeArea(
+      <DatabaseProvider initialize={initialize}>
+        <Text>Old history</Text>
+      </DatabaseProvider>,
+    );
+    await first.unmount();
+    await renderWithSafeArea(
+      <DatabaseProvider initialize={initialize}>
+        <Text>Current history</Text>
+      </DatabaseProvider>,
+    );
+    expect(await screen.findByText("Current history")).toBeOnTheScreen();
+    await act(async () => {
+      finish(oldHandle);
+      await pending;
+    });
+    expect(oldHandle.close).toHaveBeenCalledTimes(1);
+    expect(newHandle.close).not.toHaveBeenCalled();
+    expect(screen.getByText("Current history")).toBeOnTheScreen();
+    expect(screen.queryByRole("alert")).not.toBeOnTheScreen();
+  });
+
+  it("ignores an initialization failure from a disposed provider", async () => {
+    let fail!: (error: Error) => void;
+    const pending = new Promise<DatabaseHandle>((_resolve, reject) => {
+      fail = reject;
+    });
+    const initialize = jest
+      .fn()
+      .mockReturnValueOnce(pending)
+      .mockResolvedValueOnce(createDatabaseHandle());
+    const first = await renderWithSafeArea(
+      <DatabaseProvider initialize={initialize}>
+        <Text>Old history</Text>
+      </DatabaseProvider>,
+    );
+    await first.unmount();
+    await renderWithSafeArea(
+      <DatabaseProvider initialize={initialize}>
+        <Text>Current history</Text>
+      </DatabaseProvider>,
+    );
+    await act(async () => {
+      fail(new Error("Old initialization failed"));
+      await pending.catch(() => undefined);
+    });
+    expect(await screen.findByText("Current history")).toBeOnTheScreen();
+    expect(screen.queryByRole("alert")).not.toBeOnTheScreen();
   });
 });

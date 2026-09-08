@@ -106,6 +106,25 @@ export class NativeReminderNotifications implements ReminderNotifications {
     );
   }
 
+  async clearOwned(): Promise<void> {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await finishAll(
+      scheduled.flatMap((notification) =>
+        isOwned(notification)
+          ? [Notifications.cancelScheduledNotificationAsync(notification.identifier)]
+          : [],
+      ),
+    );
+    const presented = await Notifications.getPresentedNotificationsAsync();
+    await finishAll(
+      presented.flatMap((notification) =>
+        isOwned(notification.request)
+          ? [Notifications.dismissNotificationAsync(notification.request.identifier)]
+          : [],
+      ),
+    );
+  }
+
   private async readPermission(): Promise<ReminderNotificationPermission> {
     const permission = await Notifications.getPermissionsAsync();
     const channel =
@@ -161,6 +180,12 @@ export function configureReminderNotificationPresentation(): void {
       };
     },
   });
+}
+
+async function finishAll(operations: Promise<void>[]): Promise<void> {
+  const results = await Promise.allSettled(operations);
+  const failure = results.find((result) => result.status === "rejected");
+  if (failure?.status === "rejected") throw failure.reason;
 }
 
 function permissionStatus(

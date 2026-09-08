@@ -32,6 +32,7 @@ type NotificationContent = (
 
 export class ReminderSchedule {
   private tail: Promise<void> = Promise.resolve();
+  private stopped = false;
   private lastResult: ReconciliationResult | null = null;
   private readonly listeners = new Set<() => void>();
 
@@ -60,7 +61,9 @@ export class ReminderSchedule {
     // Each request reads a fresh snapshot after the preceding pass, including requests arriving
     // during a native await. There is no overlapping cancel/schedule sequence or lost dirty flag.
     const next = this.tail.then(async () => {
-      const result = await this.runSafely();
+      const result = this.stopped
+        ? { ok: true, cancelled: 0, scheduled: 0, unchanged: 0, permission: null, issues: [] }
+        : await this.runSafely();
       this.lastResult = result;
       for (const listener of this.listeners) {
         try {
@@ -77,6 +80,11 @@ export class ReminderSchedule {
       () => undefined,
     );
     return next;
+  }
+
+  async stop(): Promise<void> {
+    this.stopped = true;
+    await this.tail;
   }
 
   private async runSafely(): Promise<ReconciliationResult> {

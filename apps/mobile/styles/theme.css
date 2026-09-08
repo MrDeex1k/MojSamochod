@@ -1,9 +1,9 @@
 :root {
   --palette-graphite-950: #121212;
-  --palette-graphite-900: #171a18;
-  --palette-forest-900: #1c221d;
-  --palette-forest-800: #252d27;
-  --palette-forest-700: #343d35;
+  --palette-graphite-900: #19191b;
+  --palette-forest-900: #1c1c1e;
+  --palette-forest-800: #252527;
+  --palette-forest-700: #343438;
   --palette-racing-green-500: #72b48e;
   --palette-racing-green-400: #8ac5a2;
   --palette-ivory-50: #f2f0e8;
@@ -56,18 +56,20 @@
   --text-heading--line-height: 1.333333;
   --text-body: 1.142857rem;
   --text-body--line-height: 1.5;
+  /* Single-line native inputs use the font's own vertical metrics. */
+  --text-input: 1.142857rem;
   --text-label: 1rem;
   --text-label--line-height: 1.428571;
   --text-caption: 0.857143rem;
   --text-caption--line-height: 1.333333;
 
-  --spacing-screen: 1.714286rem;
+  --spacing-screen: 1.142857rem;
   --spacing-section: 2.285714rem;
   --spacing-content: 1.142857rem;
   --spacing-control: 0.857143rem;
   --spacing-compact: 0.571429rem;
 
-  --radius-panel: 1.714286rem;
-  --radius-control: 1rem;
+  --radius-panel: 1rem;
+  --radius-control: 0.714286rem;
   --radius-compact: 0.714286rem;
 }

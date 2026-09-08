@@ -1,5 +1,6 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
+import { Platform } from "react-native";
 
 export type VehiclePhotoSelectionResult =
   | Readonly<{ kind: "cancelled" }>
@@ -19,8 +20,11 @@ export interface VehiclePhotoPicker {
 export class GalleryVehiclePhotoPicker implements VehiclePhotoPicker {
   async select(): Promise<VehiclePhotoSelectionResult> {
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) return { kind: "denied" };
+      // Apple's editable legacy picker uses library permission; Android grants the selected URI.
+      if (Platform.OS === "ios") {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) return { kind: "denied" };
+      }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,

@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { ListScreen } from "@/components/layout/list-screen";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
@@ -18,6 +17,8 @@ import type { VehicleWorkspaceViewProps } from "./workspace-types";
 export function PhoneWorkspace(
   props: Pick<
     VehicleWorkspaceViewProps,
+    | "loadingMore"
+    | "loadMoreError"
     | "onLoadMore"
     | "onDataManagement"
     | "entries"
@@ -35,6 +36,8 @@ export function PhoneWorkspace(
   return (
     <HistoryList
       onLoadMore={props.onLoadMore}
+      loadMoreError={props.loadMoreError}
+      loadingMore={props.loadingMore}
       entries={props.entries}
       onAddEntry={props.onAddEntry}
       onSelectEntry={props.onSelectEntry}
@@ -42,20 +45,7 @@ export function PhoneWorkspace(
       header={
         <View className="gap-content">
           <VehicleSummary {...props} />
-          <Button
-            label={t("dataManagement.title")}
-            onPress={props.onDataManagement}
-            variant="secondary"
-          />
           <Button label={`+ ${t("workspace.addEntry")}`} onPress={props.onAddEntry} />
-          <Button label={t("documents.title")} onPress={props.onDocuments} variant="secondary" />
-          <Button label={t("refuelling.title")} onPress={props.onFuel} variant="secondary" />
-          <Button label={t("reminders.title")} onPress={props.onReminders} variant="secondary" />
-          <Button
-            label={t("workspace.editVehicle")}
-            onPress={props.onEditVehicle}
-            variant="secondary"
-          />
         </View>
       }
     />
@@ -79,72 +69,50 @@ export function VehicleSummary({
   });
 
   return (
-    <Card className={tablet ? "h-full" : undefined}>
-      {tablet ? (
-        <Text accessibilityRole="header" className="text-title font-bold text-primary">
+    <View className="flex-row items-center gap-content border-b border-divider pb-content">
+      {photoUri ? (
+        <Image
+          accessibilityLabel={photoDescription}
+          source={{ uri: photoUri }}
+          contentFit="cover"
+          style={{ width: tablet ? 96 : 64, height: tablet ? 96 : 64, borderRadius: 12 }}
+        />
+      ) : null}
+      <View className="flex-1 gap-compact">
+        <Text accessibilityRole="header" className="text-heading font-semibold text-primary">
           {vehicle.make} {vehicle.model}
         </Text>
-      ) : null}
-      <View className="relative aspect-square w-full overflow-hidden rounded-control bg-surface-muted">
-        {photoUri ? (
-          <Image
-            accessibilityLabel={photoDescription}
-            className="h-full w-full"
-            contentFit="cover"
-            source={{ uri: photoUri }}
-          />
-        ) : (
-          <View className="h-full w-full items-center justify-center">
-            <Text className="text-body text-secondary">{t("workspace.photo")}</Text>
-          </View>
-        )}
-        {!tablet && mileage ? (
-          <View className="absolute right-compact top-compact rounded-compact bg-canvas/80 px-control py-compact">
-            <Text className="text-body font-semibold text-primary">{mileage}</Text>
-          </View>
+        {vehicle.variant ? (
+          <Text className="text-caption text-secondary">{vehicle.variant}</Text>
+        ) : null}
+        <Text
+          className="text-body font-semibold text-primary"
+          style={{ fontVariant: ["tabular-nums"] }}
+        >
+          {mileage ?? t("workspace.noMileage")}
+        </Text>
+        {tablet && onEdit ? (
+          <Button label={t("workspace.editVehicle")} onPress={onEdit} variant="secondary" />
         ) : null}
       </View>
-      {tablet ? (
-        <View className="gap-compact">
-          {vehicle.variant ? (
-            <Text className="text-body text-secondary">{vehicle.variant}</Text>
-          ) : null}
-          <Text className="text-heading font-semibold text-primary">
-            {mileage ?? t("workspace.noMileage")}
-          </Text>
-          {onEdit ? (
-            <Button label={t("workspace.editVehicle")} onPress={onEdit} variant="secondary" />
-          ) : null}
-        </View>
-      ) : (
-        <View className="flex-row items-start justify-between gap-content">
-          <Text accessibilityRole="header" className="flex-1 text-title font-bold text-primary">
-            {vehicle.make} {vehicle.model}
-          </Text>
-          {vehicle.variant ? (
-            <Text className="max-w-[45%] text-right text-body text-secondary">
-              {vehicle.variant}
-            </Text>
-          ) : null}
-        </View>
-      )}
-    </Card>
+    </View>
   );
 }
 
 export function HistoryCard({
+  selectedId,
+  loadingMore,
+  loadMoreError,
   onLoadMore,
-  onDataManagement,
   entries,
   onAddEntry,
-  onDocuments,
-  onFuel,
-  onReminders,
   onSelectEntry,
   vehicle,
 }: Pick<
   VehicleWorkspaceViewProps,
   | "onLoadMore"
+  | "loadingMore"
+  | "loadMoreError"
   | "onDataManagement"
   | "entries"
   | "onAddEntry"
@@ -153,34 +121,28 @@ export function HistoryCard({
   | "onReminders"
   | "onSelectEntry"
   | "vehicle"
->) {
+> & { selectedId?: string }) {
   const { t } = useAppTranslation();
   return (
     <HistoryList
       onLoadMore={onLoadMore}
+      selectedId={selectedId}
+      loadingMore={loadingMore}
+      loadMoreError={loadMoreError}
       embedded
       entries={entries}
       onAddEntry={onAddEntry}
       onSelectEntry={onSelectEntry}
       vehicle={vehicle}
-      header={
-        <View className="gap-content">
-          <Button
-            label={t("dataManagement.title")}
-            onPress={onDataManagement}
-            variant="secondary"
-          />
-          <Button label={`+ ${t("workspace.addEntry")}`} onPress={onAddEntry} />
-          <Button label={t("documents.title")} onPress={onDocuments} variant="secondary" />
-          <Button label={t("refuelling.title")} onPress={onFuel} variant="secondary" />
-          <Button label={t("reminders.title")} onPress={onReminders} variant="secondary" />
-        </View>
-      }
+      header={<Button label={`+ ${t("workspace.addEntry")}`} onPress={onAddEntry} />}
     />
   );
 }
 
 function HistoryList({
+  selectedId,
+  loadingMore,
+  loadMoreError,
   onLoadMore,
   entries,
   onAddEntry,
@@ -190,13 +152,19 @@ function HistoryList({
   embedded = false,
 }: Pick<
   VehicleWorkspaceViewProps,
-  "onLoadMore" | "entries" | "onAddEntry" | "onSelectEntry" | "vehicle"
-> & { header: ReactNode; embedded?: boolean }) {
+  | "onLoadMore"
+  | "loadingMore"
+  | "loadMoreError"
+  | "entries"
+  | "onAddEntry"
+  | "onSelectEntry"
+  | "vehicle"
+> & { header: ReactNode; embedded?: boolean; selectedId?: string }) {
   const { t } = useAppTranslation();
   return (
     <ListScreen
       scrollKey="history"
-      onEndReached={onLoadMore}
+      onEndReached={loadMoreError ? undefined : onLoadMore}
       onEndReachedThreshold={0.5}
       embedded={embedded}
       data={entries}
@@ -218,20 +186,38 @@ function HistoryList({
           <Button label={t("workspace.addFirstEntry")} onPress={onAddEntry} variant="secondary" />
         </View>
       }
+      ListFooterComponent={
+        loadingMore ? (
+          <ActivityIndicator accessibilityLabel={t("workspace.loading")} />
+        ) : loadMoreError ? (
+          <View className="gap-compact py-content">
+            <Text accessibilityRole="alert" className="text-body text-secondary">
+              {t("workspace.pageError")}
+            </Text>
+            <Button label={t("database.errorAction")} onPress={onLoadMore} variant="secondary" />
+          </View>
+        ) : null
+      }
       renderItem={({ item }) => (
-        <HistoryRow entry={item} onPress={() => onSelectEntry(item)} vehicle={vehicle} />
+        <HistoryRow
+          selected={item.id === selectedId}
+          entry={item}
+          onPress={() => onSelectEntry(item)}
+          vehicle={vehicle}
+        />
       )}
     />
   );
 }
 
 function HistoryRow({
+  selected,
   entry,
   onPress,
   vehicle,
-}: Readonly<{ entry: HistoryEntry; onPress: () => void; vehicle: Vehicle }>) {
+}: Readonly<{ selected: boolean; entry: HistoryEntry; onPress: () => void; vehicle: Vehicle }>) {
   const { t, i18n } = useAppTranslation();
-  const title = `${t(`workspace.entryType.${entry.type}`)} — ${entrySubject(entry, t)}`;
+  const title = `${t(`workspace.entryType.${entry.type}`)} - ${entrySubject(entry, t)}`;
   const date = formatOccurredAt(entry, i18n.language);
   const distance =
     entry.odometerMetres === undefined
@@ -246,6 +232,17 @@ function HistoryRow({
         .filter((value) => value !== null)
         .join(", ")}
       accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={
+        selected
+          ? {
+              backgroundColor: "#252527",
+              borderLeftWidth: 3,
+              borderLeftColor: "#72b48e",
+              paddingLeft: 12,
+            }
+          : undefined
+      }
       className="gap-compact border-b border-divider py-control active:opacity-70"
       onPress={onPress}
     >

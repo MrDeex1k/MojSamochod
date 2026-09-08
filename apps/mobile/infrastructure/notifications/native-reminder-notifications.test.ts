@@ -27,6 +27,8 @@ jest.mock("./local-notifications-api", () => ({
   scheduleNotificationAsync: jest.fn(),
   getAllScheduledNotificationsAsync: jest.fn(),
   cancelScheduledNotificationAsync: jest.fn(),
+  getPresentedNotificationsAsync: jest.fn(),
+  dismissNotificationAsync: jest.fn(),
   setNotificationHandler: jest.fn(),
 }));
 
@@ -43,6 +45,42 @@ beforeEach(() => {
   native.scheduleNotificationAsync.mockImplementation(async (request) => request.identifier!);
   native.getAllScheduledNotificationsAsync.mockResolvedValue([]);
   native.cancelScheduledNotificationAsync.mockResolvedValue(undefined);
+  native.getPresentedNotificationsAsync.mockResolvedValue([]);
+  native.dismissNotificationAsync.mockResolvedValue(undefined);
+});
+
+it("clears only owned scheduled and delivered notifications without requesting permission", async () => {
+  const owned = {
+    identifier: "reminder:old:0",
+    content: {
+      title: null,
+      subtitle: null,
+      body: null,
+      categoryIdentifier: null,
+      sound: null,
+      data: { owner: "moje-auto-reminders" },
+    },
+    trigger: null,
+  } as Notifications.NotificationRequest;
+  const foreign = { ...owned, identifier: "other:notification" };
+  native.getAllScheduledNotificationsAsync.mockResolvedValue([owned, foreign]);
+  native.getPresentedNotificationsAsync.mockResolvedValue([
+    { request: owned, date: 0 },
+    { request: foreign, date: 0 },
+  ]);
+  await new NativeReminderNotifications(clock, () => "Reminders").clearOwned();
+  expect(native.cancelScheduledNotificationAsync).toHaveBeenCalledTimes(1);
+  expect(native.cancelScheduledNotificationAsync).toHaveBeenCalledWith(owned.identifier);
+  expect(native.dismissNotificationAsync).toHaveBeenCalledTimes(1);
+  expect(native.dismissNotificationAsync).toHaveBeenCalledWith(owned.identifier);
+  expect(native.requestPermissionsAsync).not.toHaveBeenCalled();
+});
+
+it("propagates notification cancellation failures so reset can retry", async () => {
+  native.getAllScheduledNotificationsAsync.mockRejectedValueOnce(new Error("native failure"));
+  await expect(
+    new NativeReminderNotifications(clock, () => "Reminders").clearOwned(),
+  ).rejects.toThrow("native failure");
 });
 
 describe("Native reminder permissions", () => {

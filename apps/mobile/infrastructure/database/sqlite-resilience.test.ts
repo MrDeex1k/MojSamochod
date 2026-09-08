@@ -25,6 +25,47 @@ afterEach(() => {
 });
 
 describe("SQLite persistence resilience", () => {
+  it("preserves committed vehicle data after SQLITE_FULL and permits a later write", () => {
+    const path = createTemporaryDatabasePath();
+    const database = openMigratedDatabase(path);
+    try {
+      insertVehicle(database);
+      const pages = Number(database.prepare("PRAGMA page_count").get()?.page_count);
+      expect(pages).toBeGreaterThan(0);
+      database.exec(`PRAGMA max_page_count = ${pages};`);
+      const insert = database.prepare(`INSERT INTO managed_files
+        (id, kind, status, storage_key, mime_type, original_name, byte_size, sha256, created_at, updated_at)
+        VALUES (?, 'vehicle-photo', 'ready', ?, 'image/jpeg', 'photo.jpg', 3, ?, ?, ?)`);
+      expect(() => {
+        database.exec("BEGIN;");
+        database.prepare("UPDATE vehicles SET model = 'V70' WHERE id = ?").run(vehicleId);
+        for (let index = 0; index < 10_000; index += 1) {
+          const id = `018f47e2-7b31-7658-b336-${index.toString(16).padStart(12, "0")}`;
+          insert.run(id, `objects/${id}.jpg`, "ab".repeat(32), timestamp, timestamp);
+        }
+        database.exec("COMMIT;");
+      }).toThrow(/full/i);
+      expect(database.prepare("SELECT model FROM vehicles WHERE id = ?").get(vehicleId)).toEqual({
+        model: "V60",
+      });
+      expect(database.prepare("PRAGMA integrity_check").get()).toEqual({ integrity_check: "ok" });
+      expect(database.prepare("SELECT count(*) AS count FROM managed_files").get()).toEqual({
+        count: 0,
+      });
+    } finally {
+      database.close();
+    }
+    const reopened = new DatabaseSync(path);
+    try {
+      reopened.prepare("UPDATE vehicles SET model = ? WHERE id = ?").run("V70", vehicleId);
+      expect(reopened.prepare("SELECT model FROM vehicles WHERE id = ?").get(vehicleId)).toEqual({
+        model: "V70",
+      });
+    } finally {
+      reopened.close();
+    }
+  });
+
   it("keeps committed data after the database file is closed and reopened", () => {
     const databasePath = createTemporaryDatabasePath();
     const firstConnection = openMigratedDatabase(databasePath);

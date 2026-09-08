@@ -32,6 +32,8 @@ export type VehicleWorkspaceViewProps = WorkspaceData &
   Readonly<{
     mode: WorkspaceMode;
     onLoadMore?: () => void;
+    loadMoreError?: boolean;
+    loadingMore?: boolean;
     onDataManagement: () => void;
     onErased: () => void;
     onAddEntry: () => void;

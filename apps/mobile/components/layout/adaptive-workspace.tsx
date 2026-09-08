@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import { OrientationGate } from "./orientation-gate";
+import { ScreenFrame } from "./screen-frame";
+import Animated, { FadeIn, LinearTransition, ReduceMotion } from "react-native-reanimated";
 
 const TABLET_MIN_SHORTEST_SIDE = 600;
 
@@ -43,10 +42,7 @@ export function AdaptiveWorkspace({
 
   const isPhone = layout.startsWith("phone");
   return (
-    <OrientationGate
-      blocked={layout === "phone-landscape" || layout === "tablet-portrait"}
-      phone={isPhone}
-    >
+    <ScreenFrame>
       {isPhone ? (
         phone
       ) : (
@@ -56,19 +52,35 @@ export function AdaptiveWorkspace({
           vehiclePane={vehiclePane}
         />
       )}
-    </OrientationGate>
+    </ScreenFrame>
   );
 }
 
 export function TabletWorkspace({ detailPane, primaryPane, vehiclePane }: TabletWorkspaceProps) {
+  const { width } = useWindowDimensions();
+  const compactDetail = Boolean(detailPane) && width < 1100;
   return (
-    <SafeAreaView style={styles.safeArea} testID="tablet-workspace">
+    <View style={styles.safeArea} testID="tablet-workspace">
       <View style={styles.workspace}>
         <View style={styles.vehiclePane}>{vehiclePane}</View>
-        <View style={styles.contentPane}>{primaryPane}</View>
-        {detailPane ? <View style={styles.contentPane}>{detailPane}</View> : null}
+        <Animated.View
+          layout={LinearTransition.duration(180).reduceMotion(ReduceMotion.System)}
+          style={[styles.contentPane, compactDetail && { display: "none" }]}
+          accessibilityElementsHidden={compactDetail}
+          importantForAccessibility={compactDetail ? "no-hide-descendants" : "auto"}
+        >
+          {primaryPane}
+        </Animated.View>
+        {detailPane ? (
+          <Animated.View
+            entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)}
+            style={styles.contentPane}
+          >
+            {detailPane}
+          </Animated.View>
+        ) : null}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -84,7 +96,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   vehiclePane: {
-    flexBasis: "30%",
+    width: 220,
     flexGrow: 0,
     flexShrink: 0,
   },

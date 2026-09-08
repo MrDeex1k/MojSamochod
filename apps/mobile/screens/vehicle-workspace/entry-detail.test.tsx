@@ -81,6 +81,7 @@ describe("EntryDetail", () => {
       </SafeAreaProvider>,
     );
 
+    await userEvent.press(screen.getByRole("button", { name: "More actions" }));
     await userEvent.press(screen.getByRole("button", { name: "Delete entry" }));
 
     await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));

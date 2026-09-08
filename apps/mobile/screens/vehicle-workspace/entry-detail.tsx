@@ -5,6 +5,7 @@ import type { HistoryEntryRepository } from "@/application/repositories/history-
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ContextualActions } from "@/components/ui/contextual-actions";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import { distanceUnitLabel, metresToDistance } from "@/domain/vehicle/distance";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
@@ -103,13 +104,15 @@ export function EntryDetail({
           {t("entryDetail.deleteError")}
         </Text>
       ) : null}
-      <Button label={t("entryDetail.edit")} onPress={onEdit} />
-      <Button
-        className="w-1/2 self-start"
+      <ContextualActions
+        cancelLabel={t("common.cancel")}
+        deleteLabel={t("entryDetail.delete")}
         disabled={deleting}
-        label={t("entryDetail.delete")}
-        onPress={confirmDelete}
-        variant="danger"
+        editLabel={t("entryDetail.edit")}
+        menuLabel={t("common.moreActions")}
+        menuTitle={t("entryDetail.actionsTitle")}
+        onDelete={confirmDelete}
+        onEdit={onEdit}
       />
       {!embedded ? (
         <Button label={t("entryDetail.back")} onPress={onBack} variant="secondary" />

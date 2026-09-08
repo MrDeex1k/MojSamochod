@@ -62,10 +62,10 @@ until a visualization materially improves a decision.
 
 For a phone-sized layout, begin with a small number of destinations:
 
-- `Vehicle` — selected vehicle and its history,
-- `Fuel` — refuelling records and consumption,
-- `Reminders` — upcoming and overdue obligations,
-- `Settings` — preferences, premium state, data management, and help.
+- `Vehicle` - selected vehicle and its history,
+- `Fuel` - refuelling records and consumption,
+- `Reminders` - upcoming and overdue obligations,
+- `Settings` - preferences, premium state, data management, and help.
 
 The add action should be prominent but should not compete with navigation. If usability testing
 shows that the timeline already provides adequate access to fuel and reminders, reduce the number of

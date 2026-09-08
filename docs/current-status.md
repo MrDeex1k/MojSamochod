@@ -18,7 +18,8 @@ opisywanego etapu.
   kanonicznych bez przepisywania historii.
 - Faza 6, czyli przypomnienia, została zintegrowana z `main` w commicie `522c2cf`, razem
   z poprawką izolacji subskrybentów harmonogramu po review CodeRabbit. Otwarty pozostaje wynik
-  audytu podatności rejestru; ograniczenia opisuje [raport etapu 7](phase-6-step-7-verification.md).
+  audytu podatności rejestru. Aktualny kontrakt opisuje
+  [dokumentacja przypomnień](local-reminder-notifications.md).
 - Aplikacja przy starcie otwiera lokalną bazę, wykonuje migracje, uzgadnia stan zarządzanych plików i
   kieruje użytkownika do utworzenia pierwszego pojazdu albo bezpośrednio do zapisanej historii.
 
@@ -37,8 +38,9 @@ opisywanego etapu.
 - Przestrzeń pojazdu udostępnia listę dokumentów i faktur. Użytkownik może zaimportować plik PDF,
   JPEG albo PNG z systemowego selektora, nadać mu nazwę i opcjonalnie uzupełnić datę, kwotę,
   walutę, notatki oraz relację z jednym wpisem historii.
-- Szczegóły dokumentu obsługują podgląd obrazu w aplikacji, natywny eksport PDF, edycję metadanych,
+- Szczegóły dokumentu obsługują podgląd obrazów i PDF-ów wewnątrz aplikacji, edycję metadanych,
   zastąpienie pliku z zachowaniem tożsamości i relacji oraz trwałe usunięcie po potwierdzeniu.
+  Nie ma akcji udostępniania, eksportu, otwierania poza aplikacją ani pobierania kopii dokumentu.
 - Główny layout zapewnia `SafeAreaProvider`, ciemny pasek stanu i wspólny import stylów.
 - Telefon jest obecnie obsługiwany w pionie, a tablet w poziomie. Pozostałe układy pokazują
   komunikat proszący o obrócenie urządzenia.
@@ -71,11 +73,12 @@ opisywanego etapu.
 - Jest i React Native Testing Library są skonfigurowane dla aplikacji mobilnej.
 - Testy są umieszczane obok kodu i sprawdzają zachowanie widoczne dla użytkownika przez role,
   etykiety oraz interakcje.
-- Aktualny zestaw zawiera 59 zestawów i 398 testów komponentów, układu adaptacyjnego, inicjalizacji
+- Aktualny zestaw na branchu Fazy 7 zawiera 68 zestawów i 461 testów komponentów, układu adaptacyjnego, inicjalizacji
   bazy, domeny, mapperów rekordów, repozytoriów, trwałości SQLite, eksportu, zarządzanych plików,
   dokumentów, przypomnień, adaptera powiadomień, konfiguracji pluginów oraz lokalizacji.
 - `nub run check` uruchamia lint, kontrolę formatowania, TypeScript i testy; obecnie przechodzi.
-- React Doctor 0.9.12 dla zmian Fazy 5 zakończył się wynikiem 100/100 bez wykrytych problemów.
+- Ostatnia weryfikacja 2026-09-08: `nub run check` przechodzi, a React Doctor 0.9.13 uzyskuje
+  83/100 bez błędów i z pięcioma istniejącymi ostrzeżeniami utrzymaniowymi.
 - Natywne bundle'e z dołączoną migracją zostały poprawnie wygenerowane dla iOS i Androida.
 - Po implementacji Fazy 3 bundle'e Hermes zostały ponownie poprawnie wygenerowane osobno dla iOS i
   Androida, wraz z nowymi modułami zdjęć, systemu plików i selektora daty oraz czasu.
@@ -190,8 +193,7 @@ opisywanego etapu.
 
 ## Zakończenie Fazy 6 i następny krok
 
-Ustalenia Fazy 6 zostały zaakceptowane i zapisane w
-[reminder-domain-decisions.md](reminder-domain-decisions.md). Implementacja jest już na `main`.
+Ustalenia Fazy 6 zostały zaakceptowane, a implementacja jest już na `main`.
 Etap 1 jest zaimplementowany: domena przypomnień, walidacja dat i stref, tworzenie i edycja,
 stany daty oraz plan powiadomień na 09:00 w zapamiętanej strefie. Testy obejmują zmiany czasu,
 granice dnia, niestandardowe przesunięcia stref i pomijanie minionych powiadomień.
@@ -221,12 +223,11 @@ React Compiler; testy potwierdzają odblokowanie przycisków po błędach i moż
 Pełne `nub run check` po poprawce review przechodzi: 59 zestawów, 398 testów. React Doctor 0.9.13: 83/100,
 bez błędów, 11 opisanych ostrzeżeń. Wynik 87/100 z etapu 5 obejmował mniej plików; pełniejszy
 skan w etapie 6 wykrył i pozwolił poprawić pominięte wcześniej problemy kompilatora.
-Expo Doctor: 19/21 kontroli — tylko brak rozpoznania `nub.lock` i świadomy TypeScript 7.
+Expo Doctor: 19/21 kontroli - tylko brak rozpoznania `nub.lock` i świadomy TypeScript 7.
 Instalacja z zamrożonego lockfile'a i eksporty Hermes dla obu platform przechodzą.
 Audyt podatności nie uzyskał odpowiedzi z rejestru po dwóch próbach; brak wyniku nie oznacza
-braku podatności. Szczegóły i wyjątki: [phase-6-step-6-dependencies.md](phase-6-step-6-dependencies.md).
+braku podatności.
 UI sprawdzono w Expo Go 57.0.9 na iPhonie 17 Pro, iPadzie Air 11 (M4), Pixelu 9 i Pixel Tablet.
-Zakres, wyniki i ograniczenia: [phase-6-step-5-verification.md](phase-6-step-5-verification.md).
 Na Androidzie Expo Go zgłasza błąd natywnego dostawcy kanałów powiadomień; nie traktujemy tego
 hosta jako dowodu poprawności uprawnień ani harmonogramu własnej aplikacji.
 
@@ -237,27 +238,43 @@ regresje historii, dokumentów, tankowań, jednostek i zdjęć. JSON v4 pozostaj
 automatycznie, nie przez nieistniejący przycisk eksportu w UI.
 Poprawiono platformowe pliki lokalizacji blokujące release lint Androida, dodano testy resolvera
 Expo i konfiguracji QA. Procedura: [native-qa-builds.md](native-qa-builds.md).
-Zakres i ograniczenia, w tym przyspieszone próby transportu powiadomień i nadal niedostępny
-audyt podatności: [phase-6-step-7-verification.md](phase-6-step-7-verification.md).
+Przyspieszone próby transportu powiadomień nie zastępują testów na fizycznych urządzeniach;
+audyt podatności pozostaje niedostępny.
 
 Poprawka po review izoluje wyjątki subskrybentów od wyniku uzgadniania i zabezpiecza kolejkę przed
 trwałym odrzuceniem. Trzy regresje sprawdzają publikację wyniku, kolejne przebiegi i wywołania
 po zapisie repozytorium. Nie zmienia to UI, konfiguracji natywnej ani zakresu prób na urządzeniach.
 
-Następny krok to ustalenia Fazy 7 — utwardzenie darmowej aplikacji:
-prywatność, zarządzanie danymi i odzyskiwanie, dostępność, sytuacje awaryjne, wydajność,
-konfiguracja wydania oraz testy na fizycznych urządzeniach. Zakończenie Fazy 6 nie oznacza
-jeszcze gotowości aplikacji do publikacji w sklepach.
+Faza 7 - utwardzenie darmowej aplikacji - została zakończona i zaakceptowana implementacyjnie.
+Obejmuje prywatność, zarządzanie danymi i odzyskiwanie, dostępność, sytuacje awaryjne, wydajność,
+adaptacyjną nawigację oraz wewnętrzny czytnik PDF. Końcowy pakiet zmian jest przygotowany na
+dedykowanym branchu do integracji z `main`. Nie oznacza to jeszcze gotowości do publikacji:
+ostateczne metadane, podpisywanie, konta sklepowe i dystrybucja będą osobnym kolejnym PR-em.
 
 ### Ustalenia wejściowe Fazy 7
+
+Krok 1 zaimplementowano na `feat/free-release-hardening`: zarządzanie danymi i treści prywatności PL/EN,
+ograniczenie uprawnień, podpowiedzi dostępności i testy. Zakres natywny, diagnostyki i otwarty
+incydent inicjalizacji SQLite po zmianie skali Androida pozostają jawnie zapisane.
+Na prośbę użytkownika wykonano prace kroku 3 przed krokiem 2: poprawkę obsługi braku miejsca,
+testy przerwań oraz próby cyklu życia na czterech urządzeniach. Dawny incydent SQLite pozostaje
+nieodtworzony i nie został uznany za naprawiony, ale decyzją produktową traktujemy go jako jeden
+znany błąd, który nie blokuje zamknięcia kroku 3 ani przejścia dalej. Krok 2 jest zaimplementowany:
+potwierdzany reset,
+trwały znacznik wznowienia, blokada nowych operacji, usuwanie własnych powiadomień i plików oraz
+wewnętrzny podgląd PDF bez działań poza aplikacją.
+Zakres implementacyjny fazy jest zaakceptowany. Lokalne buildy Release QA i macierz czterech
+symulatorów/emulatorów zostały wykonane. Produkcyjne podpisywanie, finalne metadane sklepowe,
+zrzuty, publiczna polityka prywatności oraz akceptacja na fizycznych urządzeniach pozostają bramkami
+przygotowania wydania, a nie dalszą rozbudową fazy 7.
 
 - Pierwsze wydanie to FREE: jeden pojazd na urządzenie, bez kont, synchronizacji i premium.
 - Nie udostępniamy użytkownikowi eksportu danych, backupu, importu ani odtwarzania bazy.
   Istniejący kontrakt JSON v4 i jego testy pozostają wewnętrzne; nie są obietnicą funkcji wydania.
 - Udostępniamy potwierdzane, nieodwracalne wyczyszczenie wszystkich danych i powrót do dodawania
-  pierwszego pojazdu. Docelowo usuwamy dane użytkownika, zarządzane kopie zdjęć/dokumentów i własne
+  pierwszego pojazdu. Usuwamy dane użytkownika, zarządzane kopie zdjęć/dokumentów i własne
   zaplanowane powiadomienia, bez kasowania oryginałów z galerii/plików użytkownika. Schema i stan
-  migracji są infrastrukturą, nie danymi użytkownika. Bezpieczny reset ma tolerować przerwanie.
+  migracji są infrastrukturą, nie danymi użytkownika. Przerwany reset jest wznawiany przy starcie.
 - Bez dodawania analityki. Minimalne uprawnienia, proszenie o nie tylko w kontekście czynności;
   zdjęcie wyłącznie z galerii, bez aparatu i nagrywania. Trzeba sprawdzić faktyczny manifest
   i zachowanie SDK, a nie tylko deklaracje konfiguracji. Powiadomienia pozostają opcjonalne.
@@ -265,33 +282,47 @@ jeszcze gotowości aplikacji do publikacji w sklepach.
   Android: możliwe testy APK przez rodzinę/znajomych. Tablety najpierw w symulatorze/emulatorze;
   fizyczny tablet Android będzie dostępny później, iPad znajomego jest potencjalnym celem testów.
 
-Do ustalenia pozostają kanał bety/publikacji, konta wydawcy, identyfikatory produkcyjne i kontakt
-do polityki prywatności. TestFlight dla iPhone/iPad jest rekomendacją do zatwierdzenia, nie
-wykonaną konfiguracją. `dev.mojeauto.qa` nie jest docelowym identyfikatorem sklepowym.
+Do ustalenia pozostają kanał bety/publikacji, konta wydawcy oraz kontakt do wsparcia i polityki
+prywatności. TestFlight dla iPhone/iPad jest rekomendacją do zatwierdzenia, nie wykonaną konfiguracją.
+Zaakceptowana tożsamość produkcyjna to nazwa `Moje Auto`, wydawca `Jakub Batycki` oraz wspólny
+identyfikator iOS/Android `pl.jakubbatycki.mojeauto`. Polski jest głównym językiem sklepowym,
+a angielski dodatkowym. `dev.mojeauto.qa` pozostaje identyfikatorem buildów testowych. Obecna
+wersja przedwydaniowa to `0.8.0`; numer `1.0.0` jest zarezerwowany dla pierwszego wydania sklepowego.
+Konfiguracja Expo używa już tej tożsamości domyślnie, z początkowym `ios.buildNumber = 1` oraz
+`android.versionCode = 1`; jawny tryb QA nadpisuje tylko identyfikatory aplikacji.
+Buildy, podpisywanie i wysyłanie do sklepów wykonujemy lokalnie na MacBooku. W bieżącym wydaniu
+nie konfigurujemy ani nie używamy EAS Build, Submit, Update lub Workflows i nie przesyłamy projektu
+do EAS. Powrót do EAS może być osobną decyzją dopiero po ustabilizowaniu aplikacji.
 Przed publikacją trzeba też ocenić kopie/przenoszenie danych wykonywane przez sam system:
 brak eksportu w aplikacji nie oznacza automatycznie braku backupu iOS/Android.
 
-Zakaz eksportu został doprecyzowany: obejmuje także pojedyncze załączniki, udostępnianie i otwieranie
-pliku w innej aplikacji. Faza 7 musi usunąć istniejące akcje wyprowadzania danych z UI oraz sprawdzić
-przyciski udostępniania w natywnym podglądzie. Dodawanie zdjęć i PDF/faktur jako załączników pozostaje
-dozwolone; import bazy, backupu lub historii z innej aplikacji jest wykluczony. To zakres do wdrożenia,
-nie twierdzenie, że obecny kod nie umożliwia już udostępniania dokumentów.
+Ustalenie zaktualizowane po scaleniu zmian z `main` 2026-09-05: PDF-y są podglądane wewnątrz
+aplikacji przez lokalny moduł natywny. Nie udostępniamy zapisu kopii, udostępniania ani
+automatycznego otwierania dokumentu w innej aplikacji. Reset nie dotyczy oryginałów wybranych
+z galerii lub systemowego selektora, ponieważ pozostają poza prywatnym magazynem aplikacji.
+Ogólne udostępnianie i eksport obrazów usunięto z interfejsu. Dodawanie zdjęć i PDF/faktur jako
+załączników pozostaje dozwolone; import bazy, backupu lub historii z innej aplikacji jest wykluczony.
 
 Użytkownik ma konto Apple Developer bez aktywnego członkostwa i nie ma opłaconego konta wydawcy
 Google Play. Nie skonfigurowano TestFlight ani dystrybucji sklepowej. Nie blokuje to implementacji
 i testów w symulatorach/emulatorach; etap dystrybucji wymaga oddzielnego przygotowania kont.
 
-Nie ma zidentyfikowanej, nienaprawionej uwagi funkcjonalnej CodeRabbit blokującej rozpoczęcie
-Fazy 7. Audyt podatności nadal trzeba uzyskać i ocenić przed wydaniem; znane diagnostyki Expo
-Doctor i ostrzeżenia React Doctor pozostają jawne. Faza 7 ma w planie pięć kroków; powyższe
-ustalenia doprecyzowują ich zakres, nie dodają automatycznie kolejnych funkcji.
+Nie ma zidentyfikowanej, nienaprawionej uwagi funkcjonalnej CodeRabbit blokującej zamknięcie
+Fazy 7. Audyt podatności nadal trzeba uzyskać i ocenić przed wydaniem. Pięć kroków fazy opisuje
+zaakceptowany zakres oraz jawnie odłożone bramki publikacyjne; nie dodają one automatycznie
+kolejnych funkcji.
 
-### Repository review implementation — 2026-09-05
+### Repository review implementation - 2026-09-05
 
-Phase 7 hardening is prepared on `feat/harden-mobile-workspace` for review. Resumable user-data deletion, internal PDF
-previews without outbound sharing, form draft preservation, cursor-based history loading,
-section-level caching and initial accessibility fixes are implemented. The GitHub Actions workflow
-was subsequently removed; repository checks currently rely on local runs. This supersedes
-the earlier statements above that document sharing removal and erase-all are still only planned.
-The changes are not merged or published to stores. See
+Phase 7 hardening from `origin/main` was merged into the working history in merge commit `48ac7a6`.
+Resumable user-data deletion, internal PDF previews without outbound sharing, form draft preservation,
+cursor-based history loading, section-level caching and initial accessibility fixes are included in
+the final branch. The GitHub Actions workflow was subsequently removed; repository checks currently
+rely on local runs. This supersedes the earlier statements above that document sharing removal and
+erase-all are still only planned. The changes are prepared for `main`, but not published to stores.
+The most recent verification on 2026-09-08 confirms that `nub run check` passes with 68 suites and
+461 tests. React Doctor 0.9.13 reports 83/100 with no errors and five existing maintainability warnings.
+Expo Doctor passes 19/21 checks and reports two diagnostics: it does not recognize the intentional
+`nub.lock` lockfile, and its version check expects TypeScript 6 plus newer Expo patch versions.
+The TypeScript 7 choice and current exact Expo-compatible pins are intentional. See
 [code-review-improvements.md](code-review-improvements.md) for verification and remaining release gates.

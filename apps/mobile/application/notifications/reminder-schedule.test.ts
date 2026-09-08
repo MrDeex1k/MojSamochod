@@ -89,6 +89,27 @@ function setup() {
 }
 
 describe("reminder schedule reconciliation", () => {
+  it("drains active scheduling and stops queued and subsequent passes", async () => {
+    const { schedule, vehicles, notifications } = setup();
+    let complete!: () => void;
+    const wait = new Promise<void>((resolve) => {
+      complete = resolve;
+    });
+    vehicles.get.mockImplementationOnce(async () => {
+      await wait;
+      return repositorySuccess(vehicle);
+    });
+    const active = schedule.reconcile();
+    await Promise.resolve();
+    const queued = schedule.reconcile();
+    const stop = schedule.stop();
+    complete();
+    await Promise.all([active, queued, stop]);
+    const calls = notifications.schedule.mock.calls.length;
+    await schedule.reconcile();
+    expect(vehicles.get).toHaveBeenCalledTimes(1);
+    expect(notifications.schedule).toHaveBeenCalledTimes(calls);
+  });
   it("isolates throwing subscribers while publishing successful snapshots", async () => {
     const { schedule } = setup();
     schedule.subscribe(() => {

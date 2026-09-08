@@ -129,45 +129,24 @@ export function DocumentDetail({
 
   const relatedEntry = entries.find((entry) => entry.id === document.historyEntryId);
   const content = (
-    <Card className={embedded ? "min-h-full" : undefined}>
+    <Card>
       <Text className="text-label font-semibold uppercase tracking-widest text-accent">
         {t("documents.document")}
       </Text>
       <Text accessibilityRole="header" className="text-title font-bold text-primary">
         {document.name}
       </Text>
-      {file?.mimeType.startsWith("image/") ? (
-        <View className="aspect-square w-full overflow-hidden rounded-control bg-surface-muted">
-          <Image
-            accessibilityLabel={document.name}
-            className="h-full w-full"
-            contentFit="contain"
-            source={{ uri: file.uri }}
-          />
-        </View>
-      ) : file?.mimeType === "application/pdf" ? (
-        <PdfPreview key={document.fileReference} uri={file.uri} name={document.name} />
-      ) : !loadingFile && resolved?.failed ? (
-        <View className="gap-content rounded-control bg-surface-muted p-section">
-          <Text accessibilityRole="alert" className="text-body text-danger">
-            {t("documents.loadError")}
-          </Text>
-          <Button
-            label={t("database.errorAction")}
-            onPress={() => {
-              setResolved(null);
-              setAttempt((value) => value + 1);
-            }}
-          />
-        </View>
-      ) : (
-        <View className="items-center rounded-control bg-surface-muted p-section">
-          <Text className="text-heading font-semibold text-primary">PDF</Text>
-          <Text className="text-caption text-secondary">
-            {file?.name ?? t(loadingFile ? "documents.loading" : "documents.fileMissing")}
-          </Text>
-        </View>
-      )}
+      <DocumentFilePreview
+        file={file}
+        loading={loadingFile}
+        failed={resolved?.failed === true}
+        name={document.name}
+        fileReference={document.fileReference}
+        onRetry={() => {
+          setResolved(null);
+          setAttempt((value) => value + 1);
+        }}
+      />
       <View className="gap-compact border-t border-divider pt-content">
         {document.documentDate ? (
           <DetailRow
@@ -203,9 +182,7 @@ export function DocumentDetail({
         onPress={confirmDelete}
         variant="danger"
       />
-      {!embedded ? (
-        <Button label={t("documents.back")} onPress={onBack} variant="secondary" />
-      ) : null}
+      <Button label={t("documents.back")} onPress={onBack} variant="secondary" />
     </Card>
   );
   return embedded ? (
@@ -232,4 +209,48 @@ function DetailRow({ label, value }: Readonly<{ label: string; value: string }>)
 
 function entryLabel(entry: HistoryEntry, t: (key: string) => string): string {
   return t(`workspace.entryType.${entry.type}`);
+}
+
+function DocumentFilePreview({
+  file,
+  loading,
+  failed,
+  name,
+  fileReference,
+  onRetry,
+}: {
+  file: ResolvedFile | null;
+  loading: boolean;
+  failed: boolean;
+  name: string;
+  fileReference: string;
+  onRetry: () => void;
+}) {
+  const { t } = useAppTranslation();
+  return file?.mimeType.startsWith("image/") ? (
+    <View className="aspect-square w-full overflow-hidden rounded-control bg-surface-muted">
+      <Image
+        accessibilityLabel={name}
+        className="h-full w-full"
+        contentFit="contain"
+        source={{ uri: file.uri }}
+      />
+    </View>
+  ) : file?.mimeType === "application/pdf" ? (
+    <PdfPreview key={fileReference} uri={file.uri} name={name} />
+  ) : !loading && failed ? (
+    <View className="gap-content rounded-control bg-surface-muted p-section">
+      <Text accessibilityRole="alert" className="text-body text-danger">
+        {t("documents.loadError")}
+      </Text>
+      <Button label={t("database.errorAction")} onPress={onRetry} />
+    </View>
+  ) : (
+    <View className="items-center rounded-control bg-surface-muted p-section">
+      <Text className="text-heading font-semibold text-primary">PDF</Text>
+      <Text className="text-caption text-secondary">
+        {file?.name ?? t(loading ? "documents.loading" : "documents.fileMissing")}
+      </Text>
+    </View>
+  );
 }

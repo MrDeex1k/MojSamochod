@@ -5,13 +5,21 @@ import DocumentPreview from "@/modules/document-preview/src/DocumentPreviewModul
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { Button } from "./button";
 import { Image } from "./image";
+import { PdfFullscreen } from "./pdf-fullscreen";
 
 export function PdfPreview({ uri, name }: Readonly<{ uri: string; name: string }>) {
+  return <PdfPreviewSession key={uri} uri={uri} name={name} />;
+}
+
+function PdfPreviewSession({ uri, name }: Readonly<{ uri: string; name: string }>) {
   const { t } = useAppTranslation();
+  const [fullscreen, setFullscreen] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState(0.7);
   const [page, setPage] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<{
     source: string;
+    attempt: number;
     page: number;
     uri: string;
     count: number;
@@ -40,6 +48,7 @@ export function PdfPreview({ uri, name }: Readonly<{ uri: string; name: string }
         }
         setState({
           source: uri,
+          attempt,
           page,
           uri: result.uri,
           count: result.pageCount,
@@ -54,9 +63,37 @@ export function PdfPreview({ uri, name }: Readonly<{ uri: string; name: string }
       remove();
     };
   }, [uri, page, attempt]);
-  const current = state?.source === uri && state.page === page ? state : null;
+  const current =
+    state?.source === uri && state.page === page && state.attempt === attempt ? state : null;
+  const changePage = (next: number) => {
+    setError(false);
+    setPage(next);
+    setAttempt((value) => value + 1);
+  };
+  const retry = () => {
+    setError(false);
+    setAttempt((value) => value + 1);
+  };
   return (
     <View className="gap-content">
+      <Button
+        label={t("documents.fullscreenPreview")}
+        variant="secondary"
+        onPress={() => setFullscreen(true)}
+      />
+      {fullscreen && (
+        <PdfFullscreen
+          name={name}
+          page={page}
+          count={state?.count ?? 0}
+          imageUri={current?.uri}
+          text={current?.text}
+          error={error || !DocumentPreview}
+          onRetry={retry}
+          onPage={changePage}
+          onClose={() => setFullscreen(false)}
+        />
+      )}
       {error || !DocumentPreview ? (
         <>
           <Text accessibilityRole="alert" className="text-body text-danger">
@@ -79,7 +116,11 @@ export function PdfPreview({ uri, name }: Readonly<{ uri: string; name: string }
             }
             source={{ uri: current.uri }}
             contentFit="contain"
-            style={{ width: "100%", aspectRatio: 0.7 }}
+            onLoad={({ source }) => {
+              if (source.width > 0 && source.height > 0)
+                setAspectRatio(source.width / source.height);
+            }}
+            style={{ width: "100%", aspectRatio }}
           />
           <Text className="text-body text-secondary">
             {t("documents.page", { page: page + 1, count: current.count })}
@@ -96,10 +137,7 @@ export function PdfPreview({ uri, name }: Readonly<{ uri: string; name: string }
             label={t("documents.previousPage")}
             variant="secondary"
             disabled={!current || page === 0}
-            onPress={() => {
-              setError(false);
-              setPage((value) => value - 1);
-            }}
+            onPress={() => changePage(page - 1)}
           />
         </View>
         <View className="flex-1">
@@ -107,10 +145,7 @@ export function PdfPreview({ uri, name }: Readonly<{ uri: string; name: string }
             label={t("documents.nextPage")}
             variant="secondary"
             disabled={!current || page + 1 >= current.count}
-            onPress={() => {
-              setError(false);
-              setPage((value) => value + 1);
-            }}
+            onPress={() => changePage(page + 1)}
           />
         </View>
       </View>

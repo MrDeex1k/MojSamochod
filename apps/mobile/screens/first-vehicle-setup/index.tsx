@@ -9,7 +9,7 @@ import { Screen } from "@/components/layout/screen";
 import { SupportedOrientation } from "@/components/layout/supported-orientation";
 import { useApplicationServices } from "@/components/providers/application-provider";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { Image } from "@/components/ui/image";
 import { TextField } from "@/components/ui/text-field";
 import { FuelConfigurationFields } from "@/components/vehicle/fuel-configuration-fields";
@@ -150,7 +150,7 @@ export function CreateFirstVehicleForm({
 
   return (
     <Screen contentClassName="items-center">
-      <Card className="w-full max-w-2xl">
+      <FormSection className="w-full max-w-2xl">
         <Text className="text-label font-semibold uppercase tracking-widest text-accent">
           {t("common.appName")}
         </Text>
@@ -178,63 +178,6 @@ export function CreateFirstVehicleForm({
             returnKeyType="next"
             value={model}
           />
-          <TextField
-            label={t("firstVehicle.variantLabel")}
-            onChangeText={setVariant}
-            value={variant}
-          />
-          <TextField
-            error={errors.manufactureYear}
-            keyboardType="number-pad"
-            label={t("firstVehicle.manufactureYearLabel")}
-            onChangeText={setManufactureYear}
-            value={manufactureYear}
-          />
-          <TextField
-            autoCapitalize="characters"
-            label={t("firstVehicle.registrationNumberLabel")}
-            onChangeText={setRegistrationNumber}
-            value={registrationNumber}
-          />
-          <TextField
-            autoCapitalize="characters"
-            autoCorrect={false}
-            error={errors.vin}
-            label={t("firstVehicle.vinLabel")}
-            maxLength={17}
-            onChangeText={setVin}
-            value={vin}
-          />
-        </View>
-
-        <View className="gap-compact">
-          <Text className="text-heading font-semibold text-primary">
-            {t("firstVehicle.photoLabel")}
-          </Text>
-          {photo ? (
-            <Image
-              accessibilityLabel={t("firstVehicle.photoLabel")}
-              className="aspect-square w-full rounded-control bg-surface-muted"
-              contentFit="cover"
-              source={{ uri: photo.uri }}
-            />
-          ) : null}
-          <View className="flex-row gap-compact">
-            <Button
-              className="flex-1"
-              label={photo ? t("firstVehicle.photoChangeAction") : t("firstVehicle.photoAction")}
-              onPress={() => void selectPhoto()}
-              variant="secondary"
-            />
-            {photo ? (
-              <Button
-                className="flex-1"
-                label={t("firstVehicle.photoRemoveAction")}
-                onPress={() => setPhoto(null)}
-                variant="danger"
-              />
-            ) : null}
-          </View>
         </View>
 
         <View className="gap-content">
@@ -286,13 +229,76 @@ export function CreateFirstVehicleForm({
           volumeUnit={fuelVolumeUnit}
         />
 
+        <View className="gap-content border-t border-divider pt-content">
+          <Text accessibilityRole="header" className="text-heading font-semibold text-primary">
+            {t("firstVehicle.optionalDetails")}
+          </Text>
+          <TextField
+            label={t("firstVehicle.variantLabel")}
+            onChangeText={setVariant}
+            value={variant}
+          />
+          <TextField
+            error={errors.manufactureYear}
+            keyboardType="number-pad"
+            label={t("firstVehicle.manufactureYearLabel")}
+            onChangeText={setManufactureYear}
+            value={manufactureYear}
+          />
+          <TextField
+            autoCapitalize="characters"
+            label={t("firstVehicle.registrationNumberLabel")}
+            onChangeText={setRegistrationNumber}
+            value={registrationNumber}
+          />
+          <TextField
+            autoCapitalize="characters"
+            autoCorrect={false}
+            error={errors.vin}
+            label={t("firstVehicle.vinLabel")}
+            maxLength={17}
+            onChangeText={setVin}
+            value={vin}
+          />
+
+          <View className="gap-compact">
+            <Text className="text-heading font-semibold text-primary">
+              {t("firstVehicle.photoLabel")}
+            </Text>
+            {photo ? (
+              <Image
+                accessibilityLabel={t("firstVehicle.photoLabel")}
+                className="aspect-square w-full rounded-control bg-surface-muted"
+                contentFit="cover"
+                source={{ uri: photo.uri }}
+              />
+            ) : null}
+            <View className="flex-row gap-compact">
+              <Button
+                className="flex-1"
+                label={photo ? t("firstVehicle.photoChangeAction") : t("firstVehicle.photoAction")}
+                onPress={() => void selectPhoto()}
+                variant="secondary"
+              />
+              {photo ? (
+                <Button
+                  className="flex-1"
+                  label={t("firstVehicle.photoRemoveAction")}
+                  onPress={() => setPhoto(null)}
+                  variant="danger"
+                />
+              ) : null}
+            </View>
+          </View>
+        </View>
+
         {formError ? (
           <Text accessibilityLiveRegion="polite" className="text-body text-danger">
             {formError}
           </Text>
         ) : null}
-        <Button disabled={saving} label={t("firstVehicle.addAction")} onPress={() => void save()} />
-      </Card>
+        <Button busy={saving} label={t("firstVehicle.addAction")} onPress={() => void save()} />
+      </FormSection>
     </Screen>
   );
 }

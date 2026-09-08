@@ -14,8 +14,10 @@ jest.mock("expo-image-manipulator", () => ({
 }));
 
 import { GalleryVehiclePhotoPicker } from "./gallery-vehicle-photo-picker";
+import { Platform } from "react-native";
 
 describe("GalleryVehiclePhotoPicker", () => {
+  afterEach(() => jest.restoreAllMocks());
   beforeEach(() => {
     jest.clearAllMocks();
     mockRequestPermission.mockResolvedValue({ granted: true });
@@ -27,6 +29,14 @@ describe("GalleryVehiclePhotoPicker", () => {
 
     await expect(new GalleryVehiclePhotoPicker().select()).resolves.toEqual({ kind: "denied" });
     expect(mockLaunchImageLibrary).not.toHaveBeenCalled();
+  });
+
+  it("uses Android's selected-file grant without requesting library access", async () => {
+    jest.replaceProperty(Platform, "OS", "android");
+    mockLaunchImageLibrary.mockResolvedValue({ assets: [], canceled: true });
+    await expect(new GalleryVehiclePhotoPicker().select()).resolves.toEqual({ kind: "cancelled" });
+    expect(mockRequestPermission).not.toHaveBeenCalled();
+    expect(mockLaunchImageLibrary).toHaveBeenCalledTimes(1);
   });
 
   it("opens only the image gallery and creates a square JPEG within the size limit", async () => {

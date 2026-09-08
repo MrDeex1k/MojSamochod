@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 
 describe("native theme typography", () => {
+  it("gives single-line inputs a scalable font size without a forced line height", () => {
+    const theme = readFileSync(__filename.replace(".test.ts", ".css"), "utf8");
+    expect(theme).toMatch(/--text-input:\s*[\d.]+rem;/);
+    expect(theme).not.toContain("--text-input--line-height");
+  });
   it("keeps custom line heights unitless for React Native CSS", () => {
     const theme = readFileSync(__filename.replace(".test.ts", ".css"), "utf8");
     const lineHeights = [...theme.matchAll(/--text-[\w-]+--line-height:\s*([^;]+);/g)].map(

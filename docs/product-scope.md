@@ -104,10 +104,10 @@ Phone navigation should begin with four destinations. If prototype testing shows
 does not justify permanent navigation, it may become secondary navigation without changing its
 functional scope.
 
-1. **Vehicle** — selected vehicle, immediate status, history, costs, and documents.
-2. **Fuel** — refuelling history, consumption summary, and add action.
-3. **Reminders** — upcoming and overdue insurance and inspection deadlines.
-4. **Settings** — units, data management, privacy, and help.
+1. **Vehicle** - selected vehicle, immediate status, history, costs, and documents.
+2. **Fuel** - refuelling history, consumption summary, and add action.
+3. **Reminders** - upcoming and overdue insurance and inspection deadlines.
+4. **Settings** - units, data management, privacy, and help.
 
 On iPad and Android tablets, the same information architecture should use a sidebar and list-detail
 presentation where it adds context. Tablets should not introduce different product concepts.
@@ -133,7 +133,7 @@ or modals on phones and contextual panels on tablets.
 | Reminders workspace       | Show upcoming, overdue, and unavailable notification states.                                                                     | Main destination.                                                       |
 | Reminder editor           | Create or edit insurance and technical-inspection deadlines and notification preferences.                                        | Focused form.                                                           |
 | Settings                  | Configure per-vehicle units, locale-sensitive preferences, privacy, and help.                                                    | Main destination with grouped plain lists.                              |
-| Data management           | Export data and documents, inspect storage, and perform explicitly confirmed destructive actions.                                | Secondary settings screen.                                              |
+| Data management           | Inspect storage and perform explicitly confirmed destructive actions; no user-facing export in the FREE release.                 | Secondary settings screen.                                              |
 
 ## Additional target-product screens and surfaces
 

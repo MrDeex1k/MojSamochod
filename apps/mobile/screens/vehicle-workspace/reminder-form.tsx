@@ -5,7 +5,7 @@ import { Alert, Platform, Pressable, ScrollView, Text, View } from "react-native
 import type { ReminderService } from "@/application/reminders/reminder-service";
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { calendarDate, dateInReminderZone, reminderTimeZone } from "@/domain/reminders/calendar";
 import {
   defaultNotificationDaysBefore,
@@ -113,7 +113,7 @@ export function ReminderForm({
     setPicker(new Date(`${initial}T12:00:00.000Z`));
   };
   const content = (
-    <Card className={embedded ? "min-h-full" : undefined}>
+    <FormSection className={embedded ? "p-screen" : undefined}>
       <Text accessibilityRole="header" className="text-title font-bold text-primary">
         {t(`reminders.kinds.${kind}`)}
       </Text>
@@ -207,7 +207,8 @@ export function ReminderForm({
         </Text>
       ) : null}
       <Button
-        disabled={busy || picker !== null}
+        busy={busy}
+        disabled={picker !== null}
         label={t("reminders.save")}
         onPress={() => void save()}
       />
@@ -217,11 +218,12 @@ export function ReminderForm({
         </View>
       ) : null}
       <Button disabled={busy} label={t("reminders.cancel")} onPress={cancel} variant="secondary" />
-    </Card>
+    </FormSection>
   );
   return embedded ? (
     <ScrollView
       contentContainerClassName="grow"
+      keyboardDismissMode="on-drag"
       automaticallyAdjustKeyboardInsets
       keyboardShouldPersistTaps="handled"
     >

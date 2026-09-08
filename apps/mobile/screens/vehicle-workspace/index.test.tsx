@@ -47,6 +47,16 @@ const vehicle = expectValid(
 );
 
 describe("VehicleWorkspaceView", () => {
+  it("keeps section navigation available inside an editor and returns to its source", async () => {
+    const onFuel = jest.fn();
+    const onDocuments = jest.fn();
+    await renderView("fuel", { onFuelChanged: jest.fn(), onSaved: jest.fn(), onFuel, onDocuments });
+    expect(screen.getAllByRole("tab")).toHaveLength(4);
+    await userEvent.press(screen.getByRole("button", { name: "Back" }));
+    expect(onFuel).toHaveBeenCalledTimes(1);
+    await userEvent.press(screen.getByRole("tab", { name: "Documents" }));
+    expect(onDocuments).toHaveBeenCalledTimes(1);
+  });
   it("returns to fuel after saving vehicle configuration opened from fuel", async () => {
     const onFuelChanged = jest.fn();
     const onSaved = jest.fn();
@@ -72,7 +82,12 @@ describe("VehicleWorkspaceView", () => {
 
 async function renderView(
   returnTo: "fuel" | "history",
-  callbacks: Readonly<{ onFuelChanged: jest.Mock; onSaved: jest.Mock }>,
+  callbacks: Readonly<{
+    onFuelChanged: jest.Mock;
+    onSaved: jest.Mock;
+    onFuel?: jest.Mock;
+    onDocuments?: jest.Mock;
+  }>,
 ) {
   await render(
     <VehicleWorkspaceView
@@ -87,13 +102,13 @@ async function renderView(
       onCancelFlow={jest.fn()}
       onChooseType={jest.fn()}
       onConfigureFuel={jest.fn()}
-      onDocuments={jest.fn()}
+      onDocuments={callbacks.onDocuments ?? jest.fn()}
       onDocumentsChanged={jest.fn()}
       onEditDocument={jest.fn()}
       onEditEntry={jest.fn()}
       onEditRefuelling={jest.fn()}
       onEditVehicle={jest.fn()}
-      onFuel={jest.fn()}
+      onFuel={callbacks.onFuel ?? jest.fn()}
       onReminders={jest.fn()}
       onFuelChanged={callbacks.onFuelChanged}
       onSaved={callbacks.onSaved}

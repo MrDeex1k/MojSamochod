@@ -1,3 +1,4 @@
+import { WorkspaceShell } from "./workspace-shell";
 import { ScrollPositionProvider } from "@/components/layout/scroll-positions";
 import { BackHandler } from "react-native";
 import { DataManagement } from "./data-management";
@@ -57,15 +58,17 @@ function VehicleWorkspaceController() {
   >({ status: "loading" });
 
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
   const section = workspaceSection(mode);
   const loadMore = async () => {
     if (loadingMore || !source.hasMore()) return;
     setLoadingMore(true);
+    setLoadMoreError(false);
     try {
       await source.loadMore();
       setAttempt((value) => value + 1);
     } catch {
-      setState({ status: "error" });
+      setLoadMoreError(true);
     }
     setLoadingMore(false);
   };
@@ -137,6 +140,8 @@ function VehicleWorkspaceController() {
   return (
     <VehicleWorkspaceView
       {...state.data}
+      loadMoreError={loadMoreError}
+      loadingMore={loadingMore}
       mode={mode}
       onErased={() => setState({ status: "missing" })}
       onLoadMore={
@@ -193,284 +198,174 @@ function VehicleWorkspaceController() {
 }
 
 export function VehicleWorkspaceView(props: VehicleWorkspaceViewProps) {
-  if (props.mode.kind === "data-management")
-    return (
-      <DataManagement
-        eraseData={props.services.eraseData}
-        onBack={props.onCancelFlow}
-        onErased={props.onErased}
-      />
-    );
-  if (props.mode.kind === "reminders") {
-    const { services, vehicle, onCancelFlow, onEditVehicle, photoUri } = props;
-    return (
+  const isDetail = ["detail", "document-detail", "refuelling-detail"].includes(props.mode.kind);
+  return (
+    <WorkspaceShell {...props}>
       <AdaptiveWorkspace
-        phone={<RemindersSection {...services} vehicle={vehicle} onBack={onCancelFlow} />}
-        primaryPane={
-          <RemindersSection {...services} vehicle={vehicle} onBack={onCancelFlow} embedded />
-        }
-        vehiclePane={
-          <VehicleSummary onEdit={onEditVehicle} photoUri={photoUri} tablet vehicle={vehicle} />
-        }
+        phone={renderContent(props, false)}
+        primaryPane={renderContent(props, true, isDetail)}
+        detailPane={isDetail ? renderContent(props, true) : undefined}
+        vehiclePane={<VehicleSummary photoUri={props.photoUri} tablet vehicle={props.vehicle} />}
       />
-    );
-  }
-  return <HistoryWorkspaceView {...props} />;
+    </WorkspaceShell>
+  );
 }
 
-function HistoryWorkspaceView({
-  documents,
-  entries,
-  mode,
-  onAddEntry,
-  onDataManagement,
-  onLoadMore,
-  onAddRefuelling,
-  onAddDocument,
-  onCancelFlow,
-  onChooseType,
-  onConfigureFuel,
-  onDocuments,
-  onDocumentsChanged,
-  onEditDocument,
-  onEditEntry,
-  onEditRefuelling,
-  onEditVehicle,
-  onFuel,
-  onReminders,
-  onFuelChanged,
-  onSaved,
-  onSelectEntry,
-  onSelectRefuelling,
-  onSelectDocument,
-  photoUri,
-  refuellingHistory,
-  services,
-  vehicle,
-}: VehicleWorkspaceViewProps) {
+function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, showList = false) {
+  const { mode, vehicle, services } = props;
   const configuredVehicle = hasFuelConfiguration(vehicle) ? vehicle : undefined;
-  const phone =
-    mode.kind === "fuel" ? (
-      <RefuellingList
-        history={refuellingHistory}
-        onAdd={onAddRefuelling}
-        onBack={onCancelFlow}
-        onConfigureFuel={onConfigureFuel}
-        onSelect={onSelectRefuelling}
-        vehicle={vehicle}
-      />
-    ) : mode.kind === "refuelling-form" && configuredVehicle ? (
-      <RefuellingForm
-        clock={services.clock}
-        onCancel={onFuel}
-        onSaved={onFuelChanged}
-        refuelling={mode.refuelling}
-        refuellings={services.refuellings}
-        vehicle={configuredVehicle}
-      />
-    ) : mode.kind === "refuelling-detail" && configuredVehicle ? (
-      <RefuellingDetail
-        onBack={onFuel}
-        onDeleted={onFuelChanged}
-        onEdit={() => onEditRefuelling(mode.refuelling)}
-        refuelling={mode.refuelling}
-        refuellings={services.refuellings}
-        vehicle={configuredVehicle}
-      />
-    ) : mode.kind === "documents" ? (
-      <DocumentList
-        documents={documents}
-        entries={entries}
-        onAdd={onAddDocument}
-        onBack={onCancelFlow}
-        onSelect={onSelectDocument}
-      />
-    ) : mode.kind === "document-form" ? (
-      <DocumentForm
-        document={mode.document}
-        documents={services.documents}
-        entries={entries}
-        onCancel={onDocuments}
-        onSaved={onDocumentsChanged}
-        picker={services.documentPicker}
-        vehicle={vehicle}
-      />
-    ) : mode.kind === "document-detail" ? (
-      <DocumentDetail
-        key={mode.document.id}
-        document={mode.document}
-        documents={services.documents}
-        entries={entries}
-        onBack={onDocuments}
-        onChanged={onDocumentsChanged}
-        onEdit={() => onEditDocument(mode.document)}
-        picker={services.documentPicker}
-        vehicle={vehicle}
-      />
-    ) : mode.kind === "vehicle-form" ? (
-      <VehicleEditForm
-        {...services}
-        existingPhotoUri={photoUri}
-        onCancel={mode.returnTo === "fuel" ? onFuel : onCancelFlow}
-        onSaved={mode.returnTo === "fuel" ? onFuelChanged : onSaved}
-        vehicle={vehicle}
-      />
-    ) : mode.kind === "select-type" ? (
-      <EntryTypeSelection onCancel={onCancelFlow} onSelect={onChooseType} />
-    ) : mode.kind === "form" ? (
-      <EntryForm
-        {...services}
-        entry={mode.entry}
-        onCancel={onCancelFlow}
-        onSaved={onSaved}
-        type={mode.type}
-        vehicle={vehicle}
-      />
-    ) : mode.kind === "detail" ? (
-      <EntryDetail
-        entry={mode.entry}
-        historyEntries={services.historyEntries}
-        onBack={onCancelFlow}
-        onDeleted={onSaved}
-        onEdit={() => onEditEntry(mode.entry)}
-        vehicle={vehicle}
-      />
-    ) : (
-      <PhoneWorkspace
-        entries={entries}
-        onLoadMore={onLoadMore}
-        onDataManagement={onDataManagement}
-        onAddEntry={onAddEntry}
-        onEditVehicle={onEditVehicle}
-        onFuel={onFuel}
-        onReminders={onReminders}
-        onDocuments={onDocuments}
-        onSelectEntry={onSelectEntry}
-        photoUri={photoUri}
-        vehicle={vehicle}
-      />
-    );
-
-  const primaryPane =
-    mode.kind === "fuel" || mode.kind === "refuelling-detail" ? (
-      <RefuellingList
-        embedded
-        history={refuellingHistory}
-        onAdd={onAddRefuelling}
-        onBack={onCancelFlow}
-        onConfigureFuel={onConfigureFuel}
-        onSelect={onSelectRefuelling}
-        vehicle={vehicle}
-      />
-    ) : mode.kind === "refuelling-form" && configuredVehicle ? (
-      <RefuellingForm
-        clock={services.clock}
-        embedded
-        onCancel={onFuel}
-        onSaved={onFuelChanged}
-        refuelling={mode.refuelling}
-        refuellings={services.refuellings}
-        vehicle={configuredVehicle}
-      />
-    ) : mode.kind === "documents" || mode.kind === "document-detail" ? (
-      <DocumentList
-        documents={documents}
-        embedded
-        entries={entries}
-        onAdd={onAddDocument}
-        onBack={onCancelFlow}
-        onSelect={onSelectDocument}
-      />
-    ) : mode.kind === "document-form" ? (
-      <DocumentForm
-        document={mode.document}
-        documents={services.documents}
-        embedded
-        entries={entries}
-        onCancel={onDocuments}
-        onSaved={onDocumentsChanged}
-        picker={services.documentPicker}
-        vehicle={vehicle}
-      />
-    ) : mode.kind === "vehicle-form" ? (
-      <VehicleEditForm
-        {...services}
-        embedded
-        existingPhotoUri={photoUri}
-        onCancel={mode.returnTo === "fuel" ? onFuel : onCancelFlow}
-        onSaved={mode.returnTo === "fuel" ? onFuelChanged : onSaved}
-        vehicle={vehicle}
-      />
-    ) : mode.kind === "select-type" ? (
-      <EntryTypeSelection embedded onCancel={onCancelFlow} onSelect={onChooseType} />
-    ) : mode.kind === "form" ? (
-      <EntryForm
-        {...services}
-        embedded
-        entry={mode.entry}
-        onCancel={onCancelFlow}
-        onSaved={onSaved}
-        type={mode.type}
-        vehicle={vehicle}
-      />
-    ) : (
-      <HistoryCard
-        entries={entries}
-        onLoadMore={onLoadMore}
-        onDataManagement={onDataManagement}
-        onAddEntry={onAddEntry}
-        onDocuments={onDocuments}
-        onFuel={onFuel}
-        onReminders={onReminders}
-        onSelectEntry={onSelectEntry}
-        vehicle={vehicle}
-      />
-    );
-
-  const detailPane =
-    mode.kind === "refuelling-detail" && configuredVehicle ? (
-      <RefuellingDetail
-        embedded
-        onBack={onFuel}
-        onDeleted={onFuelChanged}
-        onEdit={() => onEditRefuelling(mode.refuelling)}
-        refuelling={mode.refuelling}
-        refuellings={services.refuellings}
-        vehicle={configuredVehicle}
-      />
-    ) : mode.kind === "document-detail" ? (
-      <DocumentDetail
-        key={mode.document.id}
-        document={mode.document}
-        documents={services.documents}
-        embedded
-        entries={entries}
-        onBack={onDocuments}
-        onChanged={onDocumentsChanged}
-        onEdit={() => onEditDocument(mode.document)}
-        picker={services.documentPicker}
-        vehicle={vehicle}
-      />
-    ) : mode.kind === "detail" ? (
-      <EntryDetail
-        embedded
-        entry={mode.entry}
-        historyEntries={services.historyEntries}
-        onBack={onCancelFlow}
-        onDeleted={onSaved}
-        onEdit={() => onEditEntry(mode.entry)}
-        vehicle={vehicle}
-      />
-    ) : undefined;
-
-  return (
-    <AdaptiveWorkspace
-      detailPane={detailPane}
-      phone={phone}
-      primaryPane={primaryPane}
-      vehiclePane={
-        <VehicleSummary onEdit={onEditVehicle} photoUri={photoUri} tablet vehicle={vehicle} />
-      }
-    />
+  const kind = showList ? workspaceSection(mode) : mode.kind;
+  switch (kind) {
+    case "data-management":
+      return (
+        <DataManagement
+          eraseData={services.eraseData}
+          onBack={props.onCancelFlow}
+          onErased={props.onErased}
+        />
+      );
+    case "reminders":
+      return (
+        <RemindersSection
+          {...services}
+          embedded={embedded}
+          vehicle={vehicle}
+          onBack={props.onCancelFlow}
+        />
+      );
+    case "fuel":
+      return (
+        <RefuellingList
+          embedded={embedded}
+          history={props.refuellingHistory}
+          onAdd={props.onAddRefuelling}
+          onBack={props.onCancelFlow}
+          onConfigureFuel={props.onConfigureFuel}
+          onSelect={props.onSelectRefuelling}
+          selectedId={mode.kind === "refuelling-detail" ? mode.refuelling.id : undefined}
+          vehicle={vehicle}
+        />
+      );
+    case "documents":
+      return (
+        <DocumentList
+          embedded={embedded}
+          documents={props.documents}
+          entries={props.entries}
+          onAdd={props.onAddDocument}
+          onBack={props.onCancelFlow}
+          onSelect={props.onSelectDocument}
+          selectedId={mode.kind === "document-detail" ? mode.document.id : undefined}
+        />
+      );
+    case "document-form":
+      if (mode.kind !== "document-form") break;
+      return (
+        <DocumentForm
+          embedded={embedded}
+          document={mode.document}
+          documents={services.documents}
+          entries={props.entries}
+          onCancel={props.onDocuments}
+          onSaved={props.onDocumentsChanged}
+          picker={services.documentPicker}
+          vehicle={vehicle}
+        />
+      );
+    case "document-detail":
+      if (mode.kind !== "document-detail") break;
+      return (
+        <DocumentDetail
+          key={mode.document.id}
+          embedded={embedded}
+          document={mode.document}
+          documents={services.documents}
+          entries={props.entries}
+          onBack={props.onDocuments}
+          onChanged={props.onDocumentsChanged}
+          onEdit={() => props.onEditDocument(mode.document)}
+          picker={services.documentPicker}
+          vehicle={vehicle}
+        />
+      );
+    case "refuelling-form":
+      if (mode.kind !== "refuelling-form" || !configuredVehicle) break;
+      return (
+        <RefuellingForm
+          embedded={embedded}
+          clock={services.clock}
+          onCancel={props.onFuel}
+          onSaved={props.onFuelChanged}
+          refuelling={mode.refuelling}
+          refuellings={services.refuellings}
+          vehicle={configuredVehicle}
+        />
+      );
+    case "refuelling-detail":
+      if (mode.kind !== "refuelling-detail" || !configuredVehicle) break;
+      return (
+        <RefuellingDetail
+          key={mode.refuelling.id}
+          embedded={embedded}
+          onBack={props.onFuel}
+          onDeleted={props.onFuelChanged}
+          onEdit={() => props.onEditRefuelling(mode.refuelling)}
+          refuelling={mode.refuelling}
+          refuellings={services.refuellings}
+          vehicle={configuredVehicle}
+        />
+      );
+    case "vehicle-form":
+      if (mode.kind !== "vehicle-form") break;
+      return (
+        <VehicleEditForm
+          {...services}
+          embedded={embedded}
+          existingPhotoUri={props.photoUri}
+          onCancel={mode.returnTo === "fuel" ? props.onFuel : props.onCancelFlow}
+          onSaved={mode.returnTo === "fuel" ? props.onFuelChanged : props.onSaved}
+          vehicle={vehicle}
+        />
+      );
+    case "select-type":
+      return (
+        <EntryTypeSelection
+          embedded={embedded}
+          onCancel={props.onCancelFlow}
+          onSelect={props.onChooseType}
+        />
+      );
+    case "form":
+      if (mode.kind !== "form") break;
+      return (
+        <EntryForm
+          {...services}
+          embedded={embedded}
+          entry={mode.entry}
+          onCancel={props.onCancelFlow}
+          onSaved={props.onSaved}
+          type={mode.type}
+          vehicle={vehicle}
+        />
+      );
+    case "detail":
+      if (mode.kind !== "detail") break;
+      return (
+        <EntryDetail
+          key={mode.entry.id}
+          embedded={embedded}
+          entry={mode.entry}
+          historyEntries={services.historyEntries}
+          onBack={props.onCancelFlow}
+          onDeleted={props.onSaved}
+          onEdit={() => props.onEditEntry(mode.entry)}
+          vehicle={vehicle}
+        />
+      );
+  }
+  return embedded ? (
+    <HistoryCard {...props} selectedId={mode.kind === "detail" ? mode.entry.id : undefined} />
+  ) : (
+    <PhoneWorkspace {...props} />
   );
 }

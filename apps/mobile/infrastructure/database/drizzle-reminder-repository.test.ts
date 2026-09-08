@@ -82,7 +82,7 @@ describe("Reminder persistence with real SQLite and the Expo Drizzle driver", ()
     expect(database.select().from(schema.reminders).all()).toEqual([]);
     expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
     expect(sqlite.prepare("SELECT count(*) AS count FROM __drizzle_migrations").get()).toEqual({
-      count: 8,
+      count: journal.entries.length,
     });
   });
 

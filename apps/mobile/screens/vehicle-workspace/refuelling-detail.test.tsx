@@ -73,6 +73,7 @@ describe("RefuellingDetail", () => {
     expect(screen.getByText("$300.00")).toBeOnTheScreen();
     expect(screen.getByText("6.667 USD/l")).toBeOnTheScreen();
     expect(screen.queryByText(/UTC/)).not.toBeOnTheScreen();
+    await userEvent.press(screen.getByRole("button", { name: "More actions" }));
     await userEvent.press(screen.getByRole("button", { name: "Delete refuelling" }));
 
     await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));

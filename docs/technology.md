@@ -21,33 +21,32 @@ The application currently lives in `apps/mobile` inside a lightweight NUB worksp
 dependencies are pinned exactly; the manifest and `nub.lock` are the source of truth for full
 versions.
 
-| Area                  | Current choice                                                           | Role                                                              |
-| --------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| Application framework | Expo SDK 57 (`expo` 57.0.19)                                             | Cross-platform runtime, native modules, and development workflow. |
-| UI runtime            | React Native 0.86.3 and React 19.2.3                                     | Shared Android phone/tablet, iOS, and iPadOS application code.    |
-| Language              | TypeScript 7.0.2                                                         | Static typing for application and domain code.                    |
-| Navigation            | Expo Router 57.0.18                                                      | File-based navigation and typed routes.                           |
-| Styling               | NativeWind 5.0.0-preview.4, Tailwind CSS 4.3.3, `react-native-css` 3.0.7 | Shared utility styling and CSS interoperability.                  |
-| Animation runtime     | React Native Reanimated 4.5.1 and React Native Worklets 0.10.1           | Performant native-thread interaction and motion where justified.  |
-| Gestures              | React Native Gesture Handler 2.32.0                                      | Platform-aware touch interactions.                                |
-| System appearance     | Expo System UI 57.0.3                                                    | Applies the dark interface style consistently on Android.         |
-| Unit/component tests  | Jest 29.7.0, Jest Expo 57.0.5, React Native Testing Library 14.0.1       | Tests pure logic and user-visible component behavior.             |
-| Local database        | Expo SQLite 57.0.2 and Drizzle ORM 0.45.2                                | Persistent SQLite access and typed queries.                       |
-| Database migrations   | Drizzle Kit 0.31.10                                                      | Generates reviewable SQL migrations bundled with the application. |
-| Record identifiers    | UUID 14.0.2 and Expo Crypto 57.0.2                                       | UUIDv7 generation backed by native secure randomness.             |
-| Document import       | Expo Document Picker 57.0.1                                              | Native PDF/JPEG/PNG selection with platform-granted file access.  |
-| Native file export    | Expo Sharing 57.0.17                                                     | Platform share/export surface for managed documents.              |
+| Area                  | Current choice                                                                | Role                                                                        |
+| --------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Application framework | Expo SDK 57 (`expo` 57.0.19)                                                  | Cross-platform runtime, native modules, and development workflow.           |
+| UI runtime            | React Native 0.86.3 and React 19.2.3                                          | Shared Android phone/tablet, iOS, and iPadOS application code.              |
+| Language              | TypeScript 7.0.2                                                              | Static typing for application and domain code.                              |
+| Navigation            | Expo Router 57.0.18                                                           | File-based navigation and typed routes.                                     |
+| Styling               | NativeWind 5.0.0-preview.4, Tailwind CSS 4.3.3, `react-native-css` 3.0.7      | Shared utility styling and CSS interoperability.                            |
+| Animation runtime     | React Native Reanimated 4.5.1 and React Native Worklets 0.10.1                | Performant native-thread interaction and motion where justified.            |
+| Gestures              | React Native Gesture Handler 2.32.0                                           | Platform-aware touch interactions.                                          |
+| System appearance     | Expo System UI 57.0.3                                                         | Applies the dark interface style consistently on Android.                   |
+| Unit/component tests  | Jest 29.7.0, Jest Expo 57.0.5, React Native Testing Library 14.0.1            | Tests pure logic and user-visible component behavior.                       |
+| Local database        | Expo SQLite 57.0.2 and Drizzle ORM 0.45.2                                     | Persistent SQLite access and typed queries.                                 |
+| Database migrations   | Drizzle Kit 0.31.10                                                           | Generates reviewable SQL migrations bundled with the application.           |
+| Record identifiers    | UUID 14.0.2 and Expo Crypto 57.0.2                                            | UUIDv7 generation backed by native secure randomness.                       |
+| Document import       | Expo Document Picker 57.0.1                                                   | Native PDF/JPEG/PNG selection with platform-granted file access.            |
+| In-app PDF preview    | Local `document-preview` Expo module, PDFKit/PdfRenderer and Expo File System | Bounded internal preview of one managed PDF; no outbound export or sharing. |
 
 NativeWind 5 is intentionally a preview dependency. Its compatibility with the active Expo SDK
 must be rechecked before SDK upgrades and before a production release.
 
-Phase 6 stage 6 refreshes compatible dependencies without changing the SDK major, Node pin or
-NUB pin. Keep the `lightningcss` 1.30.1 override: the
+Compatible dependencies were refreshed without changing the SDK major, Node pin or NUB pin. Keep
+the `lightningcss` 1.30.1 override: the
 [NativeWind v5 installation guide](https://www.nativewind.dev/v5/getting-started/installation)
 still requires it to avoid CSS deserialization failures. React/RN and native modules follow the
 installed Expo compatibility matrix; Jest 29 matches the Jest 29 internals of `jest-expo` 57.0.5.
-The working [dependency report](phase-6-step-6-dependencies.md) records exact changes, exceptions
-and verification. Newer registry versions alone are not a reason to bypass SDK compatibility.
+Newer registry versions alone are not a reason to bypass SDK compatibility.
 
 ## Theme source of truth
 
@@ -82,6 +81,9 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
   passthrough.
 - Expo Doctor is required after Expo, native configuration, or dependency changes. React Doctor is
   required after React component changes.
+- Release builds, signing and store submission run locally on the publisher's MacBook. The current
+  release process does not configure or upload the project to EAS services; adopting EAS later
+  requires a separate decision.
 
 ## Local-first architecture
 
@@ -141,26 +143,27 @@ JPEG processing, `expo-image` for native rendering, `expo-file-system` for priva
 and `@react-native-community/datetimepicker` for separate native date and UTC-time controls. Direct
 dependencies are pinned to Expo SDK-compatible versions in the application manifest.
 
-Phase 4 uses `expo-document-picker` for system PDF/JPEG/PNG selection and `expo-sharing` for native
-export. Android imports preserve the picker-granted `content://` URI until `expo-file-system` copies
+Document selection uses `expo-document-picker`. Android imports preserve the picker-granted `content://` URI until `expo-file-system` copies
 the file into private managed storage; copying first into Expo Go's shared cache can lose scoped
-read permission. Before sharing, the application creates a cache alias with the original file name
-so the platform surface does not expose the internal UUID storage key.
+read permission. iOS uses `copyToCacheDirectory: true` so a selected document remains readable
+after picker dismissal. Phase 7 previews managed PDFs inside the application through the local
+`document-preview` Expo module, using PDFKit on Apple and PdfRenderer on Android. Preview work is
+bounded and temporary render files are cleaned up after use. The `expo-sharing` package and plugin
+were removed because there are no outbound document sharing, export, download or automatic external
+opening actions.
 
-Phase 5 uses pure TypeScript domain functions for canonical distance and volume conversion,
-refuelling validation, exact price derivation, and auditable fuel-consumption calculation. Vehicle
+Pure TypeScript domain functions provide canonical distance and volume conversion, refuelling
+validation, exact price derivation, and auditable fuel-consumption calculation. Vehicle
 preferences control distance, fuel-volume, and consumption presentation without rewriting
-historical source records. SQLite persists raw refuelling data, while JSON export v3 exposes those
-records without storing derived consumption values.
+historical source records. SQLite persists raw refuelling data, while the internal JSON v4 manifest
+exposes those records without storing derived consumption values.
 
-Phase 6 stages 1–2 add pure reminder-domain rules, a vehicle-owned SQLite reminder table,
-and application services. Migration `0007_add_vehicle_reminders.sql` enforces one current deadline
-per vehicle and kind. JSON export v4 adds reminder source data without device notification state.
-Stage 3 adds `expo-notifications` (updated to 57.0.16 in stage 6) behind an application port, explicit permission handling,
-an Android notification channel, and one-shot absolute-time scheduling. The local-only config
-removes the APNs entitlement introduced by the default plugin. Stages 4–5 add schedule reconciliation
-and localized reminder UI. Stage 6 updates dependencies and verifies tests and native bundles;
-final native delivery and application-wide regression acceptance remain stage 7. See
+Reminder-domain rules, a vehicle-owned SQLite table and application services retain one current
+deadline per vehicle and kind. The internal JSON v4 manifest includes reminder source data without
+device notification state. `expo-notifications` 57.0.16 sits behind an application port with explicit
+permission handling, an Android channel and one-shot absolute-time scheduling. The local-only
+configuration removes the APNs entitlement introduced by the default plugin. Schedule
+reconciliation and localized UI are implemented. See
 [local-reminder-notifications.md](local-reminder-notifications.md).
 
 ## Planned capabilities and open selections

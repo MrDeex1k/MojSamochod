@@ -2,16 +2,15 @@
 
 ## Implementation boundary
 
-Phase 6 stage 3 introduces `expo-notifications` 57.0.15, pinned to the version recommended by the
-installed Expo 57.0.18 package's `bundledNativeModules.json`. Installation uses NUB and SFW.
+The current implementation uses `expo-notifications` 57.0.16 with Expo 57.0.19. Installation and
+dependency updates use NUB and SFW.
 
 `ReminderNotifications` is an application-level port; `NativeReminderNotifications` implements
 permission inspection, explicit permission requests, settings navigation, one-shot scheduling,
 listing, and cancellation. Domain code does not import Expo or React Native.
 
-Stage 4 adds reconciliation between stored reminders and native schedules. Stage 5 adds reminder
-forms, contextual permission education and reactive permission/schedule feedback. Dependency updates are stage 6; native delivery and full four-device
-regression verification follow in stage 7 and remain pending.
+Stored reminders are reconciled with native schedules. Localized forms provide contextual
+permission education and reactive permission/schedule feedback.
 
 ## Permissions and presentation
 
@@ -100,80 +99,20 @@ the app's generated entitlements or manifest. Before phase completion, verify pe
 denial/revocation, foreground/background delivery, cancellation, restart and travel on iOS/iPadOS
 and Android phone/tablet targets, using physical devices wherever simulator behavior is insufficient.
 
-## Expo Go 57 availability — 2026-09-03
+## Verification boundaries
 
-The project-wide fast-iteration and final-acceptance rules are in the
-[verification matrix](technology.md#verification-matrix).
+- Expo Go 57 supports fast UI iteration but does not validate this application's entitlements,
+  manifest, notification channel or signing.
+- Android Expo Go has a channel-provider incompatibility with the installed notification module.
+  The adapter reports it as unavailable without losing reminder data. The issue was not reproduced
+  in the rebuilt QA application.
+- Unit tests cover scheduling, permissions, reconciliation and native-adapter failures. They do not
+  prove delivery under arbitrary device power-management policies.
+- Rebuilt QA applications were checked on iPhone, iPad, Android phone and Android tablet. Physical
+  device power management and release signing remain publication gates.
+- The narrow local-notification API facade avoids remote push-token initialization and remains
+  protected by an import regression test.
 
-The App Store now distributes Expo Go with SDK 57 support. For this SDK 57 project, this enables
-quick checks on physical iPhones and iPads using the store app and Metro, without preparing a
-separate native app merely to load the JavaScript project. It does not update repository packages
-or validate this project's custom native configuration.
-
-The new iOS store version requires the same Expo account to be signed in both in Expo CLI and
-Expo Go. CLI login uses `nub exec expo login` from `apps/mobile`. According to Expo's announcement,
-this requirement does not apply to simulator versions or development builds. See the
-[Expo announcement](https://expo.dev/changelog/expo-go-57-login) and
-[App Store listing](https://apps.apple.com/us/app/expo-go/id982107779).
-
-Local notifications remain available in Expo Go, but the host app owns its permissions, entitlements
-and bundled native modules. Final stage 7 acceptance must also use our rebuilt native app to verify
-the local-only plugin, application-specific permissions and upgraded native dependencies. See
-[development builds](https://docs.expo.dev/develop/development-builds/introduction/).
-
-## Verification recorded for stage 3
-
-- Unit tests cover the native adapter with mocked OS APIs; they do not prove device delivery.
-- Expo configuration introspection confirms no APNs entitlement, background remote mode or explicit
-  exact-alarm permission in the generated application configuration.
-- Expo Doctor reports 19/21 checks passing: it does not recognize `nub.lock`, and its package-version
-  check flags the intentional TypeScript 7 choice plus newer Expo patches. On 2026-09-03 it suggested
-  Expo 57.0.19 and notifications 57.0.16, alongside updates to constants, image, image manipulator,
-  image picker, linking, router and sharing. These are recorded, not suppressed or broadly upgraded
-  as part of notification integration.
-
-API reference: [Expo Notifications](https://docs.expo.dev/versions/latest/sdk/notifications/).
-
-## Stage 5 host compatibility findings
-
-On 2026-09-04, Expo Go 57.0.9 was used for native UI checks on all four form factors.
-The `expo-notifications` 57.0.15 barrel eagerly imports push-token auto-registration, which throws
-on Android Expo Go even though application code only uses local notifications. The narrow
-`local-notifications-api.ts` facade imports only the installed package's local API build modules.
-A regression test rejects imports of remote registration and the push-token emitter. These are
-internal package paths: review them during stage 6 updates and prefer the public entry point once
-it no longer causes remote initialization. No global warning suppression or token registration is used.
-
-With local imports, Android Expo Go starts and reminder CRUD works, but its native
-`ExpoNotificationChannelManager.getNotificationChannelAsync` rejects with a null
-`NotificationsChannelsProvider`. The adapter preserves the failure as `unavailable`; the UI shows
-an explicit inspection/scheduling error and retry without losing the saved deadline. It does not
-pretend permission was granted or silently skip channel checks. Apple Expo Go permission denial
-and grant were exercised successfully. These findings do not prove behavior in our own build.
-Stage 7 must repeat the permission and delivery matrix using rebuilt application binaries.
-
-## Stage 6 dependency verification
-
-Updated to Expo 57.0.19 and `expo-notifications` 57.0.16. The latter's changelog records no
-user-facing changes; source inspection still shows eager remote registration and the Android
-Expo Go exception. The local-only facade remains, with passing import/adapter tests and Hermes
-bundle exports for both platforms. This source check does not assert that Android Go's native
-channel-provider failure was repaired. Rebuilt app verification remains stage 7.
-
-Expo Doctor 1.20.4 passes 19/21 checks: only unrecognized `nub.lock` and the intentional
-TypeScript 7 choice remain. No newer Expo patch mismatch remains in the checked dependency set.
-
-## Stage 7 native acceptance
-
-Our own `dev.mojeauto.qa` release-configuration builds were tested on iPhone, iPad, Android phone
-and Android tablet on 2026-09-04. Android channel creation, permission handling and scheduling work
-in this host; the earlier Expo Go provider failure was not reproduced. The local-only API facade
-remains necessary for the supported Go iteration path.
-
-Native probes confirmed owned notification delivery, cancellation, restart persistence and retained
-timezone behavior. Apple transport probes used shortened native triggers; Android delivery used
-a temporary emulator-clock advance with clock settings restored afterward. These are not claims
-of exact 09:00 delivery under arbitrary real-world device policies. Domain/DST/JSON checks remain
-automated; physical-device power-management and release-signing acceptance remain release gates.
-See the [acceptance report](phase-6-step-7-verification.md) and
-[local QA build procedure](native-qa-builds.md) for the exact scope and reproduction constraints.
+See the [verification matrix](technology.md#verification-matrix),
+[local QA build procedure](native-qa-builds.md) and
+[Expo Notifications API](https://docs.expo.dev/versions/latest/sdk/notifications/).

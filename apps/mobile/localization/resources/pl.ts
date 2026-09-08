@@ -1,4 +1,13 @@
 export const pl = {
+  navigation: {
+    back: "Wróć",
+    history: "Historia",
+    fuel: "Paliwo",
+    documents: "Dokumenty",
+    reminders: "Terminy",
+    vehicle: "Pojazd",
+    settings: "Dane",
+  },
   dataManagement: {
     title: "Twoje dane",
     privacy:
@@ -39,7 +48,7 @@ export const pl = {
     zoneHelper: "O 09:00 w strefie {{zone}}. Ta strefa nie zmieni się podczas podróży.",
     alertsOff: "Powiadomienia dla tego terminu są wyłączone. Data pozostaje na liście.",
     permissionOnSave:
-      "Najpierw zapisz termin. Potem możesz zezwolić na powiadomienia — zgoda jest opcjonalna.",
+      "Najpierw zapisz termin. Potem możesz zezwolić na powiadomienia - zgoda jest opcjonalna.",
     save: "Zapisz termin",
     cancel: "Anuluj",
     delete: "Usuń termin",
@@ -77,10 +86,12 @@ export const pl = {
     channelName: "Przypomnienia o pojeździe",
     insuranceTitle: "Termin ubezpieczenia",
     inspectionTitle: "Termin badania technicznego",
-    validUntil: "{{vehicle}} — ważne do {{date}}.",
+    validUntil: "{{vehicle}} - ważne do {{date}}.",
   },
   common: {
     appName: "Moje Auto",
+    cancel: "Anuluj",
+    moreActions: "Więcej działań",
   },
   database: {
     errorAction: "Spróbuj ponownie",
@@ -90,6 +101,16 @@ export const pl = {
     loading: "Przygotowywanie danych",
   },
   documents: {
+    fullscreenPreview: "Otwórz na pełnym ekranie",
+    closePreview: "Zamknij podgląd",
+    zoomIn: "Powiększ",
+    zoomOut: "Pomniejsz",
+    fitPage: "Dopasuj stronę",
+
+    chooseRelation: "Wybierz powiązany wpis",
+    searchEntries: "Szukaj wpisu",
+    noMatchingEntries: "Brak pasujących wpisów.",
+
     clearDate: "Usuń datę",
     previewError: "Nie udało się wyświetlić PDF. Spróbuj ponownie.",
     page: "Strona {{page}} z {{count}}",
@@ -188,6 +209,7 @@ export const pl = {
     title: { inspection: "Dodaj przegląd", repair: "Dodaj naprawę", replacement: "Dodaj wymianę" },
   },
   entryDetail: {
+    actionsTitle: "Działania wpisu",
     back: "Wróć do historii",
     cost: "Koszt",
     dateTime: "Data i czas",
@@ -214,6 +236,7 @@ export const pl = {
     title: "Wybierz typ wpisu",
   },
   firstVehicle: {
+    optionalDetails: "Dodatkowe dane · opcjonalnie",
     addAction: "Dodaj pojazd",
     description: "Dodaj pojazd, aby rozpocząć prowadzenie jego pełnej historii w jednym miejscu.",
     distanceUnitLabel: "Jednostka odległości",
@@ -254,6 +277,7 @@ export const pl = {
     title: "Obróć urządzenie",
   },
   refuelling: {
+    actionsTitle: "Działania tankowania",
     add: "Dodaj tankowanie",
     addTitle: "Dodaj tankowanie",
     averageConsumption: "Średnie zużycie",
@@ -269,7 +293,7 @@ export const pl = {
     dateLabel: "Data tankowania",
     dateTime: "Data i godzina",
     delete: "Usuń tankowanie",
-    deleteDescription: "{{date}} — {{quantity}}{{odometer}}. Tej operacji nie można cofnąć.",
+    deleteDescription: "{{date}} - {{quantity}}{{odometer}}. Tej operacji nie można cofnąć.",
     deleteError: "Nie udało się usunąć tankowania. Spróbuj ponownie.",
     deleteTitle: "Usunąć to tankowanie?",
     discard: "Odrzuć zmiany",
@@ -336,6 +360,7 @@ export const pl = {
     title: "Edytuj pojazd",
   },
   workspace: {
+    pageError: "Nie udało się wczytać kolejnych wpisów. Zapisana historia jest nadal dostępna.",
     addEntry: "Dodaj wpis",
     addFirstEntry: "Dodaj pierwszy wpis",
     editVehicle: "Edytuj pojazd",

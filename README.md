@@ -7,8 +7,6 @@ Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie za
 ## Dokumentacja produktu
 
 - [Założenia produktu](./docs/README.md)
-- [Model domenowy historii pojazdu](./docs/domain-model.md)
-- [Przepływ pierwszego pojazdu](./docs/first-vehicle-user-flow.md)
 - [Zakres MVP i mapa ekranów](./docs/product-scope.md)
 - [Technologie i architektura](./docs/technology.md)
 - [Kierunek designu](./docs/design-direction.md)

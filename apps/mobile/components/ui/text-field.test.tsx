@@ -21,6 +21,7 @@ describe("TextField", () => {
 
     expect(screen.getByText("Brand is required")).toBeOnTheScreen();
     expect(screen.queryByText("Enter the manufacturer")).not.toBeOnTheScreen();
+    expect(screen.getByLabelText("Brand")).toHaveProp("accessibilityHint", "Brand is required");
   });
 
   it("can be disabled", async () => {
@@ -29,7 +30,7 @@ describe("TextField", () => {
     expect(screen.getByLabelText("Brand")).toBeDisabled();
   });
 
-  it("centers a single-line value while leaving line height to the scalable theme", async () => {
+  it("centers a single-line value without imposing paragraph line spacing", async () => {
     await render(<TextField label="Odometer" value="240" />);
 
     const input = screen.getByLabelText("Odometer");
@@ -39,5 +40,10 @@ describe("TextField", () => {
       paddingHorizontal: 16,
       paddingVertical: 0,
     });
+  });
+
+  it("keeps multiline notes aligned to the top", async () => {
+    await render(<TextField multiline label="Notes" value={"First line\nSecond line"} />);
+    expect(screen.getByLabelText("Notes")).toHaveProp("textAlignVertical", "top");
   });
 });

@@ -1,4 +1,13 @@
 export const en = {
+  navigation: {
+    back: "Back",
+    history: "History",
+    fuel: "Fuel",
+    documents: "Documents",
+    reminders: "Deadlines",
+    vehicle: "Vehicle",
+    settings: "Data",
+  },
   dataManagement: {
     title: "Your data",
     privacy:
@@ -75,10 +84,12 @@ export const en = {
     channelName: "Vehicle reminders",
     insuranceTitle: "Insurance deadline",
     inspectionTitle: "Technical inspection deadline",
-    validUntil: "{{vehicle}} — valid until {{date}}.",
+    validUntil: "{{vehicle}} - valid until {{date}}.",
   },
   common: {
     appName: "My Car",
+    cancel: "Cancel",
+    moreActions: "More actions",
   },
   database: {
     errorAction: "Try again",
@@ -87,6 +98,16 @@ export const en = {
     loading: "Preparing data",
   },
   documents: {
+    fullscreenPreview: "View full screen",
+    closePreview: "Close preview",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    fitPage: "Fit page",
+
+    chooseRelation: "Choose related entry",
+    searchEntries: "Search entries",
+    noMatchingEntries: "No matching entries.",
+
     clearDate: "Clear date",
     previewError: "Could not display this PDF. Try again.",
     page: "Page {{page}} of {{count}}",
@@ -185,6 +206,7 @@ export const en = {
     title: { inspection: "Add inspection", repair: "Add repair", replacement: "Add replacement" },
   },
   entryDetail: {
+    actionsTitle: "Entry actions",
     back: "Back to history",
     cost: "Cost",
     dateTime: "Date and time",
@@ -211,6 +233,7 @@ export const en = {
     title: "Choose entry type",
   },
   firstVehicle: {
+    optionalDetails: "Additional details · optional",
     addAction: "Add vehicle",
     description: "Add your vehicle to start keeping its complete history in one place.",
     distanceUnitLabel: "Distance unit",
@@ -250,6 +273,7 @@ export const en = {
     title: "Rotate your device",
   },
   refuelling: {
+    actionsTitle: "Refuelling actions",
     add: "Add refuelling",
     addTitle: "Add refuelling",
     averageConsumption: "Average consumption",
@@ -266,7 +290,7 @@ export const en = {
     dateLabel: "Refuelling date",
     dateTime: "Date and time",
     delete: "Delete refuelling",
-    deleteDescription: "{{date}} — {{quantity}}{{odometer}}. This operation cannot be undone.",
+    deleteDescription: "{{date}} - {{quantity}}{{odometer}}. This operation cannot be undone.",
     deleteError: "The refuelling could not be deleted. Try again.",
     deleteTitle: "Delete this refuelling?",
     discard: "Discard changes",
@@ -330,6 +354,7 @@ export const en = {
     title: "Edit vehicle",
   },
   workspace: {
+    pageError: "Could not load more entries. Your loaded history is still available.",
     addEntry: "Add entry",
     addFirstEntry: "Add first entry",
     editVehicle: "Edit vehicle",

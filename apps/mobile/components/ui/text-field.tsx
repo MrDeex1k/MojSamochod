@@ -9,6 +9,7 @@ type TextFieldProps = TextInputProps & {
 };
 
 export function TextField({
+  accessibilityHint,
   accessibilityState,
   className,
   editable = true,
@@ -34,14 +35,15 @@ export function TextField({
       </Text>
       <TextInput
         ref={inputRef}
+        keyboardAppearance="dark"
         aria-invalid={Boolean(error)}
-        accessibilityHint={supportingText}
+        accessibilityHint={error ?? accessibilityHint ?? helperText}
         accessibilityLabel={label}
         accessibilityLabelledBy={labelId}
         accessibilityState={{ ...accessibilityState, disabled: !editable }}
-        className={`rounded-control border bg-surface-muted px-content text-body text-primary placeholder:text-secondary focus:border-accent disabled:opacity-50 ${
+        className={`rounded-control border bg-surface-muted px-content text-primary placeholder:text-secondary focus:border-accent disabled:opacity-50 ${
           error ? "border-danger" : "border-divider"
-        } ${multiline ? "min-h-28 py-control" : "min-h-12"} ${className ?? ""}`}
+        } ${multiline ? "min-h-28 py-control text-body" : "min-h-12 text-input"} ${className ?? ""}`}
         editable={editable}
         multiline={multiline}
         nativeID={inputId}
