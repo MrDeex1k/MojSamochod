@@ -20,7 +20,8 @@ export function useNavigationMaterial() {
     let active = true;
     let revision = 0;
     const refresh = () => {
-      const current = ++revision;
+      revision += 1;
+      const current = revision;
       void Promise.all([
         AccessibilityInfo.isReduceTransparencyEnabled(),
         AccessibilityInfo.isDarkerSystemColorsEnabled(),
@@ -52,7 +53,7 @@ export function useNavigationMaterial() {
     refresh();
     return () => {
       active = false;
-      revision++;
+      revision += 1;
       subscriptions.forEach((subscription) => subscription.remove());
     };
   }, [supported]);

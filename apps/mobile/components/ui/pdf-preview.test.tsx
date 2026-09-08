@@ -82,3 +82,20 @@ it("can return from a failed page in fullscreen without trapping the reader", as
   expect(await modal.findByLabelText("PDF page 1")).toBeOnTheScreen();
   expect(screen.queryByRole("alert")).toBeNull();
 });
+
+it("can skip forward from a failed page in fullscreen", async () => {
+  await render(<PdfPreview uri="file:///document.pdf" name="Invoice" />);
+  await screen.findByText("Page 1 of 2");
+  await userEvent.press(screen.getByRole("button", { name: "Next page" }));
+  await screen.findByText("Page 2 of 2");
+  await userEvent.press(screen.getByRole("button", { name: "View full screen" }));
+  const modal = within(screen.getByTestId("pdf-fullscreen"));
+  renderPage.mockRejectedValueOnce(new Error("Native render failed"));
+  await userEvent.press(modal.getByRole("button", { name: "Previous page" }));
+  expect(await modal.findByRole("alert")).toHaveTextContent(
+    "Could not display this PDF. Try again.",
+  );
+  await userEvent.press(modal.getByRole("button", { name: "Next page" }));
+  expect(await modal.findByLabelText("PDF page 2")).toBeOnTheScreen();
+  expect(screen.queryByRole("alert")).toBeNull();
+});

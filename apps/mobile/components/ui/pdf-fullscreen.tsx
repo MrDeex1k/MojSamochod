@@ -135,7 +135,7 @@ function Reader({
           <Tool
             label={t("documents.nextPage")}
             symbol="›"
-            disabled={!ready || page + 1 >= count}
+            disabled={page + 1 >= count || (!ready && !error)}
             onPress={() => onPage(page + 1)}
           />
         </View>
