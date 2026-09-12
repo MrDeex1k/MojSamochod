@@ -64,6 +64,8 @@ include accounts, cloud storage, background synchronization, or a real-time sync
 
 ## Documentation map
 
+- [App showcase](./app-showcase.md) - short Polish product presentation with native screenshots
+  from Android phones and tablets, iPhone, and iPad.
 - [Current project status](./current-status.md) - Polish working summary of the active phase,
   implemented foundation, known limitations, and immediate next step.
 - [Internal data export v4](./data-export-v4.md) - current internal JSON diagnostic contract; it is

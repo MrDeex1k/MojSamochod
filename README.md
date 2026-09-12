@@ -6,6 +6,7 @@ Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie za
 
 ## Dokumentacja produktu
 
+- [Krótka prezentacja aplikacji](./docs/app-showcase.md)
 - [Założenia produktu](./docs/README.md)
 - [Zakres MVP i mapa ekranów](./docs/product-scope.md)
 - [Technologie i architektura](./docs/technology.md)
