@@ -1,6 +1,8 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { createHistoryEntry } from "@/domain/history/history-entry";
+import { createVehicleDocument } from "@/domain/documents/vehicle-document";
+import { managedFileIdFromUuidV7 } from "@/domain/shared/identifiers";
 import { createVehicle } from "@/domain/vehicle/vehicle";
 import { HistoryCard } from "./workspace-history";
 
@@ -23,9 +25,10 @@ it.each([
   { distance: 1200000, amount: 12345, suffix: ", 1,200 km, $123.45" },
   { distance: 0, amount: 0, suffix: ", 0 km, $0.00" },
   { distance: undefined, amount: undefined, suffix: "" },
+  { distance: undefined, amount: undefined, suffix: ", 2 attachments", attachments: true },
 ])(
   "announces the displayed history details including $suffix",
-  async ({ distance, amount, suffix }) => {
+  async ({ distance, amount, suffix, attachments = false }) => {
     const entry = valid(
       createHistoryEntry(
         {
@@ -39,6 +42,31 @@ it.each([
         { clock, idGenerator: { generate: () => "01990000-0001-7000-8000-000000000001" } },
       ),
     );
+    const document = valid(
+      createVehicleDocument(
+        {
+          vehicleId: vehicle.id,
+          historyEntryId: entry.id,
+          name: "Invoice",
+          fileReference: managedFileIdFromUuidV7("01990000-0001-7000-8000-000000000004"),
+        },
+        { clock, idGenerator: { generate: () => "01990000-0001-7000-8000-000000000005" } },
+      ),
+    );
+    const documents = attachments
+      ? [
+          document,
+          {
+            ...document,
+            id: valid(
+              createVehicleDocument(
+                { ...document, name: "Photo" },
+                { clock, idGenerator: { generate: () => "01990000-0001-7000-8000-000000000006" } },
+              ),
+            ).id,
+          },
+        ]
+      : [{ ...document, historyEntryId: undefined }];
     const onSelect = jest.fn();
     await render(
       <SafeAreaProvider
@@ -48,6 +76,7 @@ it.each([
         }}
       >
         <HistoryCard
+          documents={documents}
           entries={[entry]}
           vehicle={vehicle}
           onSelectEntry={onSelect}

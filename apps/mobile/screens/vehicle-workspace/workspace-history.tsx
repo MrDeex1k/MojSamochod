@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { ListScreen } from "@/components/layout/list-screen";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
+import { HistoryEntryIcon, AttachmentIndicator } from "./history-entry-icon";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 import { distanceUnitLabel, metresToDistance } from "@/domain/vehicle/distance";
@@ -21,6 +22,7 @@ export function PhoneWorkspace(
     | "loadMoreError"
     | "onLoadMore"
     | "onDataManagement"
+    | "documents"
     | "entries"
     | "onAddEntry"
     | "onDocuments"
@@ -39,6 +41,7 @@ export function PhoneWorkspace(
       loadMoreError={props.loadMoreError}
       loadingMore={props.loadingMore}
       entries={props.entries}
+      documents={props.documents}
       onAddEntry={props.onAddEntry}
       onSelectEntry={props.onSelectEntry}
       vehicle={props.vehicle}
@@ -104,6 +107,7 @@ export function HistoryCard({
   loadingMore,
   loadMoreError,
   onLoadMore,
+  documents,
   entries,
   onAddEntry,
   onSelectEntry,
@@ -114,6 +118,7 @@ export function HistoryCard({
   | "loadingMore"
   | "loadMoreError"
   | "onDataManagement"
+  | "documents"
   | "entries"
   | "onAddEntry"
   | "onDocuments"
@@ -131,6 +136,7 @@ export function HistoryCard({
       loadMoreError={loadMoreError}
       embedded
       entries={entries}
+      documents={documents}
       onAddEntry={onAddEntry}
       onSelectEntry={onSelectEntry}
       vehicle={vehicle}
@@ -144,6 +150,7 @@ function HistoryList({
   loadingMore,
   loadMoreError,
   onLoadMore,
+  documents,
   entries,
   onAddEntry,
   onSelectEntry,
@@ -155,12 +162,23 @@ function HistoryList({
   | "onLoadMore"
   | "loadingMore"
   | "loadMoreError"
+  | "documents"
   | "entries"
   | "onAddEntry"
   | "onSelectEntry"
   | "vehicle"
 > & { header: ReactNode; embedded?: boolean; selectedId?: string }) {
   const { t } = useAppTranslation();
+  const attachmentCounts = new Map<string, number>();
+  for (const document of documents) {
+    if (document.vehicleId === vehicle.id && document.historyEntryId) {
+      attachmentCounts.set(
+        document.historyEntryId,
+        (attachmentCounts.get(document.historyEntryId) ?? 0) + 1,
+      );
+    }
+  }
+
   return (
     <ListScreen
       scrollKey="history"
@@ -200,6 +218,7 @@ function HistoryList({
       }
       renderItem={({ item }) => (
         <HistoryRow
+          attachmentCount={attachmentCounts.get(item.id) ?? 0}
           selected={item.id === selectedId}
           entry={item}
           onPress={() => onSelectEntry(item)}
@@ -211,11 +230,18 @@ function HistoryList({
 }
 
 function HistoryRow({
+  attachmentCount,
   selected,
   entry,
   onPress,
   vehicle,
-}: Readonly<{ selected: boolean; entry: HistoryEntry; onPress: () => void; vehicle: Vehicle }>) {
+}: Readonly<{
+  attachmentCount: number;
+  selected: boolean;
+  entry: HistoryEntry;
+  onPress: () => void;
+  vehicle: Vehicle;
+}>) {
   const { t, i18n } = useAppTranslation();
   const title = `${t(`workspace.entryType.${entry.type}`)} - ${entrySubject(entry, t)}`;
   const date = formatOccurredAt(entry, i18n.language);
@@ -226,9 +252,11 @@ function HistoryRow({
   const cost = entry.cost
     ? formatCurrencyMinorUnits(entry.cost.minorUnits, entry.cost.currency, i18n.language)
     : null;
+  const attachments =
+    attachmentCount > 0 ? t("workspace.attachments", { count: attachmentCount }) : null;
   return (
     <Pressable
-      accessibilityLabel={[title, date, distance, cost]
+      accessibilityLabel={[title, date, distance, cost, attachments]
         .filter((value) => value !== null)
         .join(", ")}
       accessibilityRole="button"
@@ -243,16 +271,22 @@ function HistoryRow({
             }
           : undefined
       }
-      className="gap-compact border-b border-divider py-control active:opacity-70"
+      className="flex-row items-start gap-content border-b border-divider py-control active:opacity-70"
       onPress={onPress}
     >
-      <View className="flex-row justify-between gap-content">
-        <Text className="flex-1 text-body font-semibold text-primary">{title}</Text>
-        <Text className="text-caption text-secondary">{date}</Text>
-      </View>
-      <View className="flex-row gap-content">
-        {distance === null ? null : <Text className="text-caption text-secondary">{distance}</Text>}
-        {cost !== null ? <Text className="text-caption text-secondary">{cost}</Text> : null}
+      <HistoryEntryIcon type={entry.type} />
+      <View className="flex-1 gap-compact">
+        <View className="flex-row flex-wrap justify-between gap-compact">
+          <Text className="w-full text-body font-semibold text-primary">{title}</Text>
+          <Text className="text-caption text-secondary">{date}</Text>
+        </View>
+        <View className="flex-row flex-wrap items-center gap-content">
+          {distance === null ? null : (
+            <Text className="text-caption text-secondary">{distance}</Text>
+          )}
+          {cost !== null ? <Text className="text-caption text-secondary">{cost}</Text> : null}
+          {attachmentCount > 0 ? <AttachmentIndicator count={attachmentCount} /> : null}
+        </View>
       </View>
     </Pressable>
   );

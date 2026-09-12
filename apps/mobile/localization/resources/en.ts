@@ -354,6 +354,8 @@ export const en = {
     title: "Edit vehicle",
   },
   workspace: {
+    attachments_one: "{{count}} attachment",
+    attachments_other: "{{count}} attachments",
     pageError: "Could not load more entries. Your loaded history is still available.",
     addEntry: "Add entry",
     addFirstEntry: "Add first entry",
