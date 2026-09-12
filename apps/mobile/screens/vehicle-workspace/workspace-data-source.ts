@@ -117,7 +117,7 @@ export class WorkspaceDataSource {
       }
       if (section === "documents" && !this.relatedEntries)
         this.relatedEntries = unwrap(await this.services.historyEntries.list(vehicle.id));
-      if (section === "documents" && !this.loaded.has("documents")) {
+      if ((section === "documents" || section === "history") && !this.loaded.has("documents")) {
         this.data = {
           ...this.data,
           documents: unwrap(await this.services.documents.list(vehicle.id)),

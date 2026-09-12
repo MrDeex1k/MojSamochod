@@ -52,7 +52,7 @@ it("loads only the requested section and reuses cached results", async () => {
   expect(await source.load("history")).toMatchObject({ status: "ready" });
   expect(api.historyEntries.listPage).toHaveBeenCalledTimes(1);
   expect(api.historyEntries.list).not.toHaveBeenCalled();
-  expect(api.documents.list).not.toHaveBeenCalled();
+  expect(api.documents.list).toHaveBeenCalledTimes(1);
   expect(api.refuellings.list).not.toHaveBeenCalled();
   await source.load("fuel");
   await source.load("history");
@@ -131,9 +131,18 @@ it("keeps history accessible after a document load failure and retries the faile
   const api = services();
   api.documents.list.mockResolvedValueOnce(repositoryFailure("unavailable", "test") as never);
   const source = new WorkspaceDataSource(api as unknown as ApplicationServices);
-  await source.load("history");
-  expect(await source.load("documents")).toEqual({ status: "error" });
+  expect(await source.load("history")).toEqual({ status: "error" });
   expect(await source.load("history")).toMatchObject({ status: "ready" });
   expect(await source.load("documents")).toMatchObject({ status: "ready" });
+  expect(api.historyEntries.listPage).toHaveBeenCalledTimes(1);
+});
+
+it("refreshes attachment metadata after document changes without reloading history", async () => {
+  const api = services();
+  const source = new WorkspaceDataSource(api as unknown as ApplicationServices);
+  await source.load("history");
+  source.invalidate("documents");
+  await source.load("history");
+  expect(api.documents.list).toHaveBeenCalledTimes(2);
   expect(api.historyEntries.listPage).toHaveBeenCalledTimes(1);
 });

@@ -360,6 +360,10 @@ export const pl = {
     title: "Edytuj pojazd",
   },
   workspace: {
+    attachments_one: "{{count}} załącznik",
+    attachments_few: "{{count}} załączniki",
+    attachments_many: "{{count}} załączników",
+    attachments_other: "{{count}} załącznika",
     pageError: "Nie udało się wczytać kolejnych wpisów. Zapisana historia jest nadal dostępna.",
     addEntry: "Dodaj wpis",
     addFirstEntry: "Dodaj pierwszy wpis",
