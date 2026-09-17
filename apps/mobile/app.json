@@ -4,7 +4,7 @@
     "slug": "MojeAuto",
     "version": "0.8.0",
     "orientation": "default",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/app-icons/icon-dark.png",
     "scheme": "mojeauto",
     "userInterfaceStyle": "dark",
     "locales": {
@@ -12,6 +12,7 @@
       "pl": "./locales/pl.json"
     },
     "ios": {
+      "icon": "./assets/app-icons/Car.icon",
       "bundleIdentifier": "pl.jakubbatycki.mojeauto",
       "buildNumber": "1",
       "supportsTablet": true
@@ -33,10 +34,8 @@
         "android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#07383D",
+        "foregroundImage": "./assets/app-icons/android-foreground.png"
       },
       "predictiveBackGestureEnabled": false
     },
