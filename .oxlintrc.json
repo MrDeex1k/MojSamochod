@@ -4,5 +4,35 @@
     "correctness": "error"
   },
   "plugins": ["eslint", "typescript", "react", "unicorn", "oxc", "import"],
+  "jsPlugins": ["@shadcn/lint"],
+  "settings": {
+    "shadcn": {
+      "ui": "@/components/ui"
+    }
+  },
+  "rules": {
+    "shadcn/no-raw-colors": "error",
+    "shadcn/no-unknown-classes": "error",
+    "shadcn/no-restyle": [
+      "error",
+      {
+        "allow": ["layout"],
+        "contracts": [
+          { "pattern": "^Button$", "allow": ["layout", "px-compact"] },
+          { "pattern": "^FormSection$", "allow": ["layout", "p-screen"] },
+          {
+            "pattern": "^Image$",
+            "allow": ["layout", "rounded-control", "bg-surface-muted"]
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["apps/mobile/components/ui/**"],
+      "rules": { "shadcn/no-restyle": "off" }
+    }
+  ],
   "ignorePatterns": ["**/.expo/**", "**/dist/**"]
 }

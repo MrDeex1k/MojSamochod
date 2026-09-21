@@ -18,7 +18,7 @@ Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie za
 - Expo SDK 57,
 - React Native 0.86,
 - React 19.2,
-- NativeWind 5 preview,
+- NativeWind 5 release candidate,
 - Tailwind CSS 4,
 - Expo Router,
 - TypeScript 7,
