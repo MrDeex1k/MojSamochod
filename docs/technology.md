@@ -18,8 +18,8 @@ presentation and asks the user to rotate unsupported phone-landscape and tablet-
 ## Current application stack
 
 The application currently lives in `apps/mobile` inside a lightweight NUB workspace. Direct
-dependencies are pinned exactly; the manifest and `nub.lock` are the source of truth for full
-versions.
+dependencies are pinned exactly in the manifests. NUB generates a local `nub.lock` for resolved
+transitive versions; Git ignores that file.
 
 | Area                  | Current choice                                                                | Role                                                                        |
 | --------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -66,7 +66,7 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
 - NUB uses the hoisted `node_modules` layout required by the NativeWind 5 and React Native CSS
   Metro resolver.
 - Socket Firewall protects dependency mutations and enforces a 24-hour dependency cooling period.
-- Direct dependencies use exact versions; `nub.lock` is the only committed Node.js lockfile.
+- Direct dependencies use exact versions; the locally generated `nub.lock` is ignored by Git.
 - Oxlint provides static linting, including `@shadcn/lint` rules for theme colors, valid Tailwind
   classes, and allowed styling of shared UI components. Oxfmt provides formatting.
 - The `@shadcn/lint` component contracts permit existing NativeWind theme utilities where the

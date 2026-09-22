@@ -34,7 +34,7 @@ NativeWind 5 pozostaje wersją przedprodukcyjną. Projekt korzysta z niej świad
 │   └── mobile/       # aplikacja React Native + Expo
 ├── .github/          # szablony zgłoszeń i pull requestów
 ├── package.json      # skrypty główne i konfiguracja workspace
-└── nub.lock          # lockfile zależności NUB
+└── nub.lock          # local generated NUB lockfile (ignored by Git)
 ```
 
 ## Wymagania
