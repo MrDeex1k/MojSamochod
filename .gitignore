@@ -65,3 +65,4 @@ app-example
 /apps/mobile/ios
 /apps/mobile/android
 *.lock
+/nub.lock

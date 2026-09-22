@@ -18,7 +18,7 @@ Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie za
 - Expo SDK 57,
 - React Native 0.86,
 - React 19.2,
-- NativeWind 5 preview,
+- NativeWind 5 release candidate,
 - Tailwind CSS 4,
 - Expo Router,
 - TypeScript 7,
@@ -34,7 +34,7 @@ NativeWind 5 pozostaje wersją przedprodukcyjną. Projekt korzysta z niej świad
 │   └── mobile/       # aplikacja React Native + Expo
 ├── .github/          # szablony zgłoszeń i pull requestów
 ├── package.json      # skrypty główne i konfiguracja workspace
-└── nub.lock          # lockfile zależności NUB
+└── nub.lock          # local generated NUB lockfile (ignored by Git)
 ```
 
 ## Wymagania
