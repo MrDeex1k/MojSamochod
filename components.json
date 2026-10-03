@@ -1,0 +1,8 @@
+{
+  "tailwind": {
+    "css": "apps/mobile/global.css"
+  },
+  "aliases": {
+    "ui": "./apps/mobile/components/ui"
+  }
+}

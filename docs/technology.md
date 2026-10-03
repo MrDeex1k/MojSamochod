@@ -23,30 +23,35 @@ transitive versions; Git ignores that file.
 
 | Area                  | Current choice                                                                | Role                                                                        |
 | --------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Application framework | Expo SDK 57 (`expo` 57.0.24)                                                  | Cross-platform runtime, native modules, and development workflow.           |
-| UI runtime            | React Native 0.86.3 and React 19.2.3                                          | Shared Android phone/tablet, iOS, and iPadOS application code.              |
+| Application framework | Expo SDK 58 beta (`expo` 58.0.2)                                              | Cross-platform runtime, native modules, and development workflow.           |
+| UI runtime            | React Native 0.88.0-rc.3 and React 19.3.0                                     | Shared Android phone/tablet, iOS, and iPadOS application code.              |
 | Language              | TypeScript 7.0.2                                                              | Static typing for application and domain code.                              |
-| Navigation            | Expo Router 57.0.22                                                           | File-based navigation and typed routes.                                     |
+| Navigation            | Expo Router 58.0.12                                                           | File-based navigation and typed routes.                                     |
 | Styling               | NativeWind 5.0.0-rc.0, Tailwind CSS 4.3.3, `react-native-css` 3.1.0-rc.0      | Shared utility styling and CSS interoperability.                            |
-| Animation runtime     | React Native Reanimated 4.5.1 and React Native Worklets 0.10.1                | Performant native-thread interaction and motion where justified.            |
-| Gestures              | React Native Gesture Handler 2.32.0                                           | Platform-aware touch interactions.                                          |
-| System appearance     | Expo System UI 57.0.4                                                         | Applies the dark interface style consistently on Android.                   |
-| Unit/component tests  | Jest 29.7.0, Jest Expo 57.0.5, React Native Testing Library 14.0.1            | Tests pure logic and user-visible component behavior.                       |
-| Local database        | Expo SQLite 57.0.3 and Drizzle ORM 0.45.2                                     | Persistent SQLite access and typed queries.                                 |
-| Database migrations   | Drizzle Kit 0.31.10                                                           | Generates reviewable SQL migrations bundled with the application.           |
-| Record identifiers    | UUID 14.0.2 and Expo Crypto 57.0.3                                            | UUIDv7 generation backed by native secure randomness.                       |
-| Document import       | Expo Document Picker 57.0.2                                                   | Native PDF/JPEG/PNG selection with platform-granted file access.            |
+| Animation runtime     | React Native Reanimated 4.7.0 and React Native Worklets 0.13.0                | Performant native-thread interaction and motion where justified.            |
+| Gestures              | React Native Gesture Handler 3.2.1                                            | Platform-aware touch interactions.                                          |
+| System appearance     | Expo System UI 58.0.5                                                         | Applies the dark interface style consistently on Android.                   |
+| Unit/component tests  | Jest 29.7.0, Jest Expo 58.0.6, React Native Testing Library 14.0.1            | Tests pure logic and user-visible component behavior.                       |
+| Local database        | Expo SQLite 58.0.8 and Drizzle ORM 0.45.3                                     | Persistent SQLite access and typed queries.                                 |
+| Database migrations   | Drizzle Kit 0.31.11                                                           | Generates reviewable SQL migrations bundled with the application.           |
+| Record identifiers    | UUID 14.0.2 and Expo Crypto 58.0.4                                            | UUIDv7 generation backed by native secure randomness.                       |
+| Document import       | Expo Document Picker 58.0.4                                                   | Native PDF/JPEG/PNG selection with platform-granted file access.            |
 | In-app PDF preview    | Local `document-preview` Expo module, PDFKit/PdfRenderer and Expo File System | Bounded internal preview of one managed PDF; no outbound export or sharing. |
 
 NativeWind 5 is intentionally a release candidate dependency. Its compatibility with the active Expo SDK
 must be rechecked before SDK upgrades and before a production release.
 
-Compatible dependencies were refreshed without changing the SDK major, Node pin or NUB pin. Keep
+Compatible dependencies were refreshed for SDK 58 without changing the Node pin or NUB pin. Keep
 the `lightningcss` 1.30.1 override: the
 [NativeWind v5 installation guide](https://www.nativewind.dev/v5/getting-started/installation)
 still requires it to avoid CSS deserialization failures. React/RN and native modules follow the
-installed Expo compatibility matrix; Jest 29 matches the Jest 29 internals of `jest-expo` 57.0.5.
+installed Expo compatibility matrix; Jest 29 matches the Jest 29 internals of `jest-expo` 58.0.6.
 Newer registry versions alone are not a reason to bypass SDK compatibility.
+
+Versioned `packageExtensions` give Expo Constants, Expo File System and Expo DOM WebView
+the same Expo Modules Core dependency used by the installed Expo SDK (currently 58.0.11).
+Update these entries when the SDK's core dependency changes, then run `native:check` to
+confirm that Apple and Android autolinking have no duplicate native modules.
 
 ## Theme source of truth
 
@@ -61,11 +66,11 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
 ## Current repository tooling
 
 - Node.js 24.18.0 is pinned in `.node-version`.
-- NUB is the only Node.js package manager and script runner; the manifest pins 0.8.0.
-  The local executable used during the stage 6 update reported 0.8.3. No toolchain pin was changed.
+- NUB is the only Node.js package manager and script runner; the manifest pins 0.9.3.
+  The local executable used during the stage 6 update reported 0.9.6. No toolchain pin was changed.
 - NUB uses the hoisted `node_modules` layout required by the NativeWind 5 and React Native CSS
   Metro resolver.
-- Socket Firewall protects dependency mutations and enforces a 24-hour dependency cooling period.
+- Socket Firewall protects dependency mutations and enforces a 3-hour dependency cooling period.
 - Direct dependencies use exact versions; the locally generated `nub.lock` is ignored by Git.
 - Oxlint provides static linting, including `@shadcn/lint` rules for theme colors, valid Tailwind
   classes, and allowed styling of shared UI components. Oxfmt provides formatting.
@@ -214,31 +219,26 @@ archive containing binaries remains production-hardening work.
 
 ## Verification matrix
 
-### Fast native iteration with Expo Go 57
+### Native development on SDK 58
 
-Use Expo Go compatible with SDK 57 as the preferred fast feedback loop when a change only needs
-native modules already bundled in that client. It runs the project's JavaScript on native iOS and
-Android, including phone/tablet UI, localization, forms, and preliminary local-notification checks.
-It is not Expo Web and does not replace automated tests or the platform/form-factor matrix below.
+SDK 58 and React Native 0.88 are currently prerelease dependencies. Use the application's own
+native builds for this migration, including its local document-preview module. Rebuild after native
+dependency changes; Expo Go does not verify the application's native integration.
 
-Expo Go with SDK 57 support is available from the iOS App Store as of 2026-09-03, enabling quick
-checks on physical iPhones and iPads without building a separate app for each JavaScript change.
-Use compatible simulator/emulator clients for the same SDK. The iOS store client requires the same
-Expo account in the CLI and Expo Go; Expo's announcement exempts simulator clients and development
-builds. From `apps/mobile`, use `nub exec expo login` when needed, then start Metro with
-`nub run dev` from the repository root. See the
-[Expo Go 57 announcement](https://expo.dev/changelog/expo-go-57-login).
+On Apple platforms, use Swift Package Manager. Run `nub run ios` from the repository root, or
+`nub run ios:prepare` from `apps/mobile` before opening `ios/MojeAuto.xcodeproj` in Xcode.
+The preparation command creates the native project without installing Pods, runs React Native's
+SwiftPM autolinking, and applies the SDK 58 JSI dependency wiring. Android uses Gradle through
+`nub run android`. For isolated native acceptance builds, set `MOJE_AUTO_NATIVE_QA=1` when
+prebuilding and preparing the project; the QA bundle identifier is `dev.mojeauto.qa`.
 
-Use a rebuilt development/release app when changing native dependencies or configuration, testing
-our config plugins, app-specific permission texts, entitlements or signing, or performing final
-acceptance after dependency upgrades. Expo Go uses its own bundled native code, permissions and
-storage sandbox, so a passing Go test does not prove these aspects of our app work. Do not assume
-data entered in Expo Go exists in a separate development build.
+SwiftPM is experimental. Version-specific package patches provide manifests for community
+modules and source-built Expo modules; see [dependency patches](../patches/README.md).
+Reanimated uses the real JavaScript animation implementation in Jest, with native host wrappers
+replaced by React Native's test components because the renderer has no native view instances.
 
-Record the host (Expo Go version or own build), platform, device and tested scope in verification
-notes. After phase 6 dependency updates in step 6, step 7 must verify the rebuilt app as well as any
-quick checks performed in Expo Go. Notification-specific limits are documented in
-[local-reminder-notifications.md](local-reminder-notifications.md).
+Record the build, platform, device, and tested scope in verification notes. Signing and physical
+device acceptance remain part of release preparation.
 
 ### Required targets and automated coverage
 

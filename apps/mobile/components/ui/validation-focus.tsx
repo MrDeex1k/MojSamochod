@@ -1,6 +1,7 @@
 import type { TextInput } from "react-native";
 import {
   createContext,
+  type ComponentRef,
   type PropsWithChildren,
   type RefObject,
   useContext,
@@ -41,7 +42,11 @@ export function ValidationFocusProvider({ children }: PropsWithChildren) {
   return <ValidationContext.Provider value={group}>{children}</ValidationContext.Provider>;
 }
 
-export function useValidationFocus(id: string, input: RefObject<TextInput | null>, error?: string) {
+export function useValidationFocus(
+  id: string,
+  input: RefObject<ComponentRef<typeof TextInput> | null>,
+  error?: string,
+) {
   const group = useContext(ValidationContext);
   useEffect(() => group?.register(id, () => input.current?.focus()), [group, id, input]);
   useEffect(() => {

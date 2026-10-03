@@ -1,0 +1,32 @@
+diff --git a/Package.swift b/Package.swift
+new file mode 100644
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,27 @@
++// swift-tools-version: 6.2
++import PackageDescription
++
++// React and ExpoModulesCore are supplied by Expo's SwiftPM autolinking plugin.
++let package = Package(
++  name: "expo-application",
++  platforms: [.iOS("16.4")],
++  products: [.library(name: "ExpoApplication", targets: ["ExpoApplication", "ExpoApplicationObjC"])],
++  dependencies: [],
++  targets: [
++    .target(
++      name: "ExpoApplicationObjC",
++      path: "ios/ExpoApplication",
++      publicHeadersPath: ".",
++      linkerSettings: [.linkedFramework("UIKit")]
++    ),
++    .target(
++      name: "ExpoApplication",
++      dependencies: ["ExpoApplicationObjC"],
++      path: "ios",
++      exclude: ["ExpoApplication"],
++      resources: [.copy("PrivacyInfo.xcprivacy")],
++      swiftSettings: [.unsafeFlags(["-Xfrontend", "-import-module", "-Xfrontend", "ExpoApplicationObjC"])],
++      linkerSettings: [.linkedFramework("UIKit")]
++    )
++  ]
++)

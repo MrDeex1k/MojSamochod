@@ -1,6 +1,6 @@
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
 import { repositoryFailure } from "@/application/repositories/repository-result";
-import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { getLocales } from "expo-localization";
 import { useRef, useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
@@ -200,8 +200,9 @@ export function EntryForm({
           display={Platform.OS === "ios" ? "compact" : "default"}
           maximumDate={clock.now()}
           mode={pickerMode}
-          onChange={(event, selected) => {
-            handleDateTimeChange(event, selected, pickerMode, occurredAt, setOccurredAt);
+          onDismiss={() => setPickerMode(null)}
+          onValueChange={(_event, selected) => {
+            handleDateTimeChange(selected, pickerMode, occurredAt, setOccurredAt);
             setPickerMode(null);
           }}
           timeZoneName="UTC"
@@ -444,13 +445,11 @@ function formatTime(value: Date, locale: string): string {
 }
 
 function handleDateTimeChange(
-  event: DateTimePickerEvent,
-  selected: Date | undefined,
+  selected: Date,
   mode: Exclude<PickerMode, null>,
   current: Date,
   setValue: (value: Date) => void,
 ) {
-  if (event.type === "dismissed" || !selected) return;
   if (mode === "date") {
     setValue(
       new Date(

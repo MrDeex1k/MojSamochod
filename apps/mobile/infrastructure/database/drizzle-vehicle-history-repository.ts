@@ -1,11 +1,18 @@
+import { utcTimestamp } from "@/domain/shared/value-objects";
 import type {
+  HistoryEntryReference,
+  HistoryReferencePage,
   HistoryCursor,
   HistoryPage,
 } from "@/application/repositories/history-entry-repository";
-import { and, asc, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
 
 import type { HistoryEntry } from "@/domain/history/history-entry";
-import type { HistoryEntryId, VehicleId } from "@/domain/shared/identifiers";
+import {
+  historyEntryIdFromUuidV7,
+  type HistoryEntryId,
+  type VehicleId,
+} from "@/domain/shared/identifiers";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import {
@@ -127,6 +134,100 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
     } catch (error) {
       return mapFailure(operation, error);
     }
+  }
+
+  async references(
+    vehicleId: VehicleId,
+    ids: readonly HistoryEntryId[],
+  ): Promise<RepositoryResult<readonly HistoryEntryReference[]>> {
+    if (!ids.length) return repositorySuccess([]);
+    try {
+      // Leave room below SQLite's conservative 999-variable limit without many small queries.
+      const entries: HistoryEntryReference[] = [];
+      for (let start = 0; start < ids.length; start += 900) {
+        const rows = this.referenceQuery()
+          .where(
+            and(
+              eq(historyEntries.vehicleId, vehicleId),
+              inArray(historyEntries.id, ids.slice(start, start + 900)),
+            ),
+          )
+          .all();
+        entries.push(...rows.map(mapReference));
+      }
+      return repositorySuccess(entries);
+    } catch (error) {
+      return mapFailure("historyEntry.references", error);
+    }
+  }
+
+  async searchReferences(
+    vehicleId: VehicleId,
+    query: string,
+    cursor?: HistoryCursor,
+  ): Promise<RepositoryResult<HistoryReferencePage>> {
+    try {
+      const escaped = `%${query.trim().replace(/[\\%_]/g, "\\$&")}%`;
+      const subject = sql`coalesce(${repairDetails.subject}, ${replacementDetails.item}, ${inspectionDetails.description}, ${inspectionDetails.kind}, '')`;
+      const after = cursor
+        ? or(
+            lt(historyEntries.occurredAt, cursor.occurredAt),
+            and(
+              eq(historyEntries.occurredAt, cursor.occurredAt),
+              lt(historyEntries.createdAt, cursor.createdAt),
+            ),
+            and(
+              eq(historyEntries.occurredAt, cursor.occurredAt),
+              eq(historyEntries.createdAt, cursor.createdAt),
+              gt(historyEntries.id, cursor.id),
+            ),
+          )
+        : undefined;
+      const rows = this.referenceQuery()
+        .where(
+          and(
+            eq(historyEntries.vehicleId, vehicleId),
+            after,
+            query.trim() ? sql`${subject} like ${escaped} escape '\\'` : undefined,
+          ),
+        )
+        .orderBy(
+          desc(historyEntries.occurredAt),
+          desc(historyEntries.createdAt),
+          asc(historyEntries.id),
+        )
+        .limit(51)
+        .all();
+      const visible = rows.slice(0, 50);
+      const last = visible.at(-1);
+      return repositorySuccess({
+        entries: visible.map(mapReference),
+        nextCursor:
+          rows.length > 50 && last
+            ? { id: last.id, occurredAt: last.occurredAt, createdAt: last.createdAt }
+            : null,
+      });
+    } catch (error) {
+      return mapFailure("historyEntry.searchReferences", error);
+    }
+  }
+
+  private referenceQuery() {
+    return this.database
+      .select({
+        id: historyEntries.id,
+        type: historyEntries.type,
+        occurredAt: historyEntries.occurredAt,
+        createdAt: historyEntries.createdAt,
+        subject: sql<
+          string | null
+        >`coalesce(${repairDetails.subject}, ${replacementDetails.item}, ${inspectionDetails.description})`,
+        inspectionKind: inspectionDetails.kind,
+      })
+      .from(historyEntries)
+      .leftJoin(inspectionDetails, eq(inspectionDetails.historyEntryId, historyEntries.id))
+      .leftJoin(replacementDetails, eq(replacementDetails.historyEntryId, historyEntries.id))
+      .leftJoin(repairDetails, eq(repairDetails.historyEntryId, historyEntries.id));
   }
 
   async update(vehicle: Vehicle): Promise<RepositoryResult<void>>;
@@ -468,4 +569,24 @@ function mapFailure<T>(operation: string, error: unknown): RepositoryResult<T> {
     operation,
     error,
   );
+}
+
+function mapReference(row: {
+  id: string;
+  type: string;
+  occurredAt: string;
+  subject: string | null;
+  inspectionKind: string | null;
+}): HistoryEntryReference {
+  if (row.type !== "repair" && row.type !== "replacement" && row.type !== "inspection")
+    throw new CorruptStoredDataError("HistoryEntryReference");
+  const occurredAt = utcTimestamp(row.occurredAt, "occurredAt");
+  if (!occurredAt.ok) throw new CorruptStoredDataError("HistoryEntryReference");
+  return {
+    id: historyEntryIdFromUuidV7(row.id),
+    type: row.type,
+    occurredAt: occurredAt.value,
+    subject: row.subject ?? undefined,
+    inspectionKind: row.inspectionKind ?? undefined,
+  };
 }

@@ -1,3 +1,4 @@
+import { nativeTheme } from "./native-theme";
 import { readFileSync } from "node:fs";
 
 describe("native theme typography", () => {
@@ -15,4 +16,17 @@ describe("native theme typography", () => {
     expect(lineHeights).toHaveLength(6);
     expect(lineHeights).toEqual(lineHeights.map((value) => String(Number(value))));
   });
+});
+
+it("keeps the native control palette aligned with semantic CSS colors", () => {
+  const css = readFileSync(__filename.replace(".test.ts", ".css"), "utf8");
+  for (const [key, value] of Object.entries(nativeTheme)) {
+    const semantic =
+      key === "primary" || key === "secondary"
+        ? `text-${key}`
+        : key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+    const palette = css.match(new RegExp(`--theme-color-${semantic}: var\\((--[\\w-]+)\\)`))?.[1];
+    expect(palette).toBeDefined();
+    expect(css).toContain(`${palette}: ${value};`);
+  }
 });

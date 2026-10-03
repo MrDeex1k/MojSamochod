@@ -66,3 +66,4 @@ app-example
 /apps/mobile/android
 *.lock
 /nub.lock
+/apps/mobile/modules/**/.build/

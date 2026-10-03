@@ -14,6 +14,7 @@ import {
 import {
   managedFileIdFromUuidV7,
   type DocumentId,
+  type HistoryEntryId,
   type VehicleId,
 } from "@/domain/shared/identifiers";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
@@ -67,6 +68,18 @@ export class VehicleDocumentService {
 
   list(vehicleId: VehicleId) {
     return this.repository.list(vehicleId);
+  }
+
+  async attachmentCounts(vehicleId: VehicleId, ids: readonly HistoryEntryId[]) {
+    if (this.repository.attachmentCounts) return this.repository.attachmentCounts(vehicleId, ids);
+    const result = await this.repository.list(vehicleId);
+    if (!result.ok) return result;
+    const selected = new Set(ids);
+    const counts: Record<string, number> = {};
+    for (const document of result.value)
+      if (document.historyEntryId && selected.has(document.historyEntryId))
+        counts[document.historyEntryId] = (counts[document.historyEntryId] ?? 0) + 1;
+    return repositorySuccess(counts);
   }
 
   async getFile(

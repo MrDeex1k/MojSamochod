@@ -1,0 +1,56 @@
+diff --git a/ios/ExpoNotifications/Notifications/NotificationCenterManager.swift b/ios/ExpoNotifications/Notifications/NotificationCenterManager.swift
+--- a/ios/ExpoNotifications/Notifications/NotificationCenterManager.swift
++++ b/ios/ExpoNotifications/Notifications/NotificationCenterManager.swift
+@@ -3,6 +3,13 @@
+ import ExpoModulesCore
+ import Foundation
+ import UserNotifications
++
++// Swift's C++ importer currently exposes this Objective-C block argument as Int.
++#if EXPO_SWIFTPM_CXX
++public typealias SystemPresentationHandler = @Sendable (Int) -> Void
++#else
++public typealias SystemPresentationHandler = (UNNotificationPresentationOptions) -> Void
++#endif
+ 
+ /**
+  Protocol that NotificationCenterManager delegates may implement
+@@ -36,7 +43,7 @@
+  Completion handler that takes the presentation options of a delegate, and drops them because
+  another delegate answers the notification center instead.
+  */
+-private let discardPresentationOptions: (UNNotificationPresentationOptions) -> Void = { _ in }
++private let discardPresentationOptions: SystemPresentationHandler = { _ in }
+ 
+ /**
+  The delegates of `NotificationCenterManager`, and the responses that arrived before any delegate
+@@ -194,11 +200,18 @@
+   public func userNotificationCenter(
+     _ center: UNUserNotificationCenter,
+     willPresent notification: UNNotification,
+-    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
++    withCompletionHandler completionHandler: @escaping SystemPresentationHandler
+   ) {
++#if EXPO_SWIFTPM_CXX
++    let presentationHandler: (UNNotificationPresentationOptions) -> Void = {
++      completionHandler(Int(bitPattern: $0.rawValue))
++    }
++#else
++    let presentationHandler = completionHandler
++#endif
+     var handled = false
+     for delegate in delegates {
+-      handled = delegate.willPresent(notification, completionHandler: completionHandler) || handled
++      handled = delegate.willPresent(notification, completionHandler: presentationHandler) || handled
+     }
+ 
+     if handled {
+@@ -217,7 +230,7 @@
+       )
+       if answered == nil {
+         // There's no chained delegate, or it doesn't present notifications, so present nothing.
+-        completionHandler([])
++        presentationHandler([])
+       }
+     }
+   }

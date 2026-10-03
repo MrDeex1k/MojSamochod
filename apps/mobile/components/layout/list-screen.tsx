@@ -2,14 +2,26 @@ import { useScrollPosition } from "./scroll-positions";
 import { FlatList, type FlatListProps, Platform, View } from "react-native";
 import { ScreenFrame } from "./screen-frame";
 import { useNavigationInset } from "./navigation-inset";
-import { isValidElement } from "react";
+
+type ListScreenProps<T> = Omit<
+  FlatListProps<T>,
+  "ListHeaderComponent" | "ListFooterComponent" | "ListEmptyComponent"
+> & {
+  embedded?: boolean;
+  scrollKey?: string;
+  ListHeaderComponent?: FlatListProps<T>["ListHeaderComponent"] | null;
+  ListFooterComponent?: FlatListProps<T>["ListFooterComponent"] | null;
+  ListEmptyComponent?: FlatListProps<T>["ListEmptyComponent"] | null;
+};
 
 export function ListScreen<T>({
   embedded = false,
   scrollKey,
+  ListHeaderComponent,
+  ListEmptyComponent,
   ListFooterComponent: Footer,
   ...props
-}: FlatListProps<T> & { embedded?: boolean; scrollKey?: string }) {
+}: ListScreenProps<T>) {
   const position = useScrollPosition(scrollKey);
   const navigationInset = useNavigationInset();
 
@@ -34,9 +46,11 @@ export function ListScreen<T>({
           initialNumToRender={12}
           scrollIndicatorInsets={{ bottom: navigationInset }}
           {...props}
+          ListHeaderComponent={ListHeaderComponent ?? undefined}
+          ListEmptyComponent={ListEmptyComponent ?? undefined}
           ListFooterComponent={
             <View>
-              {isValidElement(Footer) ? Footer : Footer ? <Footer /> : null}
+              {typeof Footer === "function" ? <Footer /> : Footer}
               <View style={{ height: navigationInset }} />
             </View>
           }

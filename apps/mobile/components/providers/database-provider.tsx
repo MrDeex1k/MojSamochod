@@ -1,4 +1,11 @@
-import { createContext, type PropsWithChildren, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  type PropsWithChildren,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { Screen } from "@/components/layout/screen";
 import { ErrorState } from "@/components/states/error-state";
@@ -16,7 +23,7 @@ type DatabaseProviderProps = PropsWithChildren<{
 
 type DatabaseState =
   | { status: "loading" }
-  | { handle: DatabaseHandle; status: "ready" }
+  | { handle: DatabaseHandle; generation: number; status: "ready" }
   | { status: "error" };
 
 const DatabaseContext = createContext<AppDatabase | null>(null);
@@ -26,6 +33,7 @@ export function DatabaseProvider({
   initialize = initializeDatabase,
 }: DatabaseProviderProps) {
   const { t } = useAppTranslation();
+  const generation = useRef(0);
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<DatabaseState>({ status: "loading" });
 
@@ -41,7 +49,7 @@ export function DatabaseProvider({
         }
 
         activeHandle = handle;
-        setState({ handle, status: "ready" });
+        setState({ handle, generation: ++generation.current, status: "ready" });
       },
       () => {
         if (!disposed) {
@@ -83,7 +91,9 @@ export function DatabaseProvider({
   }
 
   return (
-    <DatabaseContext.Provider value={state.handle.database}>{children}</DatabaseContext.Provider>
+    <DatabaseContext.Provider key={state.generation} value={state.handle.database}>
+      {children}
+    </DatabaseContext.Provider>
   );
 }
 
