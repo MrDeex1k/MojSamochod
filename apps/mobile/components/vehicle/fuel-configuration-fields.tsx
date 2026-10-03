@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import { Button } from "@/components/ui/button";
+import { ChoiceField } from "@/components/ui/choice-field";
 import { TextField } from "@/components/ui/text-field";
 import type { FuelConsumptionUnit } from "@/domain/refuelling/fuel-consumption";
 import type { VolumeUnit } from "@/domain/refuelling/volume";
@@ -37,62 +37,28 @@ export function FuelConfigurationFields({
         onChangeText={onCapacityChange}
         value={capacity}
       />
-      <Text className="text-label font-semibold text-primary">
-        {t("firstVehicle.fuelVolumeUnitLabel")}
-      </Text>
-      <View className="flex-row gap-compact">
-        <UnitButton
-          label="l"
-          onPress={() => onVolumeUnitChange("litres")}
-          selected={volumeUnit === "litres"}
-        />
-        <UnitButton
-          label="US gal"
-          onPress={() => onVolumeUnitChange("usGallons")}
-          selected={volumeUnit === "usGallons"}
-        />
-        <UnitButton
-          label="Imp gal"
-          onPress={() => onVolumeUnitChange("imperialGallons")}
-          selected={volumeUnit === "imperialGallons"}
-        />
-      </View>
-      <Text className="text-label font-semibold text-primary">
-        {t("firstVehicle.fuelConsumptionUnitLabel")}
-      </Text>
-      <View className="flex-row gap-compact">
-        <UnitButton
-          label="l/100 km"
-          onPress={() => onConsumptionUnitChange("litresPer100Kilometres")}
-          selected={consumptionUnit === "litresPer100Kilometres"}
-        />
-        <UnitButton
-          label="mpg US"
-          onPress={() => onConsumptionUnitChange("milesPerUsGallon")}
-          selected={consumptionUnit === "milesPerUsGallon"}
-        />
-        <UnitButton
-          label="mpg Imp"
-          onPress={() => onConsumptionUnitChange("milesPerImperialGallon")}
-          selected={consumptionUnit === "milesPerImperialGallon"}
-        />
-      </View>
+      <ChoiceField
+        menu
+        label={t("firstVehicle.fuelVolumeUnitLabel")}
+        value={volumeUnit}
+        onSelect={onVolumeUnitChange}
+        options={[
+          ["litres", "l"],
+          ["usGallons", "US gal"],
+          ["imperialGallons", "Imp gal"],
+        ]}
+      />
+      <ChoiceField
+        menu
+        label={t("firstVehicle.fuelConsumptionUnitLabel")}
+        value={consumptionUnit}
+        onSelect={onConsumptionUnitChange}
+        options={[
+          ["litresPer100Kilometres", "l/100 km"],
+          ["milesPerUsGallon", "mpg US"],
+          ["milesPerImperialGallon", "mpg Imp"],
+        ]}
+      />
     </View>
-  );
-}
-
-function UnitButton({
-  label,
-  onPress,
-  selected,
-}: Readonly<{ label: string; onPress: () => void; selected: boolean }>) {
-  return (
-    <Button
-      accessibilityState={{ selected }}
-      className="flex-1 px-compact"
-      label={label}
-      onPress={onPress}
-      variant={selected ? "primary" : "secondary"}
-    />
   );
 }

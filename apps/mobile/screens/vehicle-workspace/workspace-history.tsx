@@ -1,3 +1,5 @@
+import { UpcomingReminder } from "./upcoming-reminder";
+import { nativeTheme } from "@/styles/native-theme";
 import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { ListScreen } from "@/components/layout/list-screen";
@@ -22,6 +24,7 @@ export function PhoneWorkspace(
     | "loadMoreError"
     | "onLoadMore"
     | "onDataManagement"
+    | "attachmentCounts"
     | "documents"
     | "entries"
     | "onAddEntry"
@@ -30,17 +33,20 @@ export function PhoneWorkspace(
     | "onFuel"
     | "onReminders"
     | "onSelectEntry"
+    | "nextReminder"
     | "photoUri"
     | "vehicle"
-  >,
+  > & { selectedId?: string },
 ) {
   const { t } = useAppTranslation();
   return (
     <HistoryList
+      selectedId={props.selectedId}
       onLoadMore={props.onLoadMore}
       loadMoreError={props.loadMoreError}
       loadingMore={props.loadingMore}
       entries={props.entries}
+      attachmentCounts={props.attachmentCounts}
       documents={props.documents}
       onAddEntry={props.onAddEntry}
       onSelectEntry={props.onSelectEntry}
@@ -48,7 +54,17 @@ export function PhoneWorkspace(
       header={
         <View className="gap-content">
           <VehicleSummary {...props} />
-          <Button label={`+ ${t("workspace.addEntry")}`} onPress={props.onAddEntry} />
+          {props.nextReminder ? (
+            <UpcomingReminder reminder={props.nextReminder} onPress={props.onReminders} />
+          ) : null}
+          <Button
+            label={t("navigation.documents")}
+            onPress={props.onDocuments}
+            variant="secondary"
+          />
+          {props.entries.length > 0 ? (
+            <Button label={`+ ${t("workspace.addEntry")}`} onPress={props.onAddEntry} />
+          ) : null}
         </View>
       }
     />
@@ -107,6 +123,7 @@ export function HistoryCard({
   loadingMore,
   loadMoreError,
   onLoadMore,
+  attachmentCounts: suppliedCounts,
   documents,
   entries,
   onAddEntry,
@@ -118,6 +135,7 @@ export function HistoryCard({
   | "loadingMore"
   | "loadMoreError"
   | "onDataManagement"
+  | "attachmentCounts"
   | "documents"
   | "entries"
   | "onAddEntry"
@@ -136,11 +154,16 @@ export function HistoryCard({
       loadMoreError={loadMoreError}
       embedded
       entries={entries}
+      attachmentCounts={suppliedCounts}
       documents={documents}
       onAddEntry={onAddEntry}
       onSelectEntry={onSelectEntry}
       vehicle={vehicle}
-      header={<Button label={`+ ${t("workspace.addEntry")}`} onPress={onAddEntry} />}
+      header={
+        entries.length > 0 ? (
+          <Button label={`+ ${t("workspace.addEntry")}`} onPress={onAddEntry} />
+        ) : null
+      }
     />
   );
 }
@@ -150,6 +173,7 @@ function HistoryList({
   loadingMore,
   loadMoreError,
   onLoadMore,
+  attachmentCounts: suppliedCounts,
   documents,
   entries,
   onAddEntry,
@@ -162,6 +186,7 @@ function HistoryList({
   | "onLoadMore"
   | "loadingMore"
   | "loadMoreError"
+  | "attachmentCounts"
   | "documents"
   | "entries"
   | "onAddEntry"
@@ -169,8 +194,8 @@ function HistoryList({
   | "vehicle"
 > & { header: ReactNode; embedded?: boolean; selectedId?: string }) {
   const { t } = useAppTranslation();
-  const attachmentCounts = new Map<string, number>();
-  for (const document of documents) {
+  const attachmentCounts = new Map<string, number>(Object.entries(suppliedCounts ?? {}));
+  for (const document of suppliedCounts ? [] : documents) {
     if (document.vehicleId === vehicle.id && document.historyEntryId) {
       attachmentCounts.set(
         document.historyEntryId,
@@ -264,9 +289,9 @@ function HistoryRow({
       style={
         selected
           ? {
-              backgroundColor: "#252527",
+              backgroundColor: nativeTheme.surfaceStrong,
               borderLeftWidth: 3,
-              borderLeftColor: "#72b48e",
+              borderLeftColor: nativeTheme.accent,
               paddingLeft: 12,
             }
           : undefined

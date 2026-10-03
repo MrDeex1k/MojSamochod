@@ -1,9 +1,10 @@
+import { nativeTheme } from "@/styles/native-theme";
 import { ListScreen } from "@/components/layout/list-screen";
 import { Pressable, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";
-import type { HistoryEntry } from "@/domain/history/history-entry";
+import type { HistoryEntryReference } from "@/application/repositories/history-entry-repository";
 import { formatCalendarDate, formatCurrencyMinorUnits } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
@@ -13,13 +14,12 @@ export function DocumentList({
   selectedId,
   entries,
   onAdd,
-  onBack,
   onSelect,
 }: Readonly<{
   documents: readonly VehicleDocument[];
   embedded?: boolean;
   selectedId?: string;
-  entries: readonly HistoryEntry[];
+  entries: readonly HistoryEntryReference[];
   onAdd: () => void;
   onBack: () => void;
   onSelect: (document: VehicleDocument) => void;
@@ -46,11 +46,6 @@ export function DocumentList({
           <Text className="text-body text-secondary">{t("documents.emptyDescription")}</Text>
         </View>
       }
-      ListFooterComponent={
-        !embedded ? (
-          <Button label={t("documents.back")} onPress={onBack} variant="secondary" />
-        ) : null
-      }
       renderItem={({ item: document }) => {
         const entry = document.historyEntryId
           ? entriesById.get(document.historyEntryId)
@@ -58,8 +53,27 @@ export function DocumentList({
         return (
           <Pressable
             accessibilityState={{ selected: document.id === selectedId }}
-            style={document.id === selectedId ? { backgroundColor: "#252527" } : undefined}
-            accessibilityLabel={document.name}
+            style={
+              document.id === selectedId
+                ? { backgroundColor: nativeTheme.surfaceStrong }
+                : undefined
+            }
+            accessibilityLabel={[
+              document.name,
+              document.documentDate
+                ? formatCalendarDate(document.documentDate, i18n.language)
+                : null,
+              document.amount
+                ? formatCurrencyMinorUnits(
+                    document.amount.minorUnits,
+                    document.amount.currency,
+                    i18n.language,
+                  )
+                : null,
+              entry ? t(`workspace.entryType.${entry.type}`) : t("documents.vehicleOnly"),
+            ]
+              .filter(Boolean)
+              .join(", ")}
             accessibilityRole="button"
             className="gap-compact border-b border-divider py-control active:opacity-70"
             key={document.id}

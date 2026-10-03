@@ -1,3 +1,4 @@
+import { ChoiceField } from "@/components/ui/choice-field";
 import { getLocales } from "expo-localization";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
@@ -187,23 +188,15 @@ export function CreateFirstVehicleForm({
           <Text className="text-body text-secondary">
             {t("firstVehicle.initialOdometerHelper")}
           </Text>
-          <Text className="text-label font-semibold text-primary">
-            {t("firstVehicle.distanceUnitLabel")}
-          </Text>
-          <View className="flex-row gap-compact">
-            <Button
-              className="flex-1"
-              label="km"
-              onPress={() => changeDistanceUnit("kilometres")}
-              variant={distanceUnit === "kilometres" ? "primary" : "secondary"}
-            />
-            <Button
-              className="flex-1"
-              label="mi"
-              onPress={() => changeDistanceUnit("miles")}
-              variant={distanceUnit === "miles" ? "primary" : "secondary"}
-            />
-          </View>
+          <ChoiceField<DistanceUnit>
+            label={t("firstVehicle.distanceUnitLabel")}
+            value={distanceUnit}
+            onSelect={changeDistanceUnit}
+            options={[
+              ["kilometres", "km"],
+              ["miles", "mi"],
+            ]}
+          />
           <TextField
             error={errors.initialOdometerMetres}
             keyboardType="number-pad"

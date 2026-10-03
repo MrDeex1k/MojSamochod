@@ -47,15 +47,10 @@ const vehicle = expectValid(
 );
 
 describe("VehicleWorkspaceView", () => {
-  it("keeps section navigation available inside an editor and returns to its source", async () => {
-    const onFuel = jest.fn();
-    const onDocuments = jest.fn();
-    await renderView("fuel", { onFuelChanged: jest.fn(), onSaved: jest.fn(), onFuel, onDocuments });
-    expect(screen.getAllByRole("tab")).toHaveLength(4);
-    await userEvent.press(screen.getByRole("button", { name: "Back" }));
-    expect(onFuel).toHaveBeenCalledTimes(1);
-    await userEvent.press(screen.getByRole("tab", { name: "Documents" }));
-    expect(onDocuments).toHaveBeenCalledTimes(1);
+  it("does not render section tabs inside an editor", async () => {
+    await renderView("fuel", { onFuelChanged: jest.fn(), onSaved: jest.fn() });
+    expect(screen.queryAllByRole("tab")).toHaveLength(0);
+    expect(screen.getByRole("button", { name: "Save mock vehicle" })).toBeOnTheScreen();
   });
   it("returns to fuel after saving vehicle configuration opened from fuel", async () => {
     const onFuelChanged = jest.fn();

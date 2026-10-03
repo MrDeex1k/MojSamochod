@@ -1,3 +1,4 @@
+import { ThemeProvider, DarkTheme } from "expo-router/react-navigation";
 import Stack from "expo-router/stack";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
@@ -17,7 +18,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <DatabaseProvider>
         <ApplicationProvider>
-          <Stack screenOptions={{ headerShown: false }} />
+          <ThemeProvider value={DarkTheme}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </ThemeProvider>
         </ApplicationProvider>
       </DatabaseProvider>
       <StatusBar style="light" />

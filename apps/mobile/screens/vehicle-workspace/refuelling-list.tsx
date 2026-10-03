@@ -1,3 +1,4 @@
+import { nativeTheme } from "@/styles/native-theme";
 import { ListScreen } from "@/components/layout/list-screen";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -23,6 +24,9 @@ import {
 
 type RefuellingListProps = Readonly<{
   embedded?: boolean;
+  onLoadMore?: () => void;
+  loadingMore?: boolean;
+  loadMoreError?: boolean;
   selectedId?: string;
   history: RefuellingHistory;
   onAdd: () => void;
@@ -34,10 +38,12 @@ type RefuellingListProps = Readonly<{
 
 export function RefuellingList({
   embedded = false,
+  onLoadMore,
+  loadingMore,
+  loadMoreError,
   selectedId,
   history,
   onAdd,
-  onBack,
   onConfigureFuel,
   onSelect,
   vehicle,
@@ -48,6 +54,15 @@ export function RefuellingList({
   return (
     <ListScreen
       scrollKey="fuel"
+      onEndReached={loadMoreError ? undefined : onLoadMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={
+        loadingMore ? (
+          <Text className="py-content text-secondary">{t("workspace.loading")}</Text>
+        ) : loadMoreError ? (
+          <Button label={t("database.errorAction")} onPress={onLoadMore} />
+        ) : undefined
+      }
       embedded={embedded}
       data={configuredVehicle ? history.refuellings : []}
       keyExtractor={(item) => item.id}
@@ -77,11 +92,6 @@ export function RefuellingList({
             <Text className="text-heading font-semibold text-primary">{t("refuelling.empty")}</Text>
             <Text className="text-body text-secondary">{t("refuelling.emptyDescription")}</Text>
           </View>
-        ) : null
-      }
-      ListFooterComponent={
-        !embedded ? (
-          <Button label={t("refuelling.back")} onPress={onBack} variant="secondary" />
         ) : null
       }
       renderItem={({ item }) =>
@@ -173,9 +183,26 @@ function RefuellingRow({
   )} ${volumeUnitLabel(vehicle.fuelVolumeUnitPreference)}`;
   return (
     <Pressable
-      accessibilityLabel={`${t(`refuelling.fillKind.${refuelling.fillKind}`)}, ${quantity}`}
+      accessibilityLabel={[
+        t(`refuelling.fillKind.${refuelling.fillKind}`),
+        quantity,
+        formatUtcDateTime(refuelling.occurredAt, i18n.language),
+        refuelling.odometerMetres === undefined
+          ? null
+          : formatRefuellingOdometer(refuelling.odometerMetres, vehicle, i18n.language),
+        refuelling.pricing
+          ? formatCurrencyMinorUnits(
+              refuelling.pricing.totalCost.minorUnits,
+              refuelling.pricing.totalCost.currency,
+              i18n.language,
+            )
+          : null,
+        included ? t("refuelling.includedInAverage") : null,
+      ]
+        .filter(Boolean)
+        .join(", ")}
       accessibilityState={{ selected }}
-      style={selected ? { backgroundColor: "#252527" } : undefined}
+      style={selected ? { backgroundColor: nativeTheme.surfaceStrong } : undefined}
       accessibilityRole="button"
       className="gap-compact border-b border-divider py-control active:opacity-70"
       onPress={onPress}

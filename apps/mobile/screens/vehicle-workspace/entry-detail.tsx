@@ -1,9 +1,9 @@
+import { BackAction } from "@/components/layout/back-action";
 import { useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import { Screen } from "@/components/layout/screen";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ContextualActions } from "@/components/ui/contextual-actions";
 import type { HistoryEntry } from "@/domain/history/history-entry";
@@ -114,9 +114,7 @@ export function EntryDetail({
         onDelete={confirmDelete}
         onEdit={onEdit}
       />
-      {!embedded ? (
-        <Button label={t("entryDetail.back")} onPress={onBack} variant="secondary" />
-      ) : null}
+      {!embedded ? <BackAction label={t("entryDetail.back")} onPress={onBack} /> : null}
     </Card>
   );
 
@@ -137,7 +135,9 @@ function DetailRow({ label, value }: Readonly<{ label: string; value: string }>)
   return (
     <View className="flex-row justify-between gap-content py-compact">
       <Text className="flex-1 text-body text-secondary">{label}</Text>
-      <Text className="flex-1 text-right text-body text-primary">{value}</Text>
+      <Text selectable className="flex-1 text-right text-body text-primary">
+        {value}
+      </Text>
     </View>
   );
 }

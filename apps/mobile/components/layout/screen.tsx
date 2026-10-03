@@ -1,3 +1,5 @@
+import { useContext } from "react";
+import { NativeNavigationFrameContext } from "./native-navigation-context";
 import { ScrollView, type ScrollViewProps, View } from "react-native";
 import { ScreenFrame } from "./screen-frame";
 import { useNavigationInset } from "./navigation-inset";
@@ -13,6 +15,7 @@ export function Screen({
   keyboardShouldPersistTaps = "handled",
   ...props
 }: ScreenProps) {
+  const native = useContext(NativeNavigationFrameContext);
   const isIOS = process.env.EXPO_OS === "ios";
   const navigationInset = useNavigationInset();
   return (
@@ -21,7 +24,7 @@ export function Screen({
         automaticallyAdjustKeyboardInsets={isIOS}
         className="flex-1 bg-canvas"
         contentContainerClassName={`grow ${contentContainerClassName ?? ""}`}
-        contentInsetAdjustmentBehavior="never"
+        contentInsetAdjustmentBehavior={native ? "automatic" : "never"}
         keyboardDismissMode={keyboardDismissMode ?? (isIOS ? "interactive" : "on-drag")}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
         {...props}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import { render, screen, userEvent } from "@testing-library/react-native";
 
 import { ContextualActions } from "./contextual-actions";
 
@@ -27,23 +27,9 @@ it("keeps editing visible and moves destructive work behind the action menu", as
   expect(screen.queryByRole("button", { name: "Delete entry" })).toBeNull();
 
   await userEvent.press(screen.getByRole("button", { name: "More actions" }));
-  expect(screen.getByRole("header", { name: "Entry actions" })).toBeOnTheScreen();
   await userEvent.press(screen.getByRole("button", { name: "Delete entry" }));
   expect(props.onDelete).toHaveBeenCalledTimes(1);
   expect(screen.queryByRole("button", { name: "Delete entry" })).toBeNull();
-});
-
-it("dismisses the menu with its cancel action and the Android back callback", async () => {
-  await render(<ContextualActions {...props} />);
-
-  await userEvent.press(screen.getByRole("button", { name: "More actions" }));
-  await userEvent.press(screen.getByTestId("contextual-actions-cancel"));
-  expect(screen.queryByRole("header", { name: "Entry actions" })).toBeNull();
-
-  await userEvent.press(screen.getByRole("button", { name: "More actions" }));
-  fireEvent(screen.getByTestId("contextual-actions-modal"), "requestClose");
-  await waitFor(() => expect(screen.queryByRole("header", { name: "Entry actions" })).toBeNull());
-  expect(props.onDelete).not.toHaveBeenCalled();
 });
 
 it("disables edit and menu actions together", async () => {

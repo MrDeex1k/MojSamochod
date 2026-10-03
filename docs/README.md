@@ -64,6 +64,8 @@ include accounts, cloud storage, background synchronization, or a real-time sync
 
 ## Documentation map
 
+- [Native UI and workspace performance](./native-ui-and-performance.md) - audit implementation,
+  native smoke evidence, reproducible query benchmarks and remaining release acceptance checks.
 - [SDK 58 migration](./sdk58-migration.md) - pinned prerelease versions, SwiftPM
   preparation, compatibility patches, and native verification scope.
 - [TestFlight preparation](./testflight-preparation.md) - current Polish working notes for

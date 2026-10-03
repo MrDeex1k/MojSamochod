@@ -1,0 +1,51 @@
+{
+  "session": "android-tablet",
+  "platform": "android",
+  "device": "Pixel Tablet",
+  "deviceId": "emulator-5556",
+  "sampling": {
+    "memory": {
+      "method": "adb-shell-dumpsys-meminfo",
+      "description": "Memory snapshot from adb shell dumpsys meminfo <package>. Values are reported in kilobytes.",
+      "unit": "kB",
+      "topConsumerLimit": 5
+    },
+    "snapshot": {
+      "method": "adb-shell-am-dumpheap",
+      "description": "Java heap dump captured with adb shell am dumpheap, pulled to a local artifact path.",
+      "defaultKind": "android-hprof",
+      "artifactOnly": true
+    }
+  },
+  "metrics": {
+    "memory": {
+      "available": true,
+      "totalPssKb": 514907,
+      "totalRssKb": 658288,
+      "measuredAt": "2026-10-03T11:02:38.650Z",
+      "method": "adb-shell-dumpsys-meminfo",
+      "topConsumers": [
+        {
+          "name": "Native Heap",
+          "pssKb": 277126
+        },
+        {
+          "name": ".dex mmap",
+          "pssKb": 59839
+        },
+        {
+          "name": ".apk mmap",
+          "pssKb": 59465
+        },
+        {
+          "name": "Unknown",
+          "pssKb": 44571
+        },
+        {
+          "name": "Dalvik Heap",
+          "pssKb": 24737
+        }
+      ]
+    }
+  }
+}
