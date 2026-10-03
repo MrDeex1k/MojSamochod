@@ -1,3 +1,5 @@
+import type { Reminder } from "@/domain/reminders/reminder";
+import type { HistoryEntryReference } from "@/application/repositories/history-entry-repository";
 import type { ApplicationServices } from "@/components/providers/application-provider";
 import type { RefuellingHistory } from "@/application/refuelling/refuelling-service";
 import type { HistoryEntry } from "@/domain/history/history-entry";
@@ -7,8 +9,11 @@ import type { Vehicle } from "@/domain/vehicle/vehicle";
 
 export type WorkspaceData = Readonly<{
   documents: readonly VehicleDocument[];
+  relatedEntries?: readonly HistoryEntryReference[];
+  attachmentCounts?: Readonly<Record<string, number>>;
   entries: readonly HistoryEntry[];
   photoUri: string | null;
+  nextReminder?: Reminder;
   refuellingHistory: RefuellingHistory;
   vehicle: Vehicle;
 }>;
@@ -31,6 +36,7 @@ export type WorkspaceMode =
 export type VehicleWorkspaceViewProps = WorkspaceData &
   Readonly<{
     mode: WorkspaceMode;
+    revision?: number;
     onLoadMore?: () => void;
     loadMoreError?: boolean;
     loadingMore?: boolean;
@@ -51,7 +57,7 @@ export type VehicleWorkspaceViewProps = WorkspaceData &
     onReminders: () => void;
     onFuelChanged: () => void;
     onAddRefuelling: () => void;
-    onSaved: () => void;
+    onSaved: (entry?: HistoryEntry) => void;
     onSelectEntry: (entry: HistoryEntry) => void;
     onSelectRefuelling: (refuelling: Refuelling) => void;
     onSelectDocument: (document: VehicleDocument) => void;

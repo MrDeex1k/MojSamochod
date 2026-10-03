@@ -1,4 +1,4 @@
-import { act, render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, screen, userEvent, waitFor } from "@testing-library/react-native";
 import { Alert, Platform } from "react-native";
 import { ReminderService } from "@/application/reminders/reminder-service";
 import type { ReminderRepository } from "@/application/repositories/reminder-repository";
@@ -153,7 +153,7 @@ it.each(["ios", "android"] as const)(
     const { repository, notifications, stored } = await setup();
     jest.replaceProperty(Platform, "OS", platform);
     await userEvent.press(screen.getByRole("button", { name: "Add deadline: Insurance" }));
-    expect(screen.getAllByRole("checkbox", { checked: true })).toHaveLength(3);
+    expect(screen.getAllByRole("switch", { checked: true })).toHaveLength(3);
     await chooseDate(platform);
     await userEvent.press(screen.getByRole("button", { name: "Save deadline" }));
     expect(
@@ -201,7 +201,7 @@ it("preserves the original zone during editing and permits disabling every offse
   await userEvent.press(screen.getByRole("button", { name: "Edit deadline: Insurance" }));
   await chooseDate();
   for (const name of ["7 days before", "1 day before", "On the due date"])
-    await userEvent.press(screen.getByRole("checkbox", { name }));
+    await fireEvent(screen.getByRole("switch", { name }), "valueChange", false);
   await userEvent.press(screen.getByRole("button", { name: "Save deadline" }));
   await screen.findByRole("button", { name: "Edit deadline: Insurance" });
   expect(repository.update).toHaveBeenCalledWith(
@@ -253,7 +253,7 @@ it("requires confirmation for a dirty draft and returns directly for an unchange
   await userEvent.press(screen.getByRole("button", { name: "Cancel" }));
   expect(alert).not.toHaveBeenCalled();
   await userEvent.press(screen.getByRole("button", { name: "Add deadline: Insurance" }));
-  await userEvent.press(screen.getByRole("checkbox", { name: "7 days before" }));
+  await fireEvent(screen.getByRole("switch", { name: "7 days before" }), "valueChange", false);
   await userEvent.press(screen.getByRole("button", { name: "Cancel" }));
   expect(alert).toHaveBeenCalledWith("Discard changes?", expect.any(String), expect.any(Array), {
     cancelable: false,

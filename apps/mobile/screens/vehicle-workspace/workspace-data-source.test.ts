@@ -146,3 +146,98 @@ it("refreshes attachment metadata after document changes without reloading histo
   expect(api.documents.list).toHaveBeenCalledTimes(2);
   expect(api.historyEntries.listPage).toHaveBeenCalledTimes(1);
 });
+
+function historyFixture(index: number, date = "2026-09-05T08:00:00.000Z") {
+  const result = createHistoryEntry(
+    {
+      vehicleId: vehicleIdFromUuidV7("018f47e2-7b2f-7cc8-98c4-dc0c0c07398f"),
+      type: "repair",
+      details: { subject: `Record ${index}` },
+      occurredAt: date,
+    },
+    {
+      clock: { now: () => new Date(date) },
+      idGenerator: { generate: () => `01990000-0001-7000-8000-${String(index).padStart(12, "0")}` },
+    },
+  );
+  if (!result.ok) throw new Error("Invalid fixture");
+  return result.value;
+}
+
+it("updates and removes cached history without reloading pages, preserving a moved cursor boundary", async () => {
+  const api = services();
+  const first = historyFixture(1);
+  const boundary = historyFixture(2);
+  const moved = historyFixture(2, "2026-08-01T08:00:00.000Z");
+  const older = historyFixture(3, "2026-08-20T08:00:00.000Z");
+  const cursor = {
+    id: boundary.id,
+    createdAt: boundary.createdAt,
+    occurredAt: boundary.occurredAt,
+  };
+  api.historyEntries.listPage
+    .mockResolvedValueOnce(repositorySuccess({ entries: [first, boundary], nextCursor: cursor }))
+    .mockResolvedValueOnce(repositorySuccess({ entries: [older, moved], nextCursor: null }));
+  const source = new WorkspaceDataSource(api as unknown as ApplicationServices);
+  await source.load("history");
+  await source.changedHistory(moved);
+  await source.changedHistory(undefined, first.id);
+  expect(await source.load("history")).toMatchObject({ data: { entries: [] } });
+  expect(api.historyEntries.listPage).toHaveBeenCalledTimes(1);
+  await source.loadMore();
+  expect(api.historyEntries.listPage.mock.calls[1]?.[1]).toEqual(cursor);
+  expect(await source.load("history")).toMatchObject({ data: { entries: [older, moved] } });
+  expect(source.hasMore()).toBe(false);
+});
+
+it("loads attachment counts for visible history without fetching document payloads", async () => {
+  const api = services();
+  const entry = historyFixture(1);
+  const attachmentCounts = jest.fn(async () => repositorySuccess({ [entry.id]: 3 }));
+  api.historyEntries.listPage.mockResolvedValue(
+    repositorySuccess({ entries: [entry], nextCursor: null }),
+  );
+  const source = new WorkspaceDataSource({
+    ...api,
+    documents: { ...api.documents, attachmentCounts },
+  } as unknown as ApplicationServices);
+  expect(await source.load("history")).toMatchObject({
+    data: { attachmentCounts: { [entry.id]: 3 } },
+  });
+  expect(attachmentCounts).toHaveBeenCalledWith(entry.vehicleId, [entry.id]);
+  expect(api.documents.list).not.toHaveBeenCalled();
+});
+
+it("keeps the full-history fuel summary when additional display pages are loaded", async () => {
+  const api = services();
+  const cursor = historyFixture(1);
+  const summary = {
+    includedRefuellingIds: ["anchor-1", "anchor-2"],
+    intervals: [],
+    totalDistanceMetres: 600000,
+    totalFuelMicrolitres: 45000000,
+    unanchoredRefuellingIds: [],
+  };
+  const listPage = jest
+    .fn()
+    .mockResolvedValueOnce(
+      repositorySuccess({ refuellings: [{ id: "newest" }], nextCursor: cursor }),
+    )
+    .mockResolvedValueOnce(repositorySuccess({ refuellings: [{ id: "older" }], nextCursor: null }));
+  const consumption = jest.fn(async () => repositorySuccess(summary));
+  const source = new WorkspaceDataSource({
+    ...api,
+    refuellings: { ...api.refuellings, listPage, consumption },
+  } as unknown as ApplicationServices);
+  await source.load("fuel");
+  expect(source.hasMore("fuel")).toBe(true);
+  await source.loadMore("fuel");
+  expect(await source.load("fuel")).toMatchObject({
+    data: {
+      refuellingHistory: { consumption: summary, refuellings: [{ id: "newest" }, { id: "older" }] },
+    },
+  });
+  expect(consumption).toHaveBeenCalledTimes(1);
+  expect(api.refuellings.list).not.toHaveBeenCalled();
+  expect(source.hasMore("fuel")).toBe(false);
+});

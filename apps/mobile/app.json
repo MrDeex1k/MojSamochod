@@ -12,9 +12,10 @@
       "pl": "./locales/pl.json"
     },
     "ios": {
+      "appleTeamId": "KV9BUW5GTH",
       "icon": "./assets/app-icons/Car.icon",
       "bundleIdentifier": "pl.jakubbatycki.mojeauto",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "supportsTablet": true
     },
     "android": {
@@ -44,6 +45,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "./plugins/with-sdk58-android-debug.cjs",
+      "expo-build-properties",
       "expo-router",
       [
         "expo-localization",

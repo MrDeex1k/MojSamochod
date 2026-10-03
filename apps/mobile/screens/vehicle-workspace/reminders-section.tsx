@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { AppState, BackHandler, ScrollView, Text, View } from "react-native";
 import type { ApplicationServices } from "@/components/providers/application-provider";
 import { Screen } from "@/components/layout/screen";
@@ -19,6 +19,7 @@ type Props = Pick<
     vehicle: Vehicle;
     onBack: () => void;
     embedded?: boolean;
+    onEditReminder?: (kind: ReminderKind) => void;
   }>;
 
 export function RemindersSection({
@@ -29,6 +30,7 @@ export function RemindersSection({
   vehicle,
   onBack,
   embedded = false,
+  onEditReminder,
 }: Props) {
   const { t, i18n } = useAppTranslation();
   const [attempt, setAttempt] = useState(0);
@@ -67,14 +69,16 @@ export function RemindersSection({
       subscription.remove();
     };
   }, [clock, reminderSchedule]);
+  const returnFromSection = useEffectEvent(onBack);
+  const hasNativeEditor = Boolean(onEditReminder);
   useEffect(() => {
-    if (editing) return;
+    if (editing || hasNativeEditor) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      onBack();
+      returnFromSection();
       return true;
     });
     return () => subscription.remove();
-  }, [editing, onBack]);
+  }, [editing, hasNativeEditor]);
   if (editing)
     return (
       <ReminderForm
@@ -146,7 +150,9 @@ export function RemindersSection({
                         kind: t(`reminders.kinds.${kind}`),
                       })}
                       label={t("reminders.edit")}
-                      onPress={() => setEditing({ kind, reminder })}
+                      onPress={() =>
+                        onEditReminder ? onEditReminder(kind) : setEditing({ kind, reminder })
+                      }
                       variant="secondary"
                     />
                   </>
@@ -156,7 +162,7 @@ export function RemindersSection({
                       kind: t(`reminders.kinds.${kind}`),
                     })}
                     label={t("reminders.add")}
-                    onPress={() => setEditing({ kind })}
+                    onPress={() => (onEditReminder ? onEditReminder(kind) : setEditing({ kind }))}
                     variant="secondary"
                   />
                 )}
@@ -171,7 +177,9 @@ export function RemindersSection({
           ) : null}
         </>
       )}
-      <Button label={t("reminders.back")} onPress={onBack} variant="secondary" />
+      {!onEditReminder ? (
+        <Button label={t("reminders.back")} onPress={onBack} variant="secondary" />
+      ) : null}
     </FormSection>
   );
   return embedded ? (

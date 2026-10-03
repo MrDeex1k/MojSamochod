@@ -1,3 +1,4 @@
+import { nativeTheme } from "@/styles/native-theme";
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
 import { useEffect, useState } from "react";
 import {
@@ -101,5 +102,9 @@ export function NavigationSurface({
 
 const styles = StyleSheet.create({
   surface: { borderRadius: 28 },
-  opaque: { backgroundColor: "#252527", borderWidth: 1, borderColor: "#343438" },
+  opaque: {
+    backgroundColor: nativeTheme.surfaceStrong,
+    borderWidth: 1,
+    borderColor: nativeTheme.divider,
+  },
 });

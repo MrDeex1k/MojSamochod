@@ -1,0 +1,35 @@
+diff --git a/dist/index.js b/dist/index.js
+index a5d432a..bb4d181 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -4804,12 +4804,23 @@ function compilePattern(pattern) {
+ 		throw new ContractConfigError(`Contract pattern "${pattern}" is not a valid regular expression.`);
+ 	}
+ }
++function contractThemeClassIsKnown(fromFile, token) {
++	if (!fromFile) return false;
++	const vocabulary = themeVocabularyFor(fromFile);
++	if (!vocabulary) return false;
++	// Tailwind generates these utilities from @theme; they are not @utility declarations.
++	const spacing = token.match(/^(?:p[xytrblse]?|-?m[xytrblse]?|gap(?:-[xy])?|space-[xy])-(.+)$/);
++	if (spacing && vocabulary.names.has(`spacing-${spacing[1]}`)) return true;
++	const radius = token.match(/^rounded(?:-(?:[trblse]|tl|tr|bl|br|ss|se|es|ee))?-(.+)$/);
++	return !!radius && vocabulary.names.has(`radius-${radius[1]}`);
++}
+ function checkEntries(entries, groupIds, classifier, fromFile) {
+ 	for (const entry of entries ?? []) {
+ 		if (entry === "layout" || entry.includes("*") || entry.includes(":")) continue;
+ 		if (CATEGORIES.includes(entry)) continue;
+ 		if (groupIds.has(entry)) continue;
+ 		if (classifier.groupOf(entry)) continue;
++		if (contractThemeClassIsKnown(fromFile, entry)) continue;
+ 		const known = fromFile ? knownClassesFor(fromFile) : null;
+ 		if (known?.utilities.has(entry) || known?.classes.has(entry)) continue;
+ 		const hint = /^[A-Za-z][A-Za-z0-9]*$/.test(entry) ? didYouMean(entry, [
+@@ -6580,4 +6591,4 @@ const project = {
+ var src_default = plugin;
+ 
+ //#endregion
+-export { src_default as default, plugin, project };
+\ No newline at end of file
++export { src_default as default, plugin, project };

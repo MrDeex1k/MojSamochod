@@ -88,7 +88,10 @@ export function updateRefuelling(
     : validated;
 }
 
-export function compareRefuellingsOldestFirst(left: Refuelling, right: Refuelling): number {
+export function compareRefuellingsOldestFirst(
+  left: Pick<Refuelling, "occurredAt" | "createdAt" | "id">,
+  right: Pick<Refuelling, "occurredAt" | "createdAt" | "id">,
+): number {
   return (
     left.occurredAt.localeCompare(right.occurredAt) ||
     left.createdAt.localeCompare(right.createdAt) ||

@@ -1,3 +1,5 @@
+import type { HistoryCursor } from "@/application/repositories/history-entry-repository";
+import type { RefuellingPage } from "@/application/repositories/refuelling-repository";
 import type { RefuellingRepository } from "@/application/repositories/refuelling-repository";
 import {
   repositoryFailure,
@@ -61,6 +63,22 @@ export class RefuellingService {
           refuellings: result.value,
         })
       : result;
+  }
+
+  async listPage(
+    vehicleId: VehicleId,
+    cursor?: HistoryCursor,
+  ): Promise<RepositoryResult<RefuellingPage>> {
+    if (this.repository.listPage) return this.repository.listPage(vehicleId, cursor);
+    const result = await this.repository.list(vehicleId);
+    return result.ok ? repositorySuccess({ refuellings: result.value, nextCursor: null }) : result;
+  }
+
+  async consumption(vehicleId: VehicleId): Promise<RepositoryResult<FuelConsumptionSummary>> {
+    const result = this.repository.consumptionRecords
+      ? await this.repository.consumptionRecords(vehicleId)
+      : await this.repository.list(vehicleId);
+    return result.ok ? repositorySuccess(calculateFuelConsumption(result.value)) : result;
   }
 
   async update(

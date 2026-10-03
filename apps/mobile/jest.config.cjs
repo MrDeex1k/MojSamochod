@@ -2,11 +2,13 @@ module.exports = {
   clearMocks: true,
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
+    // jest-expo's deep path is blocked by React Native 0.88's package exports.
+    "^react-native/asset-registry$": require.resolve("react-native/asset-registry"),
     "^react-native-reanimated$": "react-native-reanimated/src/index",
     "^react-native-worklets$": "react-native-worklets/src/index",
   },
   preset: "jest-expo",
-  resolver: "react-native-worklets/jest/resolver",
+  resolver: "<rootDir>/jest-resolver.cjs",
   setupFilesAfterEnv: ["<rootDir>/jest-setup.cjs"],
   restoreMocks: true,
   testMatch: ["<rootDir>/**/*.test.{ts,tsx}"],

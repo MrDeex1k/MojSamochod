@@ -9,7 +9,26 @@ export type HistoryPage = Readonly<{
   nextCursor: HistoryCursor | null;
 }>;
 
+export type HistoryEntryReference = Pick<HistoryEntry, "id" | "type" | "occurredAt"> &
+  Readonly<{
+    subject?: string;
+    inspectionKind?: string;
+  }>;
+export type HistoryReferencePage = Readonly<{
+  entries: readonly HistoryEntryReference[];
+  nextCursor: HistoryCursor | null;
+}>;
 export interface HistoryEntryRepository {
+  references?(
+    vehicleId: VehicleId,
+    ids: readonly HistoryEntryId[],
+  ): Promise<RepositoryResult<readonly HistoryEntryReference[]>>;
+  searchReferences?(
+    vehicleId: VehicleId,
+    query: string,
+    cursor?: HistoryCursor,
+  ): Promise<RepositoryResult<HistoryReferencePage>>;
+
   listPage?(
     vehicleId: VehicleId,
     cursor?: HistoryCursor,

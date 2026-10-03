@@ -1,3 +1,4 @@
+import { BackAction } from "@/components/layout/back-action";
 import { PdfPreview } from "@/components/ui/pdf-preview";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";
-import type { HistoryEntry } from "@/domain/history/history-entry";
+import type { HistoryEntryReference } from "@/application/repositories/history-entry-repository";
 import type { Vehicle } from "@/domain/vehicle/vehicle";
 import type { DocumentFilePicker } from "@/infrastructure/documents/system-document-picker";
 import { formatCalendarDate, formatCurrencyMinorUnits } from "@/localization/formatters";
@@ -30,7 +31,7 @@ export function DocumentDetail({
   document: VehicleDocument;
   documents: VehicleDocumentService;
   embedded?: boolean;
-  entries: readonly HistoryEntry[];
+  entries: readonly HistoryEntryReference[];
   onBack: () => void;
   onChanged: () => void;
   onEdit: () => void;
@@ -182,7 +183,7 @@ export function DocumentDetail({
         onPress={confirmDelete}
         variant="danger"
       />
-      <Button label={t("documents.back")} onPress={onBack} variant="secondary" />
+      <BackAction label={t("documents.back")} onPress={onBack} />
     </Card>
   );
   return embedded ? (
@@ -202,12 +203,14 @@ function DetailRow({ label, value }: Readonly<{ label: string; value: string }>)
   return (
     <View className="flex-row justify-between gap-content py-compact">
       <Text className="flex-1 text-body text-secondary">{label}</Text>
-      <Text className="flex-1 text-right text-body text-primary">{value}</Text>
+      <Text selectable className="flex-1 text-right text-body text-primary">
+        {value}
+      </Text>
     </View>
   );
 }
 
-function entryLabel(entry: HistoryEntry, t: (key: string) => string): string {
+function entryLabel(entry: HistoryEntryReference, t: (key: string) => string): string {
   return t(`workspace.entryType.${entry.type}`);
 }
 

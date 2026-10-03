@@ -1,5 +1,5 @@
 import { CorruptStoredDataError } from "./row-mappers";
-import { and, asc, desc, eq, ne, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ne, inArray, count, type SQL } from "drizzle-orm";
 
 import type { VehicleDocumentRepository } from "@/application/repositories/vehicle-document-repository";
 import {
@@ -14,6 +14,7 @@ import {
   managedFileIdFromUuidV7,
   vehicleIdFromUuidV7,
   type DocumentId,
+  type HistoryEntryId,
   type ManagedFileId,
   type VehicleId,
 } from "@/domain/shared/identifiers";
@@ -27,6 +28,32 @@ type DatabaseTransaction = Parameters<Parameters<AppDatabase["transaction"]>[0]>
 
 export class DrizzleVehicleDocumentRepository implements VehicleDocumentRepository {
   constructor(private readonly database: AppDatabase) {}
+
+  async attachmentCounts(
+    vehicleId: VehicleId,
+    ids: readonly HistoryEntryId[],
+  ): Promise<RepositoryResult<Readonly<Record<string, number>>>> {
+    try {
+      const counts: Record<string, number> = {};
+      for (let start = 0; start < ids.length; start += 200) {
+        const rows = this.database
+          .select({ id: vehicleDocuments.historyEntryId, count: count() })
+          .from(vehicleDocuments)
+          .where(
+            and(
+              eq(vehicleDocuments.vehicleId, vehicleId),
+              inArray(vehicleDocuments.historyEntryId, ids.slice(start, start + 200)),
+            ),
+          )
+          .groupBy(vehicleDocuments.historyEntryId)
+          .all();
+        for (const row of rows) if (row.id) counts[row.id] = row.count;
+      }
+      return repositorySuccess(counts);
+    } catch (error) {
+      return repositoryFailure("unavailable", "vehicleDocument.attachmentCounts", error);
+    }
+  }
 
   async create(document: VehicleDocument): Promise<RepositoryResult<void>> {
     const operation = "vehicleDocument.create";

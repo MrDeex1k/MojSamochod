@@ -1,0 +1,221 @@
+{
+  "environment": "Node v24.18.0, host SQLite, warm cache, 15 repetitions",
+  "results": [
+    {
+      "size": 100,
+      "name": "history.attachments.before",
+      "rows": 100,
+      "queries": 1,
+      "jsonBytes": 127701,
+      "medianMs": 0.076,
+      "p95Ms": 0.218
+    },
+    {
+      "size": 100,
+      "name": "history.attachments.after",
+      "rows": 50,
+      "queries": 1,
+      "jsonBytes": 2251,
+      "medianMs": 0.027,
+      "p95Ms": 0.03
+    },
+    {
+      "size": 100,
+      "name": "documents.relations.before",
+      "rows": 100,
+      "queries": 1,
+      "jsonBytes": 144301,
+      "medianMs": 0.145,
+      "p95Ms": 0.232
+    },
+    {
+      "size": 100,
+      "name": "documents.selector.after",
+      "rows": 51,
+      "queries": 1,
+      "jsonBytes": 8518,
+      "medianMs": 0.065,
+      "p95Ms": 0.069
+    },
+    {
+      "size": 100,
+      "name": "documents.relations.after",
+      "rows": 100,
+      "queries": 1,
+      "jsonBytes": 16701,
+      "medianMs": 0.073,
+      "p95Ms": 0.131
+    },
+    {
+      "size": 100,
+      "name": "fuel.before",
+      "rows": 100,
+      "queries": 1,
+      "jsonBytes": 41174,
+      "medianMs": 0.102,
+      "p95Ms": 0.181
+    },
+    {
+      "size": 100,
+      "name": "fuel.page.after",
+      "rows": 51,
+      "queries": 1,
+      "jsonBytes": 20986,
+      "medianMs": 0.073,
+      "p95Ms": 0.075
+    },
+    {
+      "size": 100,
+      "name": "fuel.summary.after",
+      "rows": 100,
+      "queries": 1,
+      "jsonBytes": 22874,
+      "medianMs": 0.054,
+      "p95Ms": 0.114
+    },
+    {
+      "size": 1000,
+      "name": "history.attachments.before",
+      "rows": 1000,
+      "queries": 1,
+      "jsonBytes": 1277001,
+      "medianMs": 0.803,
+      "p95Ms": 1.243
+    },
+    {
+      "size": 1000,
+      "name": "history.attachments.after",
+      "rows": 50,
+      "queries": 1,
+      "jsonBytes": 2251,
+      "medianMs": 0.088,
+      "p95Ms": 0.104
+    },
+    {
+      "size": 1000,
+      "name": "documents.relations.before",
+      "rows": 1000,
+      "queries": 1,
+      "jsonBytes": 1443001,
+      "medianMs": 1.554,
+      "p95Ms": 2.037
+    },
+    {
+      "size": 1000,
+      "name": "documents.selector.after",
+      "rows": 51,
+      "queries": 1,
+      "jsonBytes": 8518,
+      "medianMs": 0.767,
+      "p95Ms": 1.929
+    },
+    {
+      "size": 1000,
+      "name": "documents.relations.after",
+      "rows": 1000,
+      "queries": 2,
+      "jsonBytes": 167001,
+      "medianMs": 2.095,
+      "p95Ms": 11.185
+    },
+    {
+      "size": 1000,
+      "name": "fuel.before",
+      "rows": 1000,
+      "queries": 1,
+      "jsonBytes": 412774,
+      "medianMs": 1.742,
+      "p95Ms": 6.558
+    },
+    {
+      "size": 1000,
+      "name": "fuel.page.after",
+      "rows": 51,
+      "queries": 1,
+      "jsonBytes": 20986,
+      "medianMs": 0.46,
+      "p95Ms": 0.945
+    },
+    {
+      "size": 1000,
+      "name": "fuel.summary.after",
+      "rows": 1000,
+      "queries": 1,
+      "jsonBytes": 229774,
+      "medianMs": 2.159,
+      "p95Ms": 8.367
+    },
+    {
+      "size": 10000,
+      "name": "history.attachments.before",
+      "rows": 10000,
+      "queries": 1,
+      "jsonBytes": 12770001,
+      "medianMs": 10.459,
+      "p95Ms": 32.549
+    },
+    {
+      "size": 10000,
+      "name": "history.attachments.after",
+      "rows": 50,
+      "queries": 1,
+      "jsonBytes": 2251,
+      "medianMs": 5.354,
+      "p95Ms": 52.654
+    },
+    {
+      "size": 10000,
+      "name": "documents.relations.before",
+      "rows": 10000,
+      "queries": 1,
+      "jsonBytes": 14430001,
+      "medianMs": 42.421,
+      "p95Ms": 78.536
+    },
+    {
+      "size": 10000,
+      "name": "documents.selector.after",
+      "rows": 51,
+      "queries": 1,
+      "jsonBytes": 8518,
+      "medianMs": 6.531,
+      "p95Ms": 8.553
+    },
+    {
+      "size": 10000,
+      "name": "documents.relations.after",
+      "rows": 10000,
+      "queries": 12,
+      "jsonBytes": 1670001,
+      "medianMs": 17.835,
+      "p95Ms": 27.396
+    },
+    {
+      "size": 10000,
+      "name": "fuel.before",
+      "rows": 10000,
+      "queries": 1,
+      "jsonBytes": 4137774,
+      "medianMs": 10.129,
+      "p95Ms": 12.702
+    },
+    {
+      "size": 10000,
+      "name": "fuel.page.after",
+      "rows": 51,
+      "queries": 1,
+      "jsonBytes": 20986,
+      "medianMs": 3.85,
+      "p95Ms": 4.065
+    },
+    {
+      "size": 10000,
+      "name": "fuel.summary.after",
+      "rows": 10000,
+      "queries": 1,
+      "jsonBytes": 2307774,
+      "medianMs": 5.204,
+      "p95Ms": 6.622
+    }
+  ]
+}

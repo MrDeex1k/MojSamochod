@@ -21,10 +21,14 @@ export function DataManagement({
     setStarted(true);
     setBusy(true);
     setError(false);
-    const result = await eraseData.erase();
-    setBusy(false);
-    if (result.ok) onErased();
-    else setError(true);
+    await eraseData
+      .erase()
+      .then((result) => {
+        if (result.ok) onErased();
+        else setError(true);
+      })
+      .catch(() => setError(true))
+      .finally(() => setBusy(false));
   };
   const confirm = () =>
     Alert.alert(t("dataManagement.confirmTitle"), t("dataManagement.confirmDescription"), [

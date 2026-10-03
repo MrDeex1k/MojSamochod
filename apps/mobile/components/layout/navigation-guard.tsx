@@ -5,6 +5,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { Alert, BackHandler } from "react-native";
 
@@ -16,9 +17,22 @@ type Guard = (action: Action) => void;
 function createNavigationGuard() {
   let guard: Guard | null = null;
   let approved = false;
+  let blocked = false;
+  const listeners = new Set<() => void>();
   return {
-    register(next: Guard) {
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    getSnapshot: () => blocked,
+    register(next: Guard, preventRemoval: boolean) {
       guard = next;
+      if (blocked !== preventRemoval) {
+        blocked = preventRemoval;
+        listeners.forEach((listener) => listener());
+      }
       return () => {
         if (guard === next) guard = null;
       };
@@ -88,7 +102,7 @@ export function useFormExitGuard(values: unknown, busy: boolean, onCancel: Actio
   };
   const cancel = () => (navigation ? navigation.navigate(onCancel) : guard(onCancel));
   useEffect(() => {
-    const unregister = navigation?.register(guard);
+    const unregister = navigation?.register(guard, busy || serialized !== initial);
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       cancel();
       return true;
@@ -99,4 +113,11 @@ export function useFormExitGuard(values: unknown, busy: boolean, onCancel: Actio
     };
   });
   return cancel;
+}
+
+export function useNavigationRemovalGuard() {
+  const navigation = useContext(NavigationContext);
+  if (!navigation) throw new Error("NavigationGuardProvider is required");
+  const blocked = useSyncExternalStore(navigation.subscribe, navigation.getSnapshot);
+  return { blocked, navigate: navigation.navigate };
 }

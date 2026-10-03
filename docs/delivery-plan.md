@@ -174,7 +174,7 @@ technical contract is in [local reminder notifications](local-reminder-notificat
 5. Implement phone/tablet reminder UI, localization, and contextual permission education.
 6. Update all production and development dependencies across the repository to the newest compatible
    versions, review transitive dependencies and overrides, adapt affected code, and update `nub.lock`.
-   Keep Expo/React Native packages SDK-compatible, exact pins, SFW and the 24-hour cooling period;
+   Keep Expo/React Native packages SDK-compatible, exact pins, SFW and the 3-hour cooling period;
    document exceptions. Run automated checks, React Doctor and Expo Doctor before native acceptance.
 7. Verify the entire phase and existing application functionality after dependency updates on iPhone,
    iPad, Android phone and Android tablet. Rebuild native apps as required, fix regressions,

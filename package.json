@@ -20,7 +20,8 @@
     "format:check": "oxfmt . --check",
     "test": "nub run --workspace @moje-auto/mobile test",
     "typecheck": "nub run --workspace @moje-auto/mobile typecheck",
-    "check": "nub run lint && nub run format:check && nub run typecheck && nub run db:check && nub run test",
+    "check": "nub run lint && nub run format:check && nub run native:check && nub run typecheck && nub run db:check && nub run test",
+    "native:check": "node scripts/check-native-modules.mjs",
     "deps:install": "nubx -y sfw@2.0.6 nub install",
     "prepare": "husky",
     "commitlint": "commitlint"
@@ -28,12 +29,13 @@
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
-    "@shadcn/lint": "0.1.1",
+    "@shadcn/lint": "0.2.0",
     "fastq": "1.20.3",
     "husky": "9.1.7",
-    "oxfmt": "0.68.0",
-    "oxlint": "1.83.0",
-    "sfw": "2.0.6"
+    "oxfmt": "0.71.0",
+    "oxlint": "1.86.0",
+    "sfw": "2.0.6",
+    "xcode": "3.0.1"
   },
   "overrides": {
     "lightningcss": "1.30.1"
@@ -41,8 +43,37 @@
   "devEngines": {
     "packageManager": {
       "name": "nub",
-      "version": "0.8.0",
+      "version": "0.9.3",
       "onFail": "ignore"
     }
+  },
+  "packageExtensions": {
+    "expo-constants@58.0.9": {
+      "dependencies": {
+        "expo-modules-core": "58.0.11"
+      }
+    },
+    "expo-file-system@58.0.5": {
+      "dependencies": {
+        "expo-modules-core": "58.0.11"
+      }
+    },
+    "@expo/dom-webview@58.0.2": {
+      "dependencies": {
+        "expo-modules-core": "58.0.11"
+      }
+    }
+  },
+  "patchedDependencies": {
+    "@shadcn/lint@0.2.0": "patches/@shadcn__lint@0.2.0.patch",
+    "@react-native-community/datetimepicker@9.2.1": "patches/@react-native-community__datetimepicker@9.2.1.patch",
+    "@react-native-masked-view/masked-view@0.3.2": "patches/@react-native-masked-view__masked-view@0.3.2.patch",
+    "react-native-gesture-handler@3.2.1": "patches/react-native-gesture-handler@3.2.1.patch",
+    "react-native-safe-area-context@5.9.1": "patches/react-native-safe-area-context@5.9.1.patch",
+    "react-native-screens@4.28.0": "patches/react-native-screens@4.28.0.patch",
+    "expo-application@58.0.3": "patches/expo-application@58.0.3.patch",
+    "expo-modules-jsi@58.0.7": "patches/expo-modules-jsi@58.0.7.patch",
+    "expo-sqlite@58.0.8": "patches/expo-sqlite@58.0.8.patch",
+    "expo-notifications@58.0.11": "patches/expo-notifications@58.0.11.patch"
   }
 }

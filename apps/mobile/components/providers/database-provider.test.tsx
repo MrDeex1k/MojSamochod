@@ -1,11 +1,11 @@
 import { act, render, screen, userEvent, waitFor } from "@testing-library/react-native";
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import type { AppDatabase, DatabaseHandle } from "@/infrastructure/database/database";
 
-import { DatabaseProvider } from "./database-provider";
+import { DatabaseProvider, useDatabase } from "./database-provider";
 
 const initialMetrics = {
   frame: { height: 852, width: 393, x: 0, y: 0 },
@@ -132,4 +132,36 @@ describe("DatabaseProvider", () => {
     expect(await screen.findByText("Current history")).toBeOnTheScreen();
     expect(screen.queryByRole("alert")).not.toBeOnTheScreen();
   });
+});
+
+it("recreates stateful services when a provider obtains a replacement database handle", async () => {
+  const first = createDatabaseHandle();
+  const next = createDatabaseHandle();
+  const serviceHandles: AppDatabase[] = [];
+  function ServiceConsumer() {
+    const database = useDatabase();
+    const [service] = useState(() => {
+      serviceHandles.push(database);
+      return database;
+    });
+    return <Text>{service === next.database ? "New connection" : "Old connection"}</Text>;
+  }
+  const initializeFirst = async () => first;
+  const initializeNext = async () => next;
+  const view = await renderWithSafeArea(
+    <DatabaseProvider initialize={initializeFirst}>
+      <ServiceConsumer />
+    </DatabaseProvider>,
+  );
+  expect(await screen.findByText("Old connection")).toBeOnTheScreen();
+  await view.rerender(
+    <SafeAreaProvider initialMetrics={initialMetrics}>
+      <DatabaseProvider initialize={initializeNext}>
+        <ServiceConsumer />
+      </DatabaseProvider>
+    </SafeAreaProvider>,
+  );
+  expect(await screen.findByText("New connection")).toBeOnTheScreen();
+  expect(first.close).toHaveBeenCalledTimes(1);
+  expect(serviceHandles).toEqual([first.database, next.database]);
 });

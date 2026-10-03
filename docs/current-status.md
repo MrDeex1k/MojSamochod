@@ -216,8 +216,9 @@ tworzenie/edycję/usuwanie, wybór wyprzedzeń i stany daty. Zapis i usunięcie 
 przypomnień. Formularz zachowuje strefę istniejącego terminu, ostrzega przed porzuceniem zmian,
 a zgoda jest osobną, opcjonalną czynnością po zapisie. UI reaguje na wynik uzgadniania,
 odmowę i błąd odczytu uprawnień; błąd nie usuwa ani nie blokuje terminów.
-Etap 6 aktualizuje 15 bezpośrednich pakietów i zależności przechodnie, zachowując zgodność SDK 57,
-przypięte wersje, SFW i karencję 24 godzin. Expo ma teraz wersję 57.0.19, powiadomienia 57.0.16.
+W etapie 6 zaktualizowano 15 bezpośrednich pakietów i zależności przechodnie, zachowując zgodność SDK 57,
+przypięte wersje, SFW i ówczesną karencję 24 godzin. Bieżąca karencja wynosi 3 godziny.
+Na tym etapie Expo miało wersję 57.0.19, powiadomienia 57.0.16.
 Usunięto pięć konstrukcji `try/finally`, które blokowały optymalizację nowych formularzy przez
 React Compiler; testy potwierdzają odblokowanie przycisków po błędach i możliwość ponowienia.
 Pełne `nub run check` po poprawce review przechodzi: 59 zestawów, 398 testów. React Doctor 0.9.13: 83/100,

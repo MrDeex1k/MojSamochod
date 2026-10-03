@@ -24,7 +24,7 @@ describe("local native QA configuration", () => {
     expect(config.version).toBe("0.8.0");
     expect(config.ios).toMatchObject({
       bundleIdentifier: "pl.jakubbatycki.mojeauto",
-      buildNumber: "1",
+      buildNumber: "2",
     });
     expect(config.android).toMatchObject({
       package: "pl.jakubbatycki.mojeauto",
@@ -49,7 +49,7 @@ describe("local native QA configuration", () => {
       ...app.expo.android,
       package: "dev.mojeauto.qa",
     });
-    expect(config.ios.buildNumber).toBe("1");
+    expect(config.ios.buildNumber).toBe(app.expo.ios.buildNumber);
     expect(config.android.versionCode).toBe(1);
     expect(JSON.stringify(app.expo)).toBe(before);
   });

@@ -1,4 +1,6 @@
-import { useState, useSyncExternalStore } from "react";
+import { notificationPresentation } from "./notification-presentation";
+import { useSyncExternalStore } from "react";
+import { useNotificationActions } from "./use-notification-actions";
 import { Text, View } from "react-native";
 import type { ReminderNotifications } from "@/application/notifications/reminder-notifications";
 import type { ReminderSchedule } from "@/application/notifications/reminder-schedule";
@@ -18,64 +20,17 @@ export function ReminderNotificationStatus({
     schedule.getSnapshot,
     schedule.getSnapshot,
   );
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
-  const permission = result?.permission;
-  const request = async () => {
-    if (busy) return;
-    setBusy(true);
-    setError(false);
-    try {
-      const response = await notifications.requestPermissionAfterExplanation();
-      if (!response.ok) setError(true);
-      await schedule.reconcile();
-    } catch {
-      setError(true);
-    }
-    setBusy(false);
-  };
-  const retry = async () => {
-    setBusy(true);
-    setError(false);
-    try {
-      await schedule.reconcile();
-    } catch {
-      setError(true);
-    }
-    setBusy(false);
-  };
-  const settings = async () => {
-    setBusy(true);
-    setError(false);
-    try {
-      const response = await notifications.openSettings();
-      if (!response.ok) setError(true);
-    } catch {
-      setError(true);
-    }
-    setBusy(false);
-  };
-  const canRequest =
-    permission && !permission.canSchedule && permission.canAskAgain && !permission.channelBlocked;
+  const { busy, error, request, retry, settings } = useNotificationActions(notifications, schedule);
+  const status = notificationPresentation(result, error);
   return (
     <View className="gap-compact rounded-control bg-surface-muted p-content">
       <Text accessibilityRole="header" className="text-heading font-semibold text-primary">
         {t("reminders.notificationsTitle")}
       </Text>
       <Text accessibilityLiveRegion="polite" className="text-body text-secondary">
-        {t(
-          !permission
-            ? result && !result.ok
-              ? "reminders.permissionUnavailable"
-              : "reminders.permissionUnknown"
-            : permission.status === "provisional"
-              ? "reminders.permissionQuiet"
-              : permission.canSchedule
-                ? "reminders.permissionEnabled"
-                : "reminders.permissionDisabled",
-        )}
+        {t(status.message)}
       </Text>
-      {canRequest ? (
+      {status.canRequest ? (
         <>
           <Text className="text-body text-secondary">{t("reminders.permissionExplanation")}</Text>
           <Button
@@ -85,7 +40,7 @@ export function ReminderNotificationStatus({
           />
         </>
       ) : null}
-      {permission && (!permission.canSchedule || permission.status === "provisional") ? (
+      {status.canOpenSettings ? (
         <Button
           disabled={busy}
           label={t("reminders.openSettings")}
@@ -93,7 +48,7 @@ export function ReminderNotificationStatus({
           variant="secondary"
         />
       ) : null}
-      {error || (result && !result.ok) ? (
+      {status.failed ? (
         <>
           <Text accessibilityRole="alert" className="text-body text-danger">
             {t("reminders.scheduleError")}

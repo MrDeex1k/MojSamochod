@@ -1,9 +1,10 @@
+import { nativeTheme } from "@/styles/native-theme";
 import { Text, View } from "react-native";
 import { Image } from "@/components/ui/image";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 
 const symbols = {
-  replacement: { color: "#72b48e", path: "M4 8h15m-4-4 4 4-4 4M20 16H5m4-4-4 4 4 4" },
+  replacement: { color: nativeTheme.accent, path: "M4 8h15m-4-4 4 4-4 4M20 16H5m4-4-4 4 4 4" },
   repair: {
     color: "#a6bcea",
     path: "M14 6a5 5 0 0 0-6 6L3 17a2.8 2.8 0 0 0 4 4l5-5a5 5 0 0 0 6-6l-3 3-4-4 3-3Z",
@@ -47,7 +48,7 @@ export function AttachmentIndicator({ count }: Readonly<{ count: number }>) {
       <Image
         source={iconSource(
           "m21 11-9 9a6 6 0 0 1-8.5-8.5l9-9a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8l8.5-8.5",
-          "#aab0a7",
+          nativeTheme.secondary,
         )}
         style={{ width: 16, height: 16 }}
       />

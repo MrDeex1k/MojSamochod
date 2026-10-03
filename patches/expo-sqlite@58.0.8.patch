@@ -1,0 +1,29 @@
+diff --git a/Package.swift b/Package.swift
+new file mode 100644
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,24 @@
++// swift-tools-version: 6.2
++import PackageDescription
++
++let package = Package(
++  name: "expo-sqlite",
++  platforms: [.iOS("16.4")],
++  products: [.library(name: "ExpoSQLite", targets: ["ExpoSQLite"])],
++  targets: [
++    .target(
++      name: "ExpoSQLiteC",
++      path: "vendor/sqlite3",
++      sources: ["sqlite3.c"],
++      publicHeadersPath: ".",
++      cSettings: [.define("HAVE_USLEEP", to: "1"), .define("SQLITE_ENABLE_LOCKING_STYLE", to: "0"), .define("SQLITE_ENABLE_BYTECODE_VTAB", to: "1"), .define("SQLITE_TEMP_STORE", to: "2"), .define("SQLITE_ENABLE_SESSION", to: "1"), .define("SQLITE_ENABLE_PREUPDATE_HOOK", to: "1"), .define("SQLITE_ENABLE_MATH_FUNCTIONS", to: "1"), .define("SQLITE_ENABLE_API_ARMOR", to: "1"), .define("SQLITE_ENABLE_FTS4", to: "1"), .define("SQLITE_ENABLE_FTS3_PARENTHESIS", to: "1"), .define("SQLITE_ENABLE_FTS5", to: "1")]
++    ),
++    .target(
++      name: "ExpoSQLite",
++      dependencies: ["ExpoSQLiteC"],
++      path: "ios",
++      sources: ["AtomicInteger.swift", "DatabaseChangeEvent.swift", "DatabaseFileUtils.swift", "Exceptions.swift", "NativeDatabase.swift", "NativeSession.swift", "NativeStatement.swift", "SQLAction.swift", "SQLiteModule.swift", "SQLiteOptions.swift", "URL+FilePath.swift"],
++      swiftSettings: [.unsafeFlags(["-Xfrontend", "-import-module", "-Xfrontend", "ExpoSQLiteC", "-Xcc", "-DHAVE_USLEEP=1", "-Xcc", "-DSQLITE_ENABLE_LOCKING_STYLE=0", "-Xcc", "-DSQLITE_ENABLE_BYTECODE_VTAB=1", "-Xcc", "-DSQLITE_TEMP_STORE=2", "-Xcc", "-DSQLITE_ENABLE_SESSION=1", "-Xcc", "-DSQLITE_ENABLE_PREUPDATE_HOOK=1", "-Xcc", "-DSQLITE_ENABLE_MATH_FUNCTIONS=1", "-Xcc", "-DSQLITE_ENABLE_API_ARMOR=1", "-Xcc", "-DSQLITE_ENABLE_FTS4=1", "-Xcc", "-DSQLITE_ENABLE_FTS3_PARENTHESIS=1", "-Xcc", "-DSQLITE_ENABLE_FTS5=1"])]
++    )
++  ]
++)

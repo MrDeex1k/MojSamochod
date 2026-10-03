@@ -1,4 +1,7 @@
-import { and, asc, desc, eq, isNull, lt, or } from "drizzle-orm";
+import type { ConsumptionRecord } from "@/domain/refuelling/fuel-consumption";
+import type { HistoryCursor } from "@/application/repositories/history-entry-repository";
+import type { RefuellingPage } from "@/application/repositories/refuelling-repository";
+import { and, asc, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
 
 import type { RefuellingRepository } from "@/application/repositories/refuelling-repository";
 import {
@@ -92,6 +95,100 @@ export class DrizzleRefuellingRepository implements RefuellingRepository {
       );
     } catch (error) {
       return mapFailure(operation, error);
+    }
+  }
+
+  async listPage(
+    vehicleId: VehicleId,
+    cursor?: HistoryCursor,
+  ): Promise<RepositoryResult<RefuellingPage>> {
+    try {
+      const after = cursor
+        ? or(
+            lt(refuellings.occurredAt, cursor.occurredAt),
+            and(
+              eq(refuellings.occurredAt, cursor.occurredAt),
+              lt(refuellings.createdAt, cursor.createdAt),
+            ),
+            and(
+              eq(refuellings.occurredAt, cursor.occurredAt),
+              eq(refuellings.createdAt, cursor.createdAt),
+              gt(refuellings.id, cursor.id),
+            ),
+          )
+        : undefined;
+      const rows = this.database
+        .select()
+        .from(refuellings)
+        .where(and(eq(refuellings.vehicleId, vehicleId), after))
+        .orderBy(desc(refuellings.occurredAt), desc(refuellings.createdAt), asc(refuellings.id))
+        .limit(51)
+        .all();
+      const entries = rows.slice(0, 50).map(mapRefuellingRow);
+      const last = entries.at(-1);
+      return repositorySuccess({
+        refuellings: entries,
+        nextCursor:
+          rows.length > 50 && last
+            ? { id: last.id, occurredAt: last.occurredAt, createdAt: last.createdAt }
+            : null,
+      });
+    } catch (error) {
+      return mapFailure("refuelling.listPage", error);
+    }
+  }
+
+  async consumptionRecords(
+    vehicleId: VehicleId,
+  ): Promise<RepositoryResult<readonly ConsumptionRecord[]>> {
+    try {
+      const rows = this.database
+        .select({
+          id: refuellings.id,
+          vehicleId: refuellings.vehicleId,
+          occurredAt: refuellings.occurredAt,
+          createdAt: refuellings.createdAt,
+          fillKind: refuellings.fillKind,
+          quantityMicrolitres: refuellings.quantityMicrolitres,
+          odometerMetres: refuellings.odometerMetres,
+          inputVolumeUnit: refuellings.inputVolumeUnit,
+        })
+        .from(refuellings)
+        .where(eq(refuellings.vehicleId, vehicleId))
+        .all();
+      return repositorySuccess(
+        rows.map((row) => {
+          // Reuse persistence validation without materializing pricing and editable metadata.
+          const {
+            id,
+            vehicleId,
+            occurredAt,
+            createdAt,
+            fillKind,
+            quantityMicrolitres,
+            odometerMetres,
+          } = mapRefuellingRow({
+            ...row,
+            updatedAt: row.createdAt,
+            pricingInputMode: null,
+            totalCostMinorUnits: null,
+            totalCostCurrency: null,
+            unitPriceMilliUnits: null,
+            unitPriceVolumeUnit: null,
+          });
+          return {
+            id,
+            vehicleId,
+            occurredAt,
+            createdAt,
+            fillKind,
+            quantityMicrolitres,
+            odometerMetres,
+          };
+        }),
+      );
+    } catch (error) {
+      return mapFailure("refuelling.consumptionRecords", error);
     }
   }
 

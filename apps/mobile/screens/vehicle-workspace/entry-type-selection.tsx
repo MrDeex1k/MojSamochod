@@ -1,3 +1,4 @@
+import { BackAction } from "@/components/layout/back-action";
 import { Text, View } from "react-native";
 
 import type { HistoryEntry } from "@/domain/history/history-entry";
@@ -41,7 +42,7 @@ export function EntryTypeSelection({
           onPress={() => onSelect("repair")}
         />
       </View>
-      <Button label={t("entrySelection.cancel")} onPress={onCancel} variant="secondary" />
+      <BackAction label={t("entrySelection.cancel")} onPress={onCancel} />
     </Card>
   );
 

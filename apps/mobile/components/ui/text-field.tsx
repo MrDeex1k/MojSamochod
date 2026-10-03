@@ -1,5 +1,5 @@
 import { useValidationFocus } from "./validation-focus";
-import { useId, useRef } from "react";
+import { type ComponentRef, useId, useRef } from "react";
 import { StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
 
 type TextFieldProps = TextInputProps & {
@@ -25,7 +25,7 @@ export function TextField({
   const inputId = nativeID ?? `text-field-${generatedId}`;
   const labelId = `${inputId}-label`;
   const supportingText = error ?? helperText;
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   useValidationFocus(inputId, inputRef, error);
 
   return (

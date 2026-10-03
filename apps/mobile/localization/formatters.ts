@@ -91,7 +91,7 @@ export function formatUtcDateTime(value: Date | string, locale: string): string 
     });
     utcDateTimeFormatters.set(locale, formatter);
   }
-  return formatter.format(typeof value === "string" ? new Date(value) : value);
+  return `${formatter.format(typeof value === "string" ? new Date(value) : value)} UTC`;
 }
 
 function getCurrencyFormatter(currency: string, locale: string): Intl.NumberFormat {
@@ -114,3 +114,21 @@ function getDecimalSeparator(locale: string): string {
   }
   return separator;
 }
+
+const utcFieldFormatters = new Map<string, Intl.DateTimeFormat>();
+function formatUtcField(value: Date, locale: string, mode: "date" | "time") {
+  const key = `${locale}:${mode}`;
+  let formatter = utcFieldFormatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(
+      locale,
+      mode === "date"
+        ? { dateStyle: "medium", timeZone: "UTC" }
+        : { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" },
+    );
+    utcFieldFormatters.set(key, formatter);
+  }
+  return formatter.format(value);
+}
+export const formatUtcDate = (value: Date, locale: string) => formatUtcField(value, locale, "date");
+export const formatUtcTime = (value: Date, locale: string) => formatUtcField(value, locale, "time");

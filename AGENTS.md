@@ -6,7 +6,7 @@
 - Use NUB exclusively to manage Node.js, dependencies, scripts, and project binaries.
 - Treat commands written for `npm`, `npx`, `pnpm`, `yarn`, or `bun` in documentation and skills as examples. Translate them into semantically equivalent NUB commands before execution.
 - Route every dependency installation or mutation through Socket Firewall (SFW). Use `nub run deps:install` for the standard project install and `nub exec sfw nub <command>` for operations such as `add`, `remove`, or `update`. Commands that only run already installed scripts or binaries do not require SFW.
-- Preserve the 24-hour dependency cooling period configured in `nub.jsonc`. Do not bypass SFW or the cooling period without explicit approval.
+- Preserve the 3-hour dependency cooling period configured in `nub.jsonc`. Do not bypass SFW or the cooling period without explicit approval.
 - Pin direct dependencies and development dependencies to exact versions. Do not introduce `^`, `~`, or other version ranges.
 - Keep the locally generated `nub.lock` synchronized with dependency manifests and leave it ignored by Git.
 - Use `nub run` for package scripts and `nub exec` for an installed local binary. Run temporarily downloaded tools through SFW with `nub exec sfw nub dlx <package>`. Preserve SFW when translating dependency commands; for example, translate `npx expo install ...` to `nub exec sfw nub exec expo install ...`.

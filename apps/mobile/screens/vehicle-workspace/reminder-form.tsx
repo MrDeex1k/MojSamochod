@@ -1,7 +1,10 @@
+import { Host, Switch } from "@expo/ui";
+import { nativeTheme } from "@/styles/native-theme";
+import { FormActions, FormTitle } from "@/components/layout/native-form";
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRef, useState } from "react";
-import { Alert, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Platform, ScrollView, Text, View } from "react-native";
 import type { ReminderService } from "@/application/reminders/reminder-service";
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
@@ -114,9 +117,7 @@ export function ReminderForm({
   };
   const content = (
     <FormSection className={embedded ? "p-screen" : undefined}>
-      <Text accessibilityRole="header" className="text-title font-bold text-primary">
-        {t(`reminders.kinds.${kind}`)}
-      </Text>
+      <FormTitle>{t(`reminders.kinds.${kind}`)}</FormTitle>
       <View className="gap-compact">
         <Text className="text-label font-semibold text-primary">
           {t(`reminders.dateLabels.${kind}`)}
@@ -177,26 +178,25 @@ export function ReminderForm({
       </Text>
       <Text className="text-body text-secondary">{t("reminders.zoneHelper", { zone })}</Text>
       {defaultNotificationDaysBefore.map((offset) => (
-        <Pressable
+        <Host
           key={offset}
-          accessibilityRole="checkbox"
-          accessibilityLabel={t(`reminders.offsets.${offset}`)}
-          accessibilityState={{ checked: offsets.includes(offset), disabled: busy }}
-          disabled={busy}
-          className={`min-h-12 flex-row items-center gap-content rounded-control border px-content py-control ${offsets.includes(offset) ? "border-accent bg-surface-strong" : "border-divider bg-surface-muted"}`}
-          onPress={() =>
-            setOffsets((current) =>
-              current.includes(offset)
-                ? current.filter((value) => value !== offset)
-                : [...current, offset],
-            )
-          }
+          colorScheme="dark"
+          seedColor={nativeTheme.accent}
+          matchContents={{ vertical: true }}
         >
-          <Text className="text-body font-semibold text-accent">
-            {offsets.includes(offset) ? "✓" : "○"}
-          </Text>
-          <Text className="flex-1 text-body text-primary">{t(`reminders.offsets.${offset}`)}</Text>
-        </Pressable>
+          <Switch
+            label={t(`reminders.offsets.${offset}`)}
+            value={offsets.includes(offset)}
+            disabled={busy}
+            onValueChange={(enabled) =>
+              setOffsets((current) =>
+                enabled
+                  ? [...current.filter((value) => value !== offset), offset]
+                  : current.filter((value) => value !== offset),
+              )
+            }
+          />
+        </Host>
       ))}
       <Text className="text-caption text-secondary">
         {t(offsets.length ? "reminders.permissionOnSave" : "reminders.alertsOff")}
@@ -206,18 +206,18 @@ export function ReminderForm({
           {error}
         </Text>
       ) : null}
-      <Button
-        busy={busy}
-        disabled={picker !== null}
-        label={t("reminders.save")}
-        onPress={() => void save()}
+      <FormActions
+        busy={busy || picker !== null}
+        saveLabel={t("reminders.save")}
+        cancelLabel={t("reminders.cancel")}
+        onSave={() => void save()}
+        onCancel={cancel}
       />
       {reminder ? (
         <View className="w-1/2">
           <Button disabled={busy} label={t("reminders.delete")} onPress={remove} variant="danger" />
         </View>
       ) : null}
-      <Button disabled={busy} label={t("reminders.cancel")} onPress={cancel} variant="secondary" />
     </FormSection>
   );
   return embedded ? (

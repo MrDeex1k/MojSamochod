@@ -1,14 +1,10 @@
-import { WorkspaceShell } from "./workspace-shell";
-import { ScrollPositionProvider } from "@/components/layout/scroll-positions";
-import { BackHandler } from "react-native";
 import { DataManagement } from "./data-management";
-import { WorkspaceDataSource, workspaceSection } from "./workspace-data-source";
-import { PhoneWorkspace, VehicleSummary, HistoryCard } from "./workspace-history";
-import {
-  NavigationGuardProvider,
-  useGuardedNavigation,
-} from "@/components/layout/navigation-guard";
-import { Redirect } from "expo-router";
+import { workspaceSection } from "./workspace-data-source";
+import { PhoneWorkspace } from "./workspace-history";
+import { Redirect, router } from "expo-router";
+import { useFinishNativeForm } from "@/components/layout/native-form-context";
+import { useWorkspaceSource } from "./workspace-provider";
+import { navigateToMode } from "./workspace-routing";
 import { useEffect, useState } from "react";
 
 import { hasFuelConfiguration } from "@/domain/vehicle/vehicle";
@@ -33,23 +29,18 @@ import { RefuellingList } from "./refuelling-list";
 import { RemindersSection } from "./reminders-section";
 
 import type { WorkspaceData, WorkspaceMode, VehicleWorkspaceViewProps } from "./workspace-types";
-export function VehicleWorkspaceScreen() {
-  return (
-    <NavigationGuardProvider>
-      <ScrollPositionProvider>
-        <VehicleWorkspaceController />
-      </ScrollPositionProvider>
-    </NavigationGuardProvider>
-  );
+export function VehicleWorkspaceScreen({ mode }: { mode: WorkspaceMode }) {
+  return <VehicleWorkspaceController mode={mode} />;
 }
 
-function VehicleWorkspaceController() {
-  const navigate = useGuardedNavigation();
+function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
   const services = useApplicationServices();
-  const [source] = useState(() => new WorkspaceDataSource(services));
+  const { source, revision: attempt, refresh } = useWorkspaceSource();
+  const navigate = (action: () => void) => action();
+  const finish = useFinishNativeForm();
+  const setAttempt = () => refresh();
+  const setMode = (next: WorkspaceMode) => navigateToMode(next);
   const { t } = useAppTranslation();
-  const [attempt, setAttempt] = useState(0);
-  const [mode, setMode] = useState<WorkspaceMode>({ kind: "history" });
   const [state, setState] = useState<
     | Readonly<{ data: WorkspaceData; status: "ready" }>
     | Readonly<{ status: "error" }>
@@ -61,12 +52,12 @@ function VehicleWorkspaceController() {
   const [loadMoreError, setLoadMoreError] = useState(false);
   const section = workspaceSection(mode);
   const loadMore = async () => {
-    if (loadingMore || !source.hasMore()) return;
+    if (loadingMore || !source.hasMore(section)) return;
     setLoadingMore(true);
     setLoadMoreError(false);
     try {
-      await source.loadMore();
-      setAttempt((value) => value + 1);
+      await source.loadMore(section);
+      setAttempt();
     } catch {
       setLoadMoreError(true);
     }
@@ -82,30 +73,6 @@ function VehicleWorkspaceController() {
     };
   }, [attempt, section, source]);
 
-  useEffect(() => {
-    if (
-      mode.kind === "history" ||
-      mode.kind.includes("form") ||
-      mode.kind === "reminders" ||
-      mode.kind === "data-management"
-    )
-      return;
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      navigate(() =>
-        setMode({
-          kind:
-            mode.kind === "document-detail"
-              ? "documents"
-              : mode.kind === "refuelling-detail"
-                ? "fuel"
-                : "history",
-        }),
-      );
-      return true;
-    });
-    return () => subscription.remove();
-  }, [mode.kind, navigate]);
-
   if (state.status === "missing") return <Redirect href="/" />;
   if (state.status === "error") {
     return (
@@ -115,7 +82,7 @@ function VehicleWorkspaceController() {
           description={t("workspace.errorDescription")}
           onAction={() => {
             setState({ status: "loading" });
-            setAttempt((value) => value + 1);
+            setAttempt();
           }}
           title={t("workspace.errorTitle")}
         />
@@ -143,9 +110,13 @@ function VehicleWorkspaceController() {
       loadMoreError={loadMoreError}
       loadingMore={loadingMore}
       mode={mode}
-      onErased={() => setState({ status: "missing" })}
+      revision={attempt}
+      onErased={() => {
+        finish?.();
+        router.replace("/");
+      }}
       onLoadMore={
-        source.hasMore() && !loadingMore
+        source.hasMore(section) && !loadingMore
           ? () => {
               void loadMore();
             }
@@ -155,14 +126,22 @@ function VehicleWorkspaceController() {
       onAddEntry={() => navigate(() => setMode({ kind: "select-type" }))}
       onAddRefuelling={() => navigate(() => setMode({ kind: "refuelling-form" }))}
       onAddDocument={() => navigate(() => setMode({ kind: "document-form" }))}
-      onCancelFlow={() => navigate(() => setMode({ kind: "history" }))}
+      onCancelFlow={() => {
+        finish?.();
+        if (router.canGoBack()) router.back();
+        else setMode({ kind: "history" });
+      }}
       onChooseType={(type) => navigate(() => setMode({ kind: "form", type }))}
       onConfigureFuel={() => navigate(() => setMode({ kind: "vehicle-form", returnTo: "fuel" }))}
-      onDocuments={() => navigate(() => setMode({ kind: "documents" }))}
+      onDocuments={() => {
+        finish?.();
+        router.dismissTo("/vehicle/documents");
+      }}
       onDocumentsChanged={() => {
         source.invalidate("documents");
-        setMode({ kind: "documents" });
-        setAttempt((value) => value + 1);
+        finish?.();
+        router.dismissTo("/vehicle/documents");
+        setAttempt();
       }}
       onEditDocument={(document) => navigate(() => setMode({ document, kind: "document-form" }))}
       onEditEntry={(entry) => navigate(() => setMode({ entry, kind: "form", type: entry.type }))}
@@ -173,17 +152,25 @@ function VehicleWorkspaceController() {
         if (mode.kind !== "vehicle-form")
           navigate(() => setMode({ kind: "vehicle-form", returnTo: "history" }));
       }}
-      onFuel={() => navigate(() => setMode({ kind: "fuel" }))}
+      onFuel={() => {
+        finish?.();
+        router.dismissTo("/vehicle/(tabs)/fuel");
+      }}
       onReminders={() => navigate(() => setMode({ kind: "reminders" }))}
       onFuelChanged={() => {
         source.invalidate("fuel");
-        setMode({ kind: "fuel" });
-        setAttempt((value) => value + 1);
+        finish?.();
+        router.dismissTo("/vehicle/(tabs)/fuel");
+        setAttempt();
       }}
-      onSaved={() => {
-        source.invalidate("history");
-        setMode({ kind: "history" });
-        setAttempt((value) => value + 1);
+      onSaved={(entry) => {
+        void source
+          .changedHistory(entry, mode.kind === "detail" ? mode.entry.id : undefined)
+          .then(() => {
+            finish?.();
+            router.dismissTo("/vehicle/(tabs)/overview");
+            setAttempt();
+          });
       }}
       onSelectEntry={(entry) => navigate(() => setMode({ entry, kind: "detail" }))}
       onSelectRefuelling={(refuelling) =>
@@ -198,16 +185,19 @@ function VehicleWorkspaceController() {
 }
 
 export function VehicleWorkspaceView(props: VehicleWorkspaceViewProps) {
+  if (
+    props.mode.kind.includes("form") ||
+    props.mode.kind === "select-type" ||
+    props.mode.kind === "data-management"
+  )
+    return renderContent(props, false);
   const isDetail = ["detail", "document-detail", "refuelling-detail"].includes(props.mode.kind);
   return (
-    <WorkspaceShell {...props}>
-      <AdaptiveWorkspace
-        phone={renderContent(props, false)}
-        primaryPane={renderContent(props, true, isDetail)}
-        detailPane={isDetail ? renderContent(props, true) : undefined}
-        vehiclePane={<VehicleSummary photoUri={props.photoUri} tablet vehicle={props.vehicle} />}
-      />
-    </WorkspaceShell>
+    <AdaptiveWorkspace
+      phone={renderContent(props, false)}
+      primaryPane={renderContent(props, true, isDetail)}
+      detailPane={isDetail ? renderContent(props, true) : undefined}
+    />
   );
 }
 
@@ -227,6 +217,10 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
     case "reminders":
       return (
         <RemindersSection
+          key={props.revision}
+          onEditReminder={(kind) =>
+            router.push({ pathname: "/vehicle/reminder-editor", params: { kind } })
+          }
           {...services}
           embedded={embedded}
           vehicle={vehicle}
@@ -236,6 +230,9 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
     case "fuel":
       return (
         <RefuellingList
+          onLoadMore={props.onLoadMore}
+          loadingMore={props.loadingMore}
+          loadMoreError={props.loadMoreError}
           embedded={embedded}
           history={props.refuellingHistory}
           onAdd={props.onAddRefuelling}
@@ -251,7 +248,7 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
         <DocumentList
           embedded={embedded}
           documents={props.documents}
-          entries={props.entries}
+          entries={props.relatedEntries ?? []}
           onAdd={props.onAddDocument}
           onBack={props.onCancelFlow}
           onSelect={props.onSelectDocument}
@@ -265,7 +262,8 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
           embedded={embedded}
           document={mode.document}
           documents={services.documents}
-          entries={props.entries}
+          historyEntries={services.historyEntries}
+          entries={props.relatedEntries ?? []}
           onCancel={props.onDocuments}
           onSaved={props.onDocumentsChanged}
           picker={services.documentPicker}
@@ -280,7 +278,7 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
           embedded={embedded}
           document={mode.document}
           documents={services.documents}
-          entries={props.entries}
+          entries={props.relatedEntries ?? []}
           onBack={props.onDocuments}
           onChanged={props.onDocumentsChanged}
           onEdit={() => props.onEditDocument(mode.document)}
@@ -363,9 +361,10 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
         />
       );
   }
-  return embedded ? (
-    <HistoryCard {...props} selectedId={mode.kind === "detail" ? mode.entry.id : undefined} />
-  ) : (
-    <PhoneWorkspace {...props} />
+  return (
+    <PhoneWorkspace
+      {...props}
+      selectedId={props.mode.kind === "detail" ? props.mode.entry.id : undefined}
+    />
   );
 }

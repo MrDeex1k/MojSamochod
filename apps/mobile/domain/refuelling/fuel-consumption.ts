@@ -3,6 +3,17 @@ import { invalid, valid, type ValidationResult } from "../shared/result";
 import type { Refuelling } from "./refuelling";
 import { compareRefuellingsOldestFirst } from "./refuelling";
 
+export type ConsumptionRecord = Pick<
+  Refuelling,
+  | "id"
+  | "vehicleId"
+  | "occurredAt"
+  | "createdAt"
+  | "fillKind"
+  | "quantityMicrolitres"
+  | "odometerMetres"
+>;
+
 export type FuelConsumptionUnit =
   | "litresPer100Kilometres"
   | "milesPerUsGallon"
@@ -62,7 +73,7 @@ export type FuelConsumptionSummary = Readonly<{
 }>;
 
 export function calculateFuelConsumption(
-  refuellings: readonly Refuelling[],
+  refuellings: readonly ConsumptionRecord[],
 ): FuelConsumptionSummary {
   const sorted = [...refuellings].sort(compareRefuellingsOldestFirst);
   const firstFullIndex = sorted.findIndex(({ fillKind }) => fillKind === "full");
@@ -120,7 +131,7 @@ export function fuelConsumptionValue(
   }
 }
 
-function createInterval(refuellings: readonly Refuelling[]): FuelInterval {
+function createInterval(refuellings: readonly ConsumptionRecord[]): FuelInterval {
   const start = refuellings[0];
   const end = refuellings.at(-1)!;
   const common = {
@@ -158,7 +169,7 @@ function createInterval(refuellings: readonly Refuelling[]): FuelInterval {
   };
 }
 
-function hasDecreasingOdometer(refuellings: readonly Refuelling[]): boolean {
+function hasDecreasingOdometer(refuellings: readonly ConsumptionRecord[]): boolean {
   let previous: number | undefined;
   for (const { odometerMetres } of refuellings) {
     if (odometerMetres === undefined) continue;

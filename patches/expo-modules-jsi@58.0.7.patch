@@ -1,0 +1,110 @@
+diff --git a/Package.swift b/Package.swift
+new file mode 100644
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,39 @@
++// swift-tools-version: 6.2
++import PackageDescription
++
++// Compile against React's invariant header products supplied by Expo autolinking.
++// Runtime React and Hermes frameworks are linked by the host app.
++let root = Context.packageDirectory
++let package = Package(
++  name: "expo-modules-jsi",
++  platforms: [.iOS("16.4")],
++  products: [.library(name: "ExpoModulesJSI", type: .dynamic, targets: ["ExpoModulesJSI"])],
++  dependencies: [],
++  targets: [
++    .target(
++      name: "ExpoModulesJSI-Cxx",
++      path: "apple/Sources/ExpoModulesJSI-Cxx",
++      publicHeadersPath: "include",
++      cxxSettings: [.headerSearchPath("include/Public")]
++    ),
++    .target(
++      name: "ExpoModulesJSI",
++      dependencies: ["ExpoModulesJSI-Cxx"],
++      path: "apple/Sources/ExpoModulesJSI",
++      swiftSettings: [
++        .interoperabilityMode(.Cxx),
++        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
++        .enableUpcomingFeature("InferIsolatedConformances"),
++        .unsafeFlags([
++          "-Xfrontend", "-clang-header-expose-decls=has-expose-attr",
++          "-Xcc", "-fmodule-map-file=\(root)/spm/jsi.modulemap",
++          "-Xcc", "-iapinotes-modules",
++          "-Xcc", "\(root)/apple/APINotes"
++        ])
++      ],
++      linkerSettings: [.unsafeFlags(["-Xlinker", "-undefined", "-Xlinker", "dynamic_lookup"])]
++    )
++  ],
++  swiftLanguageModes: [.v6],
++  cxxLanguageStandard: .cxx20
++)
+diff --git a/spm/jsi.modulemap b/spm/jsi.modulemap
+new file mode 100644
+--- /dev/null
++++ b/spm/jsi.modulemap
+@@ -0,0 +1,4 @@
++module jsi {
++  header "jsi.h"
++  export *
++}
+diff --git a/spm/jsi.h b/spm/jsi.h
+new file mode 100644
+--- /dev/null
++++ b/spm/jsi.h
+@@ -0,0 +1,2 @@
++#include <jsi/jsi.h>
++#include <jsi/instrumentation.h>
+diff --git a/apple/Sources/ExpoModulesJSI-Cxx/include/MemoryBuffer.h b/apple/Sources/ExpoModulesJSI-Cxx/include/MemoryBuffer.h
+--- a/apple/Sources/ExpoModulesJSI-Cxx/include/MemoryBuffer.h
++++ b/apple/Sources/ExpoModulesJSI-Cxx/include/MemoryBuffer.h
+@@ -15,18 +15,18 @@
+  * Since ArrayBuffers created from native memory don't automatically deallocate during GC,
+  * this class handles deallocation through a custom cleanup function.
+  */
+-class MemoryBuffer final : public facebook::jsi::MutableBuffer {
++class JSIMemoryBuffer final : public facebook::jsi::MutableBuffer {
+ public:
+-  MemoryBuffer(uint8_t *data, size_t size, CleanupFunc &&cleanupFunc)
++  JSIMemoryBuffer(uint8_t *data, size_t size, CleanupFunc &&cleanupFunc)
+     : data_(data), size_(size), cleanupFunc_(std::move(cleanupFunc)) {}
+ 
+   // Non-copyable and non-movable to prevent double-free of the underlying data.
+-  MemoryBuffer(const MemoryBuffer &) = delete;
+-  MemoryBuffer &operator=(const MemoryBuffer &) = delete;
+-  MemoryBuffer(MemoryBuffer &&) = delete;
+-  MemoryBuffer &operator=(MemoryBuffer &&) = delete;
++  JSIMemoryBuffer(const JSIMemoryBuffer &) = delete;
++  JSIMemoryBuffer &operator=(const JSIMemoryBuffer &) = delete;
++  JSIMemoryBuffer(JSIMemoryBuffer &&) = delete;
++  JSIMemoryBuffer &operator=(JSIMemoryBuffer &&) = delete;
+ 
+-  ~MemoryBuffer() override {
++  ~JSIMemoryBuffer() override {
+     if (cleanupFunc_ != nullptr) {
+       cleanupFunc_();
+     }
+diff --git a/apple/Sources/ExpoModulesJSI-Cxx/include/JSIUtils.h b/apple/Sources/ExpoModulesJSI-Cxx/include/JSIUtils.h
+--- a/apple/Sources/ExpoModulesJSI-Cxx/include/JSIUtils.h
++++ b/apple/Sources/ExpoModulesJSI-Cxx/include/JSIUtils.h
+@@ -277,7 +277,7 @@
+  */
+ inline jsi::ArrayBuffer createArrayBuffer(jsi::IRuntime &runtime, size_t size) {
+   uint8_t *data = new uint8_t[size]();
+-  auto buffer = std::make_shared<MemoryBuffer>(data, size, [data]() { delete[] data; });
++  auto buffer = std::make_shared<JSIMemoryBuffer>(data, size, [data]() { delete[] data; });
+   return jsi::ArrayBuffer(runtime, std::move(buffer));
+ }
+ 
+@@ -296,7 +296,7 @@
+   // which would leak the data. The Swift caller always provides a retained Unmanaged pointer.
+   assert(cleanupContext != nullptr && "cleanupContext must not be null; cleanup would be skipped and data leaked");
+ 
+-  auto buffer = std::make_shared<MemoryBuffer>(data, size, [cleanupContext, cleanupFunction]() {
++  auto buffer = std::make_shared<JSIMemoryBuffer>(data, size, [cleanupContext, cleanupFunction]() {
+     cleanupFunction(cleanupContext);
+   });
+   return jsi::ArrayBuffer(runtime, std::move(buffer));
