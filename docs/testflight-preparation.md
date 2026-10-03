@@ -1,6 +1,6 @@
 # Przygotowanie TestFlight
 
-Dokument roboczy, aktualizacja 2026-10-01. Android jest odłożony decyzją wydawcy.
+Dokument roboczy, aktualizacja 2026-10-03. Android jest odłożony decyzją wydawcy.
 
 ## Tożsamość
 
@@ -17,32 +17,35 @@ Dokument roboczy, aktualizacja 2026-10-01. Android jest odłożony decyzją wyda
 
 Nie używamy EAS. Konfiguracja Expo jest źródłem Bundle ID, Team ID i numerów wersji.
 Projekt `apps/mobile/ios` jest generowany i ignorowany przez Git.
+Procedura dotyczy [SDK 58 i integracji SwiftPM](./sdk58-migration.md).
 Nie stosować `MOJE_AUTO_NATIVE_QA=1` do archiwum przeznaczonego dla tej aplikacji sklepowej.
 
 1. Odtworzyć zależności przez `nub run deps:install`. Lokalny `nub.lock` pozostaje ignorowany.
 2. Uruchomić `nub run check`, audyt i Expo Doctor. Rozstrzygnąć ostrzeżenia, nie wyciszać ich.
-3. W `apps/mobile` wygenerować projekt:
+3. W `apps/mobile` przygotować projekt i integrację SwiftPM:
 
    ```sh
-   MOJE_AUTO_NATIVE_QA=0 CI=1 nub exec --node sfw nub exec --node expo prebuild --platform ios --no-install --skip-dependency-update react,react-native
+   MOJE_AUTO_NATIVE_QA=0 CI=1 nub run ios:prepare
    ```
 
-4. Sprawdzić diff: prebuild może zmienić skrypty `ios`/`android` w package.json.
+   Skrypt wykonuje potrzebny prebuild, autolinking i codegen, konfiguruje SwiftPM
+   oraz zapisuje odciski wejściowe sprawdzane podczas kompilacji w Xcode.
+
+4. Sprawdzić diff: prebuild uruchamiany przez przygotowanie może zmienić skrypty `ios`/`android` w package.json.
    Zachować dotychczasowe skrypty, jeśli ich zmiana nie jest zamierzona.
-5. W `apps/mobile/ios` wykonać `MOJE_AUTO_NATIVE_QA=0 nub exec --node sfw pod install`.
-6. W lokalnym `.xcode.env.local` wskazać `NODE_BINARY` na wynik `nub node which`.
+5. W lokalnym `.xcode.env.local` wskazać `NODE_BINARY` na wynik `nub node which`.
    Nie używać przypadkowego Node z NVM ani systemowego PATH.
-7. Otworzyć `MojeAuto.xcworkspace` w Xcode, sprawdzić Team i automatyczne podpisywanie.
+6. Otworzyć `apps/mobile/ios/MojeAuto.xcodeproj` w Xcode, sprawdzić Team i automatyczne podpisywanie.
    Archiwizować Release dla urządzeń iOS, nie dla symulatora.
-8. Zweryfikować archiwum i dystrybuować przez Organizer do App Store Connect.
+7. Zweryfikować archiwum i dystrybuować przez Organizer do App Store Connect.
    Uzupełnić wymagane deklaracje zgodnie z faktycznym użyciem SDK i kryptografii.
    Nie traktować samego utworzenia archiwum jako potwierdzonego uploadu.
-9. Po przetworzeniu buildu sprawdzić go najpierw wewnętrznie przez TestFlight.
+8. Po przetworzeniu buildu sprawdzić go najpierw wewnętrznie przez TestFlight.
    Udostępnienie zewnętrzne i Beta App Review są odrębnymi krokami.
 
 Hasła, certyfikaty i klucze prywatne pozostają poza repozytorium i rozmową.
 
-## Weryfikacja bieżąca
+## Historia weryfikacji SDK 57
 
 - Przed przygotowaniem: `nub run check` przeszedł, 68 zestawów / 463 testy.
 - Odtworzono lokalny lockfile bez zmiany wersji bezpośrednich zależności.
