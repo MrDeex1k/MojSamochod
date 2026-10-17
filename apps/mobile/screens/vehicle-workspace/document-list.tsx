@@ -14,6 +14,7 @@ export function DocumentList({
   selectedId,
   entries,
   onAdd,
+  onBack,
   onSelect,
 }: Readonly<{
   documents: readonly VehicleDocument[];
@@ -38,6 +39,7 @@ export function DocumentList({
             {t("documents.title")}
           </Text>
           <Button label={`+ ${t("documents.add")}`} onPress={onAdd} />
+          <Button label={t("documents.back")} onPress={onBack} variant="secondary" />
         </View>
       }
       ListEmptyComponent={

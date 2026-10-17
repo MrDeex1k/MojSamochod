@@ -1,0 +1,53 @@
+diff --git a/dist/commonjs/components/index.cjs b/dist/commonjs/components/index.cjs
+--- a/dist/commonjs/components/index.cjs
++++ b/dist/commonjs/components/index.cjs
+@@ -6,6 +6,9 @@
+ /* eslint-disable @typescript-eslint/no-require-imports */
+
+ module.exports = {
++  get AssetRegistry() {
++    return require("react-native").AssetRegistry;
++  },
+   get ActivityIndicator() {
+     return require("./ActivityIndicator").ActivityIndicator;
+   },
+@@ -307,4 +310,4 @@
+     return require("react-native").usePressability;
+   }
+ };
+-//# sourceMappingURL=index.cjs.map
+\ No newline at end of file
++//# sourceMappingURL=index.cjs.map
+diff --git a/dist/module/components/index.cjs b/dist/module/components/index.cjs
+--- a/dist/module/components/index.cjs
++++ b/dist/module/components/index.cjs
+@@ -6,6 +6,9 @@
+ /* eslint-disable @typescript-eslint/no-require-imports */
+
+ module.exports = {
++  get AssetRegistry() {
++    return require("react-native").AssetRegistry;
++  },
+   get ActivityIndicator() {
+     return require("./ActivityIndicator").ActivityIndicator;
+   },
+@@ -307,4 +310,4 @@
+     return require("react-native").usePressability;
+   }
+ };
+-//# sourceMappingURL=index.cjs.map
+\ No newline at end of file
++//# sourceMappingURL=index.cjs.map
+diff --git a/src/components/index.cts b/src/components/index.cts
+--- a/src/components/index.cts
++++ b/src/components/index.cts
+@@ -4,6 +4,9 @@
+ /* eslint-disable @typescript-eslint/no-require-imports */
+
+ module.exports = {
++  get AssetRegistry() {
++    return require("react-native").AssetRegistry;
++  },
+   get ActivityIndicator() {
+     return require("./ActivityIndicator").ActivityIndicator;
+   },

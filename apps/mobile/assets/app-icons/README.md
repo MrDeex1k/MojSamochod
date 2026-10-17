@@ -14,6 +14,9 @@ cream and a small orange accent. No lettering or vehicle manufacturer logo is us
   space. Android uses only the dark teal background (`#07383D`), with no separate
   light or monochrome asset. Launcher-level customization remains outside the app's
   control.
+  The native splash screen also reuses this transparent car artwork on `#121212`.
+  Its 288pt image canvas includes the safe space, making the visible car about
+  150pt wide and centered without a square background.
 - `previews/`: native Icon Composer renderer output for design generations 26 and
   27, covering Default, Dark, ClearLight, ClearDark, TintedLight and TintedDark.
   These are design previews, not screenshots from physical devices.

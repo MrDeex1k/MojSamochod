@@ -135,7 +135,8 @@ function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
       onConfigureFuel={() => navigate(() => setMode({ kind: "vehicle-form", returnTo: "fuel" }))}
       onDocuments={() => {
         finish?.();
-        router.dismissTo("/vehicle/documents");
+        if (mode.kind === "history") setMode({ kind: "documents" });
+        else router.dismissTo("/vehicle/documents");
       }}
       onDocumentsChanged={() => {
         source.invalidate("documents");

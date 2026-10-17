@@ -2,7 +2,7 @@
   "expo": {
     "name": "Moje Auto",
     "slug": "MojeAuto",
-    "version": "0.8.0",
+    "version": "0.8.2",
     "orientation": "default",
     "icon": "./assets/app-icons/icon-dark.png",
     "scheme": "mojeauto",
@@ -15,7 +15,7 @@
       "appleTeamId": "KV9BUW5GTH",
       "icon": "./assets/app-icons/Car.icon",
       "bundleIdentifier": "pl.jakubbatycki.mojeauto",
-      "buildNumber": "2",
+      "buildNumber": "5",
       "supportsTablet": true
     },
     "android": {
@@ -68,8 +68,8 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "image": "./assets/app-icons/android-foreground.png",
+          "imageWidth": 288,
           "resizeMode": "contain",
           "backgroundColor": "#121212",
           "dark": {

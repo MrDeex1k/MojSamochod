@@ -58,6 +58,10 @@ it("clears only owned scheduled and delivered notifications without requesting p
       body: null,
       categoryIdentifier: null,
       sound: null,
+      launchImageName: null,
+      badge: null,
+      attachments: [],
+      threadIdentifier: null,
       data: { owner: "moje-auto-reminders" },
     },
     trigger: null,
@@ -164,8 +168,9 @@ describe("Native reminder permissions", () => {
     expect(native.setNotificationChannelAsync).toHaveBeenCalledWith(reminderChannelId, {
       name: "Vehicle reminders",
       importance: 3,
-      sound: "default",
     });
+    // Omitting sound retains Android's system default without SDK 58's custom-file warning.
+    expect(native.setNotificationChannelAsync.mock.calls[0]![1]).not.toHaveProperty("sound");
   });
 
   it("asks for iOS alerts and sound but not badges or provisional authorization", async () => {

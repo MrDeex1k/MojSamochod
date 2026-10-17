@@ -4,7 +4,7 @@ new file mode 100644
 +++ b/Package.swift
 @@ -0,0 +1,105 @@
 +// swift-tools-version: 6.0
-+// AUTO-SCAFFOLDED by react-native spm scaffold — safe to edit & commit via patch-package.
++// AUTO-SCAFFOLDED by react-native spm scaffold - safe to edit & commit via patch-package.
 +// AUTO-SCAFFOLDED-VERSION: 20
 +// Cache slot: 0.88.0-rc.3/dual-flavor
 +// Edit the contents below if needed and re-run `npx patch-package <dep-name>`

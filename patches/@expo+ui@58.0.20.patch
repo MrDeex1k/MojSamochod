@@ -1,0 +1,31 @@
+diff --git a/Package.swift b/Package.swift
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,27 @@
++// swift-tools-version: 6.2
++import PackageDescription
++
++// Expo's autolinking plugin supplies React and Expo Modules dependencies.
++let package = Package(
++  name: "expo-ui",
++  platforms: [.iOS("16.4")],
++  products: [.library(name: "ExpoUI", targets: ["ExpoUI", "ExpoUIObjC"])],
++  dependencies: [],
++  targets: [
++    .target(
++      name: "ExpoUIObjC",
++      path: "ios",
++      sources: ["ExpoUITouchHandlerHelper.mm"],
++      publicHeadersPath: ".",
++      linkerSettings: [.linkedFramework("UIKit")]
++    ),
++    .target(
++      name: "ExpoUI",
++      dependencies: ["ExpoUIObjC"],
++      path: "ios",
++      exclude: ["ExpoUITouchHandlerHelper.mm", "ExpoUITouchHandlerHelper.h", "ExpoUI.podspec"],
++      swiftSettings: [.unsafeFlags(["-Xfrontend", "-import-module", "-Xfrontend", "ExpoUIObjC"])],
++      linkerSettings: [.linkedFramework("UIKit")]
++    )
++  ]
++)

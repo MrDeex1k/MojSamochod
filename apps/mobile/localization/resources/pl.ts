@@ -262,8 +262,6 @@ export const pl = {
     fuelVolumeUnitLabel: "Jednostka objętości paliwa",
     genericError:
       "Nie udało się zapisać pojazdu. Spróbuj ponownie bez utraty wprowadzonych danych.",
-    initialOdometerHelper:
-      "To odczyt z momentu rozpoczęcia ewidencji. Późniejsze odczyty możesz dodawać do każdego wpisu.",
     initialOdometerLabel: "Stan licznika na moment rozpoczęcia ewidencji",
     makeLabel: "Marka",
     makePlaceholder: "np. Toyota",

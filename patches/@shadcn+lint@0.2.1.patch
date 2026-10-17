@@ -1,8 +1,7 @@
 diff --git a/dist/index.js b/dist/index.js
-index a5d432a..bb4d181 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -4804,12 +4804,23 @@ function compilePattern(pattern) {
+@@ -3490,6 +3490,16 @@
  		throw new ContractConfigError(`Contract pattern "${pattern}" is not a valid regular expression.`);
  	}
  }
@@ -19,6 +18,7 @@ index a5d432a..bb4d181 100644
  function checkEntries(entries, groupIds, classifier, fromFile) {
  	for (const entry of entries ?? []) {
  		if (entry === "layout" || entry.includes("*") || entry.includes(":")) continue;
+@@ -3496,6 +3506,7 @@
  		if (CATEGORIES.includes(entry)) continue;
  		if (groupIds.has(entry)) continue;
  		if (classifier.groupOf(entry)) continue;
@@ -26,9 +26,9 @@ index a5d432a..bb4d181 100644
  		const known = fromFile ? knownClassesFor(fromFile) : null;
  		if (known?.utilities.has(entry) || known?.classes.has(entry)) continue;
  		const hint = /^[A-Za-z][A-Za-z0-9]*$/.test(entry) ? didYouMean(entry, [
-@@ -6580,4 +6591,4 @@ const project = {
+@@ -5175,4 +5186,4 @@
  var src_default = plugin;
- 
+
  //#endregion
 -export { src_default as default, plugin, project };
 \ No newline at end of file

@@ -149,7 +149,6 @@ export class NativeReminderNotifications implements ReminderNotifications {
     await Notifications.setNotificationChannelAsync(reminderChannelId, {
       name: this.channelName(),
       importance: Notifications.AndroidImportance.DEFAULT,
-      sound: "default",
     });
   }
 

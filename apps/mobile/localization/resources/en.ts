@@ -258,8 +258,6 @@ export const en = {
     fuelTankCapacityLabel: "Fuel tank capacity",
     fuelVolumeUnitLabel: "Fuel volume unit",
     genericError: "The vehicle could not be saved. Try again without losing the entered data.",
-    initialOdometerHelper:
-      "This is the reading when you start the record. Later readings can be added to each entry.",
     initialOdometerLabel: "Odometer when record keeping starts",
     makeLabel: "Make",
     makePlaceholder: "e.g. Toyota",

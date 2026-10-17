@@ -185,9 +185,6 @@ export function CreateFirstVehicleForm({
           <Text className="text-heading font-semibold text-primary">
             {t("firstVehicle.initialOdometerLabel")}
           </Text>
-          <Text className="text-body text-secondary">
-            {t("firstVehicle.initialOdometerHelper")}
-          </Text>
           <ChoiceField<DistanceUnit>
             label={t("firstVehicle.distanceUnitLabel")}
             value={distanceUnit}

@@ -53,15 +53,14 @@ describe("RefuellingDetail", () => {
   it("shows all saved values and deletes only after explicit confirmation", async () => {
     const refuellings = service();
     const onDeleted = jest.fn();
-    const alert = jest.spyOn(Alert, "alert").mockImplementation((_title, _message, buttons) => {
-      buttons?.find((button) => button.style === "destructive")?.onPress?.();
-    });
+    const alert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
+    const onEdit = jest.fn();
     await render(
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>
         <RefuellingDetail
           onBack={jest.fn()}
           onDeleted={onDeleted}
-          onEdit={jest.fn()}
+          onEdit={onEdit}
           refuelling={refuelling}
           refuellings={refuellings}
           vehicle={vehicle}
@@ -73,15 +72,22 @@ describe("RefuellingDetail", () => {
     expect(screen.getByText("$300.00")).toBeOnTheScreen();
     expect(screen.getByText("6.667 USD/l")).toBeOnTheScreen();
     expect(screen.getByText(/UTC/)).toBeOnTheScreen();
-    await userEvent.press(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.queryByRole("button", { name: "More actions" })).not.toBeOnTheScreen();
+    await userEvent.press(screen.getByRole("button", { name: "Edit" }));
+    expect(onEdit).toHaveBeenCalledTimes(1);
     await userEvent.press(screen.getByRole("button", { name: "Delete refuelling" }));
-
-    await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));
+    expect(refuellings.delete).not.toHaveBeenCalled();
+    expect(onDeleted).not.toHaveBeenCalled();
     expect(alert).toHaveBeenCalledWith(
       "Delete this refuelling?",
       expect.stringContaining("45 l, 99,000 km"),
       expect.any(Array),
     );
+    const buttons = alert.mock.calls[0]?.[2];
+    buttons?.find((button) => button.style === "cancel")?.onPress?.();
+    expect(refuellings.delete).not.toHaveBeenCalled();
+    buttons?.find((button) => button.style === "destructive")?.onPress?.();
+    await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));
     expect(refuellings.delete).toHaveBeenCalledWith(vehicle.id, refuelling.id);
   });
 

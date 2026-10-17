@@ -21,10 +21,10 @@ describe("local native QA configuration", () => {
     const config = configure({ config: app.expo });
 
     expect(config.name).toBe("Moje Auto");
-    expect(config.version).toBe("0.8.0");
+    expect(config.version).toBe("0.8.2");
     expect(config.ios).toMatchObject({
       bundleIdentifier: "pl.jakubbatycki.mojeauto",
-      buildNumber: "2",
+      buildNumber: "5",
     });
     expect(config.android).toMatchObject({
       package: "pl.jakubbatycki.mojeauto",

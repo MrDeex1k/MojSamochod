@@ -29,6 +29,7 @@ const configHash = createHash("sha256").update(process.env.MOJE_AUTO_NATIVE_QA ?
 for (const path of [
   "app.json",
   "app.config.js",
+  "package.json",
   ...readdirSync(resolve(mobile, "plugins")).map((name) => `plugins/${name}`),
 ]) {
   configHash.update(path).update(readFileSync(resolve(mobile, path)));

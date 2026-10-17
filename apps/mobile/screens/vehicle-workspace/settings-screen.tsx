@@ -17,9 +17,16 @@ export function SettingsScreen() {
               onPress={() =>
                 router.push({ pathname: "/vehicle/editor", params: { kind: "vehicle-form" } })
               }
-              supportingText={t("settings.units")}
+              supportingText={
+                <Text textStyle={{ fontSize: 14, color: nativeTheme.secondary }}>
+                  {t("settings.units")}
+                </Text>
+              }
+              trailing={<Text textStyle={{ color: nativeTheme.secondary }}>›</Text>}
             >
-              <Text>{t("workspace.editVehicle")}</Text>
+              <Text textStyle={{ fontSize: 17, fontWeight: "600" }}>
+                {t("workspace.editVehicle")}
+              </Text>
             </ListItem>
           </FieldGroup.Section>
           <FieldGroup.Section title={t("settings.application")}>

@@ -22,7 +22,7 @@ new file mode 100644
 +      name: "ExpoSQLite",
 +      dependencies: ["ExpoSQLiteC"],
 +      path: "ios",
-+      sources: ["AtomicInteger.swift", "DatabaseChangeEvent.swift", "DatabaseFileUtils.swift", "Exceptions.swift", "NativeDatabase.swift", "NativeSession.swift", "NativeStatement.swift", "SQLAction.swift", "SQLiteModule.swift", "SQLiteOptions.swift", "URL+FilePath.swift"],
++      exclude: ["Benchmarks", "Tests", "ExpoSQLite.podspec"],
 +      swiftSettings: [.unsafeFlags(["-Xfrontend", "-import-module", "-Xfrontend", "ExpoSQLiteC", "-Xcc", "-DHAVE_USLEEP=1", "-Xcc", "-DSQLITE_ENABLE_LOCKING_STYLE=0", "-Xcc", "-DSQLITE_ENABLE_BYTECODE_VTAB=1", "-Xcc", "-DSQLITE_TEMP_STORE=2", "-Xcc", "-DSQLITE_ENABLE_SESSION=1", "-Xcc", "-DSQLITE_ENABLE_PREUPDATE_HOOK=1", "-Xcc", "-DSQLITE_ENABLE_MATH_FUNCTIONS=1", "-Xcc", "-DSQLITE_ENABLE_API_ARMOR=1", "-Xcc", "-DSQLITE_ENABLE_FTS4=1", "-Xcc", "-DSQLITE_ENABLE_FTS3_PARENTHESIS=1", "-Xcc", "-DSQLITE_ENABLE_FTS5=1"])]
 +    )
 +  ]

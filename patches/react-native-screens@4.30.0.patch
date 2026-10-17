@@ -2,9 +2,9 @@ diff --git a/Package.swift b/Package.swift
 new file mode 100644
 --- /dev/null
 +++ b/Package.swift
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,253 @@
 +// swift-tools-version: 6.0
-+// AUTO-SCAFFOLDED by react-native spm scaffold — safe to edit & commit via patch-package.
++// AUTO-SCAFFOLDED by react-native spm scaffold - safe to edit & commit via patch-package.
 +// AUTO-SCAFFOLDED-VERSION: 20
 +// Cache slot: 0.88.0-rc.3/dual-flavor
 +// Edit the contents below if needed and re-run `npx patch-package <dep-name>`
@@ -34,6 +34,12 @@ new file mode 100644
 +            dependencies: [.product(name: "ReactHeaders", package: "ReactNative"), .product(name: "ReactNativeHeaders", package: "ReactNative"), .product(name: "ReactNativeDependenciesHeaders", package: "ReactNative"), .product(name: "ReactAppHeaders", package: "React-GeneratedCode")],
 +            path: ".",
 +            sources: [
++                "ios/RNSNavigationBar.h",
++                "ios/RNSNavigationBar.mm",
++                "ios/tabs/RNSTabBarItemCoordinator.h",
++                "ios/tabs/RNSTabBarItemCoordinator.mm",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryWrapperView.h",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryWrapperView.mm",
 +                "common/cpp/react/renderer/components/rnscreens/FrameCorrectionModes.h",
 +                "common/cpp/react/renderer/components/rnscreens/RNSFormSheetHostComponentDescriptor.h",
 +                "common/cpp/react/renderer/components/rnscreens/RNSFormSheetHostShadowNode.cpp",
@@ -273,17 +279,3 @@ new file mode 100644
 +  header "integrations/RNSDismissibleModalProtocol.h"
 +  export *
 +}
-diff --git a/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt b/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt
---- a/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt
-+++ b/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt
-@@ -232,7 +232,9 @@
-         val stack = screenStack
-         val isTop = stack == null || stack.topScreen == parent
- 
--        if (!isAttachedToWindow || !isTop || isDestroyed) {
-+        // Fabric may deliver a final header update after the screen leaves its stack.
-+        // Ignore detached screens rather than querying their removed container.
-+        if (!isAttachedToWindow || !isTop || isDestroyed || screen?.container == null) {
-             return
-         }
- 

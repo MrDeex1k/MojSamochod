@@ -67,7 +67,7 @@ export function RefuellingList({
       data={configuredVehicle ? history.refuellings : []}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={
-        <View className="gap-content">
+        <View className="gap-content pb-section">
           <Text accessibilityRole="header" className="text-title font-bold text-primary">
             {t("refuelling.title")}
           </Text>
