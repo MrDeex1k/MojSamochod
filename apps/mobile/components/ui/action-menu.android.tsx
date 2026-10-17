@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Host } from "@expo/ui";
 import { DropdownMenu, DropdownMenuItem, Button, Text } from "@expo/ui/jetpack-compose";
-import { nativeTheme } from "@/styles/native-theme";
+import { nativeTheme, materialSeed } from "@/styles/native-theme";
 import type { ActionMenuProps } from "./action-menu-types";
 
 export function ActionMenu({ label, deleteLabel, disabled = false, onDelete }: ActionMenuProps) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <Host colorScheme="dark" seedColor={nativeTheme.accent} matchContents>
+    <Host colorScheme="dark" seedColor={materialSeed} matchContents>
       <DropdownMenu expanded={expanded} onDismissRequest={() => setExpanded(false)}>
         <DropdownMenu.Trigger>
           <Button enabled={!disabled} onClick={() => setExpanded(true)}>

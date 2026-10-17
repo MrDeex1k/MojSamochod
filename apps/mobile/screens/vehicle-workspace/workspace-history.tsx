@@ -1,7 +1,8 @@
+import { InteractiveRow as Pressable } from "@/components/layout/interactive-row";
 import { UpcomingReminder } from "./upcoming-reminder";
 import { nativeTheme } from "@/styles/native-theme";
 import type { ReactNode } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { ListScreen } from "@/components/layout/list-screen";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";

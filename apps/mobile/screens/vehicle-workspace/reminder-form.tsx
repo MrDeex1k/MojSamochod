@@ -1,5 +1,5 @@
 import { Host, Switch } from "@expo/ui";
-import { nativeTheme } from "@/styles/native-theme";
+import { materialSeed } from "@/styles/native-theme";
 import { FormActions, FormTitle } from "@/components/layout/native-form";
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -181,7 +181,7 @@ export function ReminderForm({
         <Host
           key={offset}
           colorScheme="dark"
-          seedColor={nativeTheme.accent}
+          seedColor={materialSeed}
           matchContents={{ vertical: true }}
         >
           <Switch

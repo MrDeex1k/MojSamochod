@@ -1,6 +1,7 @@
+import { InteractiveRow as Pressable } from "@/components/layout/interactive-row";
 import { nativeTheme } from "@/styles/native-theme";
 import { ListScreen } from "@/components/layout/list-screen";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import type { RefuellingHistory } from "@/application/refuelling/refuelling-service";
 import { Button } from "@/components/ui/button";

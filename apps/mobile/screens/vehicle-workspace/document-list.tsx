@@ -1,6 +1,7 @@
+import { InteractiveRow as Pressable } from "@/components/layout/interactive-row";
 import { nativeTheme } from "@/styles/native-theme";
 import { ListScreen } from "@/components/layout/list-screen";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";

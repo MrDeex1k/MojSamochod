@@ -3,14 +3,14 @@ import Constants from "expo-constants";
 import { Stack, router } from "expo-router";
 import { Linking } from "react-native";
 import { useAppTranslation } from "@/localization/use-app-translation";
-import { nativeTheme } from "@/styles/native-theme";
+import { nativeTheme, materialSeed } from "@/styles/native-theme";
 
 export function SettingsScreen() {
   const { t } = useAppTranslation();
   return (
     <>
       <Stack.Screen options={{ title: t("navigation.settings") }} />
-      <Host style={{ flex: 1 }} colorScheme="dark" seedColor={nativeTheme.accent}>
+      <Host style={{ flex: 1 }} colorScheme="dark" seedColor={materialSeed}>
         <FieldGroup>
           <FieldGroup.Section title={t("navigation.vehicle")}>
             <ListItem

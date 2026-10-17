@@ -2,7 +2,7 @@ import { useValidationFocus } from "./validation-focus";
 import { type ComponentRef, useId, useRef } from "react";
 import { StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
 
-type TextFieldProps = TextInputProps & {
+export type TextFieldProps = TextInputProps & {
   error?: string;
   helperText?: string;
   label: string;

@@ -2,9 +2,10 @@ import { ActivityIndicator, View } from "react-native";
 import { Pressable, type PressableProps, Text } from "react-native";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
-type ButtonVariant = "primary" | "secondary" | "danger";
+export type ButtonVariant = "primary" | "secondary" | "danger" | "text";
 
-type ButtonProps = Omit<PressableProps, "children"> & {
+export type ButtonProps = Omit<PressableProps, "children" | "onPress"> & {
+  onPress?: () => void;
   label: string;
   busy?: boolean;
   variant?: ButtonVariant;
@@ -19,6 +20,7 @@ const variantClasses: Record<ButtonVariant, { container: string; label: string }
     container: "bg-surface-strong active:opacity-80",
     label: "text-accent",
   },
+  text: { container: "bg-transparent active:opacity-80", label: "text-accent" },
   danger: {
     container: "border border-danger bg-transparent active:bg-surface-strong",
     label: "text-danger",

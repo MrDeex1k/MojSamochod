@@ -1,5 +1,6 @@
+import { InteractiveRow as Pressable } from "@/components/layout/interactive-row";
 import { useEffect, useState } from "react";
-import { AppState, Pressable, Text } from "react-native";
+import { AppState, Text } from "react-native";
 import { reminderStatus, type Reminder } from "@/domain/reminders/reminder";
 import { formatCalendarDate } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";

@@ -1,7 +1,7 @@
 import { Host, Picker } from "@expo/ui";
 import SegmentedControl from "@expo/ui/community/segmented-control";
 import { Text, View, useWindowDimensions } from "react-native";
-import { nativeTheme } from "@/styles/native-theme";
+import { materialSeed } from "@/styles/native-theme";
 
 export function ChoiceField<T extends string>({
   label,
@@ -23,7 +23,7 @@ export function ChoiceField<T extends string>({
       {menu || fontScale > 1.3 ? (
         <Host
           colorScheme="dark"
-          seedColor={nativeTheme.accent}
+          seedColor={materialSeed}
           matchContents={{ vertical: true }}
           accessibilityLabel={label}
         >
