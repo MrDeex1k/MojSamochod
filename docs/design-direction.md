@@ -91,13 +91,13 @@ space with decorative cards.
 ### Agreed color direction
 
 The brand palette combines racing green with warm ivory and graphite. The default canvas is a
-near-black graphite (`#121212`) rather than pure black. Slightly lighter, subtly green-tinted surfaces
+near-black (`#010101`) rather than pure black. Slightly lighter, subtly green-tinted surfaces
 provide hierarchy without making the interface feel grey. Green is the single brand accent used for
 primary actions, active navigation, selection, focus, and essential current state.
 
 | Role           | Dark appearance |
 | -------------- | --------------- |
-| Canvas         | `#121212`       |
+| Canvas         | `#010101`       |
 | Surface        | `#1C221D`       |
 | Strong surface | `#252D27`       |
 | Primary text   | `#F2F0E8`       |
@@ -175,3 +175,24 @@ into a collage or use thumbnails where a filename, date, amount, and relation sc
 - Does every animation clarify entry, continuity, or state change?
 - Do dark mode, large text, empty states, errors, and offline behavior remain coherent?
 - Do components use semantic color aliases without embedding raw color values?
+
+## Android Material direction
+
+Android uses Material 3 / Material 3 Expressive with the existing green brand seed.
+The application canvas is explicitly `#010101` on both platforms. Android control
+surfaces, selection indicators and foreground pairs come from one seeded dark
+Material palette; system wallpaper colors do not override that choice.
+
+Prefer native Compose fields, buttons, segments, switches, menus and dialogs.
+Keep long lists virtualized in React Native, with Material ripple on custom rows.
+Use one contextual FAB on populated history/fuel lists, and one compact primary
+button in empty states. Documents are a supporting text action, not a second
+large filled button. Forms and detail screens use plain layout instead of cards
+around their entire contents. Preserve iOS system sheets, SwiftUI controls and glass.
+
+Android tablets use a native Material navigation rail and the existing measured
+list/detail workspace. A local Android-only Expo module exposes the rail because
+Expo UI 58 does not expose that widget. Stack navigation owns route transitions,
+predictive back and dirty-form removal guards; short type selection uses a
+Material modal bottom sheet. Native Material interaction feedback owns motion,
+including the platform animation settings.
