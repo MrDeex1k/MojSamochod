@@ -61,3 +61,18 @@ this verifies the color, not a battery-saving claim.
 - [Android tablet at 160% text size](images/material-2026-10-17/android-tablet-large-text.png)
 - [iPhone native editor](images/material-2026-10-17/iphone-form.png)
 - [iPad native editor](images/material-2026-10-17/ipad-form.png)
+- [Android settings after the grouped-row correction](images/material-2026-10-17/android-settings.png)
+
+## Settings follow-up
+
+The Android settings screen now renders one native Material list item per row.
+The universal FieldGroup section previously wrapped those items in another
+ListItem, causing duplicate backgrounds and padding. Settings now uses plain
+sections on #010101, disclosure icons only for navigation, and a non-interactive
+version value. Content width is bounded on tablets for readable text.
+
+A source audit found no other FieldGroup/ListItem nesting in Android screens.
+Native checks covered settings on Pixel 9 and Pixel Tablet (including 160% text),
+opening the editor and data screen, and the fuel/deadline list structure. The
+existing iOS implementation is unchanged. The release APK and all 487 tests passed;
+React Doctor remained at 97/100 with no reported issues.
