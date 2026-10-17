@@ -1,7 +1,8 @@
+import { Alert } from "@/components/ui/app-alert";
 import { BackAction } from "@/components/layout/back-action";
 import { PdfPreview } from "@/components/ui/pdf-preview";
 import { useEffect, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 import { Screen } from "@/components/layout/screen";

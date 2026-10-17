@@ -1,4 +1,5 @@
-import { Alert } from "react-native";
+import { Alert } from "@/components/ui/app-alert";
+
 import { Button } from "./button";
 import type { ActionMenuProps } from "./action-menu-types";
 

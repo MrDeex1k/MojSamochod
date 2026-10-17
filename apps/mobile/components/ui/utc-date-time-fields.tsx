@@ -2,7 +2,7 @@ import { mergeUtcDateTime } from "./utc-date-time";
 import { formatUtcDate, formatUtcTime } from "@/localization/formatters";
 import { useState } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker from "@/components/ui/date-time-picker";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { nativeTheme } from "@/styles/native-theme";
 

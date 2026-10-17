@@ -1,3 +1,4 @@
+import { AlertProvider } from "@/components/providers/alert-provider";
 import { PlatformThemeProvider } from "@/components/providers/platform-theme-provider";
 import { ThemeProvider, DarkTheme } from "expo-router/react-navigation";
 import Stack from "expo-router/stack";
@@ -20,9 +21,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <DatabaseProvider>
           <ApplicationProvider>
-            <ThemeProvider value={DarkTheme}>
-              <Stack screenOptions={{ headerShown: false }} />
-            </ThemeProvider>
+            <AlertProvider>
+              <ThemeProvider value={DarkTheme}>
+                <Stack screenOptions={{ headerShown: false }} />
+              </ThemeProvider>
+            </AlertProvider>
           </ApplicationProvider>
         </DatabaseProvider>
         <StatusBar style="light" />

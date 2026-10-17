@@ -1,10 +1,11 @@
+import { Alert } from "@/components/ui/app-alert";
 import { Host, Switch } from "@expo/ui";
 import { materialSeed } from "@/styles/native-theme";
 import { FormActions, FormTitle } from "@/components/layout/native-form";
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker from "@/components/ui/date-time-picker";
 import { useRef, useState } from "react";
-import { Alert, Platform, ScrollView, Text, View } from "react-native";
+import { Platform, ScrollView, Text, View } from "react-native";
 import type { ReminderService } from "@/application/reminders/reminder-service";
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";

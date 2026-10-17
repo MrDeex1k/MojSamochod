@@ -1,6 +1,7 @@
+import { Alert } from "@/components/ui/app-alert";
 import { BackAction } from "@/components/layout/back-action";
 import { useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import { Screen } from "@/components/layout/screen";

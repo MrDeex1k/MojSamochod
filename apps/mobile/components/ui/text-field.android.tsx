@@ -1,3 +1,4 @@
+import { materialKeyboardOptions } from "./material-keyboard-options";
 import { Host } from "@expo/ui";
 import {
   OutlinedTextField,
@@ -41,9 +42,6 @@ export function TextField({
   useEffect(() => {
     if (value !== undefined && value !== text.get()) text.set(value);
   }, [text, value]);
-  const numeric =
-    inputMode === "numeric" || keyboardType === "number-pad" || keyboardType === "numeric";
-  const decimal = inputMode === "decimal" || keyboardType === "decimal-pad";
   return (
     <View className={className}>
       <Host colorScheme="dark" seedColor={materialSeed} matchContents={{ vertical: true }}>
@@ -59,23 +57,14 @@ export function TextField({
           maxLength={maxLength}
           isError={Boolean(error)}
           visualTransformation={secureTextEntry ? "password" : "none"}
-          keyboardOptions={{
-            capitalization:
-              autoCapitalize === "characters" ? "characters" : (autoCapitalize ?? "sentences"),
-            autoCorrectEnabled: autoCorrect ?? (!numeric && !decimal),
-            keyboardType: decimal
-              ? "decimal"
-              : numeric
-                ? "number"
-                : keyboardType === "email-address"
-                  ? "email"
-                  : keyboardType === "phone-pad"
-                    ? "phone"
-                    : keyboardType === "url"
-                      ? "uri"
-                      : "text",
-            imeAction: returnKeyType === "search" ? "search" : multiline ? "default" : "done",
-          }}
+          keyboardOptions={materialKeyboardOptions({
+            autoCapitalize,
+            autoCorrect,
+            keyboardType,
+            inputMode,
+            returnKeyType,
+            multiline,
+          })}
           keyboardActions={{ onDone: () => void input.current?.blur() }}
           modifiers={[fillMaxWidth(), ...(identifier ? [testID(identifier)] : [])]}
         >

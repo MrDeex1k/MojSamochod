@@ -41,29 +41,31 @@ it("confirms a dirty cross-pane transition once, preserving the draft when cance
   expect(alert).toHaveBeenCalledTimes(2);
 });
 
-it("blocks hardware back during a write and permits an unchanged form afterwards", async () => {
+it("blocks embedded-form hardware back during a write and permits an unchanged form afterwards", async () => {
   let back: (() => boolean | null | undefined) | undefined;
   jest.spyOn(BackHandler, "addEventListener").mockImplementation((_event, callback) => {
     back = () => callback({} as Parameters<typeof callback>[0]);
     return { remove: jest.fn() };
   });
   const onLeave = jest.fn();
-  const view = await render(
-    <NavigationGuardProvider>
-      <Form onLeave={onLeave} busy />
-    </NavigationGuardProvider>,
-  );
+  const view = await render(<Form onLeave={onLeave} busy />);
   await act(() => {
     expect(back?.()).toBe(true);
   });
   expect(onLeave).not.toHaveBeenCalled();
-  await view.rerender(
-    <NavigationGuardProvider>
-      <Form onLeave={onLeave} />
-    </NavigationGuardProvider>,
-  );
+  await view.rerender(<Form onLeave={onLeave} />);
   await act(() => {
     back?.();
   });
   expect(onLeave).toHaveBeenCalledTimes(1);
+});
+
+it("delegates route-owned back to the native stack removal guard", async () => {
+  const subscribe = jest.spyOn(BackHandler, "addEventListener");
+  await render(
+    <NavigationGuardProvider>
+      <Form onLeave={jest.fn()} />
+    </NavigationGuardProvider>,
+  );
+  expect(subscribe).not.toHaveBeenCalled();
 });
