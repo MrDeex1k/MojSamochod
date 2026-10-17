@@ -1,5 +1,7 @@
+import { nativeTheme } from "@/styles/native-theme";
+import { IconAction } from "./icon-action";
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ScreenFrame } from "@/components/layout/screen-frame";
 import { useAppTranslation } from "@/localization/use-app-translation";
@@ -152,6 +154,7 @@ function Reader({
             accessibilityState={{ disabled: !ready }}
             disabled={!ready}
             onPress={() => setZoom(1)}
+            android_ripple={{ color: `${nativeTheme.accent.slice(0, 7)}24` }}
             style={styles.fit}
           >
             <Text style={styles.fitText}>
@@ -176,6 +179,23 @@ function Tool({
   disabled = false,
   onPress,
 }: Readonly<{ label: string; symbol: string; disabled?: boolean; onPress: () => void }>) {
+  if (Platform.OS === "android") {
+    const icons = {
+      "×": "close",
+      "‹": "previous",
+      "›": "next",
+      "−": "zoom-out",
+      "+": "zoom-in",
+    } as const;
+    return (
+      <IconAction
+        icon={icons[symbol as keyof typeof icons]}
+        label={label}
+        disabled={disabled}
+        onPress={onPress}
+      />
+    );
+  }
   return (
     <Pressable
       accessibilityRole="button"
@@ -200,16 +220,22 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     paddingVertical: 4,
   },
-  title: { flex: 1, color: "#e7e7e1", fontSize: 17, fontWeight: "600" },
+  title: { flex: 1, color: nativeTheme.primary, fontSize: 17, fontWeight: "600" },
   viewport: { flex: 1 },
-  message: { padding: 24, gap: 16, color: "#a4aaa1" },
-  error: { color: "#ff8b83", fontSize: 16 },
+  message: { padding: 24, gap: 16, color: nativeTheme.secondary },
+  error: { color: nativeTheme.danger, fontSize: 16 },
   toolbar: { width: "100%", maxWidth: 520, alignSelf: "center", marginVertical: 8 },
   row: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8 },
   tool: { width: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },
-  symbol: { color: "#74b493", fontSize: 30, textAlign: "center" },
-  disabled: { color: "#73776f" },
-  counter: { flex: 1, color: "#e7e7e1", fontSize: 15, textAlign: "center", paddingVertical: 8 },
+  symbol: { color: nativeTheme.accent, fontSize: 30, textAlign: "center" },
+  disabled: { color: nativeTheme.secondary },
+  counter: {
+    flex: 1,
+    color: nativeTheme.primary,
+    fontSize: 15,
+    textAlign: "center",
+    paddingVertical: 8,
+  },
   fit: {
     flex: 1,
     minHeight: 48,
@@ -217,5 +243,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 8,
   },
-  fitText: { color: "#74b493", fontSize: 15, textAlign: "center" },
+  fitText: { color: nativeTheme.accent, fontSize: 15, textAlign: "center" },
 });

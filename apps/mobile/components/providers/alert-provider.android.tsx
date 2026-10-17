@@ -18,7 +18,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
             }}
           >
             <AlertDialog.Title>
-              <Text>{request.title}</Text>
+              <Text style={{ typography: "headlineSmall" }}>{request.title}</Text>
             </AlertDialog.Title>
             {request.message ? (
               <AlertDialog.Text>

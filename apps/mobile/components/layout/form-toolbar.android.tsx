@@ -14,7 +14,7 @@ export function FormToolbar({ busy, saveLabel, cancelLabel, onSave, onCancel }: 
         headerRight: () => (
           <Host colorScheme="dark" seedColor={materialSeed} matchContents>
             <TextButton enabled={!busy} onClick={onSave}>
-              <Text>{saveLabel}</Text>
+              <Text style={{ typography: "labelLarge" }}>{saveLabel}</Text>
             </TextButton>
           </Host>
         ),

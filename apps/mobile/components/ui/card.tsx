@@ -2,7 +2,7 @@ import { View, type ViewProps } from "react-native";
 
 type CardVariant = "default" | "strong";
 
-type CardProps = ViewProps & {
+export type CardProps = ViewProps & {
   variant?: CardVariant;
 };
 

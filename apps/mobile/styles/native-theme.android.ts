@@ -4,7 +4,7 @@ import { materialSeed } from "./native-theme.shared";
 export { materialSeed } from "./native-theme.shared";
 export const materialColors = getMaterialColors({ scheme: "dark", seedColor: materialSeed });
 export const nativeTheme = {
-  canvas: materialColors.surface,
+  canvas: "#010101",
   surface: materialColors.surfaceContainer,
   surfaceStrong: materialColors.surfaceContainerHigh,
   surfaceMuted: materialColors.surfaceContainerLow,

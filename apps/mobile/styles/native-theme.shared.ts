@@ -1,6 +1,6 @@
 // Apple and web retain the brand palette; Android resolves Material roles from the same seed.
 export const nativeTheme = {
-  canvas: "#121212",
+  canvas: "#010101",
   surface: "#1c1c1e",
   surfaceStrong: "#252527",
   surfaceMuted: "#19191b",
