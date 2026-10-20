@@ -1,19 +1,12 @@
 # Dependency patches
 
-## `@shadcn/lint@0.2.1`
-
-The contract validator does not recognize custom spacing and radius utilities generated
-from Tailwind `@theme` declarations. This produces notices for `px-compact`, `p-screen`,
-and `rounded-control`, despite their tokens being defined in the mobile theme.
-
-The patch checks padding, margin, gap, space, and radius class names against the
-discovered theme vocabulary during contract validation. Contract matching and
-allowed styles remain unchanged; undeclared token names still produce notices.
-
-NUB applies the version-specific patch through `package.json`'s
+NUB applies version-specific patches through `package.json`'s
 `patchedDependencies`. Install with `nub run deps:install`, which uses Socket
-Firewall. Keep the patch until an upstream release recognizes these classes;
-when upgrading the linter, review whether the patch is still necessary.
+Firewall. Review each patch when upgrading its package.
+
+The former `@shadcn/lint@0.2.1` theme-vocabulary patch was retired when upgrading
+to 0.2.3. The unpatched validator accepts the current spacing/radius contracts,
+and the project's lint check passes without the workaround.
 
 ## Expo SDK 58 / React Native 0.88 SwiftPM
 
@@ -28,7 +21,7 @@ DateTimePicker, Masked View, and Gesture Handler need explicit module maps for
 their umbrella-header layouts. Screens needs the parent directory of its custom
 component descriptors in its header search paths.
 
-Expo Application and Expo Modules JSI currently lack consumable root manifests.
+Expo Application and Expo Modules JSI 58.0.16 currently lack consumable root manifests.
 Their patches provide source targets, including a separate Objective-C target for
 Application and Swift/C++ targets for JSI. The local Document Preview module has
 its own manifest in the repository.
@@ -46,7 +39,7 @@ Notifications adapts its system presentation callback only under
 argument as `Int`. The patch forwards all option bits to the system callback and
 preserves the usual OptionSet signature in other builds.
 
-Expo UI 58.0.20 adds an Objective-C++ touch-handler helper but does not ship an
+Expo UI 58.0.21 includes an Objective-C++ touch-handler helper but does not ship an
 Apple prebuilt artifact. Its patch splits the helper into an Objective-C++ target
 and imports it into the Swift target, allowing Expo autolinking to compile sources.
 Screens 4.30.0's manifest includes its new navigation-bar, tab-item coordinator,
