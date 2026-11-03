@@ -21,7 +21,7 @@ DateTimePicker, Masked View, and Gesture Handler need explicit module maps for
 their umbrella-header layouts. Screens needs the parent directory of its custom
 component descriptors in its header search paths.
 
-Expo Application and Expo Modules JSI 58.0.16 currently lack consumable root manifests.
+Expo Application and Expo Modules JSI 58.0.21 currently lack consumable root manifests.
 Their patches provide source targets, including a separate Objective-C target for
 Application and Swift/C++ targets for JSI. The local Document Preview module has
 its own manifest in the repository.
@@ -34,15 +34,21 @@ Application similarly imports its Objective-C
 target. A private JSI memory-buffer helper has a distinct name to avoid colliding
 with the version serialized into precompiled Expo Core.
 
+Expo Modules JSI 58.0.21 changes its ArrayBuffer helpers; the rename patch is
+rebased against those implementations without changing initialization or memory
+reporting behavior. Newer SDK 58 autolinking supplies `ExpoModulesJSIHeaders` and
+owns the app's JSI build phase. When that package exists, the wiring script keeps
+the shared API Notes lookup but does not add a second source-package dependency.
+
 Notifications adapts its system presentation callback only under
 `EXPO_SWIFTPM_CXX`: Xcode 27's Swift/C++ importer exposes the Objective-C block
 argument as `Int`. The patch forwards all option bits to the system callback and
 preserves the usual OptionSet signature in other builds.
 
-Expo UI 58.0.21 includes an Objective-C++ touch-handler helper but does not ship an
+Expo UI 58.0.26 includes an Objective-C++ touch-handler helper but does not ship an
 Apple prebuilt artifact. Its patch splits the helper into an Objective-C++ target
 and imports it into the Swift target, allowing Expo autolinking to compile sources.
-Screens 4.30.0's manifest includes its new navigation-bar, tab-item coordinator,
+Screens 4.30.1's manifest includes its new navigation-bar, tab-item coordinator,
 and bottom-accessory wrapper sources. Its upstream detached-stack guard replaces
 the former local Android header fix.
 

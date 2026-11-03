@@ -29,13 +29,13 @@
   "devDependencies": {
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
-    "@shadcn/lint": "0.2.3",
+    "@shadcn/lint": "0.2.5",
     "fastq": "1.20.3",
     "husky": "9.1.7",
-    "oxfmt": "0.74.0",
-    "oxlint": "1.89.0",
+    "oxfmt": "0.75.0",
+    "oxlint": "1.90.0",
     "sfw": "2.0.6",
-    "xcode": "3.0.1"
+    "xcode": "4.0.0"
   },
   "overrides": {
     "lightningcss": "1.30.1"
@@ -48,24 +48,24 @@
     }
   },
   "packageExtensions": {
-    "expo-linking@58.0.13": {
+    "expo-linking@58.0.15": {
       "dependencies": {
-        "expo-modules-core": "58.0.23"
+        "expo-modules-core": "58.0.29"
       }
     },
-    "expo-constants@58.0.12": {
+    "expo-constants@58.0.14": {
       "dependencies": {
-        "expo-modules-core": "58.0.23"
+        "expo-modules-core": "58.0.29"
       }
     },
-    "expo-file-system@58.0.10": {
+    "expo-file-system@58.0.13": {
       "dependencies": {
-        "expo-modules-core": "58.0.23"
+        "expo-modules-core": "58.0.29"
       }
     },
     "@expo/dom-webview@58.0.2": {
       "dependencies": {
-        "expo-modules-core": "58.0.23"
+        "expo-modules-core": "58.0.29"
       }
     }
   },
@@ -73,13 +73,13 @@
     "@react-native-community/datetimepicker@9.2.1": "patches/@react-native-community__datetimepicker@9.2.1.patch",
     "@react-native-masked-view/masked-view@0.3.2": "patches/@react-native-masked-view__masked-view@0.3.2.patch",
     "react-native-gesture-handler@3.3.0": "patches/react-native-gesture-handler@3.3.0.patch",
-    "react-native-screens@4.30.0": "patches/react-native-screens@4.30.0.patch",
-    "expo-modules-jsi@58.0.16": "patches/expo-modules-jsi@58.0.16.patch",
-    "expo-sqlite@58.0.13": "patches/expo-sqlite@58.0.13.patch",
-    "expo-notifications@58.1.5": "patches/expo-notifications@58.1.5.patch",
     "expo-application@58.1.2": "patches/expo-application@58.1.2.patch",
-    "@expo/ui@58.0.21": "patches/@expo+ui@58.0.21.patch",
     "react-native-css@3.1.0-rc.0": "patches/react-native-css@3.1.0-rc.0.patch",
-    "react-native-safe-area-context@5.10.1": "patches/react-native-safe-area-context@5.10.1.patch"
+    "react-native-safe-area-context@5.10.1": "patches/react-native-safe-area-context@5.10.1.patch",
+    "@expo/ui@58.0.26": "patches/@expo+ui@58.0.26.patch",
+    "expo-modules-jsi@58.0.21": "patches/expo-modules-jsi@58.0.21.patch",
+    "expo-notifications@58.1.7": "patches/expo-notifications@58.1.7.patch",
+    "expo-sqlite@58.0.15": "patches/expo-sqlite@58.0.15.patch",
+    "react-native-screens@4.30.1": "patches/react-native-screens@4.30.1.patch"
   }
 }
