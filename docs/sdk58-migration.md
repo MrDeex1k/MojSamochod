@@ -42,6 +42,10 @@ autolinking and codegen, applies generated consumption fixes, and records input
 fingerprints. Expo prebuild may call `pod deintegrate` to remove its template's
 CocoaPods integration; dependency resolution and compilation use SwiftPM.
 Xcode fails with preparation instructions if dependency or native inputs change.
+The prepared Xcode project uses `project.xcproj` JSON. Xcode 27.2 or later is
+required for conversion; the preparation and Expo CLI entry points preserve
+compatibility with legacy Expo/React Native tooling. See
+[Xcode JSON project format](xcode-json-project-format.md).
 
 For isolated acceptance builds, set `MOJE_AUTO_NATIVE_QA=1` when preparing either
 platform. This uses `dev.mojeauto.qa` and preserves production app storage.

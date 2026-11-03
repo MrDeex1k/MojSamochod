@@ -3,8 +3,15 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
+import {
+  convertProjectToJson,
+  normalizeFileReferences,
+  restoreLegacyProject,
+} from "./xcode-project-format.mjs";
 
 const mobile = resolve(import.meta.dirname, "../apps/mobile");
+const projectDirectory = resolve(mobile, "ios/MojeAuto.xcodeproj");
+restoreLegacyProject(projectDirectory);
 const env = {
   ...process.env,
   RCT_SPM_AUTOLINKING_CONFIG_COMMAND: JSON.stringify([
@@ -57,6 +64,7 @@ const require = createRequire(resolve(mobile, "package.json"));
 const projectPath = resolve(mobile, "ios/MojeAuto.xcodeproj/project.pbxproj");
 const project = require("xcode").project(projectPath);
 project.parseSync();
+normalizeFileReferences(project.pbxFileReferenceSection());
 const generated = resolve(mobile, "ios/build/generated/autolinking");
 const jsi = resolve(generated, "expo/expo-source/expo-modules-jsi");
 const screens = resolve(mobile, "../../node_modules/react-native-screens");
@@ -133,3 +141,4 @@ writeFileSync(
 );
 run(["--node", resolve(import.meta.dirname, "check-ios-spm.mjs"), "--record"]);
 writeFileSync(nativeConfigStamp, nativeConfig);
+convertProjectToJson(projectDirectory);
