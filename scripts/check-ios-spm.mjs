@@ -15,6 +15,7 @@ const inputs = [
   "scripts/prepare-ios-spm.mjs",
   "scripts/wire-expo-spm.mjs",
   "scripts/check-ios-spm.mjs",
+  "scripts/xcode-project-format.mjs",
 ];
 for (const directory of ["patches", "apps/mobile/plugins", "apps/mobile/modules"]) {
   for (const entry of readdirSync(resolve(root, directory), {
