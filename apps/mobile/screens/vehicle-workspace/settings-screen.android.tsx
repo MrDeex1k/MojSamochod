@@ -2,7 +2,7 @@ import { Host, ListItem, Text } from "@expo/ui";
 import { Column, Icon, Text as MaterialText } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth, padding } from "@expo/ui/jetpack-compose/modifiers";
 import Constants from "expo-constants";
-import { Stack, router } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import type { PropsWithChildren } from "react";
 import { Linking, ScrollView } from "react-native";
 import { useAppTranslation } from "@/localization/use-app-translation";
@@ -48,6 +48,7 @@ function SettingsRow({
 }
 
 export function SettingsScreen() {
+  const router = useRouter();
   const { t } = useAppTranslation();
   return (
     <>

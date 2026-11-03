@@ -1,6 +1,10 @@
 # Android Material 3 implementation
 
-Verified on 17 October 2026 on `feat/android-material-expressive`.
+Initial verification: 17 October 2026 on `feat/android-material-expressive`.
+
+Latest follow-up: [Android final QA, 3 November 2026](android-material-final-qa-2026-11-03.md).
+That pass fixed a configuration-change navigation crash and records the remaining
+TalkBack and predictive-back acceptance limits explicitly.
 
 ## Direction
 
@@ -25,7 +29,7 @@ unnecessary cards. iOS retains its system controls, sheets and glass presentatio
 | Screen hierarchy and documents   | Contextual extended FABs on populated history/fuel lists, compact empty-state actions, supporting Documents action, plain detail/form layout and native PDF actions with corrected system insets. |
 | Platform polish and verification | Monochrome adaptive icon, regression tests, release builds, native phone/tablet checks and retained Apple presentation.                                                                           |
 
-## Verification
+## Initial verification (17 October 2026)
 
 - `nub run check`: passed, including **75 test suites / 487 tests**.
 - React Doctor 0.9.18: **97/100**, no reported issues in the changed React files.

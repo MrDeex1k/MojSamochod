@@ -1,10 +1,11 @@
 import { MaterialNavigationRail } from "@/components/layout/material-navigation-rail";
 import { Platform, View, useWindowDimensions } from "react-native";
-import { router, usePathname } from "expo-router";
+import { useRouter, usePathname } from "expo-router";
 import { NativeTabs } from "expo-router/native-tabs";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { nativeTheme } from "@/styles/native-theme";
 export default function TabsLayout() {
+  const router = useRouter();
   const { t } = useAppTranslation();
   const { width, fontScale } = useWindowDimensions();
   const pathname = usePathname();

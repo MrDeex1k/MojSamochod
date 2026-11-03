@@ -1,11 +1,12 @@
 import { Host, FieldGroup, ListItem, Text } from "@expo/ui";
 import Constants from "expo-constants";
-import { Stack, router } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { Linking, Platform } from "react-native";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { nativeTheme, materialSeed } from "@/styles/native-theme";
 
 export function SettingsScreen() {
+  const router = useRouter();
   const { t } = useAppTranslation();
   return (
     <>

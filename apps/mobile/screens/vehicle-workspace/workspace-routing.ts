@@ -1,7 +1,10 @@
-import { router } from "expo-router";
+import type { useRouter } from "expo-router";
 import type { WorkspaceMode } from "./workspace-types";
 
-export function navigateToMode(mode: WorkspaceMode) {
+export function navigateToMode(
+  mode: WorkspaceMode,
+  router: Pick<ReturnType<typeof useRouter>, "navigate" | "push">,
+) {
   switch (mode.kind) {
     case "history":
       router.navigate("/vehicle/(tabs)/overview");
