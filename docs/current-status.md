@@ -2,6 +2,8 @@
 
 Stan na 4 listopada 2026 r., `main` w commicie `f620569`.
 
+Na branchu `feat/foldable-layouts` przygotowano osobne wdrożenie dla składanych ekranów. [Wyniki lokalnych prób i ograniczenia odbioru](foldable-baseline-2026-11-04.md#wynik-wdrożenia-i-powtórki). Poniższy stan maina nie obejmuje tej zmiany.
+
 ## Aplikacja na mainie
 
 Zakres FREE z faz 0–7 jest zintegrowany. Użytkownik prowadzi lokalną ewidencję jednego pojazdu na urządzeniu. Aplikacja obsługuje historię przeglądów, wymian i napraw, tankowania z przeliczaniem jednostek oraz terminy ubezpieczenia i badania technicznego. Powiadomienia są opcjonalne i korzystają ze strefy zapamiętanej przy zapisie terminu. Interfejs jest dostępny po polsku i angielsku, z angielskim jako językiem zapasowym.

@@ -1,7 +1,17 @@
 import { nativeTheme } from "@/styles/native-theme";
 import { IconAction } from "./icon-action";
-import { useState } from "react";
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useLayoutEffect, useRef, useState, type ComponentRef } from "react";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ScreenFrame } from "@/components/layout/screen-frame";
 import { useAppTranslation } from "@/localization/use-app-translation";
@@ -72,6 +82,8 @@ function Reader({
   const [ratio, setRatio] = useState(0.7);
   const width = Math.max(1, Math.min(viewport.width - 24, (viewport.height - 24) * ratio)) * zoom;
   const height = width / ratio;
+  const horizontal = useReadingPosition("x", viewport.width, width);
+  const vertical = useReadingPosition("y", viewport.height, height);
   const pageLabel = t("documents.page", { page: page + 1, count });
   const ready = Boolean(imageUri) && !error;
   return (
@@ -91,12 +103,13 @@ function Reader({
           </View>
         ) : imageUri ? (
           <ScrollView
-            key={`${viewport.width}:${viewport.height}`}
+            {...vertical}
             nestedScrollEnabled
             style={styles.viewport}
             contentContainerStyle={{ minHeight: viewport.height, justifyContent: "center" }}
           >
             <ScrollView
+              {...horizontal}
               horizontal
               nestedScrollEnabled
               style={{ height }}
@@ -171,6 +184,47 @@ function Reader({
       </NavigationSurface>
     </>
   );
+}
+
+// Keep the point at the centre of the visible page when the viewport changes.
+function useReadingPosition(axis: "x" | "y", viewport: number, pageSize: number) {
+  const ref = useRef<ComponentRef<typeof ScrollView>>(null);
+  const centre = useRef<number | null>(null);
+  const dragging = useRef(false);
+  const size = axis === "x" ? "width" : "height";
+  const onScroll = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const visible = nativeEvent.layoutMeasurement[size];
+    const content = nativeEvent.contentSize[size];
+    if (dragging.current && content > visible) {
+      centre.current = (nativeEvent.contentOffset[axis] + visible / 2) / content;
+    }
+  };
+  useLayoutEffect(() => {
+    dragging.current = false;
+    if (centre.current === null || viewport <= 0) return;
+    const offset = Math.max(
+      0,
+      Math.min(pageSize - viewport, centre.current * pageSize - viewport / 2),
+    );
+    ref.current?.scrollTo({ [axis]: offset, animated: false });
+  }, [axis, pageSize, viewport]);
+  return {
+    ref,
+    onScroll,
+    scrollEventThrottle: 16,
+    onScrollBeginDrag: () => {
+      dragging.current = true;
+    },
+    onScrollEndDrag: () => {
+      dragging.current = false;
+    },
+    onMomentumScrollBegin: () => {
+      dragging.current = true;
+    },
+    onMomentumScrollEnd: () => {
+      dragging.current = false;
+    },
+  };
 }
 
 function Tool({

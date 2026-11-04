@@ -9,7 +9,7 @@ import { ScrollView, Text, View } from "react-native";
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 import { Screen } from "@/components/layout/screen";
 import { Button } from "@/components/ui/button";
-import { FormSection } from "@/components/ui/form-section";
+import { FieldPair, FormSection } from "@/components/ui/form-section";
 import { TextField } from "@/components/ui/text-field";
 import type { VehicleDocument } from "@/domain/documents/vehicle-document";
 import type { HistoryEntryReference } from "@/application/repositories/history-entry-repository";
@@ -108,8 +108,8 @@ export function DocumentForm({
         error={dateError}
         disabled={saving}
       />
-      <View className="flex-row gap-compact">
-        <View className="flex-[2]">
+      <FieldPair
+        first={
           <TextField
             error={amountError ?? undefined}
             keyboardType="decimal-pad"
@@ -120,8 +120,8 @@ export function DocumentForm({
             }}
             value={amount}
           />
-        </View>
-        <View className="flex-1">
+        }
+        second={
           <TextField
             autoCapitalize="characters"
             label={t("documents.currency")}
@@ -129,8 +129,8 @@ export function DocumentForm({
             onChangeText={(value) => setCurrency(value.toUpperCase())}
             value={currency}
           />
-        </View>
-      </View>
+        }
+      />
       <DocumentEntrySelector
         historyEntries={historyEntries}
         vehicleId={vehicle.id}

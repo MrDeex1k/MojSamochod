@@ -7,7 +7,7 @@ jest.mock("@/components/providers/application-provider", () => ({
 }));
 
 jest.mock("@/components/layout/adaptive-workspace", () => ({
-  AdaptiveWorkspace: ({ phone }: { phone: React.ReactNode }) => phone,
+  AdaptiveWorkspace: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 jest.mock("./vehicle-edit-form", () => {

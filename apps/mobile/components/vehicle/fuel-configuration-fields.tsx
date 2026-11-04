@@ -1,5 +1,6 @@
-import { Text, View, useWindowDimensions } from "react-native";
+import { Text, View } from "react-native";
 
+import { FieldPair } from "@/components/ui/form-section";
 import { ChoiceField } from "@/components/ui/choice-field";
 import { TextField } from "@/components/ui/text-field";
 import type { FuelConsumptionUnit } from "@/domain/refuelling/fuel-consumption";
@@ -24,7 +25,6 @@ export function FuelConfigurationFields({
   volumeUnit: VolumeUnit;
 }>) {
   const { t } = useAppTranslation();
-  const { fontScale } = useWindowDimensions();
 
   return (
     <View className="gap-content">
@@ -38,8 +38,9 @@ export function FuelConfigurationFields({
         onChangeText={onCapacityChange}
         value={capacity}
       />
-      <View className={fontScale > 1.3 ? "gap-content" : "flex-row gap-content"}>
-        <View className="min-w-0 flex-1">
+      <FieldPair
+        equal
+        first={
           <ChoiceField
             menu
             label={t("firstVehicle.fuelVolumeUnitLabel")}
@@ -51,8 +52,8 @@ export function FuelConfigurationFields({
               ["imperialGallons", "Imp gal"],
             ]}
           />
-        </View>
-        <View className="min-w-0 flex-1">
+        }
+        second={
           <ChoiceField
             menu
             label={t("firstVehicle.fuelConsumptionUnitLabel")}
@@ -64,8 +65,8 @@ export function FuelConfigurationFields({
               ["milesPerImperialGallon", "mpg Imp"],
             ]}
           />
-        </View>
-      </View>
+        }
+      />
     </View>
   );
 }

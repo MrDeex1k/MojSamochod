@@ -7,7 +7,7 @@ import { ScrollView, Text, View } from "react-native";
 
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import { Screen } from "@/components/layout/screen";
-import { FormSection } from "@/components/ui/form-section";
+import { FieldPair, FormSection } from "@/components/ui/form-section";
 import { TextField } from "@/components/ui/text-field";
 import { type HistoryEntry } from "@/domain/history/history-entry";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
@@ -129,8 +129,8 @@ export function EntryForm({
         />
       </FormGroup>
       <FormGroup title={t("formGroups.cost")}>
-        <View className="flex-row gap-compact">
-          <View className="flex-[2]">
+        <FieldPair
+          first={
             <TextField
               error={errors.cost}
               keyboardType="decimal-pad"
@@ -138,8 +138,8 @@ export function EntryForm({
               onChangeText={setCost}
               value={cost}
             />
-          </View>
-          <View className="flex-1">
+          }
+          second={
             <TextField
               autoCapitalize="characters"
               error={errors.currency}
@@ -148,8 +148,8 @@ export function EntryForm({
               onChangeText={(value) => setCurrency(value.toUpperCase())}
               value={currency}
             />
-          </View>
-        </View>
+          }
+        />
       </FormGroup>
       <FormGroup title={t("formGroups.details")}>
         <TextField

@@ -1,6 +1,19 @@
 import { act, render, screen, userEvent, fireEvent, within } from "@testing-library/react-native";
 import DocumentPreview from "@/modules/document-preview/src/DocumentPreviewModule";
 import { PdfPreview } from "./pdf-preview";
+import { AdaptiveWorkspace } from "../layout/adaptive-workspace";
+import * as Native from "react-native";
+
+jest.mock("react-native", () => {
+  const native = jest.requireActual("react-native");
+  return Object.defineProperties(
+    {},
+    {
+      ...Object.getOwnPropertyDescriptors(native),
+      useWindowDimensions: { value: jest.fn(native.useWindowDimensions), enumerable: true },
+    },
+  );
+});
 
 const mockDelete = jest.fn();
 jest.mock("expo-file-system", () => ({
@@ -47,6 +60,35 @@ it("preserves the page across fullscreen, bounds zoom and closes with Android ba
   expect(screen.queryByRole("button", { name: "Close preview" })).toBeNull();
   expect(screen.getByText("Page 2 of 2")).toBeOnTheScreen();
   expect(renderPage).toHaveBeenCalledTimes(2);
+});
+
+it("keeps the same open page and zoom when a fold changes the workspace layout", async () => {
+  const dimensions = jest.mocked(Native.useWindowDimensions);
+  const workspace = () => {
+    const pdf = <PdfPreview uri="file:///document.pdf" name="Invoice" />;
+    return <AdaptiveWorkspace list={<Native.Text>Documents</Native.Text>}>{pdf}</AdaptiveWorkspace>;
+  };
+  try {
+    dimensions.mockReturnValue({ width: 1000, height: 800, scale: 1, fontScale: 1 });
+    const view = await render(workspace());
+    expect(screen.getByText("Documents")).toBeOnTheScreen();
+    await screen.findByText("Page 1 of 2");
+    await userEvent.press(screen.getByRole("button", { name: "Next page" }));
+    await screen.findByText("Page 2 of 2");
+    await userEvent.press(screen.getByRole("button", { name: "View full screen" }));
+    await userEvent.press(screen.getByRole("button", { name: "Zoom in" }));
+    for (const width of [380, 720, 1000]) {
+      dimensions.mockReturnValue({ width, height: 800, scale: 1, fontScale: 1 });
+      await view.rerender(workspace());
+      expect(Boolean(screen.queryByText("Documents"))).toBe(width >= 688);
+      const modal = within(screen.getByTestId("pdf-fullscreen"));
+      expect(modal.getByText("Page 2 of 2")).toBeOnTheScreen();
+      expect(modal.getByText("150% · Fit page")).toBeOnTheScreen();
+    }
+    expect(renderPage).toHaveBeenCalledTimes(2);
+  } finally {
+    dimensions.mockImplementation(jest.requireActual("react-native").useWindowDimensions);
+  }
 });
 
 it("resets a different document to page one and removes late native renders", async () => {

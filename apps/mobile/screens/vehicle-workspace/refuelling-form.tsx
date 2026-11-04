@@ -3,11 +3,11 @@ import { FormGroup } from "@/components/ui/form-group";
 import { ChoiceField } from "@/components/ui/choice-field";
 import { FormActions, FormTitle } from "@/components/layout/native-form";
 
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text } from "react-native";
 
 import type { RefuellingService } from "@/application/refuelling/refuelling-service";
 import { Screen } from "@/components/layout/screen";
-import { FormSection } from "@/components/ui/form-section";
+import { FieldPair, FormSection } from "@/components/ui/form-section";
 import { TextField } from "@/components/ui/text-field";
 
 import type { Refuelling } from "@/domain/refuelling/refuelling";
@@ -109,8 +109,8 @@ export function RefuellingForm({
           ]}
           value={priceInputMode}
         />
-        <View className="flex-row gap-compact">
-          <View className="flex-[2]">
+        <FieldPair
+          first={
             <TextField
               error={errors.price}
               helperText={t("refuelling.priceOptional")}
@@ -123,8 +123,8 @@ export function RefuellingForm({
               onChangeText={changePrice}
               value={price}
             />
-          </View>
-          <View className="flex-1">
+          }
+          second={
             <TextField
               autoCapitalize="characters"
               error={errors.currency}
@@ -133,8 +133,8 @@ export function RefuellingForm({
               onChangeText={changeCurrency}
               value={currency}
             />
-          </View>
-        </View>
+          }
+        />
       </FormGroup>
       {formError ? (
         <Text accessibilityLiveRegion="polite" className="text-body text-danger">

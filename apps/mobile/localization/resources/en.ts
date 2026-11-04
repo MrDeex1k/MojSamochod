@@ -102,6 +102,7 @@ export const en = {
     validUntil: "{{vehicle}} - valid until {{date}}.",
   },
   common: {
+    save: "Save",
     appName: "My Car",
     cancel: "Cancel",
     moreActions: "More actions",
@@ -333,7 +334,7 @@ export const en = {
     keepEditing: "Keep editing",
     odometerHelper: "Optional. A higher reading will update the vehicle's current mileage.",
     odometerLabel: "Current odometer",
-    priceMode: { perVolumeUnit: "Price per volume unit", total: "Total amount" },
+    priceMode: { perVolumeUnit: "Unit price", total: "Total amount" },
     priceModeLabel: "Price entry mode",
     priceOptional: "Optional. Leave empty if the price is unknown.",
     quantityLabel: "Fuel quantity",

@@ -36,7 +36,7 @@ export function VehicleWorkspaceScreen({ mode }: { mode: WorkspaceMode }) {
 function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
   const router = useRouter();
   const services = useApplicationServices();
-  const { source, revision: attempt, refresh } = useWorkspaceSource();
+  const { source, revision: attempt, refresh, selection, select } = useWorkspaceSource();
   const navigate = (action: () => void) => action();
   const finish = useFinishNativeForm();
   const setAttempt = () => refresh();
@@ -112,6 +112,7 @@ function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
       loadingMore={loadingMore}
       mode={mode}
       revision={attempt}
+      selectedId={selection[section]}
       onErased={() => {
         finish?.();
         router.replace("/");
@@ -177,13 +178,18 @@ function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
             setAttempt();
           });
       }}
-      onSelectEntry={(entry) => navigate(() => setMode({ entry, kind: "detail" }))}
-      onSelectRefuelling={(refuelling) =>
-        navigate(() => setMode({ kind: "refuelling-detail", refuelling }))
-      }
-      onSelectDocument={(document) =>
-        navigate(() => setMode({ document, kind: "document-detail" }))
-      }
+      onSelectEntry={(entry) => {
+        select("history", entry.id);
+        navigate(() => setMode({ entry, kind: "detail" }));
+      }}
+      onSelectRefuelling={(refuelling) => {
+        select("fuel", refuelling.id);
+        navigate(() => setMode({ kind: "refuelling-detail", refuelling }));
+      }}
+      onSelectDocument={(document) => {
+        select("documents", document.id);
+        navigate(() => setMode({ document, kind: "document-detail" }));
+      }}
       services={services}
     />
   );
@@ -198,11 +204,9 @@ export function VehicleWorkspaceView(props: VehicleWorkspaceViewProps) {
     return renderContent(props, false);
   const isDetail = ["detail", "document-detail", "refuelling-detail"].includes(props.mode.kind);
   return (
-    <AdaptiveWorkspace
-      phone={renderContent(props, false)}
-      primaryPane={renderContent(props, true, isDetail)}
-      detailPane={isDetail ? renderContent(props, true) : undefined}
-    />
+    <AdaptiveWorkspace list={isDetail ? renderContent(props, true, true) : undefined}>
+      {renderContent(props, false)}
+    </AdaptiveWorkspace>
   );
 }
 
@@ -242,7 +246,7 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
           onBack={props.onCancelFlow}
           onConfigureFuel={props.onConfigureFuel}
           onSelect={props.onSelectRefuelling}
-          selectedId={mode.kind === "refuelling-detail" ? mode.refuelling.id : undefined}
+          selectedId={mode.kind === "refuelling-detail" ? mode.refuelling.id : props.selectedId}
           vehicle={vehicle}
         />
       );
@@ -255,7 +259,7 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
           onAdd={props.onAddDocument}
           onBack={props.onCancelFlow}
           onSelect={props.onSelectDocument}
-          selectedId={mode.kind === "document-detail" ? mode.document.id : undefined}
+          selectedId={mode.kind === "document-detail" ? mode.document.id : props.selectedId}
         />
       );
     case "document-form":
@@ -367,7 +371,7 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
   return (
     <PhoneWorkspace
       {...props}
-      selectedId={props.mode.kind === "detail" ? props.mode.entry.id : undefined}
+      selectedId={props.mode.kind === "detail" ? props.mode.entry.id : props.selectedId}
     />
   );
 }
