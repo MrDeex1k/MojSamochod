@@ -62,7 +62,7 @@ describe("RefuellingForm", () => {
     await renderForm(refuellings, jest.fn());
 
     await userEvent.type(screen.getByLabelText("Fuel quantity (l)"), "45");
-    await userEvent.press(screen.getByRole("button", { name: "Price per volume unit" }));
+    await userEvent.press(screen.getByRole("button", { name: "Unit price" }));
     await userEvent.type(screen.getByLabelText("Unit price (/l)"), "6.6667");
     await userEvent.press(screen.getByRole("button", { name: "Save refuelling" }));
 

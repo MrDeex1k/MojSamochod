@@ -1,57 +1,14 @@
-import { resolveWindowLayout } from "./window-layout";
-import { render, screen, userEvent } from "@testing-library/react-native";
-import { useState } from "react";
-import * as Native from "react-native";
-import { Text, TextInput } from "react-native";
+import { fitsWorkspaceList } from "./window-layout";
 
-import { AdaptiveWorkspace, TabletWorkspace } from "./adaptive-workspace";
-
-function Draft() {
-  const [text, setText] = useState("");
-  return <TextInput accessibilityLabel="Draft" value={text} onChangeText={setText} />;
-}
-
-describe("resolveWindowLayout", () => {
-  it.each([
-    [393, 852, "phone-portrait"],
-    [852, 393, "phone-landscape"],
-    [768, 1024, "tablet-portrait"],
-    [1024, 768, "tablet-landscape"],
-    [900, 600, "tablet-landscape"],
-    [900, 599, "tablet-landscape"],
-  ] as const)("resolves %d x %d as %s", (width, height, expected) => {
-    expect(resolveWindowLayout(width, height)).toBe(expected);
-  });
-});
-
-describe("AdaptiveWorkspace", () => {
-  it.each([
-    [393, 852],
-    [820, 1180],
-  ])("preserves a draft across rotation at %d × %d", async (width, height) => {
-    const dimensions = jest.spyOn(Native, "useWindowDimensions");
-    dimensions.mockReturnValue({ width, height, scale: 1, fontScale: 1 });
-    const workspace = <AdaptiveWorkspace phone={<Draft />} primaryPane={<Draft />} />;
-    const view = await render(workspace);
-    await userEvent.type(screen.getByLabelText("Draft"), "Oil service");
-    dimensions.mockReturnValue({ width: height, height: width, scale: 1, fontScale: 1 });
-    await view.rerender(<AdaptiveWorkspace phone={<Draft />} primaryPane={<Draft />} />);
-    expect(screen.getByLabelText("Draft")).toHaveDisplayValue("Oil service");
-  });
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it("applies native structural styles to the tablet workspace", async () => {
-    const { getByTestId, getByText } = await render(
-      <TabletWorkspace primaryPane={<Text>History</Text>} />,
-    );
-
-    expect(getByText("History")).toBeTruthy();
-    expect(getByTestId("tablet-workspace")).toHaveStyle({
-      backgroundColor: "#010101",
-      flex: 1,
-      padding: 16,
-    });
-  });
-});
+it.each([
+  [687, 800, 1, false],
+  [688, 800, 1, true],
+  [920, 393, 1, false],
+  [1000, 800, 1.6, false],
+  [1100, 800, 1.6, true],
+] as const)(
+  "fits a companion list at %d × %d with text scale %d: %s",
+  (width, height, scale, expected) => {
+    expect(fitsWorkspaceList(width, height, scale)).toBe(expected);
+  },
+);

@@ -104,6 +104,7 @@ export const pl = {
     validUntil: "{{vehicle}} - ważne do {{date}}.",
   },
   common: {
+    save: "Zapisz",
     appName: "Moje Auto",
     cancel: "Anuluj",
     moreActions: "Więcej działań",
@@ -338,7 +339,7 @@ export const pl = {
     keepEditing: "Kontynuuj edycję",
     odometerHelper: "Pole opcjonalne. Wyższy odczyt zaktualizuje obecny przebieg pojazdu.",
     odometerLabel: "Bieżący licznik",
-    priceMode: { perVolumeUnit: "Cena za jednostkę objętości", total: "Kwota całkowita" },
+    priceMode: { perVolumeUnit: "Cena jednostkowa", total: "Kwota całkowita" },
     priceModeLabel: "Sposób podania ceny",
     priceOptional: "Pole opcjonalne. Pozostaw puste, jeśli cena jest nieznana.",
     quantityLabel: "Ilość paliwa",

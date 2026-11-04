@@ -37,6 +37,7 @@ export type VehicleWorkspaceViewProps = WorkspaceData &
   Readonly<{
     mode: WorkspaceMode;
     revision?: number;
+    selectedId?: string;
     onLoadMore?: () => void;
     loadMoreError?: boolean;
     loadingMore?: boolean;

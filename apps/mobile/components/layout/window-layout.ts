@@ -1,18 +1,6 @@
-const TABLET_MIN_WIDTH = 600;
+const PANE_MIN_WIDTH = 320;
+const WORKSPACE_GUTTERS = 48;
 
-export type WindowLayout =
-  | "phone-landscape"
-  | "phone-portrait"
-  | "tablet-landscape"
-  | "tablet-portrait";
-
-export function resolveWindowLayout(width: number, height: number): WindowLayout {
-  const isTablet = width >= TABLET_MIN_WIDTH && height >= 500;
-  const isLandscape = width >= height;
-
-  if (isTablet) {
-    return isLandscape ? "tablet-landscape" : "tablet-portrait";
-  }
-
-  return isLandscape ? "phone-landscape" : "phone-portrait";
+export function fitsWorkspaceList(width: number, height: number, fontScale: number) {
+  return height >= 500 && width >= WORKSPACE_GUTTERS + 2 * PANE_MIN_WIDTH * Math.max(1, fontScale);
 }

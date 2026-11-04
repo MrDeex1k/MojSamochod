@@ -1,81 +1,29 @@
-import { resolveWindowLayout } from "./window-layout";
-import { nativeTheme } from "@/styles/native-theme";
 import { useState, type ReactNode } from "react";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { ScreenFrame } from "./screen-frame";
+import { fitsWorkspaceList } from "./window-layout";
 
-type AdaptiveWorkspaceProps = {
-  detailPane?: ReactNode;
-  phone: ReactNode;
-  primaryPane: ReactNode;
-};
-
-type TabletWorkspaceProps = Omit<AdaptiveWorkspaceProps, "phone">;
-
-export function AdaptiveWorkspace({ detailPane, phone, primaryPane }: AdaptiveWorkspaceProps) {
-  const { height, width } = useWindowDimensions();
+export function AdaptiveWorkspace({ children, list }: { children: ReactNode; list?: ReactNode }) {
+  const { height, width, fontScale } = useWindowDimensions();
   const [availableWidth, setAvailableWidth] = useState<number | null>(null);
   const contentWidth = Math.min(width, availableWidth ?? width);
-  const layout = resolveWindowLayout(contentWidth, height);
+  const split = Boolean(list) && fitsWorkspaceList(contentWidth, height, fontScale);
 
-  const isPhone = layout.startsWith("phone");
   return (
     <ScreenFrame>
       <View
-        style={{ flex: 1 }}
+        style={[styles.workspace, split && styles.split]}
         onLayout={(event) => setAvailableWidth(event.nativeEvent.layout.width)}
       >
-        {isPhone ? (
-          phone
-        ) : (
-          <TabletWorkspace
-            detailPane={detailPane}
-            primaryPane={primaryPane}
-            availableWidth={contentWidth}
-          />
-        )}
+        {split ? <View style={styles.pane}>{list}</View> : null}
+        <View style={styles.pane}>{children}</View>
       </View>
     </ScreenFrame>
   );
 }
 
-export function TabletWorkspace({
-  detailPane,
-  primaryPane,
-  availableWidth,
-}: TabletWorkspaceProps & { availableWidth?: number }) {
-  const { width, fontScale } = useWindowDimensions();
-  const compactDetail =
-    Boolean(detailPane) && (availableWidth ?? width) < Math.max(880, 720 * fontScale);
-  return (
-    <View style={styles.safeArea} testID="tablet-workspace">
-      <View style={styles.workspace}>
-        <View
-          style={[styles.contentPane, compactDetail && { display: "none" }]}
-          accessibilityElementsHidden={compactDetail}
-          importantForAccessibility={compactDetail ? "no-hide-descendants" : "auto"}
-        >
-          {primaryPane}
-        </View>
-        {detailPane ? <View style={styles.contentPane}>{detailPane}</View> : null}
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: nativeTheme.canvas,
-    padding: 16,
-  },
-  workspace: {
-    flex: 1,
-    flexDirection: "row",
-    gap: 16,
-  },
-  contentPane: {
-    flex: 1,
-    minWidth: 0,
-  },
+  workspace: { flex: 1, flexDirection: "row" },
+  split: { paddingHorizontal: 16, gap: 16 },
+  pane: { flex: 1, minWidth: 0 },
 });
