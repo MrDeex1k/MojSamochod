@@ -30,3 +30,7 @@ it("keeps the native control palette aligned with semantic CSS colors", () => {
     expect(css).toContain(`${palette}: ${value};`);
   }
 });
+
+it("uses a near-black application canvas for OLED screens", () => {
+  expect(nativeTheme.canvas).toBe("#010101");
+});

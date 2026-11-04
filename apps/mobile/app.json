@@ -36,9 +36,10 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#07383D",
-        "foregroundImage": "./assets/app-icons/android-foreground.png"
+        "foregroundImage": "./assets/app-icons/android-foreground.png",
+        "monochromeImage": "./assets/app-icons/android-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": true
     },
     "web": {
       "output": "static",
@@ -71,9 +72,9 @@
           "image": "./assets/app-icons/android-foreground.png",
           "imageWidth": 288,
           "resizeMode": "contain",
-          "backgroundColor": "#121212",
+          "backgroundColor": "#010101",
           "dark": {
-            "backgroundColor": "#121212"
+            "backgroundColor": "#010101"
           }
         }
       ],

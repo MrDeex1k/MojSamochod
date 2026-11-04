@@ -49,7 +49,7 @@ describe("AdaptiveWorkspace", () => {
 
     expect(getByText("History")).toBeTruthy();
     expect(getByTestId("tablet-workspace")).toHaveStyle({
-      backgroundColor: "#121212",
+      backgroundColor: "#010101",
       flex: 1,
       padding: 16,
     });

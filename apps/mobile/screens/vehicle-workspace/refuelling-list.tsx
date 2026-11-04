@@ -1,6 +1,7 @@
+import { InteractiveRow as Pressable } from "@/components/layout/interactive-row";
 import { nativeTheme } from "@/styles/native-theme";
 import { ListScreen } from "@/components/layout/list-screen";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 
 import type { RefuellingHistory } from "@/application/refuelling/refuelling-service";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,11 @@ export function RefuellingList({
   return (
     <ListScreen
       scrollKey="fuel"
+      floatingAction={
+        configuredVehicle && history.refuellings.length
+          ? { label: t("refuelling.add"), onPress: onAdd }
+          : undefined
+      }
       onEndReached={loadMoreError ? undefined : onLoadMore}
       onEndReachedThreshold={0.5}
       ListFooterComponent={
@@ -74,7 +80,9 @@ export function RefuellingList({
           {configuredVehicle ? (
             <>
               <ConsumptionSummary history={history} vehicle={configuredVehicle} />
-              <Button label={`+ ${t("refuelling.add")}`} onPress={onAdd} />
+              {Platform.OS !== "android" || !history.refuellings.length ? (
+                <Button label={`+ ${t("refuelling.add")}`} onPress={onAdd} />
+              ) : null}
             </>
           ) : (
             <>
@@ -123,7 +131,7 @@ function ConsumptionSummary({
   return (
     <View
       className="gap-compact rounded-control bg-surface-muted p-content"
-      style={styles.consumptionSummary}
+      style={[styles.consumptionSummary, Platform.OS === "android" && styles.materialSummary]}
       testID="consumption-summary"
     >
       <Text className="text-label font-semibold uppercase tracking-widest text-accent">
@@ -157,6 +165,14 @@ function ConsumptionSummary({
 }
 
 const styles = StyleSheet.create({
+  materialSummary: {
+    marginHorizontal: 0,
+    backgroundColor: nativeTheme.canvas,
+    borderBottomWidth: 1,
+    borderColor: nativeTheme.divider,
+    paddingHorizontal: 0,
+    borderRadius: 0,
+  },
   consumptionSummary: {
     marginHorizontal: -16,
   },

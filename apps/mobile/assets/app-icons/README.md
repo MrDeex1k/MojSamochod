@@ -11,10 +11,10 @@ cream and a small orange accent. No lettering or vehicle manufacturer logo is us
 - `icon-light.png` and `icon-dark.png`: flat, full-square 1024px artwork. The dark
   image is the Expo fallback icon.
 - `android-foreground.png`: transparent adaptive foreground with additional safe
-  space. Android uses only the dark teal background (`#07383D`), with no separate
-  light or monochrome asset. Launcher-level customization remains outside the app's
-  control.
-  The native splash screen also reuses this transparent car artwork on `#121212`.
+  space. The standard adaptive icon uses the dark teal background (`#07383D`).
+- `android-monochrome.png`: transparent single-color silhouette generated from the same
+  vector paths. Android launchers use it for themed icons and choose the final tint.
+  The native splash screen also reuses this transparent car artwork on `#010101`.
   Its 288pt image canvas includes the safe space, making the visible car about
   150pt wide and centered without a square background.
 - `previews/`: native Icon Composer renderer output for design generations 26 and

@@ -15,7 +15,7 @@ export function ScreenFrame({
   if (contained && !standalone) return <View className="flex-1 bg-canvas">{children}</View>;
   return (
     <SafeAreaView
-      edges={native ? ["left", "right"] : undefined}
+      edges={native && !standalone ? ["left", "right"] : undefined}
       style={{ flex: 1, backgroundColor: nativeTheme.canvas }}
     >
       <ScreenFrameContext.Provider value>{children}</ScreenFrameContext.Provider>

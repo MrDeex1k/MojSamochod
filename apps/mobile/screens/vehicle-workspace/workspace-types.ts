@@ -52,6 +52,7 @@ export type VehicleWorkspaceViewProps = WorkspaceData &
     onEditDocument: (document: VehicleDocument) => void;
     onEditEntry: (entry: HistoryEntry) => void;
     onEditRefuelling: (refuelling: Refuelling) => void;
+    onEditReminder: (kind: Reminder["kind"]) => void;
     onEditVehicle: () => void;
     onFuel: () => void;
     onReminders: () => void;

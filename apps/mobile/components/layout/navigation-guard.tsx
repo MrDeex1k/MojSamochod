@@ -1,3 +1,4 @@
+import { Alert } from "@/components/ui/app-alert";
 import {
   createContext,
   type PropsWithChildren,
@@ -7,7 +8,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Alert, BackHandler } from "react-native";
+import { BackHandler } from "react-native";
 
 import { useAppTranslation } from "@/localization/use-app-translation";
 
@@ -101,16 +102,14 @@ export function useFormExitGuard(values: unknown, busy: boolean, onCancel: Actio
     );
   };
   const cancel = () => (navigation ? navigation.navigate(onCancel) : guard(onCancel));
+  useEffect(() => navigation?.register(guard, busy || serialized !== initial));
   useEffect(() => {
-    const unregister = navigation?.register(guard, busy || serialized !== initial);
+    if (navigation) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       cancel();
       return true;
     });
-    return () => {
-      unregister?.();
-      subscription.remove();
-    };
+    return () => subscription.remove();
   });
   return cancel;
 }

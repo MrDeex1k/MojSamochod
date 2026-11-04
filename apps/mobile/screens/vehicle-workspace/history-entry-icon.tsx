@@ -6,10 +6,10 @@ import type { HistoryEntry } from "@/domain/history/history-entry";
 const symbols = {
   replacement: { color: nativeTheme.accent, path: "M4 8h15m-4-4 4 4-4 4M20 16H5m4-4-4 4 4 4" },
   repair: {
-    color: "#a6bcea",
+    color: nativeTheme.accent,
     path: "M14 6a5 5 0 0 0-6 6L3 17a2.8 2.8 0 0 0 4 4l5-5a5 5 0 0 0 6-6l-3 3-4-4 3-3Z",
   },
-  inspection: { color: "#d4bc83", path: "M9 4H6v17h13V4h-3M9 3h7v4H9ZM9 14l2 2 5-5" },
+  inspection: { color: nativeTheme.accent, path: "M9 4H6v17h13V4h-3M9 3h7v4H9ZM9 14l2 2 5-5" },
 } satisfies Record<HistoryEntry["type"], { color: string; path: string }>;
 
 function iconSource(path: string, color: string) {
@@ -27,7 +27,7 @@ export function HistoryEntryIcon({ type }: Readonly<{ type: HistoryEntry["type"]
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: `${symbol.color}18`,
+        backgroundColor: `${symbol.color.slice(0, 7)}18`,
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,

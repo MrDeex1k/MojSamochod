@@ -20,9 +20,22 @@ export default function VehicleLayout() {
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
+            name="select-type"
+            options={
+              Platform.OS === "android"
+                ? {
+                    presentation: "transparentModal",
+                    headerShown: false,
+                    animation: "fade",
+                    contentStyle: { backgroundColor: "transparent" },
+                  }
+                : undefined
+            }
+          />
+          <Stack.Screen
             name="editor"
             options={{
-              presentation: Platform.OS === "ios" ? "formSheet" : "modal",
+              presentation: Platform.OS === "ios" ? "formSheet" : "card",
               sheetAllowedDetents: [1],
               sheetGrabberVisible: true,
             }}
@@ -30,7 +43,7 @@ export default function VehicleLayout() {
           <Stack.Screen
             name="reminder-editor"
             options={{
-              presentation: Platform.OS === "ios" ? "formSheet" : "modal",
+              presentation: Platform.OS === "ios" ? "formSheet" : "card",
               sheetAllowedDetents: [1],
               sheetGrabberVisible: true,
             }}

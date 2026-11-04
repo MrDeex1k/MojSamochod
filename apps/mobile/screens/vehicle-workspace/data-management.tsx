@@ -1,5 +1,6 @@
+import { Alert } from "@/components/ui/app-alert";
 import { useState } from "react";
-import { Alert, Text } from "react-native";
+import { Text } from "react-native";
 import type { EraseAllData } from "@/application/storage/erase-all-data";
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
 import { Screen } from "@/components/layout/screen";

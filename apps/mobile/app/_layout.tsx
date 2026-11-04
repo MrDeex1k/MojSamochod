@@ -1,3 +1,6 @@
+import { nativeTheme } from "@/styles/native-theme";
+import { AlertProvider } from "@/components/providers/alert-provider";
+import { PlatformThemeProvider } from "@/components/providers/platform-theme-provider";
 import { ThemeProvider, DarkTheme } from "expo-router/react-navigation";
 import Stack from "expo-router/stack";
 import { StatusBar } from "expo-status-bar";
@@ -15,15 +18,31 @@ configureReminderNotificationPresentation();
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <DatabaseProvider>
-        <ApplicationProvider>
-          <ThemeProvider value={DarkTheme}>
-            <Stack screenOptions={{ headerShown: false }} />
-          </ThemeProvider>
-        </ApplicationProvider>
-      </DatabaseProvider>
-      <StatusBar style="light" />
-    </SafeAreaProvider>
+    <PlatformThemeProvider>
+      <SafeAreaProvider>
+        <DatabaseProvider>
+          <ApplicationProvider>
+            <AlertProvider>
+              <ThemeProvider
+                value={{
+                  ...DarkTheme,
+                  colors: {
+                    ...DarkTheme.colors,
+                    background: nativeTheme.canvas,
+                    card: nativeTheme.canvas,
+                    primary: nativeTheme.accent,
+                    text: nativeTheme.primary,
+                    border: nativeTheme.divider,
+                  },
+                }}
+              >
+                <Stack screenOptions={{ headerShown: false }} />
+              </ThemeProvider>
+            </AlertProvider>
+          </ApplicationProvider>
+        </DatabaseProvider>
+        <StatusBar style="light" />
+      </SafeAreaProvider>
+    </PlatformThemeProvider>
   );
 }

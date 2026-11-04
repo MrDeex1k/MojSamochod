@@ -25,26 +25,33 @@ adapter discovery and Expo Constants configuration. `--node` does not change the
 Keep Socket Firewall around commands that may download build dependencies.
 
 ```sh
-MOJE_AUTO_NATIVE_QA=1 CI=1 nub exec --node sfw nub exec --node expo prebuild --no-install --skip-dependency-update react,react-native
+MOJE_AUTO_NATIVE_QA=1 CI=1 nub exec --node sfw nub exec --node expo prebuild --platform android --no-install --skip-dependency-update react,react-native
 ```
 
 Review the diff after prebuild. It can regenerate ignored native projects and rewrite the mobile
 `ios`/`android` package scripts; preserve the repository's existing scripts unless changing them is
 intentional. Do not regenerate native directories while a build is running.
 
-For Apple, run in the generated `ios` directory:
+For Apple, use SwiftPM preparation from `apps/mobile`:
 
 ```sh
-MOJE_AUTO_NATIVE_QA=1 nub exec --node sfw pod install
+MOJE_AUTO_NATIVE_QA=1 nub exec sfw nub run ios:prepare
 ```
 
-Then, from `apps/mobile`:
+This runs the native generators and converts the project to `project.xcproj`
+using Xcode 27.2 or later. Do not install Pods or run raw Expo prebuild over the
+JSON project. See [format compatibility](xcode-json-project-format.md).
+
+For a direct JSON-project simulator build, also from `apps/mobile`:
 
 ```sh
-MOJE_AUTO_NATIVE_QA=1 NODE_ENV=production nub exec --node sfw nub exec --node expo run:ios --configuration Release --no-install --no-bundler --device generic --output /tmp/moje-auto-native-qa-ios
+MOJE_AUTO_NATIVE_QA=1 NODE_ENV=production nub exec sfw xcodebuild -project ios/MojeAuto.xcodeproj -scheme MojeAuto -configuration Release -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/moje-auto-native-qa-ios build
 ```
 
-This produces a simulator application, not an App Store archive. For Android, run in the generated
+The app is `/tmp/moje-auto-native-qa-ios/Build/Products/Release-iphonesimulator/MojeAuto.app`.
+For Expo CLI builds, use `nub run ios` so the compatibility wrapper restores JSON
+after legacy signing/build setup. This produces a simulator application, not an
+App Store archive. For Android, run in the generated
 `android` directory with `ANDROID_HOME` pointing to the installed SDK:
 
 ```sh

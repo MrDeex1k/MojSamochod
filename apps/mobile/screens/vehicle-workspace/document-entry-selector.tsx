@@ -1,3 +1,4 @@
+import { InteractiveRow as Pressable } from "@/components/layout/interactive-row";
 import type {
   HistoryEntryRepository,
   HistoryCursor,
@@ -5,7 +6,7 @@ import type {
 import type { VehicleId } from "@/domain/shared/identifiers";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import { useEffect, useRef, useState } from "react";
-import { FlatList, Modal, Pressable, Text, View } from "react-native";
+import { FlatList, Modal, Text, View } from "react-native";
 import type { HistoryEntryReference } from "@/application/repositories/history-entry-repository";
 import { ScreenFrame } from "@/components/layout/screen-frame";
 import { SafeAreaProvider } from "react-native-safe-area-context";

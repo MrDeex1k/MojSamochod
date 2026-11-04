@@ -1,3 +1,4 @@
+import { FloatingAction, type FloatingActionProps } from "@/components/ui/floating-action";
 import { useScrollPosition } from "./scroll-positions";
 import { FlatList, type FlatListProps, Platform, View } from "react-native";
 import { ScreenFrame } from "./screen-frame";
@@ -9,6 +10,7 @@ type ListScreenProps<T> = Omit<
 > & {
   embedded?: boolean;
   scrollKey?: string;
+  floatingAction?: FloatingActionProps;
   ListHeaderComponent?: FlatListProps<T>["ListHeaderComponent"] | null;
   ListFooterComponent?: FlatListProps<T>["ListFooterComponent"] | null;
   ListEmptyComponent?: FlatListProps<T>["ListEmptyComponent"] | null;
@@ -17,6 +19,7 @@ type ListScreenProps<T> = Omit<
 export function ListScreen<T>({
   embedded = false,
   scrollKey,
+  floatingAction,
   ListHeaderComponent,
   ListEmptyComponent,
   ListFooterComponent: Footer,
@@ -36,7 +39,7 @@ export function ListScreen<T>({
           contentContainerStyle={{
             flexGrow: 1,
             paddingTop: 16,
-            paddingBottom: 24,
+            paddingBottom: floatingAction && Platform.OS === "android" ? 112 : 24,
             paddingLeft: embedded ? 20 : 16,
             paddingRight: embedded ? 20 : 16,
           }}
@@ -55,6 +58,14 @@ export function ListScreen<T>({
             </View>
           }
         />
+        {floatingAction && Platform.OS === "android" ? (
+          <View
+            pointerEvents="box-none"
+            style={{ position: "absolute", right: 16, bottom: 16, maxWidth: "90%" }}
+          >
+            <FloatingAction {...floatingAction} />
+          </View>
+        ) : null}
       </View>
     </ScreenFrame>
   );
