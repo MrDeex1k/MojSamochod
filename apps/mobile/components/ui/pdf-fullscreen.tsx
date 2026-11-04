@@ -89,6 +89,7 @@ function Reader({
   return (
     <>
       <View
+        testID="pdf-viewport"
         style={styles.viewport}
         onLayout={({ nativeEvent: { layout } }) =>
           setViewport({ width: layout.width, height: layout.height })
@@ -103,12 +104,14 @@ function Reader({
           </View>
         ) : imageUri ? (
           <ScrollView
+            testID="pdf-scroll-y"
             {...vertical}
             nestedScrollEnabled
             style={styles.viewport}
             contentContainerStyle={{ minHeight: viewport.height, justifyContent: "center" }}
           >
             <ScrollView
+              testID="pdf-scroll-x"
               {...horizontal}
               horizontal
               nestedScrollEnabled
@@ -211,6 +214,11 @@ function useReadingPosition(axis: "x" | "y", viewport: number, pageSize: number)
   return {
     ref,
     onScroll,
+    scrollsToTop: axis === "y",
+    onScrollToTop: () => {
+      dragging.current = false;
+      centre.current = 0;
+    },
     scrollEventThrottle: 16,
     onScrollBeginDrag: () => {
       dragging.current = true;

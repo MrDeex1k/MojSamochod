@@ -15,7 +15,7 @@ Aktualny stos to Expo 58.0.22 i React Native 0.88.1. Akceptację integracji naty
 ## Ostatnie zmiany
 
 - `69e285a` wprowadza na Androidzie natywne kontrolki Material, ciemne tło `#010101`, formularze z walidacją i potwierdzeniem odrzucenia zmian. Telefon korzysta z zakładek, a szeroki układ z bocznej nawigacji oraz listy i szczegółów obok siebie. Na Pixel Tablet sprawdzono pion, poziom i zachowanie szkicu po obrocie. [Opis wdrożenia](android-material-expressive.md).
-- Poprawiono awarię na Pixel Tablet. Po zmianie rozmiaru tekstu systemowego ze 100% na 160% wybranie Ustawień zamykało aplikację. Nawigacja korzysta teraz z routera bieżącego drzewa komponentów przez `useRouter()`. Na poprawionym APK powtórzono zmianę skali, wejście w Ustawienia, edycję pojazdu i przejście do sekcji danych. [Reprodukcja i wynik powtórki](android-material-final-qa-2026-11-03.md#confirmed-issue-and-correction).
+- Poprawiono awarię na Pixel Tablet. Po zmianie rozmiaru tekstu systemowego ze 100% na 160% aplikacja zamykała się po wybraniu Ustawień. Nawigacja korzysta teraz z routera bieżącego drzewa komponentów przez `useRouter()`. Na poprawionym APK powtórzono zmianę skali, wejście w Ustawienia, edycję pojazdu i przejście do sekcji danych. [Reprodukcja i wynik powtórki](android-material-final-qa-2026-11-03.md#confirmed-issue-and-correction).
 - `f620569` stabilizuje typowanie stanu przycisku Androida i test akcji dialogu. Regresja startu iOS sprawdza teraz wygenerowane przez lokalny prebuild pliki `Info.plist` i `SceneDelegate.swift`.
 
 ## Ostatnia udokumentowana weryfikacja

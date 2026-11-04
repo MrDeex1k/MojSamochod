@@ -91,6 +91,45 @@ it("keeps the same open page and zoom when a fold changes the workspace layout",
   }
 });
 
+it("restores both scroll offsets after resizing and keeps the top after a status bar tap", async () => {
+  await render(<PdfPreview uri="file:///document.pdf" name="Invoice" />);
+  await screen.findByText("Page 1 of 2");
+  await userEvent.press(screen.getByRole("button", { name: "View full screen" }));
+  const viewport = screen.getByTestId("pdf-viewport");
+  const layout = (width: number, height: number) =>
+    fireEvent(viewport, "layout", { nativeEvent: { layout: { x: 0, y: 0, width, height } } });
+  await layout(374, 524);
+  for (let i = 0; i < 2; i++)
+    await userEvent.press(screen.getByRole("button", { name: "Zoom in" }));
+
+  const horizontal = screen.getByTestId("pdf-scroll-x");
+  const vertical = screen.getByTestId("pdf-scroll-y");
+  const nativeEvent = {
+    contentSize: { width: 700, height: 1000 },
+    layoutMeasurement: { width: 374, height: 524 },
+    contentOffset: { x: 163, y: 438 },
+  };
+  for (const scroll of [horizontal, vertical]) {
+    await fireEvent(scroll, "scrollBeginDrag", { nativeEvent });
+    await fireEvent.scroll(scroll, { nativeEvent });
+    await fireEvent(scroll, "scrollEndDrag", { nativeEvent });
+  }
+  const scrollTo = jest.mocked(Native.ScrollView.prototype.scrollTo);
+  await layout(304, 424);
+  expect(scrollTo).toHaveBeenCalledWith({ x: 128, animated: false });
+  expect(scrollTo).toHaveBeenCalledWith({ y: 348, animated: false });
+
+  expect(horizontal.props.scrollsToTop).toBe(false);
+  expect(vertical.props.scrollsToTop).toBe(true);
+  await fireEvent(vertical, "scrollToTop", {
+    nativeEvent: { ...nativeEvent, contentOffset: { x: 0, y: 0 } },
+  });
+  scrollTo.mockClear();
+  await layout(374, 524);
+  expect(scrollTo).toHaveBeenCalledWith({ x: 163, animated: false });
+  expect(scrollTo).toHaveBeenCalledWith({ y: 0, animated: false });
+});
+
 it("resets a different document to page one and removes late native renders", async () => {
   let finish!: (result: { uri: string; pageCount: number; text: string }) => void;
   renderPage.mockImplementationOnce(
