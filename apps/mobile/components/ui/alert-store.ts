@@ -19,6 +19,8 @@ export const alertStore = {
     emit();
   },
   select(button?: AlertButton) {
+    if (!current) return;
+    if (button && !current.buttons.includes(button)) return;
     current = null;
     emit();
     button?.onPress?.();

@@ -17,6 +17,7 @@ export function TextField({
   value,
   defaultValue = "",
   label,
+  placeholder,
   error,
   helperText,
   editable = true,
@@ -71,6 +72,11 @@ export function TextField({
           <OutlinedTextField.Label>
             <Text>{label}</Text>
           </OutlinedTextField.Label>
+          {placeholder ? (
+            <OutlinedTextField.Placeholder>
+              <Text>{placeholder}</Text>
+            </OutlinedTextField.Placeholder>
+          ) : null}
           {error || helperText ? (
             <OutlinedTextField.SupportingText>
               <Text>{error ?? helperText}</Text>
