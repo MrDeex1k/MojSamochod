@@ -1,7 +1,7 @@
 import { DataManagement } from "./data-management";
 import { workspaceSection } from "./workspace-data-source";
 import { PhoneWorkspace } from "./workspace-history";
-import { Redirect, router } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { useFinishNativeForm } from "@/components/layout/native-form-context";
 import { useWorkspaceSource } from "./workspace-provider";
 import { navigateToMode } from "./workspace-routing";
@@ -34,12 +34,13 @@ export function VehicleWorkspaceScreen({ mode }: { mode: WorkspaceMode }) {
 }
 
 function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
+  const router = useRouter();
   const services = useApplicationServices();
   const { source, revision: attempt, refresh } = useWorkspaceSource();
   const navigate = (action: () => void) => action();
   const finish = useFinishNativeForm();
   const setAttempt = () => refresh();
-  const setMode = (next: WorkspaceMode) => navigateToMode(next);
+  const setMode = (next: WorkspaceMode) => navigateToMode(next, router);
   const { t } = useAppTranslation();
   const [state, setState] = useState<
     | Readonly<{ data: WorkspaceData; status: "ready" }>
@@ -149,6 +150,9 @@ function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
       onEditRefuelling={(refuelling) =>
         navigate(() => setMode({ kind: "refuelling-form", refuelling }))
       }
+      onEditReminder={(kind) =>
+        router.push({ pathname: "/vehicle/reminder-editor", params: { kind } })
+      }
       onEditVehicle={() => {
         if (mode.kind !== "vehicle-form")
           navigate(() => setMode({ kind: "vehicle-form", returnTo: "history" }));
@@ -219,9 +223,7 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
       return (
         <RemindersSection
           key={props.revision}
-          onEditReminder={(kind) =>
-            router.push({ pathname: "/vehicle/reminder-editor", params: { kind } })
-          }
+          onEditReminder={props.onEditReminder}
           {...services}
           embedded={embedded}
           vehicle={vehicle}

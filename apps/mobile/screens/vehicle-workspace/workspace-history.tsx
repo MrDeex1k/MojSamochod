@@ -2,7 +2,7 @@ import { InteractiveRow as Pressable } from "@/components/layout/interactive-row
 import { UpcomingReminder } from "./upcoming-reminder";
 import { nativeTheme } from "@/styles/native-theme";
 import type { ReactNode } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Text, View } from "react-native";
 import { ListScreen } from "@/components/layout/list-screen";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
@@ -61,9 +61,10 @@ export function PhoneWorkspace(
           <Button
             label={t("navigation.documents")}
             onPress={props.onDocuments}
-            variant="secondary"
+            variant={Platform.OS === "android" ? "text" : "secondary"}
+            compact={Platform.OS === "android"}
           />
-          {props.entries.length > 0 ? (
+          {props.entries.length > 0 && Platform.OS !== "android" ? (
             <Button label={`+ ${t("workspace.addEntry")}`} onPress={props.onAddEntry} />
           ) : null}
         </View>
@@ -161,7 +162,7 @@ export function HistoryCard({
       onSelectEntry={onSelectEntry}
       vehicle={vehicle}
       header={
-        entries.length > 0 ? (
+        entries.length > 0 && Platform.OS !== "android" ? (
           <Button label={`+ ${t("workspace.addEntry")}`} onPress={onAddEntry} />
         ) : null
       }
@@ -208,6 +209,9 @@ function HistoryList({
   return (
     <ListScreen
       scrollKey="history"
+      floatingAction={
+        entries.length ? { label: t("workspace.addEntry"), onPress: onAddEntry } : undefined
+      }
       onEndReached={loadMoreError ? undefined : onLoadMore}
       onEndReachedThreshold={0.5}
       embedded={embedded}
@@ -227,7 +231,12 @@ function HistoryList({
             {t("workspace.noEntries")}
           </Text>
           <Text className="text-body text-secondary">{t("workspace.historyDescription")}</Text>
-          <Button label={t("workspace.addFirstEntry")} onPress={onAddEntry} variant="secondary" />
+          <Button
+            label={t("workspace.addFirstEntry")}
+            onPress={onAddEntry}
+            variant={Platform.OS === "android" ? "primary" : "secondary"}
+            compact={Platform.OS === "android"}
+          />
         </View>
       }
       ListFooterComponent={

@@ -1,9 +1,11 @@
-import { Platform, Pressable, Text, View, useWindowDimensions } from "react-native";
-import { router, usePathname } from "expo-router";
+import { MaterialNavigationRail } from "@/components/layout/material-navigation-rail";
+import { Platform, View, useWindowDimensions } from "react-native";
+import { useRouter, usePathname } from "expo-router";
 import { NativeTabs } from "expo-router/native-tabs";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { nativeTheme } from "@/styles/native-theme";
 export default function TabsLayout() {
+  const router = useRouter();
   const { t } = useAppTranslation();
   const { width, fontScale } = useWindowDimensions();
   const pathname = usePathname();
@@ -17,35 +19,17 @@ export default function TabsLayout() {
   return (
     <View style={{ flex: 1, flexDirection: "row", backgroundColor: nativeTheme.canvas }}>
       {sidebar ? (
-        <View
-          style={{
-            width: Math.min(280, width * 0.24),
-            padding: 16,
-            gap: 8,
-            borderRightWidth: 1,
-            borderColor: nativeTheme.divider,
+        <MaterialNavigationRail
+          labels={destinations.map(([, label]) => t(`navigation.${label}`))}
+          selectedIndex={Math.max(
+            0,
+            destinations.findIndex(([name]) => pathname.endsWith(name)),
+          )}
+          onSelect={(index) => {
+            const destination = destinations[index];
+            if (destination) router.navigate(destination[2]);
           }}
-        >
-          {destinations.map(([name, label, href]) => (
-            <Pressable
-              key={name}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: pathname.endsWith(name) }}
-              onPress={() => router.navigate(href)}
-              style={{
-                padding: 16,
-                borderRadius: 12,
-                backgroundColor: pathname.endsWith(name)
-                  ? nativeTheme.surfaceStrong
-                  : nativeTheme.canvas,
-              }}
-            >
-              <Text style={{ color: nativeTheme.primary, fontSize: 16 }}>
-                {t(`navigation.${label}`)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        />
       ) : null}
       <View style={{ flex: 1 }}>
         <NativeTabs
@@ -54,6 +38,11 @@ export default function TabsLayout() {
             Platform.OS === "ios" && Number.parseInt(String(Platform.Version), 10) >= 18
               ? true
               : undefined
+          }
+          labelVisibilityMode={fontScale > 1.3 ? "selected" : "labeled"}
+          indicatorColor={Platform.OS === "android" ? nativeTheme.surfaceStrong : undefined}
+          rippleColor={
+            Platform.OS === "android" ? `${nativeTheme.accent.slice(0, 7)}24` : undefined
           }
           tintColor={nativeTheme.accent}
           backgroundColor={nativeTheme.canvas}

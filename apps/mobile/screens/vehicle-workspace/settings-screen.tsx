@@ -1,17 +1,18 @@
 import { Host, FieldGroup, ListItem, Text } from "@expo/ui";
 import Constants from "expo-constants";
-import { Stack, router } from "expo-router";
-import { Linking } from "react-native";
+import { Stack, useRouter } from "expo-router";
+import { Linking, Platform } from "react-native";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { nativeTheme, materialSeed } from "@/styles/native-theme";
 
 export function SettingsScreen() {
+  const router = useRouter();
   const { t } = useAppTranslation();
   return (
     <>
       <Stack.Screen options={{ title: t("navigation.settings") }} />
       <Host style={{ flex: 1 }} colorScheme="dark" seedColor={materialSeed}>
-        <FieldGroup>
+        <FieldGroup style={{ backgroundColor: nativeTheme.canvas }}>
           <FieldGroup.Section title={t("navigation.vehicle")}>
             <ListItem
               onPress={() =>
@@ -22,7 +23,11 @@ export function SettingsScreen() {
                   {t("settings.units")}
                 </Text>
               }
-              trailing={<Text textStyle={{ color: nativeTheme.secondary }}>›</Text>}
+              trailing={
+                Platform.OS === "ios" ? (
+                  <Text textStyle={{ color: nativeTheme.secondary }}>›</Text>
+                ) : undefined
+              }
             >
               <Text textStyle={{ fontSize: 17, fontWeight: "600" }}>
                 {t("workspace.editVehicle")}

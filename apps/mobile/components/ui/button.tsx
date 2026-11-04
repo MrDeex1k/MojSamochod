@@ -8,6 +8,7 @@ export type ButtonProps = Omit<PressableProps, "children" | "onPress"> & {
   onPress?: () => void;
   label: string;
   busy?: boolean;
+  compact?: boolean;
   variant?: ButtonVariant;
 };
 
@@ -31,6 +32,7 @@ export function Button({
   accessibilityState,
   busy = false,
   className,
+  compact = false,
   disabled = false,
   label,
   variant = "primary",
@@ -45,7 +47,7 @@ export function Button({
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ ...accessibilityState, busy: isBusy, disabled: isDisabled }}
-      className={`min-h-12 items-center justify-center rounded-control px-content py-control disabled:opacity-50 ${classes.container} ${className ?? ""}`}
+      className={`min-h-12 items-center justify-center rounded-control px-content py-control disabled:opacity-50 ${classes.container} ${compact ? "self-start" : ""} ${className ?? ""}`}
       disabled={isDisabled}
       {...props}
     >

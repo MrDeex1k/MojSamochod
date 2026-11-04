@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import { useApplicationServices } from "@/components/providers/application-provider";
 import { useFinishNativeForm } from "@/components/layout/native-form-context";
 import { Screen } from "@/components/layout/screen";
@@ -12,6 +12,7 @@ import { ReminderForm } from "./reminder-form";
 import { useWorkspaceSource } from "./workspace-provider";
 
 export function ReminderEditorScreen() {
+  const router = useRouter();
   const { kind } = useLocalSearchParams<{ kind: string }>();
   const services = useApplicationServices();
   const finish = useFinishNativeForm();

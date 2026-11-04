@@ -233,6 +233,12 @@ SwiftPM autolinking, and applies the SDK 58 JSI dependency wiring. Android uses 
 `nub run android`. For isolated native acceptance builds, set `MOJE_AUTO_NATIVE_QA=1` when
 prebuilding and preparing the project; the QA bundle identifier is `dev.mojeauto.qa`.
 
+The prepared Apple project uses Xcode's `project.xcproj` JSON configuration.
+Preparation requires Xcode 27.2 or later and retains a guarded compatibility layer
+for Expo/RN tools that still require plist input. See
+[Xcode JSON project format](xcode-json-project-format.md) before editing generated
+native files or bypassing the repository's iOS entry points.
+
 SwiftPM is experimental. Version-specific package patches provide manifests for community
 modules and source-built Expo modules; see [dependency patches](../patches/README.md).
 Reanimated uses the real JavaScript animation implementation in Jest, with native host wrappers

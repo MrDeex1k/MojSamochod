@@ -84,3 +84,17 @@ try render("icon-light.png", background: 0xF5EBD0, bodyColor: 0x07383D, detailCo
 try render("icon-dark.png", background: 0x07383D, bodyColor: 0xF5EBD0, detailColor: 0x07383D)
 try render("android-foreground.png", background: nil, bodyColor: 0xF5EBD0, detailColor: 0x07383D, adaptive: true)
 print("Generated SVG layers and 1024px PNG assets in \(output.path)")
+
+func renderMonochrome() throws {
+    let ctx = CGContext(data: nil, width: 1024, height: 1024, bitsPerComponent: 8, bytesPerRow: 0,
+                        space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    ctx.translateBy(x: 0, y: 1024); ctx.scaleBy(x: 1, y: -1)
+    ctx.translateBy(x: 512, y: 512); ctx.scaleBy(x: 0.78, y: 0.78); ctx.translateBy(x: -512, y: -512)
+    ctx.setFillColor(color(0xFFFFFF))
+    for shape in shell { ctx.addPath(shape.path); ctx.drawPath(using: .eoFill) }
+    ctx.setBlendMode(.clear)
+    for shape in details + [accent] { ctx.addPath(shape.path); ctx.drawPath(using: .eoFill) }
+    let rep = NSBitmapImageRep(cgImage: ctx.makeImage()!)
+    try rep.representation(using: .png, properties: [:])!.write(to: output.appendingPathComponent("android-monochrome.png"))
+}
+try renderMonochrome()

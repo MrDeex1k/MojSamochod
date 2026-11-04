@@ -1,3 +1,4 @@
+import { nativeTheme } from "@/styles/native-theme";
 import { AlertProvider } from "@/components/providers/alert-provider";
 import { PlatformThemeProvider } from "@/components/providers/platform-theme-provider";
 import { ThemeProvider, DarkTheme } from "expo-router/react-navigation";
@@ -22,7 +23,19 @@ export default function RootLayout() {
         <DatabaseProvider>
           <ApplicationProvider>
             <AlertProvider>
-              <ThemeProvider value={DarkTheme}>
+              <ThemeProvider
+                value={{
+                  ...DarkTheme,
+                  colors: {
+                    ...DarkTheme.colors,
+                    background: nativeTheme.canvas,
+                    card: nativeTheme.canvas,
+                    primary: nativeTheme.accent,
+                    text: nativeTheme.primary,
+                    border: nativeTheme.divider,
+                  },
+                }}
+              >
                 <Stack screenOptions={{ headerShown: false }} />
               </ThemeProvider>
             </AlertProvider>

@@ -1,4 +1,12 @@
-import { readdirSync, readFileSync, writeFileSync, rmSync, cpSync, existsSync } from "node:fs";
+import {
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+} from "node:fs";
 import { resolve, relative } from "node:path";
 
 // Expo's precompiled core imports the source-built JSI module in its Swift interface.
@@ -8,6 +16,7 @@ const packages = resolve(
   "../apps/mobile/ios/build/generated/autolinking/expo/expo-source",
 );
 const jsiPackage = resolve(packages, "expo-modules-jsi");
+const usesJSIHeaders = existsSync(resolve(packages, "../ExpoModulesJSIHeaders/Package.swift"));
 const frameworks = resolve(packages, "../../../../xcframeworks");
 const nativeHeaders = resolve(frameworks, "ReactNativeHeadersTarget");
 const headersVersion = JSON.parse(
@@ -111,9 +120,29 @@ if (!codegenSource.includes("// Use explicit dependency provider header"))
   codegenSource += "\n// Use explicit dependency provider header\n";
 writeFileSync(codegenManifest, codegenSource);
 const jsiFlags = `.unsafeFlags(["-Xfrontend", "-import-module", "-Xfrontend", "Foundation", "-Xfrontend", "-import-module", "-Xfrontend", "UIKit", "-Xcc", "-fapinotes", "-Xcc", "-fmodule-map-file=${jsiPackage}/jsi.modulemap", "-Xcc", "-iapinotes-modules", "-Xcc", "${jsiPackage}"])`;
+// Newer SDK 58 generators own JSI linkage through ExpoModulesJSIHeaders and an app build phase.
+// Keep the shared API Notes lookup without introducing a second JSI SwiftPM product.
+if (usesJSIHeaders) {
+  mkdirSync(jsiPackage, { recursive: true });
+  const headers = resolve(nativeHeaders, "include/jsi");
+  const notes = readFileSync(
+    resolve(import.meta.dirname, "../node_modules/expo-modules-jsi/apple/APINotes/jsi.apinotes"),
+    "utf8",
+  );
+  writeFileSync(resolve(jsiPackage, "jsi.apinotes"), notes);
+  writeFileSync(
+    resolve(jsiPackage, "ExpoModulesJSI_Cxx.apinotes"),
+    notes.replace("Name: jsi", "Name: ExpoModulesJSI_Cxx"),
+  );
+  writeFileSync(
+    resolve(jsiPackage, "jsi.modulemap"),
+    `module jsi {\n  header "${headers}/jsi.h"\n  header "${headers}/instrumentation.h"\n  export *\n}\n`,
+  );
+}
 for (const entry of readdirSync(packages, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
   const manifestPath = resolve(packages, entry.name, "Package.swift");
+  if (!existsSync(manifestPath)) continue;
   const manifest = readFileSync(manifestPath, "utf8");
   if (entry.name === "expo-modules-jsi") {
     const headers = resolve(nativeHeaders, "include/jsi");
@@ -206,7 +235,7 @@ for (const entry of readdirSync(packages, { withFileTypes: true })) {
       `swiftSettings: [/* screens-header-paths */ .unsafeFlags(${JSON.stringify(flags)}), `,
     );
   }
-  if (manifest.includes('.package(name: "expo-modules-jsi"')) {
+  if (usesJSIHeaders || manifest.includes('.package(name: "expo-modules-jsi"')) {
     writeFileSync(manifestPath, consumer);
     continue;
   }

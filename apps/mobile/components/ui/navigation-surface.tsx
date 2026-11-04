@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   surface: { borderRadius: 28 },
   opaque: {
     backgroundColor: nativeTheme.surfaceStrong,
-    borderWidth: 1,
+    borderWidth: Platform.OS === "android" ? 0 : 1,
     borderColor: nativeTheme.divider,
   },
 });
