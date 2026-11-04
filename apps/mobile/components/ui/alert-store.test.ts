@@ -20,8 +20,9 @@ it("requires an explicit action for non-cancelable destructive confirmation", ()
 });
 it("closes before invoking an action so another confirmation can open", () => {
   const next = { title: "Next", buttons: [] };
-  alertStore.show({ title: "First", buttons: [] });
-  alertStore.select({ onPress: () => alertStore.show(next) });
+  const button = { text: "Continue", onPress: () => alertStore.show(next) };
+  alertStore.show({ title: "First", buttons: [button] });
+  alertStore.select(button);
   expect(alertStore.getSnapshot()).toBe(next);
 });
 it("preserves the original pending confirmation when another request arrives", () => {

@@ -12,6 +12,8 @@ import { materialSeed, nativeTheme } from "@/styles/native-theme";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import type { ButtonProps, ButtonVariant } from "./button";
 
+const idleButtonState = { pressed: false, hovered: false } as const;
+
 const materialButtons: Record<ButtonVariant, typeof FilledButton> = {
   primary: FilledButton,
   secondary: FilledTonalButton,
@@ -41,7 +43,7 @@ export function Button({
       className={className}
       style={[
         compact && { alignSelf: "flex-start", maxWidth: "100%" },
-        typeof style === "function" ? style({ pressed: false, hovered: false }) : style,
+        typeof style === "function" ? style(idleButtonState) : style,
       ]}
       testID={testID}
     >
