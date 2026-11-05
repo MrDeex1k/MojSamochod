@@ -355,3 +355,40 @@ function expectValid<T>(result: { ok: false } | { ok: true; value: T }): T {
   if (!result.ok) throw new Error("Expected valid test value");
   return result.value;
 }
+
+it("releases a failed staged reservation when retrying without restarting", async () => {
+  const events: string[] = [];
+  const repository = repositoryFake(events);
+  const storage = storageFake(events);
+  let pending: StagedManagedFileMetadata | undefined;
+  repository.listRecoverable = async () => repositorySuccess(pending ? [pending] : []);
+  repository.createStaged = async (value) => {
+    if (pending) return repositoryFailure("conflict", "createStaged");
+    pending = value;
+    return repositorySuccess(undefined);
+  };
+  repository.delete = async () => {
+    pending = undefined;
+    return repositorySuccess(undefined);
+  };
+  repository.markReady = async () => {
+    pending = undefined;
+    return repositorySuccess(undefined);
+  };
+  const commit = storage.commit;
+  storage.commit = jest
+    .fn()
+    .mockResolvedValueOnce(objectStorageFailure("unavailable", "move"))
+    .mockImplementation(commit);
+  const coordinator = new ManagedFileCoordinator(clock, repository, storage);
+  const source = {
+    kind: "document" as const,
+    managedFileId: id,
+    mimeType: "application/pdf",
+    originalName: "invoice.pdf",
+    sourceUri: "file:///invoice.pdf",
+  };
+  expect((await coordinator.import(source)).ok).toBe(false);
+  expect(pending).toBeDefined();
+  expect((await coordinator.import({ ...source, managedFileId: secondId })).ok).toBe(true);
+});

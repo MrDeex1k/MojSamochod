@@ -182,12 +182,20 @@ export async function createVehicleHistoryExport(
   const documentsResult = await dependencies.vehicleDocumentRepository.list(vehicle.id);
   if (!documentsResult.ok) return documentsResult;
   const exportedDocuments: ExportDocumentV2[] = [];
+  const files = new Map<string, ReadyManagedFileMetadata>();
+  if (dependencies.managedFileRepository.getReadyMany) {
+    const result = await dependencies.managedFileRepository.getReadyMany(
+      documentsResult.value.map((document) => document.fileReference),
+    );
+    if (!result.ok) return result;
+    for (const file of result.value) files.set(file.id, file);
+  }
   for (const document of documentsResult.value) {
-    const file = await dependencies.managedFileRepository.getReady(document.fileReference);
+    const file = dependencies.managedFileRepository.getReadyMany
+      ? { ok: true as const, value: files.get(document.fileReference) }
+      : await dependencies.managedFileRepository.getReady(document.fileReference);
     if (!file.ok) return file;
-    if (!file.value) {
-      return repositoryFailure("corrupt-data", "vehicleHistoryExport.documentFile");
-    }
+    if (!file.value) return repositoryFailure("corrupt-data", "vehicleHistoryExport.documentFile");
     exportedDocuments.push(mapDocument(document, file.value));
   }
 

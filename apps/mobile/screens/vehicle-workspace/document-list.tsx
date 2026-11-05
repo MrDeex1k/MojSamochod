@@ -17,7 +17,13 @@ export function DocumentList({
   onAdd,
   onBack,
   onSelect,
+  onLoadMore,
+  loadingMore,
+  loadMoreError,
 }: Readonly<{
+  onLoadMore?: () => void;
+  loadingMore?: boolean;
+  loadMoreError?: boolean;
   documents: readonly VehicleDocument[];
   embedded?: boolean;
   selectedId?: string;
@@ -31,6 +37,15 @@ export function DocumentList({
   return (
     <ListScreen
       scrollKey="documents"
+      onEndReached={onLoadMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={
+        loadingMore ? (
+          <Text className="py-content text-secondary">{t("workspace.loading")}</Text>
+        ) : loadMoreError ? (
+          <Button label={t("database.errorAction")} onPress={onLoadMore} />
+        ) : undefined
+      }
       embedded={embedded}
       data={documents}
       keyExtractor={(item) => item.id}

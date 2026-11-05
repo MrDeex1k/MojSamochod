@@ -1,3 +1,4 @@
+import type { DocumentCursor, DocumentPage } from "../repositories/vehicle-document-repository";
 import type { VehicleDocumentRepository } from "@/application/repositories/vehicle-document-repository";
 import {
   repositoryFailure,
@@ -18,7 +19,7 @@ import {
   type VehicleId,
 } from "@/domain/shared/identifiers";
 import type { Clock, IdGenerator } from "@/domain/shared/ports";
-import type { PickedDocument } from "@/infrastructure/documents/system-document-picker";
+import type { PickedDocument } from "./document-file-picker";
 
 export type DocumentMetadataInput = Omit<VehicleDocumentInput, "fileReference" | "vehicleId">;
 
@@ -68,6 +69,16 @@ export class VehicleDocumentService {
 
   list(vehicleId: VehicleId) {
     return this.repository.list(vehicleId);
+  }
+
+  async listPage(
+    vehicleId: VehicleId,
+    cursor?: DocumentCursor,
+    limit?: number,
+  ): Promise<RepositoryResult<DocumentPage>> {
+    if (this.repository.listPage) return this.repository.listPage(vehicleId, cursor, limit);
+    const result = await this.repository.list(vehicleId);
+    return result.ok ? repositorySuccess({ documents: result.value, nextCursor: null }) : result;
   }
 
   async attachmentCounts(vehicleId: VehicleId, ids: readonly HistoryEntryId[]) {

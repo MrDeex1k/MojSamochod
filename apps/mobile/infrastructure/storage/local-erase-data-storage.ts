@@ -19,8 +19,8 @@ export class LocalEraseDataStorage implements EraseDataStorage {
   async clearFiles() {
     for (const directory of [
       new Directory(Paths.document, "managed-objects"),
-      new Directory(Paths.cache, "document-previews"),
-      new Directory(Paths.cache, "document-exports"),
+      // The cache is private to this app, including native picker copies at its root.
+      ...new Directory(Paths.cache).list(),
     ]) {
       if (directory.exists) directory.delete();
     }

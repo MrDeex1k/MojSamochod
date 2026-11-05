@@ -1,5 +1,3 @@
-// This file is required for Expo/React Native SQLite migrations - https://orm.drizzle.team/quick-sqlite/expo
-
 import journal from "./meta/_journal.json";
 import m0000 from "./0000_create_vehicle_history_schema.sql";
 import m0001 from "./0001_add_managed_vehicle_photos.sql";
@@ -9,6 +7,7 @@ import m0004 from "./0004_enforce_document_entry_vehicle_consistency.sql";
 import m0005 from "./0005_enforce_history_entry_document_vehicle_consistency.sql";
 import m0006 from "./0006_add_refuelling_persistence.sql";
 import m0007 from "./0007_add_vehicle_reminders.sql";
+import m0008 from "./0008_harden_storage_contracts.sql";
 
 export default {
   journal,
@@ -21,5 +20,6 @@ export default {
     m0005,
     m0006,
     m0007,
+    m0008,
   },
 };

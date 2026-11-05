@@ -1,3 +1,4 @@
+import { currencyDecimalPlaces } from "@/domain/shared/currency";
 const numberFormatters = new Map<string, Intl.NumberFormat>();
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
 const decimalSeparators = new Map<string, string>();
@@ -19,7 +20,7 @@ export function formatCurrencyMinorUnits(
   locale: string,
 ): string {
   const formatter = getCurrencyFormatter(currency, locale);
-  const fractionDigits = formatter.resolvedOptions().maximumFractionDigits ?? 2;
+  const fractionDigits = currencyDecimalPlaces(currency);
   return formatter.format(minorUnits / 10 ** fractionDigits);
 }
 
@@ -58,9 +59,9 @@ export function parseCurrencyInput(
   return Number.isSafeInteger(minorUnits) ? { kind: "value", minorUnits } : { kind: "invalid" };
 }
 
-export function currencyFractionDigits(currency: string, locale: string): number {
+export function currencyFractionDigits(currency: string, _locale: string): number {
   if (!/^[A-Z]{3}$/.test(currency)) return 2;
-  return getCurrencyFormatter(currency, locale).resolvedOptions().maximumFractionDigits ?? 2;
+  return currencyDecimalPlaces(currency);
 }
 
 export function formatCalendarDate(

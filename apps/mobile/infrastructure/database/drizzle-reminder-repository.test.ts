@@ -425,3 +425,40 @@ function seedVehicle(database: ReturnType<typeof drizzle<typeof schema>>, owner 
     })
     .run();
 }
+
+it("upgrades legacy duplicate files without deleting either attachment", async () => {
+  const { database, sqlite } = await open(":memory:", 3);
+  const stamp = clock.now().toISOString();
+  sqlite
+    .prepare(
+      "INSERT INTO vehicles(id,make,model,distance_unit_preference,created_at,updated_at) VALUES (?, 'QA', 'Legacy', 'kilometres', ?, ?)",
+    )
+    .run(vehicleId, stamp, stamp);
+  for (const suffix of [1, 2]) {
+    const fileId = `018f47e2-7b33-7000-8000-${String(suffix).padStart(12, "0")}`;
+    const documentId = `018f47e2-7b34-7000-8000-${String(suffix).padStart(12, "0")}`;
+    sqlite
+      .prepare(
+        "INSERT INTO managed_files(id,kind,status,storage_key,mime_type,original_name,byte_size,sha256,created_at,updated_at) VALUES (?,'document','ready',?,'application/pdf','invoice.pdf',1,?,?,?)",
+      )
+      .run(fileId, `objects/${fileId}.pdf`, "a".repeat(64), stamp, stamp);
+    sqlite
+      .prepare(
+        "INSERT INTO vehicle_documents(id,vehicle_id,file_reference,name,created_at,updated_at) VALUES (?,?,?,'Invoice',?,?)",
+      )
+      .run(documentId, vehicleId, fileId, stamp, stamp);
+  }
+  await migrate(database, migrations());
+  await migrate(database, migrations());
+  expect(sqlite.prepare("SELECT count(*) n FROM managed_files").get()).toEqual({ n: 2 });
+  expect(sqlite.prepare("SELECT count(*) n FROM vehicle_documents").get()).toEqual({ n: 2 });
+  expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  expect(() =>
+    sqlite
+      .prepare(
+        "INSERT INTO managed_files(id,kind,status,storage_key,mime_type,original_name,byte_size,sha256,created_at,updated_at) VALUES (?,'document','ready','objects/third.pdf','application/pdf','invoice.pdf',1,?,?,?)",
+      )
+      .run("018f47e2-7b33-7000-8000-000000000003", "a".repeat(64), stamp, stamp),
+  ).toThrow(/UNIQUE/);
+  expect(() => sqlite.exec("UPDATE managed_files SET original_name = 'renamed.pdf'")).not.toThrow();
+});

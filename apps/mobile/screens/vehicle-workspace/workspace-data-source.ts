@@ -1,3 +1,4 @@
+import type { DocumentCursor } from "@/application/repositories/vehicle-document-repository";
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import type { HistoryEntryId } from "@/domain/shared/identifiers";
 import type {
@@ -19,6 +20,7 @@ export function workspaceSection(mode: WorkspaceMode): WorkspaceSection {
 }
 
 export class WorkspaceDataSource {
+  private documentCursor: DocumentCursor | null = null;
   private fuelCursor: HistoryCursor | null = null;
   private cursor: HistoryCursor | null = null;
   private relatedEntries: readonly HistoryEntryReference[] | null = null;
@@ -66,6 +68,27 @@ export class WorkspaceDataSource {
 
   async loadMore(section: WorkspaceSection = "history") {
     const next = this.tail.then(async () => {
+      if (section === "documents") {
+        if (!this.data || !this.documentCursor) return;
+        const page = unwrap(
+          await this.services.documents.listPage(this.data.vehicle.id, this.documentCursor),
+        );
+        const documents = [...this.data.documents, ...page.documents];
+        const ids = [
+          ...new Set(
+            documents.flatMap((document) =>
+              document.historyEntryId ? [document.historyEntryId] : [],
+            ),
+          ),
+        ];
+        const entries = this.services.historyEntries.references
+          ? unwrap(await this.services.historyEntries.references(this.data.vehicle.id, ids))
+          : unwrap(await this.services.historyEntries.list(this.data.vehicle.id));
+        this.relatedEntries = entries;
+        this.data = { ...this.data, documents, relatedEntries: entries };
+        this.documentCursor = page.nextCursor;
+        return;
+      }
       if (section === "fuel") {
         if (!this.data || !this.fuelCursor) return;
         const page = unwrap(
@@ -94,7 +117,11 @@ export class WorkspaceDataSource {
   }
 
   hasMore(section: WorkspaceSection = "history") {
-    return section === "fuel" ? this.fuelCursor !== null : this.cursor !== null;
+    return section === "documents"
+      ? this.documentCursor !== null
+      : section === "fuel"
+        ? this.fuelCursor !== null
+        : this.cursor !== null;
   }
 
   private async loadSection(
@@ -164,10 +191,22 @@ export class WorkspaceDataSource {
         this.loaded.add("history");
       }
       if (section === "documents" && !this.loaded.has("documents")) {
-        this.data = {
-          ...this.data,
-          documents: unwrap(await this.services.documents.list(vehicle.id)),
-        };
+        const target = Math.max(50, this.data.documents.length);
+        let page = this.services.documents.listPage
+          ? unwrap(await this.services.documents.listPage(vehicle.id))
+          : { documents: unwrap(await this.services.documents.list(vehicle.id)), nextCursor: null };
+        while (page.nextCursor && page.documents.length < target) {
+          const next = unwrap(
+            await this.services.documents.listPage(
+              vehicle.id,
+              page.nextCursor,
+              Math.min(100, target - page.documents.length),
+            ),
+          );
+          page = { documents: [...page.documents, ...next.documents], nextCursor: next.nextCursor };
+        }
+        this.documentCursor = page.nextCursor;
+        this.data = { ...this.data, documents: page.documents };
         const ids = [
           ...new Set(
             this.data.documents.flatMap((document) =>

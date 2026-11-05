@@ -1,3 +1,4 @@
+import { isCalendarDate } from "../shared/calendar-date";
 import { invalid, valid, type ValidationResult } from "../shared/result";
 
 declare const calendarDateBrand: unique symbol;
@@ -7,13 +8,7 @@ export type CalendarDate = string & { readonly [calendarDateBrand]: true };
 export type ReminderTimeZone = string & { readonly [reminderTimeZoneBrand]: true };
 
 export function calendarDate(value: string): ValidationResult<CalendarDate> {
-  const parsed = new Date(`${value}T00:00:00.000Z`);
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-    value.startsWith("0000") ||
-    !Number.isFinite(parsed.getTime()) ||
-    parsed.toISOString().slice(0, 10) !== value
-  ) {
+  if (!isCalendarDate(value)) {
     return invalid([{ code: "invalid-format", field: "dueDate" }]);
   }
   return valid(value as CalendarDate);
@@ -67,8 +62,13 @@ export function assertValidInstant(value: Date): void {
   if (!Number.isFinite(value.getTime())) throw new Error("Expected a valid reminder clock instant");
 }
 
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
 function formatter(timeZone: string): Intl.DateTimeFormat {
-  return new Intl.DateTimeFormat("en-US", {
+  const cached = formatters.get(timeZone);
+  if (cached) return cached;
+  const result = new Intl.DateTimeFormat("en-US", {
+    era: "short",
     calendar: "gregory",
     day: "2-digit",
     hour: "2-digit",
@@ -80,6 +80,9 @@ function formatter(timeZone: string): Intl.DateTimeFormat {
     timeZone,
     year: "numeric",
   });
+  if (formatters.size >= 32) formatters.delete(formatters.keys().next().value!);
+  formatters.set(timeZone, result);
+  return result;
 }
 
 function localParts(date: Date, format: Intl.DateTimeFormat): { date: string; time: string } {
@@ -89,8 +92,13 @@ function localParts(date: Date, format: Intl.DateTimeFormat): { date: string; ti
     if (value === undefined) throw new Error(`Missing reminder calendar part: ${type}`);
     return value;
   };
+  const year = part("era") === "BC" ? 1 - Number(part("year")) : Number(part("year"));
+  const yearText =
+    year >= 0 && year <= 9999
+      ? String(year).padStart(4, "0")
+      : `${year < 0 ? "-" : "+"}${String(Math.abs(year)).padStart(6, "0")}`;
   return {
-    date: `${part("year").padStart(4, "0")}-${part("month")}-${part("day")}`,
+    date: `${yearText}-${part("month")}-${part("day")}`,
     time: `${part("hour")}:${part("minute")}:${part("second")}`,
   };
 }

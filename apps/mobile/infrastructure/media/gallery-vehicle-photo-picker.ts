@@ -2,21 +2,14 @@ import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { Platform } from "react-native";
 
-export type VehiclePhotoSelectionResult =
-  | Readonly<{ kind: "cancelled" }>
-  | Readonly<{ kind: "denied" }>
-  | Readonly<{
-      kind: "selected";
-      mimeType: "image/jpeg";
-      originalName: string;
-      uri: string;
-    }>
-  | Readonly<{ cause: unknown; kind: "unavailable" }>;
-
-export interface VehiclePhotoPicker {
-  select(): Promise<VehiclePhotoSelectionResult>;
-}
-
+import type {
+  VehiclePhotoPicker,
+  VehiclePhotoSelectionResult,
+} from "@/application/storage/vehicle-photo-picker";
+export type {
+  VehiclePhotoPicker,
+  VehiclePhotoSelectionResult,
+} from "@/application/storage/vehicle-photo-picker";
 export class GalleryVehiclePhotoPicker implements VehiclePhotoPicker {
   async select(): Promise<VehiclePhotoSelectionResult> {
     try {

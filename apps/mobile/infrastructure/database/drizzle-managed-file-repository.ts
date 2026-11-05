@@ -1,5 +1,5 @@
 import { CorruptStoredDataError } from "./row-mappers";
-import { and, eq, isNull, ne, or } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, or } from "drizzle-orm";
 
 import type { ManagedFileRepository } from "@/application/repositories/managed-file-repository";
 import {
@@ -8,6 +8,7 @@ import {
   type RepositoryResult,
 } from "@/application/repositories/repository-result";
 import {
+  isStagingKey,
   byteSize,
   sha256Digest,
   storageObjectKey,
@@ -88,6 +89,38 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
       return repositoryFailure(
         error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
         operation,
+        error,
+      );
+    }
+  }
+
+  async getReadyMany(
+    ids: readonly ManagedFileId[],
+  ): Promise<RepositoryResult<readonly ReadyManagedFileMetadata[]>> {
+    try {
+      const result: ReadyManagedFileMetadata[] = [];
+      const unique = [...new Set(ids)];
+      for (let offset = 0; offset < unique.length; offset += 900) {
+        const rows = this.database
+          .select()
+          .from(managedFiles)
+          .where(
+            and(
+              inArray(managedFiles.id, unique.slice(offset, offset + 900)),
+              eq(managedFiles.status, "ready"),
+            ),
+          )
+          .all();
+        for (const row of rows) {
+          const metadata = mapManagedFileRow(row);
+          if (metadata.status === "ready") result.push(metadata);
+        }
+      }
+      return repositorySuccess(result);
+    } catch (error) {
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        "managedFile.getReadyMany",
         error,
       );
     }
@@ -221,7 +254,7 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
       const result = this.database
         .update(managedFiles)
         .set(values)
-        .where(eq(managedFiles.id, id))
+        .where(and(eq(managedFiles.id, id), eq(managedFiles.status, "staged")))
         .run();
       return result.changes === 0
         ? repositoryFailure("not-found", operation)
@@ -252,7 +285,12 @@ function parseStoredRow(row: ManagedFileRow): ManagedFileMetadata {
     updatedAt: expect(utcTimestamp(row.updatedAt, "updatedAt")),
   };
 
-  if (row.status === "staged" && row.stagingKey && !row.storageKey) {
+  if (
+    row.status === "staged" &&
+    row.stagingKey &&
+    isStagingKey(row.stagingKey, common.id) &&
+    !row.storageKey
+  ) {
     return { ...common, stagingKey: row.stagingKey, status: row.status };
   }
   if ((row.status === "ready" || row.status === "deleting") && row.storageKey && !row.stagingKey) {

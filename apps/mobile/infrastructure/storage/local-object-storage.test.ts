@@ -193,11 +193,10 @@ class MemoryDriver implements ObjectStorageDriver {
       .map((key) => key.slice(directory.length));
   }
 
-  async read(key: string): Promise<Uint8Array<ArrayBuffer>> {
-    this.readCalls += 1;
-    const value = this.files.get(key);
-    if (!value) throw new Error("Missing file");
-    return value;
+  async digest(_key: string): Promise<string> {
+    this.readCalls++;
+    const hash = await mockDigest();
+    return [...new Uint8Array(hash)].map((value) => value.toString(16).padStart(2, "0")).join("");
   }
 
   size(key: string): number {
@@ -208,3 +207,47 @@ class MemoryDriver implements ObjectStorageDriver {
     return `file:///managed-objects/${key}`;
   }
 }
+
+it("rejects mismatched content at an existing destination", async () => {
+  mockDigest.mockResolvedValue(new Uint8Array(32).fill(0xab).buffer);
+  const driver = new MemoryDriver(new Uint8Array([1, 2, 3]));
+  const storage = new LocalObjectStorage(driver);
+  const staged = await storage.stage({
+    extension: "pdf",
+    managedFileId,
+    maximumBytes: 100,
+    sourceUri: "file:///source.pdf",
+  });
+  if (!staged.ok) throw new Error("stage");
+  driver.files.set(`objects/${managedFileId}.pdf`, new Uint8Array([9]));
+  expect(await storage.commit(staged.value)).toMatchObject({
+    ok: false,
+    error: { kind: "integrity-failure" },
+  });
+  driver.files.set(`objects/${managedFileId}.pdf`, new Uint8Array([9, 9, 9]));
+  mockDigest.mockResolvedValue(new Uint8Array(32).fill(0xcd).buffer);
+  expect(await storage.commit(staged.value)).toMatchObject({
+    ok: false,
+    error: { kind: "integrity-failure" },
+  });
+});
+
+it("rejects staging paths outside this file's private slot before touching the driver", async () => {
+  const driver = new MemoryDriver(new Uint8Array([1]));
+  const storage = new LocalObjectStorage(driver);
+  const staged = await storage.stage({
+    extension: "pdf",
+    managedFileId,
+    maximumBytes: 100,
+    sourceUri: "file:///source.pdf",
+  });
+  if (!staged.ok) throw new Error("stage");
+  const move = jest.spyOn(driver, "move");
+  expect(
+    await storage.commit({
+      ...staged.value,
+      stagingKey: "../outside.pdf" as typeof staged.value.stagingKey,
+    }),
+  ).toMatchObject({ ok: false, error: { kind: "integrity-failure" } });
+  expect(move).not.toHaveBeenCalled();
+});

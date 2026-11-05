@@ -6,11 +6,12 @@ export type ValidationIssue = Readonly<{
 }>;
 
 export type ValidationResult<T> =
-  | Readonly<{ issues: readonly ValidationIssue[]; ok: false }>
+  | Readonly<{ issues: readonly [ValidationIssue, ...ValidationIssue[]]; ok: false }>
   | Readonly<{ ok: true; value: T }>;
 
 export function invalid<T = never>(issues: readonly ValidationIssue[]): ValidationResult<T> {
-  return { issues, ok: false };
+  if (!issues.length) throw new Error("Validation failure requires at least one issue");
+  return { issues: issues as readonly [ValidationIssue, ...ValidationIssue[]], ok: false };
 }
 
 export function valid<T>(value: T): ValidationResult<T> {

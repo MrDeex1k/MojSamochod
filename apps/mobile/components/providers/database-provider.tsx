@@ -1,3 +1,4 @@
+import { DatabaseSession } from "@/application/lifecycle/database-session";
 import {
   createContext,
   type PropsWithChildren,
@@ -23,9 +24,15 @@ type DatabaseProviderProps = PropsWithChildren<{
 
 type DatabaseState =
   | { status: "loading" }
-  | { handle: DatabaseHandle; generation: number; status: "ready" }
-  | { status: "error" };
+  | {
+      handle: DatabaseHandle;
+      session: DatabaseSession<AppDatabase>;
+      generation: number;
+      status: "ready";
+    }
+  | { status: "error"; cause: unknown };
 
+const SessionContext = createContext<DatabaseSession<AppDatabase> | null>(null);
 const DatabaseContext = createContext<AppDatabase | null>(null);
 
 export function DatabaseProvider({
@@ -39,30 +46,28 @@ export function DatabaseProvider({
 
   useEffect(() => {
     let disposed = false;
-    let activeHandle: DatabaseHandle | null = null;
+    const session = new DatabaseSession(initialize);
 
-    void initialize().then(
+    void session.open().then(
       (handle) => {
         if (disposed) {
-          void handle.close().catch(() => undefined);
+          void session.close().catch(() => undefined);
           return;
         }
 
-        activeHandle = handle;
-        setState({ handle, generation: ++generation.current, status: "ready" });
+        setState({ handle, session, generation: ++generation.current, status: "ready" });
       },
-      () => {
+      (cause) => {
+        void session.close();
         if (!disposed) {
-          setState({ status: "error" });
+          setState({ status: "error", cause });
         }
       },
     );
 
     return () => {
       disposed = true;
-      if (activeHandle) {
-        void activeHandle.close().catch(() => undefined);
-      }
+      void session.close().catch(() => undefined);
     };
   }, [attempt, initialize]);
 
@@ -92,7 +97,7 @@ export function DatabaseProvider({
 
   return (
     <DatabaseContext.Provider key={state.generation} value={state.handle.database}>
-      {children}
+      <SessionContext.Provider value={state.session}>{children}</SessionContext.Provider>
     </DatabaseContext.Provider>
   );
 }
@@ -105,4 +110,10 @@ export function useDatabase(): AppDatabase {
   }
 
   return database;
+}
+
+export function useDatabaseSession(): DatabaseSession<AppDatabase> {
+  const session = useContext(SessionContext);
+  if (!session) throw new Error("Database session is unavailable");
+  return session;
 }

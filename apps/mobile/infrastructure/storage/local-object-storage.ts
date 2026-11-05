@@ -1,4 +1,3 @@
-import { CryptoDigestAlgorithm, digest } from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 
 import {
@@ -12,7 +11,12 @@ import {
   type StagedObjectKey,
   type StoredObject,
 } from "@/application/storage/object-storage";
-import { byteSize, sha256Digest, storageObjectKey } from "@/domain/files/managed-file";
+import {
+  byteSize,
+  sha256Digest,
+  storageObjectKey,
+  isStagingKey,
+} from "@/domain/files/managed-file";
 import type { ManagedFileId } from "@/domain/shared/identifiers";
 
 export { maximumDocumentBytes, maximumVehiclePhotoBytes };
@@ -24,7 +28,7 @@ export interface ObjectStorageDriver {
   exists(key: string): boolean;
   list(prefix: string): readonly string[];
   move(fromKey: string, toKey: string): Promise<void>;
-  read(key: string): Promise<Uint8Array<ArrayBuffer>>;
+  digest(key: string): Promise<string>;
   size(key: string): number;
   uri(key: string): string;
 }
@@ -47,14 +51,8 @@ export class LocalObjectStorage implements ObjectStorage {
         await this.driver.delete(stagingKey);
         return objectStorageFailure("invalid-source", operation);
       }
-      const bytes = await this.driver.read(stagingKey);
-      if (bytes.byteLength > input.maximumBytes) {
-        await this.driver.delete(stagingKey);
-        return objectStorageFailure("invalid-source", operation);
-      }
-
-      const size = byteSize(bytes.byteLength);
-      const hash = sha256Digest(toHex(await digest(CryptoDigestAlgorithm.SHA256, bytes)));
+      const size = byteSize(this.driver.size(stagingKey));
+      const hash = sha256Digest(await this.driver.digest(stagingKey));
       if (!size.ok || !hash.ok) {
         await this.driver.delete(stagingKey);
         return objectStorageFailure("integrity-failure", operation);
@@ -78,10 +76,20 @@ export class LocalObjectStorage implements ObjectStorage {
     const keyResult = storageObjectKey(
       `objects/${stagedObject.managedFileId}.${stagedObject.extension}`,
     );
-    if (!keyResult.ok) return objectStorageFailure("integrity-failure", operation);
+    if (!keyResult.ok || !isStagingKey(stagedObject.stagingKey, stagedObject.managedFileId))
+      return objectStorageFailure("integrity-failure", operation);
 
     try {
-      if (!this.driver.exists(keyResult.value)) {
+      const exists = this.driver.exists(keyResult.value);
+      const candidate = exists ? keyResult.value : stagedObject.stagingKey;
+      if (!this.driver.exists(candidate)) return objectStorageFailure("not-found", operation);
+      if (
+        this.driver.size(candidate) !== stagedObject.byteSize ||
+        (await this.driver.digest(candidate)) !== stagedObject.sha256
+      ) {
+        return objectStorageFailure("integrity-failure", operation);
+      }
+      if (!exists) {
         await this.driver.move(stagedObject.stagingKey, keyResult.value);
       }
       return objectStorageSuccess({
@@ -190,8 +198,8 @@ export class ExpoFileSystemDriver implements ObjectStorageDriver {
     await this.file(fromKey).move(this.file(toKey), { overwrite: false });
   }
 
-  read(key: string): Promise<Uint8Array<ArrayBuffer>> {
-    return this.file(key).bytes();
+  digest(key: string): Promise<string> {
+    return this.file(key).digest("SHA-256");
   }
 
   size(key: string): number {
@@ -203,6 +211,9 @@ export class ExpoFileSystemDriver implements ObjectStorageDriver {
   }
 
   private file(key: string): File {
+    if (!storageObjectKey(key).ok || !/^(staging|objects)\/[^/]+$/.test(key)) {
+      throw new Error("Managed object key must remain inside its storage directory");
+    }
     return new File(this.root, ...key.split("/"));
   }
 }
@@ -215,12 +226,8 @@ async function safelyDelete(driver: ObjectStorageDriver, key: string): Promise<v
   }
 }
 
-function toHex(value: ArrayBuffer): string {
-  return [...new Uint8Array(value)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
 export function cleanTransientDocumentFiles(): void {
-  for (const name of ["document-previews", "document-exports"]) {
+  for (const name of transientFileDirectories) {
     try {
       const directory = new Directory(Paths.cache, name);
       if (directory.exists) directory.delete();
@@ -229,3 +236,11 @@ export function cleanTransientDocumentFiles(): void {
     }
   }
 }
+
+export const transientFileDirectories = [
+  "document-previews",
+  "document-exports",
+  "DocumentPicker",
+  "ImagePicker",
+  "ImageManipulator",
+] as const;

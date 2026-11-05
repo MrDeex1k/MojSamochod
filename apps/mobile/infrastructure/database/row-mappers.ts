@@ -82,6 +82,14 @@ export function mapVehicleRow(row: VehicleRow): Vehicle {
   if (!isDistanceUnit(row.distanceUnitPreference)) {
     throw new CorruptStoredDataError("distanceUnitPreference");
   }
+  if (
+    row.manufactureYear !== null &&
+    (!Number.isInteger(row.manufactureYear) ||
+      row.manufactureYear < 1000 ||
+      row.manufactureYear > 9999)
+  ) {
+    throw new CorruptStoredDataError("manufactureYear");
+  }
   const fuelConfiguration = mapFuelConfiguration(row);
 
   return {
