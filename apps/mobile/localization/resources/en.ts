@@ -204,7 +204,7 @@ export const en = {
       "not-recorded": "Not recorded",
       passed: "Passed",
     },
-    invalidCostError: "Enter a valid non-negative amount with up to two decimal places.",
+    invalidCostError: "Enter a valid non-negative amount using the currency's decimal precision.",
     invalidOdometerError: "Enter a valid non-negative whole number.",
     itemLabel: "Replaced item",
     keepEditing: "Keep editing",
@@ -219,6 +219,8 @@ export const en = {
     serviceProviderLabel: "Workshop or service provider",
     subjectLabel: "Repair subject",
     timeLabel: "Time (UTC)",
+    confirmTime: "Confirm time",
+    cancelTime: "Cancel time selection",
     title: { inspection: "Add inspection", repair: "Add repair", replacement: "Add replacement" },
   },
   entryDetail: {

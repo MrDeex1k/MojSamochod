@@ -20,6 +20,11 @@ function createNavigationGuard() {
   let approved = false;
   let blocked = false;
   const listeners = new Set<() => void>();
+  const setBlocked = (value: boolean) => {
+    if (blocked === value) return;
+    blocked = value;
+    listeners.forEach((listener) => listener());
+  };
   return {
     subscribe(listener: () => void) {
       listeners.add(listener);
@@ -30,12 +35,12 @@ function createNavigationGuard() {
     getSnapshot: () => blocked,
     register(next: Guard, preventRemoval: boolean) {
       guard = next;
-      if (blocked !== preventRemoval) {
-        blocked = preventRemoval;
-        listeners.forEach((listener) => listener());
-      }
+      setBlocked(preventRemoval);
       return () => {
-        if (guard === next) guard = null;
+        if (guard === next) {
+          guard = null;
+          setBlocked(false);
+        }
       };
     },
     navigate(action: Action) {
@@ -102,7 +107,15 @@ export function useFormExitGuard(values: unknown, busy: boolean, onCancel: Actio
     );
   };
   const cancel = () => (navigation ? navigation.navigate(onCancel) : guard(onCancel));
-  useEffect(() => navigation?.register(guard, busy || serialized !== initial));
+  const latestGuard = useRef(guard);
+  const preventRemoval = busy || serialized !== initial;
+  useEffect(() => {
+    latestGuard.current = guard;
+  });
+  useEffect(
+    () => navigation?.register((action) => latestGuard.current(action), preventRemoval),
+    [navigation, preventRemoval],
+  );
   useEffect(() => {
     if (navigation) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {

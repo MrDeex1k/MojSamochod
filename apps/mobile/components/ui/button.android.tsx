@@ -37,6 +37,7 @@ export function Button({
   const { t } = useAppTranslation();
   const isBusy = busy || accessibilityState?.busy === true;
   const isDisabled = disabled || isBusy;
+  const text = busy ? t("formGuard.saving") : label;
   const Component = materialButtons[variant];
   return (
     <View
@@ -60,11 +61,11 @@ export function Button({
             ...(compact ? [] : [fillMaxWidth()]),
             defaultMinSize({ minHeight: 48 }),
             semantics({
-              contentDescription: accessibilityLabel ?? (isBusy ? t("formGuard.saving") : label),
+              contentDescription: accessibilityLabel ?? text,
             }),
           ]}
         >
-          <Text style={{ typography: "labelLarge" }}>{isBusy ? t("formGuard.saving") : label}</Text>
+          <Text style={{ typography: "labelLarge" }}>{text}</Text>
         </Component>
       </Host>
     </View>

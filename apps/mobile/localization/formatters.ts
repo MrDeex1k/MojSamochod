@@ -21,7 +21,21 @@ export function formatCurrencyMinorUnits(
 ): string {
   const formatter = getCurrencyFormatter(currency, locale);
   const fractionDigits = currencyDecimalPlaces(currency);
-  return formatter.format(minorUnits / 10 ** fractionDigits);
+  const scale = 10 ** fractionDigits;
+  if (fractionDigits === 0 || !Number.isSafeInteger(minorUnits) || Math.abs(minorUnits) < 2 ** 52)
+    return formatter.format(minorUnits / scale);
+
+  // Near MAX_SAFE_INTEGER, converting to a fractional Number can lose a minor unit.
+  const remainder = Math.abs(minorUnits % scale);
+  const whole = Math.sign(minorUnits) * ((Math.abs(minorUnits) - remainder) / scale);
+  const fraction = new Intl.NumberFormat(locale, {
+    minimumIntegerDigits: fractionDigits,
+    useGrouping: false,
+  }).format(remainder);
+  return formatter
+    .formatToParts(whole)
+    .map((part) => (part.type === "fraction" ? fraction : part.value))
+    .join("");
 }
 
 export function formatCurrencyInputMinorUnits(

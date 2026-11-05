@@ -78,3 +78,13 @@ it("can clear an active request without invoking a button", () => {
   expect(alertStore.getSnapshot()).toBeNull();
   expect(onPress).not.toHaveBeenCalled();
 });
+
+it("ignores a delayed native dismissal from a previous alert", () => {
+  const second = { title: "Second", buttons: [{ text: "Continue" }] };
+  const button = { text: "Next", onPress: () => alertStore.show(second) };
+  const first = { title: "First", buttons: [button] };
+  alertStore.show(first);
+  alertStore.select(button);
+  alertStore.dismiss(first);
+  expect(alertStore.getSnapshot()).toBe(second);
+});

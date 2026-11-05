@@ -11,7 +11,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
       {request ? (
         <Host colorScheme="dark" seedColor={materialSeed}>
           <AlertDialog
-            onDismissRequest={alertStore.dismiss}
+            onDismissRequest={() => alertStore.dismiss(request)}
             properties={{
               dismissOnBackPress: request.options?.cancelable !== false,
               dismissOnClickOutside: request.options?.cancelable !== false,

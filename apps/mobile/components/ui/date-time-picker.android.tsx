@@ -23,20 +23,22 @@ export default function DateTimePicker({
   const common = {
     onDateSelected: select,
     onDismissRequest: () => onDismiss?.(),
-    confirmButtonLabel: t("reminders.confirmDate"),
-    dismissButtonLabel: t("reminders.cancelDate"),
   };
   return (
     <Host colorScheme="dark" seedColor={materialSeed}>
       {mode === "time" ? (
         <TimePickerDialog
           {...common}
+          confirmButtonLabel={t("entryForm.confirmTime")}
+          dismissButtonLabel={t("entryForm.cancelTime")}
           initialDate={utcClockForDevice(value).toISOString()}
           is24Hour={is24Hour ?? getCalendars()[0]?.uses24hourClock ?? true}
         />
       ) : (
         <DatePickerDialog
           {...common}
+          confirmButtonLabel={t("reminders.confirmDate")}
+          dismissButtonLabel={t("reminders.cancelDate")}
           initialDate={value.toISOString()}
           selectableDates={{ start: minimumDate, end: maximumDate }}
         />

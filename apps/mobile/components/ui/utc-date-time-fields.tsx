@@ -19,6 +19,10 @@ export function UtcDateTimeFields({
 }>) {
   const { t, i18n } = useAppTranslation();
   const [open, setOpen] = useState<"date" | "time" | null>(null);
+  const displayed = {
+    date: formatUtcDate(value, i18n.language),
+    time: formatUtcTime(value, i18n.language),
+  };
   return (
     <View>
       {(["date", "time"] as const).map((mode) => (
@@ -45,14 +49,11 @@ export function UtcDateTimeFields({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t(`entryForm.${mode}Label`)}
+              accessibilityValue={{ text: displayed[mode] }}
               onPress={() => setOpen(mode)}
               className="min-h-12 justify-center px-compact"
             >
-              <Text className="text-body text-accent">
-                {mode === "date"
-                  ? formatUtcDate(value, i18n.language)
-                  : formatUtcTime(value, i18n.language)}
-              </Text>
+              <Text className="text-body text-accent">{displayed[mode]}</Text>
             </Pressable>
           )}
         </View>
