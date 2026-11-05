@@ -6,7 +6,18 @@ const mobile = resolve(import.meta.dirname, "../apps/mobile");
 const status = withLegacyProject(resolve(mobile, "ios/MojeAuto.xcodeproj"), () => {
   const result = spawnSync(
     "nub",
-    ["exec", "sfw", "nub", "exec", "expo", "run:ios", "--no-install", ...process.argv.slice(2)],
+    [
+      "exec",
+      "--node",
+      "sfw",
+      "nub",
+      "exec",
+      "--node",
+      "expo",
+      "run:ios",
+      "--no-install",
+      ...process.argv.slice(2),
+    ],
     {
       cwd: mobile,
       env: process.env,

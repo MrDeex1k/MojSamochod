@@ -37,10 +37,10 @@ Do not introduce npm, pnpm, Yarn, or Bun commands into the documented contributo
 ## Contribution workflow
 
 1. For a substantial change, start with a GitHub Discussion so the direction can be agreed before implementation.
-2. Create a focused branch from the current `main` branch.
+2. Create a focused branch from the current `main`, or from the preceding branch when stacking pull requests.
 3. Keep the change small and avoid unrelated refactors.
 4. Add or update tests and documentation where appropriate.
-5. Run `nub run check` before opening a pull request.
+5. Run `nub run check` before opening a pull request. GitHub Actions repeats the repository checks with a fresh dependency install.
 6. Use Conventional Commits, for example `feat(mobile): add vehicle form`.
 7. Complete the pull request template and accept the CLA.
 

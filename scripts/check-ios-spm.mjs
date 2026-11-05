@@ -1,23 +1,18 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, relative } from "node:path";
+import { nativeConfigFingerprint } from "./native-prebuild.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const mobile = resolve(root, "apps/mobile");
 const stamp = resolve(mobile, "ios/build/generated/autolinking/.moje-auto-spm-inputs");
 const inputs = [
-  "package.json",
-  "nub.lock",
-  "nub.jsonc",
-  "apps/mobile/package.json",
-  "apps/mobile/app.json",
-  "apps/mobile/app.config.js",
   "scripts/prepare-ios-spm.mjs",
   "scripts/wire-expo-spm.mjs",
   "scripts/check-ios-spm.mjs",
   "scripts/xcode-project-format.mjs",
 ];
-for (const directory of ["patches", "apps/mobile/plugins", "apps/mobile/modules"]) {
+for (const directory of ["apps/mobile/modules"]) {
   for (const entry of readdirSync(resolve(root, directory), {
     recursive: true,
     withFileTypes: true,
@@ -28,7 +23,7 @@ for (const directory of ["patches", "apps/mobile/plugins", "apps/mobile/modules"
     inputs.push(path);
   }
 }
-const hash = createHash("sha256");
+const hash = createHash("sha256").update(nativeConfigFingerprint(root));
 for (const input of [...new Set(inputs)].sort()) {
   hash.update(input);
   hash.update(existsSync(resolve(root, input)) ? readFileSync(resolve(root, input)) : "missing");

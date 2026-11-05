@@ -2,7 +2,7 @@
 
 ## Version contract
 
-The current version contract pins Expo 58.0.14, React Native 0.88.0, and React 19.3.0.
+The current version contract pins Expo 58.0.22, React Native 0.88.1, and React 19.3.0.
 React Native 0.88 now uses its stable release rather than a release candidate. Apple
 dependency integration uses experimental Swift Package Manager support.
 Expo libraries follow SDK 58's bundled native version set. Node 24.18.0,
@@ -49,7 +49,9 @@ compatibility with legacy Expo/React Native tooling. See
 
 For isolated acceptance builds, set `MOJE_AUTO_NATIVE_QA=1` when preparing either
 platform. This uses `dev.mojeauto.qa` and preserves production app storage.
-Android uses `nub run android` and Gradle. The SDK 58 debug configuration explicitly
+Android uses `nub run android` and Gradle. For a direct Gradle build, run
+`nub run android:prepare` from `apps/mobile` with the intended profile first.
+The SDK 58 debug configuration explicitly
 enables development support in the React host so precompiled React does not
 accidentally select an embedded JavaScript asset in a Metro development build.
 

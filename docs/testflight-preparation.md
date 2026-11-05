@@ -77,10 +77,11 @@ Nie stosować `MOJE_AUTO_NATIVE_QA=1` do archiwum przeznaczonego dla tej aplikac
    Skrypt wykonuje potrzebny prebuild, autolinking i codegen, konfiguruje SwiftPM
    oraz zapisuje odciski wejściowe sprawdzane podczas kompilacji w Xcode.
 
-4. Sprawdzić diff: prebuild uruchamiany przez przygotowanie może zmienić skrypty `ios`/`android` w package.json.
-   Zachować dotychczasowe skrypty, jeśli ich zmiana nie jest zamierzona.
-5. W lokalnym `.xcode.env.local` wskazać `NODE_BINARY` na wynik `nub node which`.
-   Nie używać przypadkowego Node z NVM ani systemowego PATH.
+4. Porównać Bundle ID i numer buildu z konfiguracją Expo oraz ostatnim przesłanym buildem.
+   Przy kolejnym uploadzie użyć numeru buildu, którego App Store Connect jeszcze nie przyjął.
+5. Użyć `NODE_BINARY` zapisanego przez przygotowanie w `ios/.xcode.env`.
+   Jeśli istnieje `ios/.xcode.env.local`, sprawdzić, czy jego nadpisanie wskazuje ten sam Node
+   co `nub node which`.
 6. Otworzyć `apps/mobile/ios/MojeAuto.xcodeproj` w Xcode, sprawdzić Team i automatyczne podpisywanie.
    Archiwizować Release dla urządzeń iOS, nie dla symulatora.
 7. Zweryfikować archiwum i dystrybuować przez Organizer do App Store Connect.

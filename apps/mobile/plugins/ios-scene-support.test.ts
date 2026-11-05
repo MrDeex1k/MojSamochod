@@ -42,6 +42,8 @@ it("generates the scene lifecycle required to launch on iOS 27", () => {
     const plugins = require.resolve("@expo/config-plugins/package.json", { paths: [expo] });
     const plist = createRequire(plugins)("@expo/plist").default;
     const info = plist.parse(readFileSync(join(project, "ios/MojeAuto/Info.plist"), "utf8"));
+    expect(info.UIUserInterfaceStyle).toBe("Dark");
+    expect(info.UILaunchStoryboardName).toBe("SplashScreen");
     expect(info.UIApplicationSceneManifest).toMatchObject({
       UIApplicationSupportsMultipleScenes: false,
       UISceneConfigurations: {
