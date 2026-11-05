@@ -33,6 +33,7 @@ type NotificationContent = (
 export class ReminderSchedule {
   private tail: Promise<void> = Promise.resolve();
   private stopped = false;
+  private queued?: Promise<ReconciliationResult>;
   private lastResult: ReconciliationResult | null = null;
   private readonly listeners = new Set<() => void>();
 
@@ -58,9 +59,11 @@ export class ReminderSchedule {
   }
 
   reconcile(): Promise<ReconciliationResult> {
-    // Each request reads a fresh snapshot after the preceding pass, including requests arriving
-    // during a native await. There is no overlapping cancel/schedule sequence or lost dirty flag.
+    if (this.queued) return this.queued;
+    // Calls before a pass starts share its fresh snapshot. Calls during a native await
+    // share one following pass, which reads any changes made while the first was running.
     const next = this.tail.then(async () => {
+      this.queued = undefined;
       const result = this.stopped
         ? { ok: true, cancelled: 0, scheduled: 0, unchanged: 0, permission: null, issues: [] }
         : await this.runSafely();
@@ -74,6 +77,7 @@ export class ReminderSchedule {
       }
       return result;
     });
+    this.queued = next;
     // Keep the serial queue usable even if a pass unexpectedly rejects; callers retain its result.
     this.tail = next.then(
       () => undefined,

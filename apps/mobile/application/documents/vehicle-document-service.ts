@@ -24,6 +24,27 @@ import type { PickedDocument } from "./document-file-picker";
 export type DocumentMetadataInput = Omit<VehicleDocumentInput, "fileReference" | "vehicleId">;
 
 export class VehicleDocumentService {
+  private tail: Promise<unknown> = Promise.resolve();
+
+  private enqueue<T>(
+    operation: string,
+    work: () => Promise<RepositoryResult<T>>,
+  ): Promise<RepositoryResult<T>> {
+    const result = this.tail
+      .then(work)
+      .catch((cause: unknown) => repositoryFailure("unavailable", operation, cause));
+    this.tail = result;
+    return result;
+  }
+
+  private async removeUnreferenced(
+    id: Parameters<ManagedFileCoordinator["remove"]>[0],
+  ): Promise<void> {
+    // Once metadata commits, cleanup failure must not turn success into a retry of the write.
+    // Ready/deleting metadata remains available to startup reconciliation.
+    await this.managedFiles.remove(id).catch(() => undefined);
+  }
+
   constructor(
     private readonly clock: Clock,
     private readonly idGenerator: IdGenerator,
@@ -32,6 +53,14 @@ export class VehicleDocumentService {
   ) {}
 
   async create(
+    vehicleId: VehicleId,
+    file: PickedDocument,
+    metadata: DocumentMetadataInput,
+  ): Promise<RepositoryResult<VehicleDocument>> {
+    return this.enqueue("vehicleDocument.create", () => this.createNow(vehicleId, file, metadata));
+  }
+
+  private async createNow(
     vehicleId: VehicleId,
     file: PickedDocument,
     metadata: DocumentMetadataInput,
@@ -48,18 +77,25 @@ export class VehicleDocumentService {
     if (!imported.ok) return imported;
     const created = await this.repository.create(document.value);
     if (!created.ok) {
-      await this.managedFiles.remove(imported.value.id);
+      await this.removeUnreferenced(imported.value.id);
       return created;
     }
     return repositorySuccess(document.value);
   }
 
   async delete(vehicleId: VehicleId, documentId: DocumentId): Promise<RepositoryResult<void>> {
+    return this.enqueue("vehicleDocument.delete", () => this.deleteNow(vehicleId, documentId));
+  }
+
+  private async deleteNow(
+    vehicleId: VehicleId,
+    documentId: DocumentId,
+  ): Promise<RepositoryResult<void>> {
     const deleted = await this.repository.delete(vehicleId, documentId);
     if (!deleted.ok) return deleted;
     // Metadata deletion is the user-visible operation. If binary cleanup is interrupted,
     // reconciliation removes the now-unreferenced managed file on the next application start.
-    await this.managedFiles.remove(deleted.value.fileReference);
+    await this.removeUnreferenced(deleted.value.fileReference);
     return repositorySuccess(undefined);
   }
 
@@ -113,6 +149,17 @@ export class VehicleDocumentService {
     existing: VehicleDocument,
     file: PickedDocument,
   ): Promise<RepositoryResult<VehicleDocument>> {
+    return this.enqueue("vehicleDocument.replace", () => this.replaceNow(existing, file));
+  }
+
+  private async replaceNow(
+    existing: VehicleDocument,
+    file: PickedDocument,
+  ): Promise<RepositoryResult<VehicleDocument>> {
+    const stored = await this.repository.get(existing.vehicleId, existing.id);
+    if (!stored.ok) return stored;
+    if (!stored.value) return repositoryFailure("not-found", "vehicleDocument.replace");
+    existing = stored.value;
     const imported = await this.importFile(file);
     if (!imported.ok) return imported;
     const updated = updateVehicleDocument(
@@ -121,15 +168,15 @@ export class VehicleDocumentService {
       this.clock,
     );
     if (!updated.ok) {
-      await this.managedFiles.remove(imported.value.id);
+      await this.removeUnreferenced(imported.value.id);
       return repositoryFailure("unsupported", "vehicleDocument.replace", updated.issues);
     }
     const saved = await this.repository.update(updated.value);
     if (!saved.ok) {
-      await this.managedFiles.remove(imported.value.id);
+      await this.removeUnreferenced(imported.value.id);
       return saved;
     }
-    await this.managedFiles.remove(existing.fileReference);
+    await this.removeUnreferenced(existing.fileReference);
     return repositorySuccess(updated.value);
   }
 
@@ -137,6 +184,17 @@ export class VehicleDocumentService {
     existing: VehicleDocument,
     metadata: DocumentMetadataInput,
   ): Promise<RepositoryResult<VehicleDocument>> {
+    return this.enqueue("vehicleDocument.update", () => this.updateNow(existing, metadata));
+  }
+
+  private async updateNow(
+    existing: VehicleDocument,
+    metadata: DocumentMetadataInput,
+  ): Promise<RepositoryResult<VehicleDocument>> {
+    const stored = await this.repository.get(existing.vehicleId, existing.id);
+    if (!stored.ok) return stored;
+    if (!stored.value) return repositoryFailure("not-found", "vehicleDocument.update");
+    existing = stored.value;
     const updated = updateVehicleDocument(
       existing,
       { ...metadata, fileReference: existing.fileReference, vehicleId: existing.vehicleId },

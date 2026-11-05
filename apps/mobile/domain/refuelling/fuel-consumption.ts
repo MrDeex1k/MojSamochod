@@ -64,6 +64,7 @@ export type PendingFuelInterval = Readonly<{
 }>;
 
 export type FuelConsumptionSummary = Readonly<{
+  unavailableReason?: "unsafe-total";
   includedRefuellingIds: readonly RefuellingId[];
   intervals: readonly FuelInterval[];
   pendingInterval?: PendingFuelInterval;
@@ -96,13 +97,15 @@ export function calculateFuelConsumption(
   const totalFuelMicrolitres = safeSum(
     validIntervals.map(({ fuelMicrolitres }) => fuelMicrolitres),
   );
+  const overflow = totalDistanceMetres === undefined || totalFuelMicrolitres === undefined;
   const includedRefuellingIds = [
     ...new Set(validIntervals.flatMap(({ refuellingIds }) => refuellingIds)),
   ];
   const pendingRefuellings = sorted.slice(anchorIndex);
 
   return {
-    includedRefuellingIds,
+    includedRefuellingIds: overflow ? [] : includedRefuellingIds,
+    ...(overflow ? { unavailableReason: "unsafe-total" as const } : {}),
     intervals,
     pendingInterval: {
       reason: "awaiting-full-tank",
@@ -120,6 +123,7 @@ export function fuelConsumptionValue(
   unit: FuelConsumptionUnit,
 ): number | undefined {
   const { totalDistanceMetres, totalFuelMicrolitres } = summary;
+  if (summary.unavailableReason) return undefined;
   if (totalDistanceMetres <= 0 || totalFuelMicrolitres <= 0) return undefined;
   switch (unit) {
     case "litresPer100Kilometres":

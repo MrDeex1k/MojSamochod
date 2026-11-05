@@ -61,7 +61,7 @@ export function useRefuellingForm({
   const { t, i18n } = useAppTranslation();
   const volumeUnit = vehicle.fuelVolumeUnitPreference;
   const [occurredAt, setOccurredAt] = useState(() =>
-    toUtcMinute(new Date(refuelling?.occurredAt ?? clock.now())),
+    refuelling ? new Date(refuelling.occurredAt) : toUtcMinute(clock.now()),
   );
   const [quantity, setQuantity] = useState(() =>
     refuelling
@@ -86,6 +86,7 @@ export function useRefuellingForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState(false);
   const [saving, setSaving] = useState(false);
+  const pendingSave = useRef(false);
   const cancel = useFormExitGuard(
     { occurredAt, quantity, fillKind, odometer, priceInputMode, price, currency },
     saving,
@@ -93,7 +94,7 @@ export function useRefuellingForm({
   );
 
   const save = async () => {
-    if (saving) return;
+    if (pendingSave.current) return;
     setFormError(false);
     const parsed = parseInput({
       currency,
@@ -117,12 +118,16 @@ export function useRefuellingForm({
     }
 
     setErrors({});
+    pendingSave.current = true;
     setSaving(true);
     const result = await (
       refuelling ? refuellings.update(refuelling, parsed.value) : refuellings.create(parsed.value)
     )
       .catch((cause: unknown) => repositoryFailure("unavailable", "form.save", cause))
-      .finally(() => setSaving(false));
+      .finally(() => {
+        pendingSave.current = false;
+        setSaving(false);
+      });
     if (!result.ok) {
       const issues = validationIssues(result.error.cause);
       if (issues) setErrors(mapIssues(issues, t));
@@ -338,6 +343,7 @@ function formatInitialPrice(
         refuelling.pricing.unitPriceVolumeUnit,
         volumeUnit,
         locale,
+        false,
       ) ?? "");
 }
 
@@ -346,15 +352,9 @@ function normalizeDecimal(value: string): string {
 }
 
 function toUtcMinute(value: Date): Date {
-  return new Date(
-    Date.UTC(
-      value.getUTCFullYear(),
-      value.getUTCMonth(),
-      value.getUTCDate(),
-      value.getUTCHours(),
-      value.getUTCMinutes(),
-    ),
-  );
+  const result = new Date(value);
+  result.setUTCSeconds(0, 0);
+  return result;
 }
 
 function validationIssues(cause: unknown): readonly ValidationIssue[] | undefined {

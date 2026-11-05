@@ -1,5 +1,4 @@
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
-import { repositoryFailure } from "@/application/repositories/repository-result";
 import { useRef, useState } from "react";
 
 import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
@@ -81,6 +80,7 @@ export function useVehicleEditForm({
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const pendingSave = useRef(false);
   const cancel = useFormExitGuard(
     {
       make,
@@ -133,7 +133,7 @@ export function useVehicleEditForm({
   };
 
   const save = async () => {
-    if (saving) return;
+    if (pendingSave.current) return;
     setFormError(null);
     const newPhotoId =
       photoChange.kind === "new" ? managedFileIdFromUuidV7(idGenerator.generate()) : undefined;
@@ -167,6 +167,7 @@ export function useVehicleEditForm({
     }
 
     setErrors({});
+    pendingSave.current = true;
     setSaving(true);
     const outcome = await persistVehicleUpdate({
       managedFiles,
@@ -176,8 +177,11 @@ export function useVehicleEditForm({
       vehicle,
       vehicles,
     })
-      .catch((cause: unknown) => repositoryFailure("unavailable", "form.save", cause))
-      .finally(() => setSaving(false));
+      .catch(() => false)
+      .finally(() => {
+        pendingSave.current = false;
+        setSaving(false);
+      });
     if (!outcome) {
       setFormError(t("vehicleEdit.error"));
       return;
@@ -259,14 +263,16 @@ async function persistVehicleUpdate({
       if (newPhotoId) await managedFiles.remove(newPhotoId);
       return false;
     }
-    if (vehicle.photoReference && vehicle.photoReference !== updatedVehicle.photoReference) {
-      await managedFiles.remove(vehicle.photoReference);
-    }
-    return true;
   } catch {
     if (newPhotoId) await managedFiles.remove(newPhotoId).catch(() => undefined);
     return false;
   }
+  // The new reference is committed. Cleanup failure must never remove the new photo
+  // or report that the saved vehicle needs to be submitted again.
+  if (vehicle.photoReference && vehicle.photoReference !== updatedVehicle.photoReference) {
+    await managedFiles.remove(vehicle.photoReference).catch(() => undefined);
+  }
+  return true;
 }
 
 function parseOdometer(value: string, unit: DistanceUnit): number | undefined {

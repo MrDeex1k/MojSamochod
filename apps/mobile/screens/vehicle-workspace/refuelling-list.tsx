@@ -139,9 +139,11 @@ function ConsumptionSummary({
       </Text>
       {value === undefined ? (
         <Text className="text-body text-secondary">
-          {invalidInterval
-            ? t(`refuelling.intervalReason.${invalidInterval.reason}`)
-            : t("refuelling.awaitingConsumption")}
+          {history.consumption.unavailableReason
+            ? t(`refuelling.intervalReason.${history.consumption.unavailableReason}`)
+            : invalidInterval
+              ? t(`refuelling.intervalReason.${invalidInterval.reason}`)
+              : t("refuelling.awaitingConsumption")}
         </Text>
       ) : (
         <>

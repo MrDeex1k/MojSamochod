@@ -87,6 +87,7 @@ export function DocumentEntrySelector({
               />
             </View>
             <FlatList
+              testID="document-reference-results"
               data={filtered}
               onEndReached={results.loadMore}
               onEndReachedThreshold={0.5}
@@ -161,6 +162,18 @@ function useReferenceSearch(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [search, setSearch] = useState<{
+    query: string;
+    vehicleId: VehicleId;
+    repository: HistoryEntryRepository;
+    attempt: number;
+  } | null>(null);
+  const currentSearch =
+    open &&
+    search?.query === query &&
+    search?.vehicleId === vehicleId &&
+    search?.repository === repository &&
+    search?.attempt === attempt;
   const generation = useRef(0);
   const pending = useRef(false);
   useEffect(() => {
@@ -168,6 +181,7 @@ function useReferenceSearch(
     pending.current = false;
     if (!open || !vehicleId || !repository?.searchReferences) return;
     const timer = setTimeout(() => {
+      setSearch({ query, vehicleId, repository, attempt });
       setEntries([]);
       setCursor(null);
       setError(false);
@@ -196,6 +210,7 @@ function useReferenceSearch(
   }, [open, query, repository, vehicleId, attempt]);
   const loadMore = () => {
     if (
+      !currentSearch ||
       !cursor ||
       loading ||
       pending.current ||
@@ -228,5 +243,11 @@ function useReferenceSearch(
         }
       });
   };
-  return { entries, loading, error, loadMore, retry: () => setAttempt((value) => value + 1) };
+  return {
+    entries: currentSearch ? entries : [],
+    loading: open && Boolean(repository?.searchReferences) && (!currentSearch || loading),
+    error: currentSearch && error,
+    loadMore,
+    retry: () => setAttempt((value) => value + 1),
+  };
 }

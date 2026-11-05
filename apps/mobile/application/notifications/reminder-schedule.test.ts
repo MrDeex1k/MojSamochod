@@ -132,10 +132,10 @@ describe("reminder schedule reconciliation", () => {
     schedule.subscribe(listener);
     const results = await Promise.all([schedule.reconcile(), schedule.reconcile()]);
     expect(results[0]).toMatchObject({ ok: true, scheduled: 3 });
-    expect(results[1]).toMatchObject({ ok: true, scheduled: 0, unchanged: 3 });
+    expect(results[1]).toBe(results[0]);
     await expect(schedule.reconcile()).resolves.toMatchObject({ ok: true, unchanged: 3 });
-    expect(listener).toHaveBeenCalledTimes(3);
-    expect(notifications.list).toHaveBeenCalledTimes(3);
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(notifications.list).toHaveBeenCalledTimes(2);
     expect(notifications.schedule).toHaveBeenCalledTimes(3);
   });
 
@@ -369,4 +369,31 @@ describe("schedule-aware repository commit boundaries", () => {
     // A pending native operation must not delay committed data becoming available to the UI.
     expect(refresh).toHaveBeenCalledTimes(6);
   });
+});
+
+it("coalesces 100 refreshes while still reading changes made during native scheduling", async () => {
+  const { schedule, state, notifications, vehicles } = setup();
+  let started!: () => void, release!: () => void;
+  const entered = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const original = notifications.schedule.getMockImplementation()!;
+  notifications.schedule.mockImplementationOnce(async (request) => {
+    started();
+    await gate;
+    return original(request);
+  });
+  const first = schedule.reconcile();
+  await entered;
+  state.reminders = [];
+  const pending = Array.from({ length: 100 }, () => schedule.reconcile());
+  expect(new Set(pending).size).toBe(1);
+  release();
+  await Promise.all([first, ...pending]);
+  expect(vehicles.get).toHaveBeenCalledTimes(2);
+  expect(state.pending).toEqual([]);
+  await schedule.stop();
 });
