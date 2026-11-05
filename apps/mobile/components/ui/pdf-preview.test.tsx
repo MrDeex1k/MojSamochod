@@ -41,25 +41,30 @@ beforeEach(() => {
 });
 
 it("preserves the page across fullscreen, bounds zoom and closes with Android back", async () => {
-  await render(<PdfPreview uri="file:///document.pdf" name="Invoice" />);
-  await screen.findByText("Page 1 of 2");
-  await userEvent.press(screen.getByRole("button", { name: "Next page" }));
-  await screen.findByText("Page 2 of 2");
-  await userEvent.press(screen.getByRole("button", { name: "View full screen" }));
-  expect(
-    within(screen.getByTestId("pdf-fullscreen")).getByRole("button", { name: "Next page" }),
-  ).toBeDisabled();
-  expect(screen.getByRole("button", { name: "Zoom out" })).toBeDisabled();
-  for (let i = 0; i < 4; i++)
-    await userEvent.press(screen.getByRole("button", { name: "Zoom in" }));
-  expect(screen.getByText("300% · Fit page")).toBeOnTheScreen();
-  expect(screen.getByRole("button", { name: "Zoom in" })).toBeDisabled();
-  await userEvent.press(screen.getByRole("button", { name: "Fit page" }));
-  expect(screen.getByText("100% · Fit page")).toBeOnTheScreen();
-  await fireEvent(screen.getByTestId("pdf-fullscreen"), "requestClose");
-  expect(screen.queryByRole("button", { name: "Close preview" })).toBeNull();
-  expect(screen.getByText("Page 2 of 2")).toBeOnTheScreen();
-  expect(renderPage).toHaveBeenCalledTimes(2);
+  jest.useFakeTimers({ legacyFakeTimers: true });
+  const user = userEvent.setup();
+  try {
+    await render(<PdfPreview uri="file:///document.pdf" name="Invoice" />);
+    await screen.findByText("Page 1 of 2");
+    await user.press(screen.getByRole("button", { name: "Next page" }));
+    await screen.findByText("Page 2 of 2");
+    await user.press(screen.getByRole("button", { name: "View full screen" }));
+    expect(
+      within(screen.getByTestId("pdf-fullscreen")).getByRole("button", { name: "Next page" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Zoom out" })).toBeDisabled();
+    for (let i = 0; i < 4; i++) await user.press(screen.getByRole("button", { name: "Zoom in" }));
+    expect(screen.getByText("300% · Fit page")).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Zoom in" })).toBeDisabled();
+    await user.press(screen.getByRole("button", { name: "Fit page" }));
+    expect(screen.getByText("100% · Fit page")).toBeOnTheScreen();
+    await fireEvent(screen.getByTestId("pdf-fullscreen"), "requestClose");
+    expect(screen.queryByRole("button", { name: "Close preview" })).toBeNull();
+    expect(screen.getByText("Page 2 of 2")).toBeOnTheScreen();
+    expect(renderPage).toHaveBeenCalledTimes(2);
+  } finally {
+    jest.useRealTimers();
+  }
 });
 
 it("keeps the same open page and zoom when a fold changes the workspace layout", async () => {
