@@ -2,6 +2,7 @@ import type { ManagedFileRepository } from "@/application/repositories/managed-f
 import type { RepositoryResult } from "@/application/repositories/repository-result";
 import type {
   ObjectStorage,
+  ObjectStorageError,
   StagedObject,
   StagedObjectKey,
 } from "@/application/storage/object-storage";
@@ -156,6 +157,7 @@ export class ManagedFileCoordinator {
     }
     const stagedKeys = await this.storage.listStagedKeys();
     if (!stagedKeys.ok) return storageFailure(stagedKeys.error, "managedFile.reconcile");
+    let integrityFailure: ObjectStorageError | undefined;
     for (const metadata of pending.value) {
       if (metadata.status === "deleting") continue;
 
@@ -168,6 +170,11 @@ export class ManagedFileCoordinator {
       };
       const committed = await this.storage.commit(staged);
       if (!committed.ok) {
+        if (committed.error.kind === "integrity-failure") {
+          // Leave the reservation and copies intact for recovery without blocking other files.
+          integrityFailure ??= committed.error;
+          continue;
+        }
         if (committed.error.kind === "not-found") {
           const deleted = await this.repository.delete(metadata.id);
           if (!deleted.ok && deleted.error.kind !== "not-found") return deleted;
@@ -208,7 +215,9 @@ export class ManagedFileCoordinator {
       if (!removed.ok) return removed;
     }
 
-    return { ok: true, value: undefined };
+    return integrityFailure
+      ? storageFailure(integrityFailure, "managedFile.reconcile")
+      : { ok: true, value: undefined };
   }
 
   remove(id: ManagedFileId): Promise<RepositoryResult<void>> {

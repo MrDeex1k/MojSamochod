@@ -107,11 +107,18 @@ export type MoneyInput = Readonly<{
 }>;
 
 export function utcTimestamp(value: string, field: string): ValidationResult<UtcTimestamp> {
+  const parsed = storedUtcTimestamp(value, field);
+  return parsed.ok && parsed.value.startsWith("0000")
+    ? invalid([{ code: "invalid-format", field }])
+    : parsed;
+}
+
+/** Reads canonical event timestamps that older versions could persist with year 0000. */
+export function storedUtcTimestamp(value: string, field: string): ValidationResult<UtcTimestamp> {
   const parsed = new Date(value);
 
   if (
     !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) ||
-    value.startsWith("0000") ||
     !Number.isFinite(parsed.getTime()) ||
     parsed.toISOString() !== value
   ) {

@@ -453,3 +453,54 @@ it("exports populated documents with one batched file read and no private locati
   expect(dependencies.managedFileRepository.getReady).not.toHaveBeenCalled();
   expect(serializeVehicleHistoryExport(result.value)).not.toMatch(/storageKey|objects\/private/);
 });
+
+it.each(["single", "missing-batch"] as const)(
+  "handles a populated export with %s metadata lookup",
+  async (mode) => {
+    const dependencies = exportDependencies();
+    const document = {
+      id: "01990000-0001-7000-8000-000000000001",
+      fileReference: "01990000-0002-7000-8000-000000000001",
+      vehicleId: createDevelopmentVehicleHistoryFixture().vehicle.id,
+      name: "Invoice",
+      createdAt: exportedAt.toISOString(),
+      updatedAt: exportedAt.toISOString(),
+    };
+    dependencies.vehicleDocumentRepository.list.mockResolvedValue(repositorySuccess([document]));
+    const { getReady } = dependencies.managedFileRepository;
+    getReady.mockResolvedValue(
+      repositorySuccess({
+        id: document.fileReference,
+        kind: "document",
+        status: "ready",
+        byteSize: 123,
+        mimeType: "application/pdf",
+        originalName: "invoice.pdf",
+        sha256: "a".repeat(64),
+        storageKey: "objects/private.pdf",
+        createdAt: document.createdAt,
+        updatedAt: document.updatedAt,
+      }),
+    );
+    const getReadyMany = jest.fn().mockResolvedValue(repositorySuccess([]));
+    const result = await createVehicleHistoryExport({
+      ...dependencies,
+      managedFileRepository: {
+        ...dependencies.managedFileRepository,
+        ...(mode === "missing-batch" ? { getReadyMany } : {}),
+      },
+    } as unknown as Parameters<typeof createVehicleHistoryExport>[0]);
+    if (mode === "single") {
+      expect(result).toMatchObject({
+        ok: true,
+        value: { data: { documents: [{ id: document.id }] } },
+      });
+      expect(getReady).toHaveBeenCalledWith(document.fileReference);
+      expect(getReadyMany).not.toHaveBeenCalled();
+    } else {
+      expect(result).toMatchObject({ ok: false, error: { kind: "corrupt-data" } });
+      expect(getReadyMany).toHaveBeenCalledWith([document.fileReference]);
+      expect(getReady).not.toHaveBeenCalled();
+    }
+  },
+);

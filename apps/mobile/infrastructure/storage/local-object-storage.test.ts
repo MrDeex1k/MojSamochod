@@ -208,7 +208,7 @@ class MemoryDriver implements ObjectStorageDriver {
   }
 }
 
-it("rejects mismatched content at an existing destination", async () => {
+it("retains damaged copies when neither matches the staged metadata", async () => {
   mockDigest.mockResolvedValue(new Uint8Array(32).fill(0xab).buffer);
   const driver = new MemoryDriver(new Uint8Array([1, 2, 3]));
   const storage = new LocalObjectStorage(driver);
@@ -219,20 +219,54 @@ it("rejects mismatched content at an existing destination", async () => {
     sourceUri: "file:///source.pdf",
   });
   if (!staged.ok) throw new Error("stage");
-  driver.files.set(`objects/${managedFileId}.pdf`, new Uint8Array([9]));
+  const destination = `objects/${managedFileId}.pdf`;
+  driver.files.set(destination, new Uint8Array([9]));
+  driver.files.delete(staged.value.stagingKey);
   expect(await storage.commit(staged.value)).toMatchObject({
     ok: false,
     error: { kind: "integrity-failure" },
   });
-  driver.files.set(`objects/${managedFileId}.pdf`, new Uint8Array([9, 9, 9]));
+  driver.files.set(destination, new Uint8Array([9, 9, 9]));
+  driver.files.set(staged.value.stagingKey, new Uint8Array([8, 8, 8]));
   mockDigest.mockResolvedValue(new Uint8Array(32).fill(0xcd).buffer);
   expect(await storage.commit(staged.value)).toMatchObject({
     ok: false,
     error: { kind: "integrity-failure" },
   });
+  expect(driver.files.get(destination)).toEqual(new Uint8Array([9, 9, 9]));
+  expect(driver.files.get(staged.value.stagingKey)).toEqual(new Uint8Array([8, 8, 8]));
+});
+
+it("can recover from a failed replacement without losing the verified staging copy", async () => {
+  mockDigest.mockResolvedValue(new Uint8Array(32).fill(0xab).buffer);
+  const content = new Uint8Array([1, 2, 3]);
+  const driver = new MemoryDriver(content);
+  const storage = new LocalObjectStorage(driver);
+  const staged = await storage.stage({
+    extension: "pdf",
+    managedFileId,
+    maximumBytes: 100,
+    sourceUri: "file:///source.pdf",
+  });
+  if (!staged.ok) throw staged.error;
+  const destination = `objects/${managedFileId}.pdf`;
+  driver.files.set(destination, new Uint8Array([9]));
+  jest.spyOn(driver, "move").mockRejectedValueOnce(new Error("I/O error"));
+
+  expect(await storage.commit(staged.value)).toMatchObject({
+    ok: false,
+    error: { kind: "unavailable" },
+  });
+  expect(driver.files.get(staged.value.stagingKey)).toEqual(content);
+  expect(await storage.commit(staged.value)).toMatchObject({
+    ok: true,
+    value: { storageKey: destination },
+  });
+  expect(driver.files.get(destination)).toEqual(content);
 });
 
 it("rejects staging paths outside this file's private slot before touching the driver", async () => {
+  mockDigest.mockResolvedValue(new Uint8Array(32).fill(0xab).buffer);
   const driver = new MemoryDriver(new Uint8Array([1]));
   const storage = new LocalObjectStorage(driver);
   const staged = await storage.stage({

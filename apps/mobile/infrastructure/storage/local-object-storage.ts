@@ -80,16 +80,19 @@ export class LocalObjectStorage implements ObjectStorage {
       return objectStorageFailure("integrity-failure", operation);
 
     try {
-      const exists = this.driver.exists(keyResult.value);
-      const candidate = exists ? keyResult.value : stagedObject.stagingKey;
-      if (!this.driver.exists(candidate)) return objectStorageFailure("not-found", operation);
-      if (
-        this.driver.size(candidate) !== stagedObject.byteSize ||
-        (await this.driver.digest(candidate)) !== stagedObject.sha256
-      ) {
-        return objectStorageFailure("integrity-failure", operation);
-      }
-      if (!exists) {
+      const destinationExists = this.driver.exists(keyResult.value);
+      if (!destinationExists || !(await this.matches(keyResult.value, stagedObject))) {
+        if (!this.driver.exists(stagedObject.stagingKey)) {
+          return objectStorageFailure(
+            destinationExists ? "integrity-failure" : "not-found",
+            operation,
+          );
+        }
+        if (!(await this.matches(stagedObject.stagingKey, stagedObject))) {
+          return objectStorageFailure("integrity-failure", operation);
+        }
+        // Keep the verified staging copy until it can replace the damaged destination.
+        if (destinationExists) await this.driver.delete(keyResult.value);
         await this.driver.move(stagedObject.stagingKey, keyResult.value);
       }
       return objectStorageSuccess({
@@ -99,12 +102,15 @@ export class LocalObjectStorage implements ObjectStorage {
         storageKey: keyResult.value,
       });
     } catch (error) {
-      return objectStorageFailure(
-        this.driver.exists(stagedObject.stagingKey) ? "unavailable" : "not-found",
-        operation,
-        error,
-      );
+      return objectStorageFailure("unavailable", operation, error);
     }
+  }
+
+  private async matches(key: string, expected: StagedObject): Promise<boolean> {
+    return (
+      this.driver.size(key) === expected.byteSize &&
+      (await this.driver.digest(key)) === expected.sha256
+    );
   }
 
   async discard(stagingKey: StagedObjectKey): Promise<ObjectStorageResult<void>> {

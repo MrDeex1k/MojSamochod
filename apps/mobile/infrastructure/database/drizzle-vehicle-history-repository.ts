@@ -1,4 +1,4 @@
-import { utcTimestamp } from "@/domain/shared/value-objects";
+import { storedUtcTimestamp } from "@/domain/shared/value-objects";
 import type {
   HistoryEntryReference,
   HistoryReferencePage,
@@ -593,7 +593,7 @@ function mapReference(row: {
 }): HistoryEntryReference {
   if (row.type !== "repair" && row.type !== "replacement" && row.type !== "inspection")
     throw new CorruptStoredDataError("HistoryEntryReference");
-  const occurredAt = utcTimestamp(row.occurredAt, "occurredAt");
+  const occurredAt = storedUtcTimestamp(row.occurredAt, "occurredAt");
   if (!occurredAt.ok) throw new CorruptStoredDataError("HistoryEntryReference");
   return {
     id: historyEntryIdFromUuidV7(row.id),

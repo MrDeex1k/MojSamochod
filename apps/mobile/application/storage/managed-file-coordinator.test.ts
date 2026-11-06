@@ -270,6 +270,41 @@ describe("ManagedFileCoordinator", () => {
     expect(result).toMatchObject({ ok: false });
   });
 
+  it("reports isolated corruption after recovering other files and exposing the app", async () => {
+    const events: string[] = [];
+    const repository = repositoryFake(events);
+    const storage = storageFake(events);
+    const damaged: StagedManagedFileMetadata = {
+      byteSize: size,
+      createdAt: timestamp,
+      id,
+      kind: "vehicle-photo",
+      mimeType: "image/jpeg",
+      originalName: "car.jpg",
+      sha256: hash,
+      stagingKey,
+      status: "staged",
+      updatedAt: timestamp,
+    };
+    const healthyKey = `staging/${secondId}.jpg` as StagedObjectKey;
+    repository.listRecoverable = async () =>
+      repositorySuccess([damaged, { ...damaged, id: secondId, stagingKey: healthyKey }]);
+    storage.listStagedKeys = async () => objectStorageSuccess([stagingKey, healthyKey]);
+    const commit = storage.commit;
+    storage.commit = (staged) =>
+      staged.managedFileId === id
+        ? Promise.resolve(objectStorageFailure("integrity-failure", "test"))
+        : commit(staged);
+    const markReady = jest.spyOn(repository, "markReady");
+
+    const result = await new ManagedFileCoordinator(clock, repository, storage).reconcile(() =>
+      events.push("ready"),
+    );
+    expect(result).toMatchObject({ ok: false, error: { kind: "corrupt-data" } });
+    expect(markReady.mock.calls.map(([fileId]) => fileId)).toEqual([secondId]);
+    expect(events).toEqual(["storage.commit", "repository.markReady", "ready"]);
+  });
+
   it("removes stale metadata when its staged copy disappeared", async () => {
     const events: string[] = [];
     const repository = repositoryFake(events);

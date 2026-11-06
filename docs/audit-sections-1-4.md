@@ -18,8 +18,9 @@ file storage findings. Dependency and toolchain versions remain unchanged.
 
 - Text rejects NUL and counts Unicode code points without allocating character arrays. Length
   validation stops after exceeding the limit.
-- UTC timestamps accept only canonical four-digit years 0001–9999. Documents and reminders share
-  calendar-date validation; timezone calculations handle intermediate years outside that range.
+- New UTC timestamps use canonical four-digit years 0001–9999. History and refuelling reads
+  also accept canonical year 0000 for compatibility with older records. Documents and reminders
+  share calendar-date validation; timezone calculations handle intermediate years outside that range.
 - Date/time merging preserves years 0001–0099. Reminder timezone formatters have a bounded cache.
 - Money formatting and fuel calculations share currency precision. Three-letter uppercase codes
   remain supported, including historical/custom codes; unknown codes use Intl's two-digit fallback.
@@ -52,12 +53,14 @@ pagination, query plans, and SQLite failure recovery.
 
 ## Local file storage
 
-- Erasure removes managed objects and all app-private cache entries, including picker and image
-  processing copies. External originals remain outside its scope; failed deletion retains the
-  resumable erasure marker.
+- Erasure removes managed objects and app-private cache entries, including picker and image
+  processing copies. It handles a missing cache directory, and a listing or deletion failure
+  retains the resumable marker. External originals remain outside its scope.
 - Serialized import/recovery operations release failed staged hash reservations so retry works
   without restarting. Stored staging keys must match the file ID and allowed extension.
-- Commit verifies size and SHA-256 even when the final object already exists. Hashing uses the
+- Commit verifies size and SHA-256 even when the final object already exists. A verified staging
+  copy can replace a damaged destination. If neither copy verifies, recovery keeps both copies
+  and reports the isolated failure after making the rest of the data available. Hashing uses the
   native file digest API instead of materializing the whole file in JavaScript memory.
 - Export reads ready-file metadata in batches, preserving missing-file validation and excluding
   private storage keys from the exported document.

@@ -100,6 +100,20 @@ it("resolves references across bind-variable batches without losing records", as
   expect(new Set(result.value.map((entry) => entry.id))).toEqual(new Set(ids));
 });
 
+it("reads canonical year-zero dates from old history rows and their references", async () => {
+  const occurredAt = "0000-02-29T13:24:57.123Z";
+  addHistory(1, "Legacy repair");
+  sqlite.prepare("UPDATE history_entries SET occurred_at = ? WHERE id = ?").run(occurredAt, id(1));
+  expect(await history.listPage(vehicleId)).toMatchObject({
+    ok: true,
+    value: { entries: [{ id: id(1), occurredAt }] },
+  });
+  expect(await history.references(vehicleId, [historyEntryIdFromUuidV7(id(1))])).toMatchObject({
+    ok: true,
+    value: [{ id: id(1), occurredAt }],
+  });
+});
+
 it("counts only requested associations and supports an empty selection", async () => {
   addHistory(1, "Repair");
   addHistory(2, "Other repair");
@@ -123,8 +137,9 @@ it("counts only requested associations and supports an empty selection", async (
 });
 
 it("pages fuel records without changing consumption calculated from the complete projection", async () => {
+  const legacyDate = "0000-02-29T13:24:57.123Z";
   for (let index = 1; index <= 105; index++) {
-    const date = new Date(Date.UTC(2026, 0, index)).toISOString();
+    const date = index === 1 ? legacyDate : new Date(Date.UTC(2026, 0, index)).toISOString();
     sqlite
       .prepare(
         "INSERT INTO refuellings (id,vehicle_id,occurred_at,odometer_metres,quantity_microlitres,input_volume_unit,fill_kind,created_at,updated_at) VALUES (?,?,?,?,40000000,'litres','full',?,?)",
@@ -140,6 +155,7 @@ it("pages fuel records without changing consumption calculated from the complete
   const third = await fuel.listPage(vehicleId, second.value.nextCursor!);
   if (!third.ok) throw third.error;
   expect(third.value.refuellings).toHaveLength(5);
+  expect(third.value.refuellings.at(-1)?.occurredAt).toBe(legacyDate);
   expect(third.value.nextCursor).toBeNull();
   const ids = [
     ...first.value.refuellings,
@@ -150,6 +166,7 @@ it("pages fuel records without changing consumption calculated from the complete
   const all = await fuel.list(vehicleId);
   const projection = await fuel.consumptionRecords(vehicleId);
   if (!all.ok || !projection.ok) throw new Error("Query failed");
+  expect(projection.value.find((record) => record.id === id(1))?.occurredAt).toBe(legacyDate);
   expect(calculateFuelConsumption(projection.value)).toEqual(calculateFuelConsumption(all.value));
   expect(calculateFuelConsumption(projection.value).intervals).toHaveLength(104);
 });
