@@ -441,7 +441,7 @@ review the scope instead of introducing remote infrastructure implicitly.
 ## Recommended next step
 
 Native UI refinement and audit PRs #23–#26 are integrated into `main`. See the
-[current status](current-status.md) for the integration baseline, verification, and CI limitation.
+[current status](current-status.md) for the integration baseline, verification, and local build policy.
 Prepare the release details, store metadata, screenshots and local signed builds before distributing
 the FREE release candidate for Phase 8 feedback. The non-reproduced Android SQLite initialization
 incident remains tracked as one known, non-blocking defect. Phase 6 is merged. Local build instructions

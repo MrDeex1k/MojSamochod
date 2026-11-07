@@ -40,8 +40,8 @@ merging them into `main` does not publish a new TestFlight or store build. See
   preservation of loaded refuelling ranges, split-view Back behavior, navigation guard cleanup,
   Android accessibility descriptions, alert dismissal isolation, and localized exact formatting.
 - `8630435`, sections 13–15: profile-aware native preparation, pinned transitive Expo modules for
-  clean installs, required native-module checks, consistent dark launch configuration, the Quality
-  workflow, and updated native build and release documentation. See [native QA builds](native-qa-builds.md)
+  clean installs, required native-module checks, consistent dark launch configuration, and updated
+  native build and release documentation. See [native QA builds](native-qa-builds.md)
   and [Xcode project preparation](xcode-json-project-format.md).
 
 ## Verification at integration
@@ -64,16 +64,10 @@ dates, and limitations; those counts are not the current integration result.
 
 ## CI and release automation
 
-The repository has one GitHub Actions workflow, [Quality](../.github/workflows/quality.yml).
-It runs for pull requests and pushes to `main` on Ubuntu 24.04, installs pinned NUB 0.9.3,
-checks the pinned Node version, installs dependencies through Socket Firewall, and runs
-`nub run check`. It does not build native release artifacts or publish to TestFlight or stores.
-Build, signing, and submission remain local; EAS is outside the accepted release setup.
-
-On 7 November, GitHub Actions jobs were prevented from starting because the account was locked
-due to a billing issue. See the [integration PR job annotation](https://github.com/MrDeex1k/MojSamochod/actions/runs/42365110093/job/128381413837).
-Local checks passed, but this does not establish a successful hosted CI run. Restore account
-access and rerun the workflow before relying on hosted verification.
+The Quality GitHub Actions workflow was removed on 7 November at the user's request. The repository
+has no CI/CD workflows. Run `nub run check` locally before committing or opening a pull request;
+dependency installation continues to use the pinned toolchain and Socket Firewall.
+Native builds, signing, and submission remain local; EAS is outside the accepted release setup.
 
 ## Historical accessibility verification and release gates
 

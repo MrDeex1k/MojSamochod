@@ -80,9 +80,8 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
   available for device-dependent dimensions, animation, and platform controls.
 - Husky and commitlint enforce Conventional Commits.
 - `nub run check` runs lint, formatting, native tooling tests, Expo autolinking checks, TypeScript,
-  Drizzle migration checks, and Jest. GitHub Actions runs it on pull requests and on `main`,
-  using the pinned toolchain and a fresh dependency install through Socket Firewall. The workflow
-  does not build or publish native releases; see [current CI status](current-status.md#ci-and-release-automation).
+  Drizzle migration checks, and Jest. Run it locally before committing or opening a pull request.
+  The repository has no CI/CD workflows. Native builds, signing, and publication remain local.
 - Tests are colocated with source files and prefer accessible roles, labels, and user interactions
   over implementation details.
 - NativeWind theme lengths use `rem` values, while custom line heights remain unitless ratios. This

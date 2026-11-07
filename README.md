@@ -32,7 +32,7 @@ NativeWind 5 pozostaje wersją przedprodukcyjną. Projekt korzysta z niej świad
 .
 ├── apps/
 │   └── mobile/       # aplikacja React Native + Expo
-├── .github/          # issue and pull request templates, quality workflow
+├── .github/          # issue and pull request templates
 ├── package.json      # skrypty główne i konfiguracja workspace
 └── nub.lock          # local generated NUB lockfile (ignored by Git)
 ```
@@ -70,9 +70,8 @@ nub run typecheck
 nub run check
 ```
 
-[GitHub Actions Quality](.github/workflows/quality.yml) runs the same repository checks for pull
-requests and pushes to `main`. It does not build or publish native releases. See
-[current status](docs/current-status.md#ci-and-release-automation) for the hosted CI limitation.
+Run repository checks locally before committing or opening a pull request. The repository has no
+CI/CD workflows; native builds and publication are performed locally.
 See [local native QA builds](./docs/native-qa-builds.md) for simulator and emulator verification.
 
 Automatyczne poprawki i formatowanie:
