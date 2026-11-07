@@ -15,7 +15,7 @@
       "appleTeamId": "KV9BUW5GTH",
       "icon": "./assets/app-icons/Car.icon",
       "bundleIdentifier": "pl.jakubbatycki.mojeauto",
-      "buildNumber": "5",
+      "buildNumber": "7",
       "supportsTablet": true
     },
     "android": {

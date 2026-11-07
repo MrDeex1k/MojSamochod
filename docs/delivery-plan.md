@@ -212,8 +212,9 @@ restriction applies to database/dataset export and outbound attachment actions. 
 previewed inside the app; do not expose general sharing, external opening or image-export actions.
 Attachment selection remains
 allowed, but importing datasets from other applications does not. Review OS backup behavior
-separately from app-level export. The last documented App Store Connect upload is iOS `0.8.2 (5)`
-from 12 October; it predates the November changes now on `main`. See the
+separately from app-level export. The latest App Store Connect upload is iOS `0.8.2 (7)`
+from 7 November, including the integrated November changes. Apple accepted the package for
+processing; TestFlight availability and device acceptance of that build are not confirmed. See the
 [TestFlight history](testflight-preparation.md). Public store distribution and current account
 readiness require confirmation during release preparation.
 The current pre-release application version is `0.8.2`; reserve `1.0.0` for the first store release.

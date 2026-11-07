@@ -1,6 +1,6 @@
 # Przygotowanie TestFlight
 
-Dokument roboczy, aktualizacja 2026-10-12. Dystrybucja Androida jest odłożona decyzją wydawcy.
+Release record updated 2026-11-07. Android distribution remains deferred by the publisher.
 
 ## Tożsamość
 
@@ -8,10 +8,51 @@ Dokument roboczy, aktualizacja 2026-10-12. Dystrybucja Androida jest odłożona 
 - Nazwa pod ikoną: `Moje Auto`.
 - Bundle ID: `pl.jakubbatycki.mojeauto`; SKU: `mojeauto-ios`.
 - Apple Team ID: `KV9BUW5GTH`.
-- Aktualna wysłana wersja: `0.8.2`, build `5`, przygotowana lokalnie na Expo SDK 58.
-  Wcześniej wysłano `0.8.0` w buildach `1` i `2`.
+- Latest uploaded version: `0.8.2`, build `7`, prepared locally on Expo SDK 58.
+  Earlier documented uploads include `0.8.2 (5)` and `0.8.0` builds `1` and `2`.
 - Wydawca ma aktywne członkostwo i zgłosił utworzenie rekordu aplikacji.
 - Kontakt aplikacji: `mycar@mail.batycki.dev`.
+
+## Release 0.8.2 (7): 2026-11-07
+
+- Built from the application source on `main` at `def27d5`, with the iOS build counter advanced
+  to `7` and its configuration regression expectation updated. This includes the foldable work
+  and merged audit PRs #23–#26. No application dependency or toolchain versions were changed.
+- An existing local `0.8.2 (6)` archive dated 4 November was found in Xcode Archives. Its upload
+  status was not established; build `7` avoids reusing that counter.
+- Used temporary NUB `0.9.3` (official release SHA-256 verified), pinned Node `24.18.0`, and
+  Xcode `27.2`. Dependency installation went through Socket Firewall, with the existing cooling
+  period. The host's globally installed NUB was not replaced.
+- `nub run check` passed: 83 application suites / 566 tests and 9 native tooling tests, plus lint,
+  formatting, TypeScript, Drizzle checks, and autolinking (28 Apple / 27 Android modules, no duplicates).
+- Expo Doctor `1.21.6` passed 18/20: unsupported NUB lockfile detection and SDK-recommended
+  package-version differences, including intentional TypeScript 7. No checks were suppressed.
+- The root NUB audit reported no advisories across its reported 150 dependencies. This is not
+  a full mobile-workspace audit: the separate mobile audit refused to run without a workspace-local
+  lockfile. No alternate lockfile was introduced.
+- Production preparation used `MOJE_AUTO_NATIVE_QA=0`. Archive and distribution IPA metadata
+  confirm `pl.jakubbatycki.mojeauto`, `0.8.2 (7)`, arm64, iPhone/iPad support, dark appearance,
+  `SplashScreen`, the scene manifest, and an embedded `main.jsbundle`. Both signatures passed
+  `codesign --verify --deep --strict`. The IPA uses Cloud Managed Apple Distribution for team
+  `KV9BUW5GTH`, with `get-task-allow: false` and `beta-reports-active: true`.
+- Installed the development-signed Release archive as an update on the paired iPhone 15 Pro,
+  without removing the app or its data. Automation readiness and launch attempts failed. The user
+  explicitly instructed skipping the device-start check and uploading. Cold start and functional
+  acceptance of this build are therefore not confirmed.
+- Archive retained in Xcode Organizer:
+  `/Users/jakubbatycki/Library/Developer/Xcode/Archives/2026-11-07/MojeAuto-0.8.2-7-def27d5.xcarchive`.
+  Local distribution IPA: `/private/tmp/moje-auto-testflight-7-export/MojeAuto.ipa`.
+- Uploaded using local `xcodebuild -exportArchive` at 12:11 CET on 7 November. Apple reported
+  `Upload succeeded`, `Uploaded package is processing`, and `EXPORT SUCCEEDED`.
+  Processing completion and availability to TestFlight testers have not been verified.
+- Upload retained non-blocking missing-dSYM warnings for precompiled Expo, React,
+  ReactNativeDependencies, SDWebImage variants, Hermes, and libavif frameworks. These limit crash
+  symbolication for those libraries and did not prevent package acceptance.
+  Upload log: `/private/tmp/moje-auto-testflight-7-upload.log`.
+  Files under `/private/tmp` are temporary; the Organizer archive is the retained build artifact.
+- No EAS, public App Store submission, Android distribution, external tester changes, or Beta App
+  Review submission was performed. After Apple processing, install `0.8.2 (7)` through TestFlight
+  and verify cold start and representative existing-data workflows before wider distribution.
 
 ## Aktualizacja 0.8.2 (5): 2026-10-12
 

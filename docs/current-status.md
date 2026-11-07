@@ -1,6 +1,7 @@
 # Current project status
 
-Status as of 7 November 2026. Application baseline: `main` at `8630435`, after merging audit
+Status as of 7 November 2026. Latest upload uses application source from `main` at `def27d5`,
+with the iOS build counter advanced to `7`. It includes merged audit
 PRs [#23](https://github.com/MrDeex1k/MojSamochod/pull/23),
 [#24](https://github.com/MrDeex1k/MojSamochod/pull/24),
 [#25](https://github.com/MrDeex1k/MojSamochod/pull/25), and
@@ -21,9 +22,10 @@ database export, import, backup, or restore. See [product scope](product-scope.m
 [privacy and permissions](privacy-and-permissions.md).
 
 The application uses Expo 58.0.22 and React Native 0.88.1. Native configuration declares version
-0.8.2, iOS build 5, and Android version code 1. The last documented App Store Connect upload is
-iOS 0.8.2 (5), dated 12 October. The November changes and QA builds are newer than that upload;
-merging them into `main` does not publish a new TestFlight or store build. See
+0.8.2, iOS build 7, and Android version code 1. The latest App Store Connect upload is
+iOS 0.8.2 (7), accepted on 7 November and reported as processing by Apple. TestFlight availability
+and installation of the uploaded build are not yet verified. The user explicitly requested skipping
+the physical-device start check after automation failed. No public store release was submitted. See
 [TestFlight history](testflight-preparation.md) and the [delivery plan](delivery-plan.md).
 
 ## Integrated changes

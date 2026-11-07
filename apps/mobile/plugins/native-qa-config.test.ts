@@ -24,7 +24,7 @@ describe("local native QA configuration", () => {
     expect(config.version).toBe("0.8.2");
     expect(config.ios).toMatchObject({
       bundleIdentifier: "pl.jakubbatycki.mojeauto",
-      buildNumber: "5",
+      buildNumber: "7",
     });
     expect(config.android).toMatchObject({
       package: "pl.jakubbatycki.mojeauto",
