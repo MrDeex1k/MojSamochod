@@ -58,6 +58,10 @@ export class ReminderSchedule {
     return this.lastResult;
   }
 
+  /**
+   * Shares each queued pass between callers and publishes its result to subscribers.
+   * Calls made during an active pass queue one further pass to read subsequent edits.
+   */
   reconcile(): Promise<ReconciliationResult> {
     if (this.queued) return this.queued;
     // Calls before a pass starts share its fresh snapshot. Calls during a native await

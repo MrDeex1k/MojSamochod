@@ -117,6 +117,7 @@ export function RefuellingList({
   );
 }
 
+/** Displays average consumption or its unavailable reason, prioritizing unsafe aggregate sums. */
 function ConsumptionSummary({
   history,
   vehicle,

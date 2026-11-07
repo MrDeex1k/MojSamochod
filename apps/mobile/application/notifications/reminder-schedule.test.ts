@@ -373,6 +373,8 @@ describe("schedule-aware repository commit boundaries", () => {
 
 it("coalesces 100 refreshes while still reading changes made during native scheduling", async () => {
   const { schedule, state, notifications, vehicles } = setup();
+  const listener = jest.fn(() => schedule.getSnapshot());
+  schedule.subscribe(listener);
   let started!: () => void, release!: () => void;
   const entered = new Promise<void>((resolve) => {
     started = resolve;
@@ -393,6 +395,11 @@ it("coalesces 100 refreshes while still reading changes made during native sched
   expect(new Set(pending).size).toBe(1);
   release();
   await Promise.all([first, ...pending]);
+  expect(listener).toHaveBeenCalledTimes(2);
+  expect(listener.mock.results.map(({ value }) => value)).toEqual([
+    expect.objectContaining({ ok: true, scheduled: 3, cancelled: 0 }),
+    expect.objectContaining({ ok: true, scheduled: 0, cancelled: 3 }),
+  ]);
   expect(vehicles.get).toHaveBeenCalledTimes(2);
   expect(state.pending).toEqual([]);
   await schedule.stop();

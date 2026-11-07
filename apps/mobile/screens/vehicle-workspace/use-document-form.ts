@@ -19,6 +19,7 @@ import type {
 import { formatCurrencyInputMinorUnits, parseCurrencyInput } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
+/** Manages document metadata and file selection, allowing one pending create or update. */
 export function useDocumentForm({
   document,
   documents,
@@ -88,6 +89,7 @@ export function useDocumentForm({
     }
   };
 
+  /** Validates document fields and releases the submission lock after either persistence outcome. */
   const save = async () => {
     if (pendingSave.current) return;
     if (!name.trim()) {

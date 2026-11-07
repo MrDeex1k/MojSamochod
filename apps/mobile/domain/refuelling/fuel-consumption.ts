@@ -73,6 +73,10 @@ export type FuelConsumptionSummary = Readonly<{
   unanchoredRefuellingIds: readonly RefuellingId[];
 }>;
 
+/**
+ * Summarizes valid full-tank intervals while retaining incomplete and invalid intervals.
+ * Unsafe aggregate sums mark consumption unavailable and clear included record IDs.
+ */
 export function calculateFuelConsumption(
   refuellings: readonly ConsumptionRecord[],
 ): FuelConsumptionSummary {
@@ -118,6 +122,7 @@ export function calculateFuelConsumption(
   };
 }
 
+/** Converts usable summary totals to the requested unit, returning undefined for unavailable data. */
 export function fuelConsumptionValue(
   summary: FuelConsumptionSummary,
   unit: FuelConsumptionUnit,

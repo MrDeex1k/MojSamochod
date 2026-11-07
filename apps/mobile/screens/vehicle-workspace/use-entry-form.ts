@@ -33,6 +33,7 @@ type EntryFormProps = Readonly<{
   vehicle: Vehicle;
 }>;
 
+/** Edits history entries without rounding stored timestamps and prevents overlapping saves. */
 export function useEntryForm({
   clock,
   entry,
@@ -121,6 +122,7 @@ export function useEntryForm({
     return { ...common, details: { description, subject }, type };
   };
 
+  /** Validates the draft before locking a single create or update operation. */
   const save = async () => {
     if (pendingSave.current) return;
     setFormError(null);

@@ -54,6 +54,7 @@ export function FirstVehicleSetupScreen() {
   );
 }
 
+/** Collects the first vehicle and optional photo with a single pending persistence operation. */
 export function CreateFirstVehicleForm({
   clock,
   idGenerator,
@@ -111,6 +112,7 @@ export function CreateFirstVehicleForm({
     setFuelVolumeUnit(nextUnit);
   };
 
+  /** Validates the draft and locks submissions until vehicle and photo persistence finishes. */
   const save = async () => {
     if (pendingSave.current) return;
     setFormError(null);

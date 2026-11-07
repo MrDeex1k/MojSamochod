@@ -15,6 +15,7 @@ import { TextField } from "@/components/ui/text-field";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { formatUtcDateTime } from "@/localization/formatters";
 
+/** Selects a history relation from repository search results or the supplied local entries. */
 export function DocumentEntrySelector({
   entries,
   historyEntries,
@@ -151,6 +152,10 @@ function referenceLabel(entry: HistoryEntryReference | HistoryEntry, t: (key: st
   return `${t(`workspace.entryType.${entry.type}`)} - ${subject ?? t(`entryForm.inspectionKinds.${inspectionKind ?? "other"}`)}`;
 }
 
+/**
+ * Debounces reference search and exposes pages only for the current query and repository.
+ * Query changes invalidate previous requests and prevent reuse of their pagination cursors.
+ */
 function useReferenceSearch(
   open: boolean,
   query: string,

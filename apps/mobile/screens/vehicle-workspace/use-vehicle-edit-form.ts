@@ -27,6 +27,7 @@ type PhotoChange =
   | Readonly<{ kind: "keep" | "remove" }>
   | Readonly<{ kind: "new"; photo: SelectedPhoto }>;
 
+/** Manages vehicle edits and photo replacement with one pending save and retryable errors. */
 export function useVehicleEditForm({
   clock,
   existingPhotoUri,
@@ -132,6 +133,7 @@ export function useVehicleEditForm({
     setFuelVolumeUnit(nextUnit);
   };
 
+  /** Validates the vehicle draft and prevents duplicate writes until persistence settles. */
   const save = async () => {
     if (pendingSave.current) return;
     setFormError(null);
@@ -232,6 +234,10 @@ export function useVehicleEditForm({
   };
 }
 
+/**
+ * Imports a replacement photo before committing the vehicle and rolls it back on failure.
+ * Old-photo cleanup happens after commit and cannot invalidate a successful update.
+ */
 async function persistVehicleUpdate({
   managedFiles,
   newPhotoId,

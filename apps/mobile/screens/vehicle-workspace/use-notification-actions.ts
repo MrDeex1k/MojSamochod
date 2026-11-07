@@ -2,6 +2,10 @@ import { useRef, useState } from "react";
 import type { ReminderNotifications } from "@/application/notifications/reminder-notifications";
 import type { ReminderSchedule } from "@/application/notifications/reminder-schedule";
 
+/**
+ * Prevents overlapping notification actions and exposes their busy and failure state.
+ * Permission requests finish before reconciliation, and both results determine success.
+ */
 export function useNotificationActions(
   notifications: ReminderNotifications,
   schedule: ReminderSchedule,
@@ -9,6 +13,7 @@ export function useNotificationActions(
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
   const [error, setError] = useState(false);
+  /** Runs one action at a time and maps failed results or rejections to a retryable error. */
   const run = async (operation: () => Promise<boolean>) => {
     if (pending.current) return;
     pending.current = true;

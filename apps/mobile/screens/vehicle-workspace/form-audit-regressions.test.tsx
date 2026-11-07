@@ -218,3 +218,57 @@ it("reports failed notification retries and coalesces repeated button actions", 
   expect(result.current.error).toBe(true);
   expect(result.current.busy).toBe(false);
 });
+
+it.each([
+  { permissionOk: false, reconciledOk: true, expectedError: true },
+  { permissionOk: true, reconciledOk: false, expectedError: true },
+  { permissionOk: true, reconciledOk: true, expectedError: false },
+])(
+  "waits for permission before reconciling and reports request results $permissionOk/$reconciledOk",
+  async ({ permissionOk, reconciledOk, expectedError }) => {
+    type PermissionResult = Awaited<
+      ReturnType<ReminderNotifications["requestPermissionAfterExplanation"]>
+    >;
+    let completePermission!: (result: PermissionResult) => void;
+    const permission = new Promise<PermissionResult>((resolve) => {
+      completePermission = resolve;
+    });
+    const requestPermissionAfterExplanation = jest.fn(() => permission);
+    const reconcile = jest.fn().mockResolvedValue({ ok: reconciledOk });
+    const { result } = await renderHook(() =>
+      useNotificationActions(
+        { requestPermissionAfterExplanation } as unknown as ReminderNotifications,
+        { reconcile } as unknown as ReminderSchedule,
+      ),
+    );
+    let request!: Promise<void>;
+    await act(async () => {
+      request = result.current.request();
+      await result.current.request();
+    });
+    expect(requestPermissionAfterExplanation).toHaveBeenCalledTimes(1);
+    expect(reconcile).not.toHaveBeenCalled();
+    expect(result.current.busy).toBe(true);
+    expect(result.current.error).toBe(false);
+
+    await act(async () => {
+      completePermission(
+        permissionOk
+          ? {
+              ok: true,
+              value: {
+                status: "granted",
+                canAskAgain: true,
+                channelBlocked: false,
+                canSchedule: true,
+              },
+            }
+          : { ok: false, error: { kind: "unavailable", operation: "requestPermission" } },
+      );
+      await request;
+    });
+    expect(reconcile).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toBe(expectedError);
+    expect(result.current.busy).toBe(false);
+  },
+);

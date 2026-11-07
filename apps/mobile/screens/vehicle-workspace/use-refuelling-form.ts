@@ -50,6 +50,7 @@ type RefuellingFormProps = Readonly<{
   vehicle: FuelConfiguredVehicle;
 }>;
 
+/** Preserves stored timestamps and editable prices while guarding against duplicate submissions. */
 export function useRefuellingForm({
   clock,
   onCancel,
@@ -93,6 +94,7 @@ export function useRefuellingForm({
     onCancel,
   );
 
+  /** Validates refuelling inputs and holds the submission lock until persistence settles. */
   const save = async () => {
     if (pendingSave.current) return;
     setFormError(false);
@@ -326,6 +328,7 @@ function formatInitialOdometer(
   );
 }
 
+/** Formats the stored total or converted unit price without input-breaking grouping separators. */
 function formatInitialPrice(
   refuelling: Refuelling | undefined,
   volumeUnit: FuelConfiguredVehicle["fuelVolumeUnitPreference"],

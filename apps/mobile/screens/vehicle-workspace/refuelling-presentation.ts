@@ -44,6 +44,7 @@ export function formatUnitPrice(
   }).format(unitPriceMilliUnits / 1000);
 }
 
+/** Converts and formats a unit price, allowing editable inputs to omit grouping separators. */
 export function formatConvertedUnitPrice(
   unitPriceMilliUnits: number,
   fromUnit: VolumeUnit,

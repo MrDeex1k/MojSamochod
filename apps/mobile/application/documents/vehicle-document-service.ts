@@ -60,6 +60,7 @@ export class VehicleDocumentService {
     return this.enqueue("vehicleDocument.create", () => this.createNow(vehicleId, file, metadata));
   }
 
+  /** Imports the file before metadata creation and cleans up the import if creation fails. */
   private async createNow(
     vehicleId: VehicleId,
     file: PickedDocument,
@@ -87,6 +88,7 @@ export class VehicleDocumentService {
     return this.enqueue("vehicleDocument.delete", () => this.deleteNow(vehicleId, documentId));
   }
 
+  /** Commits metadata deletion before attempting binary cleanup, which startup can retry. */
   private async deleteNow(
     vehicleId: VehicleId,
     documentId: DocumentId,
@@ -152,6 +154,7 @@ export class VehicleDocumentService {
     return this.enqueue("vehicleDocument.replace", () => this.replaceNow(existing, file));
   }
 
+  /** Reloads current metadata before replacing its file and cleans up only after commit. */
   private async replaceNow(
     existing: VehicleDocument,
     file: PickedDocument,
@@ -187,6 +190,7 @@ export class VehicleDocumentService {
     return this.enqueue("vehicleDocument.update", () => this.updateNow(existing, metadata));
   }
 
+  /** Applies metadata edits to the stored document so stale editors retain its current file. */
   private async updateNow(
     existing: VehicleDocument,
     metadata: DocumentMetadataInput,
