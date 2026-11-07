@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, desc } from "drizzle-orm";
 import {
   check,
   foreignKey,
@@ -25,7 +25,7 @@ export const managedFiles = sqliteTable(
     updatedAt: text("updated_at").notNull(),
   },
   (table) => [
-    uniqueIndex("managed_files_document_sha256_unique")
+    index("managed_files_document_sha256_unique")
       .on(table.sha256)
       .where(sql`${table.kind} = 'document' and ${table.status} in ('staged', 'ready')`),
     uniqueIndex("managed_files_staging_key_unique").on(table.stagingKey),
@@ -87,7 +87,7 @@ export const vehicles = sqliteTable(
     ),
     check(
       "vehicles_manufacture_year_range",
-      sql`${table.manufactureYear} is null or ${table.manufactureYear} between 1000 and 9999`,
+      sql`${table.manufactureYear} is null or (typeof(${table.manufactureYear}) = 'integer' and ${table.manufactureYear} between 1000 and 9999)`,
     ),
     check(
       "vehicles_registration_number_length",
@@ -173,8 +173,8 @@ export const refuellings = sqliteTable(
   (table) => [
     index("refuellings_vehicle_timeline_index").on(
       table.vehicleId,
-      table.occurredAt,
-      table.createdAt,
+      desc(table.occurredAt),
+      desc(table.createdAt),
       table.id,
     ),
     check(
@@ -218,8 +218,8 @@ export const historyEntries = sqliteTable(
     uniqueIndex("history_entries_id_type_unique").on(table.id, table.type),
     index("history_entries_vehicle_timeline_index").on(
       table.vehicleId,
-      table.occurredAt,
-      table.createdAt,
+      desc(table.occurredAt),
+      desc(table.createdAt),
       table.id,
     ),
     check("history_entries_type", sql`${table.type} in ('inspection', 'replacement', 'repair')`),
@@ -275,15 +275,15 @@ export const vehicleDocuments = sqliteTable(
     uniqueIndex("vehicle_documents_file_reference_unique").on(table.fileReference),
     index("vehicle_documents_vehicle_date_index").on(
       table.vehicleId,
-      table.documentDate,
-      table.createdAt,
+      desc(table.documentDate),
+      desc(table.createdAt),
       table.id,
     ),
     index("vehicle_documents_history_entry_index").on(table.historyEntryId),
     check("vehicle_documents_name_length", sql`length(trim(${table.name})) between 1 and 255`),
     check(
       "vehicle_documents_date_format",
-      sql`${table.documentDate} is null or (${table.documentDate} glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' and date(${table.documentDate}) = ${table.documentDate})`,
+      sql`${table.documentDate} is null or (${table.documentDate} glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' and ${table.documentDate} >= '0001-01-01' and date(${table.documentDate}, '+0 days') is not null and date(${table.documentDate}, '+0 days') = ${table.documentDate})`,
     ),
     check(
       "vehicle_documents_amount_pair",

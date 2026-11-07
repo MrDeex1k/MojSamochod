@@ -14,7 +14,9 @@ export type Money = Readonly<{
 }>;
 
 export function countCharacters(value: string): number {
-  return [...value].length;
+  let count = 0;
+  for (const _character of value) count++;
+  return count;
 }
 
 export function requiredText(
@@ -25,9 +27,11 @@ export function requiredText(
   const normalized = value.trim();
   const issues: ValidationIssue[] = [];
 
-  if (normalized.length === 0) {
+  if (normalized.includes("\0")) {
+    issues.push({ code: "invalid-format", field });
+  } else if (normalized.length === 0) {
     issues.push({ code: "required", field });
-  } else if (countCharacters(normalized) > maximumLength) {
+  } else if (exceedsCharacterLimit(normalized, maximumLength)) {
     issues.push({ code: "too-long", field });
   }
 
@@ -45,7 +49,9 @@ export function optionalText(
     return valid(undefined);
   }
 
-  if (countCharacters(normalized) > maximumLength) {
+  if (normalized.includes("\0")) return invalid([{ code: "invalid-format", field }]);
+
+  if (exceedsCharacterLimit(normalized, maximumLength)) {
     return invalid([{ code: "too-long", field }]);
   }
 
@@ -101,9 +107,21 @@ export type MoneyInput = Readonly<{
 }>;
 
 export function utcTimestamp(value: string, field: string): ValidationResult<UtcTimestamp> {
+  const parsed = storedUtcTimestamp(value, field);
+  return parsed.ok && parsed.value.startsWith("0000")
+    ? invalid([{ code: "invalid-format", field }])
+    : parsed;
+}
+
+/** Reads canonical event timestamps that older versions could persist with year 0000. */
+export function storedUtcTimestamp(value: string, field: string): ValidationResult<UtcTimestamp> {
   const parsed = new Date(value);
 
-  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString() !== value) {
+  if (
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) ||
+    !Number.isFinite(parsed.getTime()) ||
+    parsed.toISOString() !== value
+  ) {
     return invalid([{ code: "invalid-format", field }]);
   }
 
@@ -115,5 +133,13 @@ export function utcTimestampFromDate(value: Date): UtcTimestamp {
     throw new Error("Clock returned an invalid date");
   }
 
-  return value.toISOString() as UtcTimestamp;
+  const result = utcTimestamp(value.toISOString(), "timestamp");
+  if (!result.ok) throw new Error("Timestamp must be in years 0001–9999");
+  return result.value;
+}
+
+function exceedsCharacterLimit(value: string, maximum: number): boolean {
+  let count = 0;
+  for (const _character of value) if (++count > maximum) return true;
+  return false;
 }

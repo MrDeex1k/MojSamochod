@@ -24,6 +24,7 @@ import {
   money,
   optionalText,
   requiredText,
+  storedUtcTimestamp,
   utcTimestamp,
 } from "@/domain/shared/value-objects";
 import type { DistanceUnit, Vehicle } from "@/domain/vehicle/vehicle";
@@ -82,6 +83,14 @@ export function mapVehicleRow(row: VehicleRow): Vehicle {
   if (!isDistanceUnit(row.distanceUnitPreference)) {
     throw new CorruptStoredDataError("distanceUnitPreference");
   }
+  if (
+    row.manufactureYear !== null &&
+    (!Number.isInteger(row.manufactureYear) ||
+      row.manufactureYear < 1000 ||
+      row.manufactureYear > 9999)
+  ) {
+    throw new CorruptStoredDataError("manufactureYear");
+  }
   const fuelConfiguration = mapFuelConfiguration(row);
 
   return {
@@ -126,7 +135,7 @@ export function mapRefuellingRow(row: RefuellingRow): Refuelling {
     fillKind: row.fillKind,
     id: mapRefuellingId(row.id, "id"),
     inputVolumeUnit: expectValue(volumeUnit(row.inputVolumeUnit), "inputVolumeUnit"),
-    occurredAt: expectValue(utcTimestamp(row.occurredAt, "occurredAt"), "occurredAt"),
+    occurredAt: expectValue(storedUtcTimestamp(row.occurredAt, "occurredAt"), "occurredAt"),
     odometerMetres: expectValue(
       metres(row.odometerMetres ?? undefined, "odometerMetres"),
       "odometerMetres",
@@ -275,7 +284,7 @@ function mapHistoryCommon(row: HistoryEntryRow) {
     createdAt: expectValue(utcTimestamp(row.createdAt, "createdAt"), "createdAt"),
     id: mapHistoryEntryId(row.id, "id"),
     notes: expectValue(optionalText(row.notes ?? undefined, "notes", 5000), "notes"),
-    occurredAt: expectValue(utcTimestamp(row.occurredAt, "occurredAt"), "occurredAt"),
+    occurredAt: expectValue(storedUtcTimestamp(row.occurredAt, "occurredAt"), "occurredAt"),
     odometerMetres: expectValue(
       metres(row.odometerMetres ?? undefined, "odometerMetres"),
       "odometerMetres",

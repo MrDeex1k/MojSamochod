@@ -77,3 +77,8 @@ export function storageObjectKey(value: string): ValidationResult<StorageObjectK
     ? valid(value as StorageObjectKey)
     : invalid([{ code: "invalid-format", field: "storageKey" }]);
 }
+
+/** A staging key must identify this exact file inside the private staging directory. */
+export function isStagingKey(value: string, id: ManagedFileId): boolean {
+  return ["jpg", "png", "pdf"].some((extension) => value === `staging/${id}.${extension}`);
+}

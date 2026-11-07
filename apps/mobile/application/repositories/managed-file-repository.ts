@@ -10,6 +10,9 @@ import type { UtcTimestamp } from "@/domain/shared/value-objects";
 import type { RepositoryResult } from "./repository-result";
 
 export interface ManagedFileRepository {
+  getReadyMany?(
+    ids: readonly ManagedFileId[],
+  ): Promise<RepositoryResult<readonly ReadyManagedFileMetadata[]>>;
   createStaged(metadata: StagedManagedFileMetadata): Promise<RepositoryResult<void>>;
   delete(id: ManagedFileId): Promise<RepositoryResult<void>>;
   findReadyBySha256(

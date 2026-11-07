@@ -32,6 +32,13 @@ export function parseVolumeToMicrolitres(
   field = "quantity",
   maximumDecimalPlaces = defaultMaximumDecimalPlaces,
 ): ValidationResult<Microlitres> {
+  if (
+    !Number.isInteger(maximumDecimalPlaces) ||
+    maximumDecimalPlaces < 0 ||
+    maximumDecimalPlaces > 6
+  ) {
+    return invalid([{ code: "out-of-range", field: `${field}.precision` }]);
+  }
   const validatedUnit = volumeUnit(unit, `${field}.unit`);
   const normalized = value.trim();
   const pattern =

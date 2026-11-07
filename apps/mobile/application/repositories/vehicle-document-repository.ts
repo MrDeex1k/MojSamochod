@@ -8,7 +8,21 @@ import type {
 
 import type { RepositoryResult } from "./repository-result";
 
+export type DocumentCursor = Readonly<{
+  documentDate: string | null;
+  createdAt: string;
+  id: string;
+}>;
+export type DocumentPage = Readonly<{
+  documents: readonly VehicleDocument[];
+  nextCursor: DocumentCursor | null;
+}>;
 export interface VehicleDocumentRepository {
+  listPage?(
+    vehicleId: VehicleId,
+    cursor?: DocumentCursor,
+    limit?: number,
+  ): Promise<RepositoryResult<DocumentPage>>;
   attachmentCounts?(
     vehicleId: VehicleId,
     ids: readonly HistoryEntryId[],

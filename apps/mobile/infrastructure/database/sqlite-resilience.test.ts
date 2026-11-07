@@ -14,6 +14,7 @@ const migrationFileNames = [
   "0005_enforce_history_entry_document_vehicle_consistency.sql",
   "0006_add_refuelling_persistence.sql",
   "0007_add_vehicle_reminders.sql",
+  "0008_harden_storage_contracts.sql",
 ] as const;
 const migrationSql = readMigrations(migrationFileNames);
 const temporaryDirectories: string[] = [];
@@ -39,11 +40,16 @@ describe("SQLite persistence resilience", () => {
       expect(() => {
         database.exec("BEGIN;");
         database.prepare("UPDATE vehicles SET model = 'V70' WHERE id = ?").run(vehicleId);
-        for (let index = 0; index < 10_000; index += 1) {
-          const id = `018f47e2-7b31-7658-b336-${index.toString(16).padStart(12, "0")}`;
-          insert.run(id, `objects/${id}.jpg`, "ab".repeat(32), timestamp, timestamp);
+        try {
+          for (let index = 0; index < 10_000; index += 1) {
+            const id = `018f47e2-7b31-7658-b336-${index.toString(16).padStart(12, "0")}`;
+            insert.run(id, `objects/${id}.jpg`, "ab".repeat(32), timestamp, timestamp);
+          }
+          database.exec("COMMIT;");
+        } catch (error) {
+          if (database.isTransaction) database.exec("ROLLBACK;");
+          throw error;
         }
-        database.exec("COMMIT;");
       }).toThrow(/full/i);
       expect(database.prepare("SELECT model FROM vehicles WHERE id = ?").get(vehicleId)).toEqual({
         model: "V60",

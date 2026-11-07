@@ -1,4 +1,4 @@
-import { utcTimestamp } from "@/domain/shared/value-objects";
+import { storedUtcTimestamp } from "@/domain/shared/value-objects";
 import type {
   HistoryEntryReference,
   HistoryReferencePage,
@@ -167,37 +167,50 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
     cursor?: HistoryCursor,
   ): Promise<RepositoryResult<HistoryReferencePage>> {
     try {
-      const escaped = `%${query.trim().replace(/[\\%_]/g, "\\$&")}%`;
-      const subject = sql`coalesce(${repairDetails.subject}, ${replacementDetails.item}, ${inspectionDetails.description}, ${inspectionDetails.kind}, '')`;
-      const after = cursor
-        ? or(
-            lt(historyEntries.occurredAt, cursor.occurredAt),
-            and(
-              eq(historyEntries.occurredAt, cursor.occurredAt),
-              lt(historyEntries.createdAt, cursor.createdAt),
-            ),
-            and(
-              eq(historyEntries.occurredAt, cursor.occurredAt),
-              eq(historyEntries.createdAt, cursor.createdAt),
-              gt(historyEntries.id, cursor.id),
-            ),
+      const normalized = query.trim().normalize("NFC").toLowerCase();
+      const rows: ReturnType<ReturnType<DrizzleVehicleHistoryRepository["referenceQuery"]>["all"]> =
+        [];
+      let boundary = cursor;
+      while (rows.length < 51) {
+        const after = boundary
+          ? or(
+              lt(historyEntries.occurredAt, boundary.occurredAt),
+              and(
+                eq(historyEntries.occurredAt, boundary.occurredAt),
+                lt(historyEntries.createdAt, boundary.createdAt),
+              ),
+              and(
+                eq(historyEntries.occurredAt, boundary.occurredAt),
+                eq(historyEntries.createdAt, boundary.createdAt),
+                gt(historyEntries.id, boundary.id),
+              ),
+            )
+          : undefined;
+        // SQLite LIKE folds ASCII only. Scan bounded reference projections and match Unicode
+        // in JS, retaining the same keyset order and literal substring semantics.
+        const batch = this.referenceQuery()
+          .where(and(eq(historyEntries.vehicleId, vehicleId), after))
+          .orderBy(
+            desc(historyEntries.occurredAt),
+            desc(historyEntries.createdAt),
+            asc(historyEntries.id),
           )
-        : undefined;
-      const rows = this.referenceQuery()
-        .where(
-          and(
-            eq(historyEntries.vehicleId, vehicleId),
-            after,
-            query.trim() ? sql`${subject} like ${escaped} escape '\\'` : undefined,
-          ),
-        )
-        .orderBy(
-          desc(historyEntries.occurredAt),
-          desc(historyEntries.createdAt),
-          asc(historyEntries.id),
-        )
-        .limit(51)
-        .all();
+          .limit(100)
+          .all();
+        for (const row of batch) {
+          if (
+            (row.subject ?? row.inspectionKind ?? "")
+              .normalize("NFC")
+              .toLowerCase()
+              .includes(normalized)
+          )
+            rows.push(row);
+          if (rows.length === 51) break;
+        }
+        if (batch.length < 100) break;
+        boundary = batch.at(-1)!;
+        if (rows.length < 51) await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      }
       const visible = rows.slice(0, 50);
       const last = visible.at(-1);
       return repositorySuccess({
@@ -580,7 +593,7 @@ function mapReference(row: {
 }): HistoryEntryReference {
   if (row.type !== "repair" && row.type !== "replacement" && row.type !== "inspection")
     throw new CorruptStoredDataError("HistoryEntryReference");
-  const occurredAt = utcTimestamp(row.occurredAt, "occurredAt");
+  const occurredAt = storedUtcTimestamp(row.occurredAt, "occurredAt");
   if (!occurredAt.ok) throw new CorruptStoredDataError("HistoryEntryReference");
   return {
     id: historyEntryIdFromUuidV7(row.id),

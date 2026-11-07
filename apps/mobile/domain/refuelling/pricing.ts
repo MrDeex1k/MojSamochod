@@ -1,3 +1,4 @@
+import { currencyDecimalPlaces } from "../shared/currency";
 import { money, type MoneyInput } from "../shared/value-objects";
 import { invalid, valid, type ValidationIssue, type ValidationResult } from "../shared/result";
 import type { RefuellingPricingInput } from "./refuelling";
@@ -138,6 +139,10 @@ function validateCurrency(
   }
   if (!Number.isInteger(fractionDigits) || fractionDigits < 0 || fractionDigits > 3) {
     issues.push({ code: "out-of-range", field: "currencyFractionDigits" });
+    return undefined;
+  }
+  if (/^[A-Z]{3}$/.test(currency) && fractionDigits !== currencyDecimalPlaces(currency)) {
+    issues.push({ code: "invalid-format", field: "currencyFractionDigits" });
     return undefined;
   }
   return 10 ** fractionDigits;

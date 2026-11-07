@@ -1,21 +1,8 @@
 export function mergeUtcDateTime(current: Date, selected: Date, mode: "date" | "time") {
-  return mode === "date"
-    ? new Date(
-        Date.UTC(
-          selected.getUTCFullYear(),
-          selected.getUTCMonth(),
-          selected.getUTCDate(),
-          current.getUTCHours(),
-          current.getUTCMinutes(),
-        ),
-      )
-    : new Date(
-        Date.UTC(
-          current.getUTCFullYear(),
-          current.getUTCMonth(),
-          current.getUTCDate(),
-          selected.getUTCHours(),
-          selected.getUTCMinutes(),
-        ),
-      );
+  const date = mode === "date" ? selected : current;
+  const time = mode === "time" ? selected : current;
+  const result = new Date(0);
+  result.setUTCFullYear(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  result.setUTCHours(time.getUTCHours(), time.getUTCMinutes(), 0, 0);
+  return result;
 }

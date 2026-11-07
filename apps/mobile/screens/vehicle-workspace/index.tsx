@@ -253,6 +253,9 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
     case "documents":
       return (
         <DocumentList
+          onLoadMore={props.onLoadMore}
+          loadingMore={props.loadingMore}
+          loadMoreError={props.loadMoreError}
           embedded={embedded}
           documents={props.documents}
           entries={props.relatedEntries ?? []}

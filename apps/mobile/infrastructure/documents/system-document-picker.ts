@@ -3,25 +3,18 @@ import { Platform } from "react-native";
 
 import { maximumDocumentBytes } from "@/application/storage/object-storage";
 
-export const supportedDocumentMimeTypes = ["application/pdf", "image/jpeg", "image/png"] as const;
-
-export type PickedDocument = Readonly<{
-  mimeType: (typeof supportedDocumentMimeTypes)[number];
-  name: string;
-  size?: number;
-  uri: string;
-}>;
-
-export type DocumentPickResult =
-  | Readonly<{ kind: "cancelled" }>
-  | Readonly<{ kind: "invalid-size" }>
-  | Readonly<{ kind: "unsupported" }>
-  | Readonly<{ document: PickedDocument; kind: "selected" }>;
-
-export interface DocumentFilePicker {
-  pick(): Promise<DocumentPickResult>;
-}
-
+import type {
+  DocumentFilePicker,
+  DocumentPickResult,
+  PickedDocument,
+} from "@/application/documents/document-file-picker";
+export type {
+  DocumentFilePicker,
+  DocumentPickResult,
+  PickedDocument,
+} from "@/application/documents/document-file-picker";
+import { supportedDocumentMimeTypes } from "@/application/documents/document-file-picker";
+export { supportedDocumentMimeTypes } from "@/application/documents/document-file-picker";
 export class SystemDocumentPicker implements DocumentFilePicker {
   async pick(): Promise<DocumentPickResult> {
     const result = await DocumentPicker.getDocumentAsync({

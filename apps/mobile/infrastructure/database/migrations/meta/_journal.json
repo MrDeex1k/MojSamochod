@@ -57,6 +57,13 @@
       "when": 1788469792808,
       "tag": "0007_add_vehicle_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793912399086,
+      "tag": "0008_harden_storage_contracts",
+      "breakpoints": true
     }
   ]
 }

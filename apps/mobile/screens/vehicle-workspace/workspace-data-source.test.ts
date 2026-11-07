@@ -241,3 +241,45 @@ it("keeps the full-history fuel summary when additional display pages are loaded
   expect(api.refuellings.list).not.toHaveBeenCalled();
   expect(source.hasMore("fuel")).toBe(false);
 });
+
+it("loads document pages and refreshes the cached range without falling back to the full list", async () => {
+  const api = services();
+  const records = Array.from({ length: 105 }, (_, index) => ({
+    id: String(index),
+    createdAt: "2026-11-05T00:00:00.000Z",
+    documentDate: undefined,
+    name: `Invoice ${index}`,
+  }));
+  const listPage = jest.fn(async (_vehicle: unknown, cursor?: { id: string }, limit = 50) => {
+    const start = cursor ? Number(cursor.id) + 1 : 0;
+    const page = records.slice(start, start + limit);
+    return repositorySuccess({
+      documents: page,
+      nextCursor:
+        start + limit < records.length
+          ? { id: page.at(-1)!.id, documentDate: null, createdAt: page.at(-1)!.createdAt }
+          : null,
+    });
+  });
+  const source = new WorkspaceDataSource({
+    ...api,
+    documents: { ...api.documents, listPage },
+  } as unknown as ApplicationServices);
+  expect(await source.load("documents")).toMatchObject({
+    status: "ready",
+    data: { documents: records.slice(0, 50) },
+  });
+  await source.loadMore("documents");
+  source.invalidate("documents");
+  expect(await source.load("documents")).toMatchObject({
+    status: "ready",
+    data: { documents: records.slice(0, 100) },
+  });
+  await source.loadMore("documents");
+  expect(await source.load("documents")).toMatchObject({
+    status: "ready",
+    data: { documents: records },
+  });
+  expect(source.hasMore("documents")).toBe(false);
+  expect(api.documents.list).not.toHaveBeenCalled();
+});

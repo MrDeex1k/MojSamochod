@@ -414,3 +414,93 @@ function refuellingFixture(
   if (!result.ok) throw new Error("Expected a valid refuelling fixture");
   return result.value;
 }
+
+it("exports populated documents with one batched file read and no private locations", async () => {
+  const dependencies = exportDependencies();
+  const fixture = createDevelopmentVehicleHistoryFixture();
+  const documents = Array.from({ length: 100 }, (_, index) => ({
+    id: `01990000-0001-7000-8000-${String(index).padStart(12, "0")}`,
+    vehicleId: fixture.vehicle.id,
+    fileReference: `01990000-0002-7000-8000-${String(index).padStart(12, "0")}`,
+    name: `Invoice ${index}`,
+    createdAt: exportedAt.toISOString(),
+    updatedAt: exportedAt.toISOString(),
+  }));
+  dependencies.vehicleDocumentRepository.list.mockResolvedValue(repositorySuccess(documents));
+  const getReadyMany = jest.fn(async () =>
+    repositorySuccess(
+      documents.map((document) => ({
+        id: document.fileReference,
+        kind: "document" as const,
+        status: "ready" as const,
+        byteSize: 123,
+        mimeType: "application/pdf",
+        originalName: "invoice.pdf",
+        sha256: "a".repeat(64),
+        storageKey: "objects/private.pdf",
+        createdAt: document.createdAt,
+        updatedAt: document.updatedAt,
+      })),
+    ),
+  );
+  const result = await createVehicleHistoryExport({
+    ...dependencies,
+    managedFileRepository: { ...dependencies.managedFileRepository, getReadyMany },
+  } as unknown as Parameters<typeof createVehicleHistoryExport>[0]);
+  if (!result.ok) throw result.error;
+  expect(result.value.data.documents).toHaveLength(100);
+  expect(getReadyMany).toHaveBeenCalledTimes(1);
+  expect(dependencies.managedFileRepository.getReady).not.toHaveBeenCalled();
+  expect(serializeVehicleHistoryExport(result.value)).not.toMatch(/storageKey|objects\/private/);
+});
+
+it.each(["single", "missing-batch"] as const)(
+  "handles a populated export with %s metadata lookup",
+  async (mode) => {
+    const dependencies = exportDependencies();
+    const document = {
+      id: "01990000-0001-7000-8000-000000000001",
+      fileReference: "01990000-0002-7000-8000-000000000001",
+      vehicleId: createDevelopmentVehicleHistoryFixture().vehicle.id,
+      name: "Invoice",
+      createdAt: exportedAt.toISOString(),
+      updatedAt: exportedAt.toISOString(),
+    };
+    dependencies.vehicleDocumentRepository.list.mockResolvedValue(repositorySuccess([document]));
+    const { getReady } = dependencies.managedFileRepository;
+    getReady.mockResolvedValue(
+      repositorySuccess({
+        id: document.fileReference,
+        kind: "document",
+        status: "ready",
+        byteSize: 123,
+        mimeType: "application/pdf",
+        originalName: "invoice.pdf",
+        sha256: "a".repeat(64),
+        storageKey: "objects/private.pdf",
+        createdAt: document.createdAt,
+        updatedAt: document.updatedAt,
+      }),
+    );
+    const getReadyMany = jest.fn().mockResolvedValue(repositorySuccess([]));
+    const result = await createVehicleHistoryExport({
+      ...dependencies,
+      managedFileRepository: {
+        ...dependencies.managedFileRepository,
+        ...(mode === "missing-batch" ? { getReadyMany } : {}),
+      },
+    } as unknown as Parameters<typeof createVehicleHistoryExport>[0]);
+    if (mode === "single") {
+      expect(result).toMatchObject({
+        ok: true,
+        value: { data: { documents: [{ id: document.id }] } },
+      });
+      expect(getReady).toHaveBeenCalledWith(document.fileReference);
+      expect(getReadyMany).not.toHaveBeenCalled();
+    } else {
+      expect(result).toMatchObject({ ok: false, error: { kind: "corrupt-data" } });
+      expect(getReadyMany).toHaveBeenCalledWith([document.fileReference]);
+      expect(getReady).not.toHaveBeenCalled();
+    }
+  },
+);

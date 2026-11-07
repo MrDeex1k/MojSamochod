@@ -1,5 +1,9 @@
+import type {
+  DocumentCursor,
+  DocumentPage,
+} from "@/application/repositories/vehicle-document-repository";
 import { CorruptStoredDataError } from "./row-mappers";
-import { and, asc, desc, eq, ne, inArray, count, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ne, inArray, count, gt, lt, or, isNull, type SQL } from "drizzle-orm";
 
 import type { VehicleDocumentRepository } from "@/application/repositories/vehicle-document-repository";
 import {
@@ -81,7 +85,11 @@ export class DrizzleVehicleDocumentRepository implements VehicleDocumentReposito
         return repositorySuccess(undefined);
       });
     } catch (error) {
-      return repositoryFailure("unavailable", operation, error);
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 
@@ -105,7 +113,11 @@ export class DrizzleVehicleDocumentRepository implements VehicleDocumentReposito
         return repositorySuccess(mapRow(row));
       });
     } catch (error) {
-      return repositoryFailure("unavailable", operation, error);
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 
@@ -124,6 +136,62 @@ export class DrizzleVehicleDocumentRepository implements VehicleDocumentReposito
       eq(vehicleDocuments.fileReference, fileReference),
       "vehicleDocument.getByFile",
     );
+  }
+
+  async listPage(
+    vehicleId: VehicleId,
+    cursor?: DocumentCursor,
+    limit = 50,
+  ): Promise<RepositoryResult<DocumentPage>> {
+    const pageSize = Math.max(1, Math.min(100, Number.isFinite(limit) ? Math.trunc(limit) : 50));
+    try {
+      const sameDate =
+        cursor?.documentDate == null
+          ? isNull(vehicleDocuments.documentDate)
+          : eq(vehicleDocuments.documentDate, cursor.documentDate);
+      const after = cursor
+        ? or(
+            cursor.documentDate === null
+              ? undefined
+              : or(
+                  lt(vehicleDocuments.documentDate, cursor.documentDate),
+                  isNull(vehicleDocuments.documentDate),
+                ),
+            and(sameDate, lt(vehicleDocuments.createdAt, cursor.createdAt)),
+            and(
+              sameDate,
+              eq(vehicleDocuments.createdAt, cursor.createdAt),
+              gt(vehicleDocuments.id, cursor.id),
+            ),
+          )
+        : undefined;
+      const rows = this.database
+        .select()
+        .from(vehicleDocuments)
+        .where(and(eq(vehicleDocuments.vehicleId, vehicleId), after))
+        .orderBy(
+          desc(vehicleDocuments.documentDate),
+          desc(vehicleDocuments.createdAt),
+          asc(vehicleDocuments.id),
+        )
+        .limit(pageSize + 1)
+        .all();
+      const visible = rows.slice(0, pageSize);
+      const last = visible.at(-1);
+      return repositorySuccess({
+        documents: visible.map(mapRow),
+        nextCursor:
+          rows.length > pageSize && last
+            ? { documentDate: last.documentDate, createdAt: last.createdAt, id: last.id }
+            : null,
+      });
+    } catch (error) {
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        "vehicleDocument.listPage",
+        error,
+      );
+    }
   }
 
   async list(vehicleId: VehicleId): Promise<RepositoryResult<readonly VehicleDocument[]>> {
@@ -189,7 +257,11 @@ export class DrizzleVehicleDocumentRepository implements VehicleDocumentReposito
         return repositorySuccess(undefined);
       });
     } catch (error) {
-      return repositoryFailure("unavailable", operation, error);
+      return repositoryFailure(
+        error instanceof CorruptStoredDataError ? "corrupt-data" : "unavailable",
+        operation,
+        error,
+      );
     }
   }
 

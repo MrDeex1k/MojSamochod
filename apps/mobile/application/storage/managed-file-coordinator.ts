@@ -2,6 +2,7 @@ import type { ManagedFileRepository } from "@/application/repositories/managed-f
 import type { RepositoryResult } from "@/application/repositories/repository-result";
 import type {
   ObjectStorage,
+  ObjectStorageError,
   StagedObject,
   StagedObjectKey,
 } from "@/application/storage/object-storage";
@@ -9,7 +10,11 @@ import {
   maximumDocumentBytes,
   maximumVehiclePhotoBytes,
 } from "@/application/storage/object-storage";
-import type { ManagedFileKind, ReadyManagedFileMetadata } from "@/domain/files/managed-file";
+import {
+  storageObjectKey,
+  type ManagedFileKind,
+  type ReadyManagedFileMetadata,
+} from "@/domain/files/managed-file";
 import type { ManagedFileId } from "@/domain/shared/identifiers";
 import type { Clock } from "@/domain/shared/ports";
 import { utcTimestampFromDate } from "@/domain/shared/value-objects";
@@ -23,13 +28,26 @@ export type ManagedFileSource = Readonly<{
 }>;
 
 export class ManagedFileCoordinator {
+  private tail: Promise<unknown> = Promise.resolve();
+
+  private enqueue<T>(work: () => Promise<T>): Promise<T> {
+    const next = this.tail.then(work);
+    this.tail = next.catch(() => undefined);
+    return next;
+  }
   constructor(
     private readonly clock: Clock,
     private readonly repository: ManagedFileRepository,
     private readonly storage: ObjectStorage,
   ) {}
 
-  async import(source: ManagedFileSource): Promise<RepositoryResult<ReadyManagedFileMetadata>> {
+  import(source: ManagedFileSource): Promise<RepositoryResult<ReadyManagedFileMetadata>> {
+    return this.enqueue(() => this.importNow(source));
+  }
+
+  private async importNow(
+    source: ManagedFileSource,
+  ): Promise<RepositoryResult<ReadyManagedFileMetadata>> {
     const staged = await this.storage.stage({
       ...source,
       extension: extensionForMimeType(source.mimeType),
@@ -39,6 +57,39 @@ export class ManagedFileCoordinator {
     if (!staged.ok) return storageFailure(staged.error, "managedFile.import");
 
     if (source.kind === "document") {
+      // Imports are serialized: a staged reservation here belongs to a failed earlier attempt.
+      const pending = await this.repository.listRecoverable();
+      if (!pending.ok) {
+        await this.storage.discard(staged.value.stagingKey);
+        return pending;
+      }
+      for (const file of pending.value) {
+        if (
+          file.status !== "staged" ||
+          file.kind !== "document" ||
+          file.sha256 !== staged.value.sha256
+        )
+          continue;
+        if (file.id === source.managedFileId) {
+          const deleted = await this.repository.delete(file.id);
+          if (!deleted.ok) return deleted;
+          continue;
+        }
+        const key = storageObjectKey(`objects/${file.id}.${extensionForMimeType(file.mimeType)}`);
+        if (!key.ok)
+          return { ok: false, error: { kind: "corrupt-data", operation: "managedFile.retry" } };
+        const discarded = await this.storage.discard(file.stagingKey as StagedObjectKey);
+        const removed = discarded.ok ? await this.storage.delete(key.value) : discarded;
+        if (!removed.ok) {
+          await this.storage.discard(staged.value.stagingKey);
+          return storageFailure(removed.error, "managedFile.retry");
+        }
+        const deleted = await this.repository.delete(file.id);
+        if (!deleted.ok) {
+          await this.storage.discard(staged.value.stagingKey);
+          return deleted;
+        }
+      }
       const duplicate = await this.repository.findReadyBySha256("document", staged.value.sha256);
       if (!duplicate.ok) {
         await this.storage.discard(staged.value.stagingKey);
@@ -92,7 +143,11 @@ export class ManagedFileCoordinator {
     return this.repository.getReady(id);
   }
 
-  async reconcile(onRecovered?: () => void): Promise<RepositoryResult<void>> {
+  reconcile(onRecovered?: () => void): Promise<RepositoryResult<void>> {
+    return this.enqueue(() => this.reconcileNow(onRecovered));
+  }
+
+  private async reconcileNow(onRecovered?: () => void): Promise<RepositoryResult<void>> {
     const pending = await this.repository.listRecoverable();
     if (!pending.ok) return pending;
 
@@ -102,6 +157,7 @@ export class ManagedFileCoordinator {
     }
     const stagedKeys = await this.storage.listStagedKeys();
     if (!stagedKeys.ok) return storageFailure(stagedKeys.error, "managedFile.reconcile");
+    let integrityFailure: ObjectStorageError | undefined;
     for (const metadata of pending.value) {
       if (metadata.status === "deleting") continue;
 
@@ -114,6 +170,11 @@ export class ManagedFileCoordinator {
       };
       const committed = await this.storage.commit(staged);
       if (!committed.ok) {
+        if (committed.error.kind === "integrity-failure") {
+          // Leave the reservation and copies intact for recovery without blocking other files.
+          integrityFailure ??= committed.error;
+          continue;
+        }
         if (committed.error.kind === "not-found") {
           const deleted = await this.repository.delete(metadata.id);
           if (!deleted.ok && deleted.error.kind !== "not-found") return deleted;
@@ -150,14 +211,20 @@ export class ManagedFileCoordinator {
       }
     }
     for (const metadata of unreferencedFiles.value) {
-      const removed = await this.remove(metadata.id);
+      const removed = await this.removeNow(metadata.id);
       if (!removed.ok) return removed;
     }
 
-    return { ok: true, value: undefined };
+    return integrityFailure
+      ? storageFailure(integrityFailure, "managedFile.reconcile")
+      : { ok: true, value: undefined };
   }
 
-  async remove(id: ManagedFileId): Promise<RepositoryResult<void>> {
+  remove(id: ManagedFileId): Promise<RepositoryResult<void>> {
+    return this.enqueue(() => this.removeNow(id));
+  }
+
+  private async removeNow(id: ManagedFileId): Promise<RepositoryResult<void>> {
     const metadata = await this.repository.getReady(id);
     if (!metadata.ok) return metadata;
     if (!metadata.value) return { ok: true, value: undefined };
@@ -218,7 +285,14 @@ function storageFailure<T>(
   return {
     error: {
       cause: error.cause,
-      kind: error.kind === "not-found" ? "not-found" : "unavailable",
+      kind:
+        error.kind === "not-found"
+          ? "not-found"
+          : error.kind === "integrity-failure"
+            ? "corrupt-data"
+            : error.kind === "invalid-source"
+              ? "unsupported"
+              : "unavailable",
       operation,
     },
     ok: false,

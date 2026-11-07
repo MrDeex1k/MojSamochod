@@ -1,4 +1,12 @@
-import { countCharacters, metres, money, optionalText, utcTimestamp } from "./value-objects";
+import {
+  countCharacters,
+  requiredText,
+  utcTimestampFromDate,
+  metres,
+  money,
+  optionalText,
+  utcTimestamp,
+} from "./value-objects";
 
 describe("domain value objects", () => {
   it("counts Unicode code points instead of UTF-16 code units", () => {
@@ -39,3 +47,24 @@ describe("domain value objects", () => {
     });
   });
 });
+
+it.each(["\0Volvo", "Volvo\0tail"])("rejects NUL in text: %j", (value) => {
+  expect(requiredText(value, "make", 80)).toMatchObject({
+    ok: false,
+    issues: [{ code: "invalid-format", field: "make" }],
+  });
+  expect(optionalText(value, "notes", 5000).ok).toBe(false);
+});
+it.each(["0000-01-01T00:00:00.000Z", "-000001-01-01T00:00:00.000Z", "+010000-01-01T00:00:00.000Z"])(
+  "rejects non-sortable timestamps in both constructors: %s",
+  (value) => {
+    expect(utcTimestamp(value, "date").ok).toBe(false);
+    expect(() => utcTimestampFromDate(new Date(value))).toThrow();
+  },
+);
+it.each(["0001-01-01T00:00:00.000Z", "0099-12-31T23:59:59.999Z", "9999-12-31T23:59:59.999Z"])(
+  "keeps the timestamp range endpoints: %s",
+  (value) => {
+    expect(utcTimestampFromDate(new Date(value))).toBe(value);
+  },
+);

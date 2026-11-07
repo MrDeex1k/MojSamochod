@@ -25,7 +25,13 @@ function createDatabaseHandle(): DatabaseHandle {
 
 describe("DatabaseProvider", () => {
   it("keeps application content hidden while the database is being prepared", async () => {
-    const initialize = jest.fn(() => new Promise<DatabaseHandle>(() => undefined));
+    let finish!: (handle: DatabaseHandle) => void;
+    const initialize = jest.fn(
+      () =>
+        new Promise<DatabaseHandle>((resolve) => {
+          finish = resolve;
+        }),
+    );
 
     await renderWithSafeArea(
       <DatabaseProvider initialize={initialize}>
@@ -35,6 +41,9 @@ describe("DatabaseProvider", () => {
 
     expect(screen.getByRole("progressbar", { name: "Preparing data" })).toBeOnTheScreen();
     expect(screen.queryByText("Vehicle history")).not.toBeOnTheScreen();
+    await act(async () => {
+      finish(createDatabaseHandle());
+    });
   });
 
   it("renders application content after migrations finish and closes the database on unmount", async () => {
@@ -94,7 +103,7 @@ describe("DatabaseProvider", () => {
         <Text>Current history</Text>
       </DatabaseProvider>,
     );
-    expect(await screen.findByText("Current history")).toBeOnTheScreen();
+    expect(screen.queryByText("Current history")).not.toBeOnTheScreen();
     await act(async () => {
       finish(oldHandle);
       await pending;

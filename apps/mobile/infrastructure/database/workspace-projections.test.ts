@@ -100,6 +100,20 @@ it("resolves references across bind-variable batches without losing records", as
   expect(new Set(result.value.map((entry) => entry.id))).toEqual(new Set(ids));
 });
 
+it("reads canonical year-zero dates from old history rows and their references", async () => {
+  const occurredAt = "0000-02-29T13:24:57.123Z";
+  addHistory(1, "Legacy repair");
+  sqlite.prepare("UPDATE history_entries SET occurred_at = ? WHERE id = ?").run(occurredAt, id(1));
+  expect(await history.listPage(vehicleId)).toMatchObject({
+    ok: true,
+    value: { entries: [{ id: id(1), occurredAt }] },
+  });
+  expect(await history.references(vehicleId, [historyEntryIdFromUuidV7(id(1))])).toMatchObject({
+    ok: true,
+    value: [{ id: id(1), occurredAt }],
+  });
+});
+
 it("counts only requested associations and supports an empty selection", async () => {
   addHistory(1, "Repair");
   addHistory(2, "Other repair");
@@ -123,8 +137,9 @@ it("counts only requested associations and supports an empty selection", async (
 });
 
 it("pages fuel records without changing consumption calculated from the complete projection", async () => {
+  const legacyDate = "0000-02-29T13:24:57.123Z";
   for (let index = 1; index <= 105; index++) {
-    const date = new Date(Date.UTC(2026, 0, index)).toISOString();
+    const date = index === 1 ? legacyDate : new Date(Date.UTC(2026, 0, index)).toISOString();
     sqlite
       .prepare(
         "INSERT INTO refuellings (id,vehicle_id,occurred_at,odometer_metres,quantity_microlitres,input_volume_unit,fill_kind,created_at,updated_at) VALUES (?,?,?,?,40000000,'litres','full',?,?)",
@@ -140,6 +155,7 @@ it("pages fuel records without changing consumption calculated from the complete
   const third = await fuel.listPage(vehicleId, second.value.nextCursor!);
   if (!third.ok) throw third.error;
   expect(third.value.refuellings).toHaveLength(5);
+  expect(third.value.refuellings.at(-1)?.occurredAt).toBe(legacyDate);
   expect(third.value.nextCursor).toBeNull();
   const ids = [
     ...first.value.refuellings,
@@ -150,6 +166,79 @@ it("pages fuel records without changing consumption calculated from the complete
   const all = await fuel.list(vehicleId);
   const projection = await fuel.consumptionRecords(vehicleId);
   if (!all.ok || !projection.ok) throw new Error("Query failed");
+  expect(projection.value.find((record) => record.id === id(1))?.occurredAt).toBe(legacyDate);
   expect(calculateFuelConsumption(projection.value)).toEqual(calculateFuelConsumption(all.value));
   expect(calculateFuelConsumption(projection.value).intervals).toHaveLength(104);
+});
+
+it("matches Unicode letters literally across reference pages", async () => {
+  for (let index = 1; index <= 105; index++) addHistory(index, "ŁĄCZNIK ŻÓŁTY %_\\");
+  const first = await history.searchReferences(vehicleId, "łącznik żółty %_\\");
+  if (!first.ok) throw first.error;
+  expect(first.value.entries).toHaveLength(50);
+  const second = await history.searchReferences(vehicleId, "ŁĄCZNIK", first.value.nextCursor!);
+  if (!second.ok) throw second.error;
+  expect(second.value.entries[0]?.id).toBe(id(51));
+});
+
+it("pages document dates including NULL and timestamp ties without loss", async () => {
+  for (let index = 1; index <= 105; index++) {
+    sqlite
+      .prepare(
+        "INSERT INTO managed_files (id,kind,status,storage_key,mime_type,original_name,byte_size,sha256,created_at,updated_at) VALUES (?,'document','ready',?,'application/pdf','doc.pdf',1,?,?,?)",
+      )
+      .run(
+        id(index + 1000),
+        `objects/${id(index + 1000)}.pdf`,
+        index.toString(16).padStart(64, "0"),
+        stamp,
+        stamp,
+      );
+    sqlite
+      .prepare(
+        "INSERT INTO vehicle_documents (id,vehicle_id,file_reference,name,document_date,created_at,updated_at) VALUES (?,?,?,'Invoice',?,?,?)",
+      )
+      .run(id(index), vehicleId, id(index + 1000), index < 53 ? "2026-09-01" : null, stamp, stamp);
+  }
+  const ids: string[] = [];
+  let page = await documents.listPage(vehicleId);
+  while (page.ok) {
+    ids.push(...page.value.documents.map((document) => document.id));
+    if (!page.value.nextCursor) break;
+    page = await documents.listPage(vehicleId, page.value.nextCursor);
+  }
+  expect(page.ok).toBe(true);
+  expect(ids).toEqual(Array.from({ length: 105 }, (_, index) => id(index + 1)));
+});
+
+it("rejects invalid dates and fractional persisted quantities", () => {
+  expect(() =>
+    sqlite.prepare("UPDATE vehicles SET manufacture_year = 2020.5 WHERE id = ?").run(vehicleId),
+  ).toThrow(/CHECK/);
+  expect(() =>
+    sqlite.prepare("UPDATE vehicles SET current_odometer_metres = 1.5 WHERE id = ?").run(vehicleId),
+  ).toThrow(/CHECK/);
+  sqlite
+    .prepare(
+      "INSERT INTO managed_files (id,kind,status,storage_key,mime_type,original_name,byte_size,sha256,created_at,updated_at) VALUES (?,'document','ready','objects/doc.pdf','application/pdf','doc.pdf',1,?,?,?)",
+    )
+    .run(id(100), "a".repeat(64), stamp, stamp);
+  for (const date of ["2026-13-01", "2026-02-30", "0000-01-01"]) {
+    expect(() =>
+      sqlite
+        .prepare(
+          "INSERT INTO vehicle_documents (id,vehicle_id,file_reference,name,document_date,created_at,updated_at) VALUES (?,?,?,'Invoice',?,?,?)",
+        )
+        .run(id(101), vehicleId, id(100), date, stamp, stamp),
+    ).toThrow(/CHECK/);
+  }
+});
+
+it("satisfies timeline ordering directly from the index", () => {
+  const plan = sqlite
+    .prepare(
+      "EXPLAIN QUERY PLAN SELECT id FROM history_entries WHERE vehicle_id = ? ORDER BY occurred_at DESC, created_at DESC, id ASC LIMIT 51",
+    )
+    .all(vehicleId);
+  expect(JSON.stringify(plan)).not.toContain("TEMP B-TREE");
 });

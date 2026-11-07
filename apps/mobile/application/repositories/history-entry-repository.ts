@@ -43,3 +43,8 @@ export interface HistoryEntryRepository {
   list(vehicleId: VehicleId): Promise<RepositoryResult<readonly HistoryEntry[]>>;
   update(entry: HistoryEntry): Promise<RepositoryResult<void>>;
 }
+
+/** Required production read capabilities; smaller write-only test doubles can use the base port. */
+export type HistoryEntryReadRepository = Required<
+  Pick<HistoryEntryRepository, "listPage" | "references" | "searchReferences">
+>;

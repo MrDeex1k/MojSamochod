@@ -1,101 +1,46 @@
-import { EraseAllData } from "@/application/storage/erase-all-data";
-import { LocalEraseDataStorage } from "@/infrastructure/storage/local-erase-data-storage";
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from "react";
-
-import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
-import type { VehicleRepository } from "@/application/repositories/vehicle-repository";
-import type { ReminderNotifications } from "@/application/notifications/reminder-notifications";
-import { ReminderSchedule } from "@/application/notifications/reminder-schedule";
-import {
-  scheduleAwareReminderRepository,
-  scheduleAwareVehicleRepository,
-} from "@/application/notifications/schedule-aware-repositories";
-import { startReminderScheduleLifecycle } from "@/infrastructure/notifications/reminder-schedule-lifecycle";
-import { reminderNotificationContent } from "@/localization/reminder-notification-content";
-import { NativeReminderNotifications } from "@/infrastructure/notifications/native-reminder-notifications";
-import { appI18n } from "@/localization/i18n";
-import { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
-import { RefuellingService } from "@/application/refuelling/refuelling-service";
-import { ReminderService } from "@/application/reminders/reminder-service";
-import { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { Screen } from "@/components/layout/screen";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
-import type { Clock, IdGenerator } from "@/domain/shared/ports";
-import { DrizzleManagedFileRepository } from "@/infrastructure/database/drizzle-managed-file-repository";
-import { DrizzleRefuellingRepository } from "@/infrastructure/database/drizzle-refuelling-repository";
-import { DrizzleReminderRepository } from "@/infrastructure/database/drizzle-reminder-repository";
-import { DrizzleVehicleDocumentRepository } from "@/infrastructure/database/drizzle-vehicle-document-repository";
-import { DrizzleVehicleHistoryRepository } from "@/infrastructure/database/drizzle-vehicle-history-repository";
-import type { AppDatabase } from "@/infrastructure/database/database";
-import { UuidV7IdGenerator } from "@/infrastructure/identity/uuid-v7-id-generator";
-import {
-  GalleryVehiclePhotoPicker,
-  type VehiclePhotoPicker,
-} from "@/infrastructure/media/gallery-vehicle-photo-picker";
-import {
-  SystemDocumentPicker,
-  type DocumentFilePicker,
-} from "@/infrastructure/documents/system-document-picker";
-import {
-  LocalObjectStorage,
-  cleanTransientDocumentFiles,
-} from "@/infrastructure/storage/local-object-storage";
-import { SystemClock } from "@/infrastructure/time/system-clock";
 import { useAppTranslation } from "@/localization/use-app-translation";
-
-import { useDatabase } from "./database-provider";
-
-export type ApplicationServices = Readonly<{
-  clock: Clock;
-  eraseData: EraseAllData;
-  documentPicker: DocumentFilePicker;
-  documents: VehicleDocumentService;
-  historyEntries: HistoryEntryRepository;
-  idGenerator: IdGenerator;
-  managedFiles: ManagedFileCoordinator;
-  photoPicker: VehiclePhotoPicker;
-  refuellings: RefuellingService;
-  reminders: ReminderService;
-  reminderNotifications: ReminderNotifications;
-  reminderSchedule: ReminderSchedule;
-  vehicles: VehicleRepository;
-}>;
+import {
+  createApplicationServices,
+  type ApplicationServices,
+} from "@/infrastructure/application-services";
+import { useDatabase, useDatabaseSession } from "./database-provider";
+export type { ApplicationServices } from "@/infrastructure/application-services";
 
 const ApplicationContext = createContext<ApplicationServices | null>(null);
-
 export function ApplicationProvider({ children }: PropsWithChildren) {
   const database = useDatabase();
+  const session = useDatabaseSession();
   const { t } = useAppTranslation();
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<"error" | "loading" | "ready">("loading");
-  const [services] = useState(() => createApplicationServices(database));
-
-  useEffect(() => startReminderScheduleLifecycle(services.reminderSchedule, appI18n), [services]);
-
+  const [services, setServices] = useState<ApplicationServices | null>(null);
   useEffect(() => {
     let active = true;
     let recovered = false;
-    cleanTransientDocumentFiles();
-    void services.eraseData
-      .resume()
-      .then((result) => {
-        if (!result.ok) return result;
-        return services.managedFiles.reconcile(() => {
+    const instance = createApplicationServices(database);
+    void session
+      .register(() => instance.runtime.stop())
+      .then(() =>
+        instance.runtime.start(() => {
           recovered = true;
-          if (active) setStatus("ready");
-        });
-      })
+          if (active) {
+            setServices(instance.services);
+            setStatus("ready");
+          }
+        }),
+      )
       .then((result) => {
         if (active && !recovered) setStatus(result.ok ? "ready" : "error");
-      })
-      .catch(() => {
-        if (active && !recovered) setStatus("error");
       });
     return () => {
       active = false;
+      void instance.runtime.stop();
     };
-  }, [attempt, services]);
+  }, [attempt, database, session]);
 
   if (status === "loading") {
     return (
@@ -121,60 +66,7 @@ export function ApplicationProvider({ children }: PropsWithChildren) {
     );
   }
 
-  return <ApplicationContext.Provider value={services}>{children}</ApplicationContext.Provider>;
-}
-
-function createApplicationServices(database: AppDatabase): ApplicationServices {
-  const clock = new SystemClock();
-  const vehicleHistory = new DrizzleVehicleHistoryRepository(database);
-  const refuellingRepository = new DrizzleRefuellingRepository(database);
-  const idGenerator = new UuidV7IdGenerator();
-  const reminderRepository = new DrizzleReminderRepository(database);
-  const reminderNotifications = new NativeReminderNotifications(
-    clock,
-    () => appI18n.t("notifications.channelName"),
-    () => {
-      void reminderSchedule.reconcile();
-    },
-  );
-  const reminderSchedule = new ReminderSchedule(
-    clock,
-    vehicleHistory,
-    reminderRepository,
-    reminderNotifications,
-    reminderNotificationContent,
-  );
-  const managedFiles = new ManagedFileCoordinator(
-    clock,
-    new DrizzleManagedFileRepository(database),
-    new LocalObjectStorage(),
-  );
-  return {
-    clock,
-    eraseData: new EraseAllData(new LocalEraseDataStorage(database), () =>
-      reminderSchedule.reconcile(),
-    ),
-    documentPicker: new SystemDocumentPicker(),
-    documents: new VehicleDocumentService(
-      clock,
-      idGenerator,
-      new DrizzleVehicleDocumentRepository(database),
-      managedFiles,
-    ),
-    historyEntries: vehicleHistory,
-    idGenerator,
-    managedFiles,
-    photoPicker: new GalleryVehiclePhotoPicker(),
-    refuellings: new RefuellingService(clock, idGenerator, refuellingRepository),
-    reminders: new ReminderService(
-      clock,
-      idGenerator,
-      scheduleAwareReminderRepository(reminderRepository, reminderSchedule),
-    ),
-    reminderNotifications,
-    reminderSchedule,
-    vehicles: scheduleAwareVehicleRepository(vehicleHistory, reminderSchedule),
-  };
+  return <ApplicationContext.Provider value={services!}>{children}</ApplicationContext.Provider>;
 }
 
 export function useApplicationServices(): ApplicationServices {

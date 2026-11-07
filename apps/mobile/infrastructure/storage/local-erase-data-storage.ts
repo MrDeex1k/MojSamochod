@@ -17,13 +17,14 @@ export class LocalEraseDataStorage implements EraseDataStorage {
     clearUserData(this.database);
   }
   async clearFiles() {
-    for (const directory of [
-      new Directory(Paths.document, "managed-objects"),
-      new Directory(Paths.cache, "document-previews"),
-      new Directory(Paths.cache, "document-exports"),
-    ]) {
-      if (directory.exists) directory.delete();
-    }
+    const managed = new Directory(Paths.document, "managed-objects");
+    if (managed.exists) managed.delete();
+
+    // The OS can purge the cache directory. Recreate it idempotently before listing:
+    // Expo's exists also returns false for inaccessible paths, so do not skip errors.
+    const cache = new Directory(Paths.cache);
+    if (!cache.exists) cache.create({ idempotent: true });
+    for (const entry of cache.list()) entry.delete();
   }
   async finish() {
     if (this.marker.exists) this.marker.delete();
