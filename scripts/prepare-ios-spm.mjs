@@ -44,6 +44,10 @@ if (existsSync(resolve(projectDirectory, "project.xcproj")) || existsSync(projec
 run(["--node", resolve(import.meta.dirname, "check-ios-spm.mjs"), "--record"]);
 writeFileSync(nativeConfigStamp, nativeConfig);
 
+/**
+ * Invalidates preparation stamps, refreshes the native project when needed and wires SwiftPM.
+ * Configures compiler inputs and Xcode checks before the caller records successful preparation.
+ */
 function prepareSwiftPM() {
   rmSync(nativeConfigStamp, { force: true });
   rmSync(resolve(mobile, "ios/build/generated/autolinking/.moje-auto-spm-inputs"), { force: true });

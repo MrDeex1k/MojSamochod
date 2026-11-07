@@ -7,6 +7,7 @@ import { dirname, relative, resolve } from "node:path";
 export const root = resolve(import.meta.dirname, "..");
 export const mobile = resolve(root, "apps/mobile");
 
+/** Hashes native configuration, dependency inputs and runtime resources to detect stale projects. */
 export function nativeConfigFingerprint(projectRoot = root) {
   const inputs = [
     ".node-version",
@@ -42,6 +43,7 @@ export function nativeConfigFingerprint(projectRoot = root) {
   return hash.digest("hex");
 }
 
+/** Runs NUB in the mobile workspace and throws on spawn errors, signals or nonzero exit codes. */
 export function runNub(args, env = process.env) {
   const result = spawnSync("nub", args, { cwd: mobile, env, stdio: "inherit" });
   if (result.error) throw result.error;
@@ -50,6 +52,10 @@ export function runNub(args, env = process.env) {
   }
 }
 
+/**
+ * Generates a native project using the installed Expo template through NUB and Socket Firewall.
+ * Rejects manifest changes after restoring the original contents and propagates prebuild failures.
+ */
 export function prebuildNativeProject(platform, env = process.env) {
   const manifest = resolve(mobile, "package.json");
   const before = readFileSync(manifest, "utf8");
