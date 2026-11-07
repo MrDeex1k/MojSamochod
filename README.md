@@ -15,9 +15,9 @@ Repozytorium jest lekkim monorepo zarządzanym wyłącznie przez NUB. Obecnie za
 
 ## Aktualny stos
 
-- Expo SDK 57,
-- React Native 0.86,
-- React 19.2,
+- Expo SDK 58 (`expo` 58.0.22),
+- React Native 0.88.1,
+- React 19.3.0,
 - NativeWind 5 release candidate,
 - Tailwind CSS 4,
 - Expo Router,
@@ -32,16 +32,16 @@ NativeWind 5 pozostaje wersją przedprodukcyjną. Projekt korzysta z niej świad
 .
 ├── apps/
 │   └── mobile/       # aplikacja React Native + Expo
-├── .github/          # szablony zgłoszeń i pull requestów
+├── .github/          # issue and pull request templates, quality workflow
 ├── package.json      # skrypty główne i konfiguracja workspace
 └── nub.lock          # local generated NUB lockfile (ignored by Git)
 ```
 
 ## Wymagania
 
-- NUB 0.8.0,
-- Node.js 24.18.0, przypięty w `.node-version`,
-- Xcode do uruchamiania aplikacji na urządzeniach Apple,
+- NUB 0.9.3 (`package.json`),
+- Node.js 24.18.0 (`.node-version`),
+- Xcode 27.2+ for local Apple builds,
 - Android Studio, Android SDK i JDK 17 do uruchamiania aplikacji na Androidzie.
 
 ## Uruchomienie
@@ -69,6 +69,9 @@ nub run format:check
 nub run typecheck
 nub run check
 ```
+
+GitHub Actions runs the same repository checks for pull requests and pushes to `main`.
+See [local native QA builds](./docs/native-qa-builds.md) for simulator and emulator verification.
 
 Automatyczne poprawki i formatowanie:
 

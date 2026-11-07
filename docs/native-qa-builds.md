@@ -25,17 +25,19 @@ adapter discovery and Expo Constants configuration. `--node` does not change the
 Keep Socket Firewall around commands that may download build dependencies.
 
 ```sh
-MOJE_AUTO_NATIVE_QA=1 CI=1 nub exec --node sfw nub exec --node expo prebuild --platform android --no-install --skip-dependency-update react,react-native
+MOJE_AUTO_NATIVE_QA=1 CI=1 nub run android:prepare
 ```
 
-Review the diff after prebuild. It can regenerate ignored native projects and rewrite the mobile
-`ios`/`android` package scripts; preserve the repository's existing scripts unless changing them is
-intentional. Do not regenerate native directories while a build is running.
+The preparation scripts use the installed Expo template and the pinned mobile manifest. They
+regenerate when native inputs or the app profile change, and Android verifies the generated
+application ID before launching a build. Prepare the intended profile before running Gradle or
+Xcode directly. The environment variable on a direct build command cannot change a project that
+was already generated for a different profile. Keep preparation and builds sequential.
 
 For Apple, use SwiftPM preparation from `apps/mobile`:
 
 ```sh
-MOJE_AUTO_NATIVE_QA=1 nub exec sfw nub run ios:prepare
+MOJE_AUTO_NATIVE_QA=1 CI=1 nub run ios:prepare
 ```
 
 This runs the native generators and converts the project to `project.xcproj`
@@ -45,7 +47,7 @@ JSON project. See [format compatibility](xcode-json-project-format.md).
 For a direct JSON-project simulator build, also from `apps/mobile`:
 
 ```sh
-MOJE_AUTO_NATIVE_QA=1 NODE_ENV=production nub exec sfw xcodebuild -project ios/MojeAuto.xcodeproj -scheme MojeAuto -configuration Release -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/moje-auto-native-qa-ios build
+MOJE_AUTO_NATIVE_QA=1 NODE_ENV=production nub exec --node sfw xcodebuild -project ios/MojeAuto.xcodeproj -scheme MojeAuto -configuration Release -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/moje-auto-native-qa-ios build
 ```
 
 The app is `/tmp/moje-auto-native-qa-ios/Build/Products/Release-iphonesimulator/MojeAuto.app`.

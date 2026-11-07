@@ -72,10 +72,7 @@
           "image": "./assets/app-icons/android-foreground.png",
           "imageWidth": 288,
           "resizeMode": "contain",
-          "backgroundColor": "#010101",
-          "dark": {
-            "backgroundColor": "#010101"
-          }
+          "backgroundColor": "#010101"
         }
       ],
       "./plugins/with-local-only-notifications.cjs",

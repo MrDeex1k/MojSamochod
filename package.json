@@ -21,7 +21,7 @@
     "test": "nub run --workspace @moje-auto/mobile test",
     "typecheck": "nub run --workspace @moje-auto/mobile typecheck",
     "check": "nub run lint && nub run format:check && nub run native:tooling:test && nub run native:check && nub run typecheck && nub run db:check && nub run test",
-    "native:tooling:test": "nub --node --test scripts/xcode-project-format.test.mjs",
+    "native:tooling:test": "nub --node --test scripts/*.test.mjs",
     "native:check": "node scripts/check-native-modules.mjs",
     "deps:install": "nubx -y sfw@2.0.6 nub install",
     "prepare": "husky",
@@ -39,6 +39,9 @@
     "xcode": "4.0.0"
   },
   "overrides": {
+    "expo-asset": "58.0.19",
+    "expo-modules-core": "58.0.29",
+    "expo-modules-jsi": "58.0.21",
     "lightningcss": "1.30.1"
   },
   "devEngines": {

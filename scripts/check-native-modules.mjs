@@ -3,6 +3,10 @@ import { fileURLToPath } from "node:url";
 
 // Expo's verify command only warns about duplicates. Make them fail the quality gate.
 const cwd = fileURLToPath(new URL("../apps/mobile/", import.meta.url));
+const required = {
+  apple: ["@moje-auto/document-preview"],
+  android: ["@moje-auto/document-preview", "@moje-auto/material-navigation"],
+};
 for (const platform of ["apple", "android"]) {
   const result = spawnSync(
     "nub",
@@ -10,9 +14,16 @@ for (const platform of ["apple", "android"]) {
     { cwd, encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
   );
   if (result.error || result.status !== 0) {
-    throw new Error(`Autolinking failed for ${platform}: ${result.error ?? result.stderr}`);
+    throw new Error(
+      `Autolinking failed for ${platform}: ${result.error ?? result.signal ?? result.stderr}`,
+    );
   }
-  const modules = Object.values(JSON.parse(result.stdout));
+  const packages = JSON.parse(result.stdout);
+  for (const name of required[platform]) {
+    if (!Object.hasOwn(packages, name))
+      throw new Error(`${platform}: missing native module ${name}`);
+  }
+  const modules = Object.values(packages);
   if (modules.length === 0) throw new Error(`No native modules found for ${platform}`);
   for (const module of modules) {
     if (!Array.isArray(module.duplicates)) {

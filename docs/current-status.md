@@ -1,8 +1,8 @@
 # Bieżący stan projektu
 
-Stan na 4 listopada 2026 r., `main` w commicie `f620569`.
+Stan na 5 listopada 2026 r., `main` w commicie `6e1088b`.
 
-Na branchu `feat/foldable-layouts` przygotowano osobne wdrożenie dla składanych ekranów. [Wyniki lokalnych prób i ograniczenia odbioru](foldable-baseline-2026-11-04.md#wynik-wdrożenia-i-powtórki). Poniższy stan maina nie obejmuje tej zmiany.
+Obsługa składanych ekranów jest na `main`. [Wyniki lokalnych prób i ograniczenia odbioru](foldable-baseline-2026-11-04.md#wynik-wdrożenia-i-powtórki). Poprawki z audytu są w osobnym stosie PR. Ich testy opisują odpowiednie branche, a nie wersję wysłaną do TestFlight. [Sekcje 1–4](https://github.com/MrDeex1k/MojSamochod/pull/23), [5–8](https://github.com/MrDeex1k/MojSamochod/pull/24) i [9–12](https://github.com/MrDeex1k/MojSamochod/pull/25).
 
 ## Aplikacja na mainie
 
@@ -18,7 +18,7 @@ Aktualny stos to Expo 58.0.22 i React Native 0.88.1. Akceptację integracji naty
 - Poprawiono awarię na Pixel Tablet. Po zmianie rozmiaru tekstu systemowego ze 100% na 160% aplikacja zamykała się po wybraniu Ustawień. Nawigacja korzysta teraz z routera bieżącego drzewa komponentów przez `useRouter()`. Na poprawionym APK powtórzono zmianę skali, wejście w Ustawienia, edycję pojazdu i przejście do sekcji danych. [Reprodukcja i wynik powtórki](android-material-final-qa-2026-11-03.md#confirmed-issue-and-correction).
 - `f620569` stabilizuje typowanie stanu przycisku Androida i test akcji dialogu. Regresja startu iOS sprawdza teraz wygenerowane przez lokalny prebuild pliki `Info.plist` i `SceneDelegate.swift`.
 
-## Ostatnia udokumentowana weryfikacja
+## Weryfikacja listopadowa przed audytem
 
 W raporcie z **3 listopada** pełny `nub run check` przeszedł z wynikiem **76 zestawów i 488 testów**. React Doctor nie zgłosił problemów w zmienionym zakresie; skan wykonano bez oceny punktowej. Wyniki dotyczą przebiegu opisanego w raporcie, przed commitem `f620569`.
 

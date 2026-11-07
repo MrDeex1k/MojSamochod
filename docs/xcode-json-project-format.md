@@ -19,7 +19,7 @@ nub run ios
 To prepare the project for Xcode without launching the app, run from `apps/mobile`:
 
 ```sh
-nub exec sfw nub run ios:prepare
+nub run ios:prepare
 ```
 
 For the isolated native QA app, set `MOJE_AUTO_NATIVE_QA=1` for both preparation
@@ -55,18 +55,19 @@ with Xcode before each autolinking update would leave stale references. The loca
 `.moje-auto-project-format.json` compatibility cache stores the exact generator
 output and checksums. Preparation restores it only if the JSON file is unchanged,
 runs the existing generators, then converts the updated project to JSON again.
-The Expo CLI wrapper restores JSON in a `finally` block, including after a failed
-build. It forwards build/device arguments and preserves the CLI's exit status.
+The preparation and Expo CLI wrappers restore JSON after a failed command when
+the legacy project is still convertible. Preparation records its fingerprints
+only after the project returns to JSON. The Expo CLI wrapper forwards build and
+device arguments and preserves the CLI's exit status.
 
 Use the repository's `nub run ios` entry point for Expo CLI builds. Running raw
 `expo run:ios`, `expo prebuild` or `react-native spm update` against the JSON-only
 bundle bypasses this compatibility layer. Direct `xcodebuild -project ...` builds
 work with the JSON bundle and do not need the layer.
 
-Do not run preparation or the Expo CLI wrapper concurrently with another native
-build or with Xcode saving project changes. Failed preparation or an interrupted
-process can leave the legacy intermediate project in place; resolve the reported
-error and rerun preparation before treating it as a prepared JSON project.
+Run preparation and native builds sequentially, with Xcode project editing paused.
+If conversion fails or the process is interrupted, resolve the reported error
+and rerun preparation before opening the project for a build.
 
 ## Source of truth and manual edits
 

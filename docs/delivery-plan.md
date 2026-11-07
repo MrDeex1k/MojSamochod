@@ -68,7 +68,7 @@ and documented.
 
 ### Steps
 
-1. Integrate Drizzle ORM with the Expo SDK 57-compatible `expo-sqlite` package.
+1. Integrate Drizzle ORM with the `expo-sqlite` package pinned for the active Expo SDK.
 2. Define stable identifiers, schema versioning, migrations, and repository interfaces.
 3. Implement transactional create, read, update, and delete behavior for vehicles and entries.
 4. Add seed or fixture data for development without coupling production behavior to it.
