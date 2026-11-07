@@ -5,7 +5,7 @@ import { documentDate } from "@/domain/documents/vehicle-document";
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
 import { repositoryFailure } from "@/application/repositories/repository-result";
 import { getLocales } from "expo-localization";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
 
@@ -19,6 +19,7 @@ import type {
 import { formatCurrencyInputMinorUnits, parseCurrencyInput } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 
+/** Manages document metadata and file selection, allowing one pending create or update. */
 export function useDocumentForm({
   document,
   documents,
@@ -61,6 +62,7 @@ export function useDocumentForm({
   const [amountError, setAmountError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const pendingSave = useRef(false);
   const cancel = useFormExitGuard(
     { file, name, date, amount, currency, notes, entryId },
     saving,
@@ -87,8 +89,9 @@ export function useDocumentForm({
     }
   };
 
+  /** Validates document fields and releases the submission lock after either persistence outcome. */
   const save = async () => {
-    if (saving) return;
+    if (pendingSave.current) return;
     if (!name.trim()) {
       setNameError(t("documents.required"));
       return;
@@ -110,6 +113,7 @@ export function useDocumentForm({
     setNameError(null);
     setAmountError(null);
     setFormError(null);
+    pendingSave.current = true;
     setSaving(true);
     const metadata = {
       amount:
@@ -127,7 +131,10 @@ export function useDocumentForm({
         : documents.create(vehicle.id, file!, metadata)
     )
       .catch((cause: unknown) => repositoryFailure("unavailable", "form.save", cause))
-      .finally(() => setSaving(false));
+      .finally(() => {
+        pendingSave.current = false;
+        setSaving(false);
+      });
     if (!result.ok) {
       setFormError(
         result.error.kind === "conflict" ? t("documents.duplicateError") : t("documents.saveError"),

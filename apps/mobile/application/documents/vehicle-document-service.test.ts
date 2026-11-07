@@ -85,6 +85,7 @@ describe("VehicleDocumentService", () => {
       { clock: { now: () => now }, idGenerator: { generate: () => documentId } },
     );
     if (!existing.ok) throw new Error("Expected a valid fixture");
+    repository.get = async () => repositorySuccess(existing.value);
     const service = new VehicleDocumentService(
       { now: () => new Date("2026-09-01T08:00:00.000Z") },
       { generate: () => replacementFileId },
@@ -152,3 +153,84 @@ function expectValid<T>(result: { ok: false } | { ok: true; value: T }): T {
   if (!result.ok) throw new Error("Expected valid fixture");
   return result.value;
 }
+
+it("serializes replacement and stale metadata edits without restoring the removed file", async () => {
+  const events: string[] = [];
+  const existing = createVehicleDocument(
+    { fileReference: managedFileIdFromUuidV7(fileId), name: "Invoice", vehicleId },
+    { clock: { now: () => now }, idGenerator: { generate: () => documentId } },
+  );
+  if (!existing.ok) throw new Error("Invalid fixture");
+  let stored = existing.value;
+  const repository = repositoryFake(events);
+  repository.get = async () => repositorySuccess(stored);
+  repository.update = async (value) => {
+    stored = value;
+    return repositorySuccess(undefined);
+  };
+  const files = managedFilesFake(events, replacementFileId);
+  const service = new VehicleDocumentService(
+    { now: () => now },
+    { generate: () => replacementFileId },
+    repository,
+    files,
+  );
+  const [replaced, edited] = await Promise.all([
+    service.replace(existing.value, picked),
+    service.update(existing.value, { name: "Renamed invoice" }),
+  ]);
+  expect(replaced.ok).toBe(true);
+  expect(edited.ok).toBe(true);
+  expect(stored).toMatchObject({ name: "Renamed invoice", fileReference: replacementFileId });
+  expect(events).toEqual(["files.import", `files.remove:${fileId}`]);
+});
+
+it.each(["replace", "delete"] as const)(
+  "keeps a committed %s successful when binary cleanup rejects",
+  async (operation) => {
+    const events: string[] = [];
+    const existing = createVehicleDocument(
+      { fileReference: managedFileIdFromUuidV7(fileId), name: "Invoice", vehicleId },
+      { clock: { now: () => now }, idGenerator: { generate: () => documentId } },
+    );
+    if (!existing.ok) throw new Error("Invalid fixture");
+    const repository = repositoryFake(events);
+    repository.get = async () => repositorySuccess(existing.value);
+    repository.delete = async () => repositorySuccess(existing.value);
+    const files = managedFilesFake(events, replacementFileId);
+    files.remove = jest.fn().mockRejectedValue(new Error("Native I/O failure"));
+    const service = new VehicleDocumentService(
+      { now: () => now },
+      { generate: () => replacementFileId },
+      repository,
+      files,
+    );
+    const result =
+      operation === "replace"
+        ? await service.replace(existing.value, picked)
+        : await service.delete(vehicleId, existing.value.id);
+    expect(result.ok).toBe(true);
+    expect(files.remove).toHaveBeenCalledTimes(1);
+    expect(files.remove).toHaveBeenCalledWith(fileId);
+  },
+);
+
+it("does not import a replacement for a document that was deleted after its screen loaded", async () => {
+  const events: string[] = [];
+  const existing = createVehicleDocument(
+    { fileReference: managedFileIdFromUuidV7(fileId), name: "Invoice", vehicleId },
+    { clock: { now: () => now }, idGenerator: { generate: () => documentId } },
+  );
+  if (!existing.ok) throw new Error("Invalid fixture");
+  const service = new VehicleDocumentService(
+    { now: () => now },
+    { generate: () => replacementFileId },
+    repositoryFake(events),
+    managedFilesFake(events),
+  );
+  expect(await service.replace(existing.value, picked)).toMatchObject({
+    ok: false,
+    error: { kind: "not-found" },
+  });
+  expect(events).toEqual([]);
+});

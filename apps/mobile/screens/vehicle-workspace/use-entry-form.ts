@@ -33,6 +33,7 @@ type EntryFormProps = Readonly<{
   vehicle: Vehicle;
 }>;
 
+/** Edits history entries without rounding stored timestamps and prevents overlapping saves. */
 export function useEntryForm({
   clock,
   entry,
@@ -45,7 +46,7 @@ export function useEntryForm({
 }: EntryFormProps) {
   const { t, i18n } = useAppTranslation();
   const [occurredAt, setOccurredAt] = useState(() =>
-    toUtcMinute(new Date(entry?.occurredAt ?? clock.now())),
+    entry ? new Date(entry.occurredAt) : toUtcMinute(clock.now()),
   );
   const [odometer, setOdometer] = useState(() => formatInitialOdometer(entry, vehicle));
   const odometerChanged = useRef(false);
@@ -77,6 +78,7 @@ export function useEntryForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const pendingSave = useRef(false);
   const cancel = useFormExitGuard(
     {
       occurredAt,
@@ -120,8 +122,9 @@ export function useEntryForm({
     return { ...common, details: { description, subject }, type };
   };
 
+  /** Validates the draft before locking a single create or update operation. */
   const save = async () => {
-    if (saving) return;
+    if (pendingSave.current) return;
     setFormError(null);
     const validated = entry
       ? updateHistoryEntry(entry, input(), clock)
@@ -131,12 +134,16 @@ export function useEntryForm({
       return;
     }
     setErrors({});
+    pendingSave.current = true;
     setSaving(true);
     const result = await (
       entry ? historyEntries.update(validated.value) : historyEntries.create(validated.value)
     )
       .catch((cause: unknown) => repositoryFailure("unavailable", "form.save", cause))
-      .finally(() => setSaving(false));
+      .finally(() => {
+        pendingSave.current = false;
+        setSaving(false);
+      });
     if (!result.ok) {
       setFormError(t("entryForm.saveError"));
       return;
@@ -212,15 +219,9 @@ function entryDescription(entry: HistoryEntry | undefined): string {
 }
 
 function toUtcMinute(value: Date): Date {
-  return new Date(
-    Date.UTC(
-      value.getUTCFullYear(),
-      value.getUTCMonth(),
-      value.getUTCDate(),
-      value.getUTCHours(),
-      value.getUTCMinutes(),
-    ),
-  );
+  const result = new Date(value);
+  result.setUTCSeconds(0, 0);
+  return result;
 }
 
 function mapIssues(issues: readonly ValidationIssue[], t: (key: string) => string): FieldErrors {

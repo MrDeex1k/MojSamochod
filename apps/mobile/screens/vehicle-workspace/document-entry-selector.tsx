@@ -15,6 +15,7 @@ import { TextField } from "@/components/ui/text-field";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { formatUtcDateTime } from "@/localization/formatters";
 
+/** Selects a history relation from repository search results or the supplied local entries. */
 export function DocumentEntrySelector({
   entries,
   historyEntries,
@@ -87,6 +88,7 @@ export function DocumentEntrySelector({
               />
             </View>
             <FlatList
+              testID="document-reference-results"
               data={filtered}
               onEndReached={results.loadMore}
               onEndReachedThreshold={0.5}
@@ -150,6 +152,10 @@ function referenceLabel(entry: HistoryEntryReference | HistoryEntry, t: (key: st
   return `${t(`workspace.entryType.${entry.type}`)} - ${subject ?? t(`entryForm.inspectionKinds.${inspectionKind ?? "other"}`)}`;
 }
 
+/**
+ * Debounces reference search and exposes pages only for the current query and repository.
+ * Query changes invalidate previous requests and prevent reuse of their pagination cursors.
+ */
 function useReferenceSearch(
   open: boolean,
   query: string,
@@ -161,6 +167,18 @@ function useReferenceSearch(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [search, setSearch] = useState<{
+    query: string;
+    vehicleId: VehicleId;
+    repository: HistoryEntryRepository;
+    attempt: number;
+  } | null>(null);
+  const currentSearch =
+    open &&
+    search?.query === query &&
+    search?.vehicleId === vehicleId &&
+    search?.repository === repository &&
+    search?.attempt === attempt;
   const generation = useRef(0);
   const pending = useRef(false);
   useEffect(() => {
@@ -168,6 +186,7 @@ function useReferenceSearch(
     pending.current = false;
     if (!open || !vehicleId || !repository?.searchReferences) return;
     const timer = setTimeout(() => {
+      setSearch({ query, vehicleId, repository, attempt });
       setEntries([]);
       setCursor(null);
       setError(false);
@@ -196,6 +215,7 @@ function useReferenceSearch(
   }, [open, query, repository, vehicleId, attempt]);
   const loadMore = () => {
     if (
+      !currentSearch ||
       !cursor ||
       loading ||
       pending.current ||
@@ -228,5 +248,11 @@ function useReferenceSearch(
         }
       });
   };
-  return { entries, loading, error, loadMore, retry: () => setAttempt((value) => value + 1) };
+  return {
+    entries: currentSearch ? entries : [],
+    loading: open && Boolean(repository?.searchReferences) && (!currentSearch || loading),
+    error: currentSearch && error,
+    loadMore,
+    retry: () => setAttempt((value) => value + 1),
+  };
 }

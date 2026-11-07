@@ -64,6 +64,7 @@ export type PendingFuelInterval = Readonly<{
 }>;
 
 export type FuelConsumptionSummary = Readonly<{
+  unavailableReason?: "unsafe-total";
   includedRefuellingIds: readonly RefuellingId[];
   intervals: readonly FuelInterval[];
   pendingInterval?: PendingFuelInterval;
@@ -72,6 +73,10 @@ export type FuelConsumptionSummary = Readonly<{
   unanchoredRefuellingIds: readonly RefuellingId[];
 }>;
 
+/**
+ * Summarizes valid full-tank intervals while retaining incomplete and invalid intervals.
+ * Unsafe aggregate sums mark consumption unavailable and clear included record IDs.
+ */
 export function calculateFuelConsumption(
   refuellings: readonly ConsumptionRecord[],
 ): FuelConsumptionSummary {
@@ -96,13 +101,15 @@ export function calculateFuelConsumption(
   const totalFuelMicrolitres = safeSum(
     validIntervals.map(({ fuelMicrolitres }) => fuelMicrolitres),
   );
+  const overflow = totalDistanceMetres === undefined || totalFuelMicrolitres === undefined;
   const includedRefuellingIds = [
     ...new Set(validIntervals.flatMap(({ refuellingIds }) => refuellingIds)),
   ];
   const pendingRefuellings = sorted.slice(anchorIndex);
 
   return {
-    includedRefuellingIds,
+    includedRefuellingIds: overflow ? [] : includedRefuellingIds,
+    ...(overflow ? { unavailableReason: "unsafe-total" as const } : {}),
     intervals,
     pendingInterval: {
       reason: "awaiting-full-tank",
@@ -115,11 +122,13 @@ export function calculateFuelConsumption(
   };
 }
 
+/** Converts usable summary totals to the requested unit, returning undefined for unavailable data. */
 export function fuelConsumptionValue(
   summary: FuelConsumptionSummary,
   unit: FuelConsumptionUnit,
 ): number | undefined {
   const { totalDistanceMetres, totalFuelMicrolitres } = summary;
+  if (summary.unavailableReason) return undefined;
   if (totalDistanceMetres <= 0 || totalFuelMicrolitres <= 0) return undefined;
   switch (unit) {
     case "litresPer100Kilometres":

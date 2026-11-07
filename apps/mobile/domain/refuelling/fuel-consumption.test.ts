@@ -158,3 +158,15 @@ function fixture(
   if (!result.ok) throw new Error(`Invalid fixture: ${JSON.stringify(result.issues)}`);
   return result.value;
 }
+
+it("reports an overflowing aggregate instead of pretending it is waiting for an interval", () => {
+  const summary = calculateFuelConsumption([
+    fixture(ids[0], "2026-08-01T10:00:00.000Z", "full", 0, 1),
+    fixture(ids[1], "2026-08-02T10:00:00.000Z", "full", 1000, Number.MAX_SAFE_INTEGER),
+    fixture(ids[2], "2026-08-03T10:00:00.000Z", "full", 2000, 1),
+  ]);
+  expect(summary.intervals.every((interval) => interval.status === "valid")).toBe(true);
+  expect(summary.unavailableReason).toBe("unsafe-total");
+  expect(summary.includedRefuellingIds).toEqual([]);
+  expect(fuelConsumptionValue(summary, "litresPer100Kilometres")).toBeUndefined();
+});

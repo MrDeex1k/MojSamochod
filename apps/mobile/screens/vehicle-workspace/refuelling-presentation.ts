@@ -32,21 +32,28 @@ export function formatFuelConsumption(value: number, locale: string): string {
   }).format(value);
 }
 
-export function formatUnitPrice(unitPriceMilliUnits: number, locale: string): string {
+export function formatUnitPrice(
+  unitPriceMilliUnits: number,
+  locale: string,
+  useGrouping = true,
+): string {
   return new Intl.NumberFormat(locale, {
+    useGrouping,
     maximumFractionDigits: 3,
     minimumFractionDigits: 0,
   }).format(unitPriceMilliUnits / 1000);
 }
 
+/** Converts and formats a unit price, allowing editable inputs to omit grouping separators. */
 export function formatConvertedUnitPrice(
   unitPriceMilliUnits: number,
   fromUnit: VolumeUnit,
   toUnit: VolumeUnit,
   locale: string,
+  useGrouping = true,
 ): string | undefined {
   const converted = convertUnitPriceMilliUnits(unitPriceMilliUnits, fromUnit, toUnit);
-  return converted === undefined ? undefined : formatUnitPrice(converted, locale);
+  return converted === undefined ? undefined : formatUnitPrice(converted, locale, useGrouping);
 }
 
 export function formatRefuellingOdometer(metres: number, vehicle: Vehicle, locale: string): string {

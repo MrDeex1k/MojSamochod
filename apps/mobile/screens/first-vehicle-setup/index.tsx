@@ -54,6 +54,7 @@ export function FirstVehicleSetupScreen() {
   );
 }
 
+/** Collects the first vehicle and optional photo with a single pending persistence operation. */
 export function CreateFirstVehicleForm({
   clock,
   idGenerator,
@@ -82,6 +83,7 @@ export function CreateFirstVehicleForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const pendingSave = useRef(false);
 
   const selectPhoto = async () => {
     setFormError(null);
@@ -110,8 +112,9 @@ export function CreateFirstVehicleForm({
     setFuelVolumeUnit(nextUnit);
   };
 
+  /** Validates the draft and locks submissions until vehicle and photo persistence finishes. */
   const save = async () => {
-    if (saving) return;
+    if (pendingSave.current) return;
     setFormError(null);
     const photoId = photo ? managedFileIdFromUuidV7(idGenerator.generate()) : undefined;
     const result = createVehicle(
@@ -137,13 +140,17 @@ export function CreateFirstVehicleForm({
     }
 
     setErrors({});
+    pendingSave.current = true;
     setSaving(true);
     const outcome = await persistFirstVehicle({
       managedFiles,
       photo,
       vehicle: result.value,
       vehicles,
-    }).finally(() => setSaving(false));
+    }).finally(() => {
+      pendingSave.current = false;
+      setSaving(false);
+    });
     if (outcome === "photo-error") setFormError(t("firstVehicle.photoError"));
     if (outcome === "vehicle-error") setFormError(t("firstVehicle.genericError"));
     if (outcome === "created") onCreated();
