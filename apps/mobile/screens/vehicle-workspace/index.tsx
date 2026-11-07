@@ -33,6 +33,7 @@ export function VehicleWorkspaceScreen({ mode }: { mode: WorkspaceMode }) {
   return <VehicleWorkspaceController mode={mode} />;
 }
 
+/** Loads the active workspace section and replaces peer detail routes when selection changes. */
 function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
   const router = useRouter();
   const services = useApplicationServices();

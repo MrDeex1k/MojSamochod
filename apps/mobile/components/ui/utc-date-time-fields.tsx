@@ -6,6 +6,7 @@ import DateTimePicker from "@/components/ui/date-time-picker";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { nativeTheme } from "@/styles/native-theme";
 
+/** Edits UTC date and time separately and exposes each formatted value to assistive technology. */
 export function UtcDateTimeFields({
   value,
   onChange,

@@ -1,6 +1,7 @@
 import type { useRouter } from "expo-router";
 import type { WorkspaceMode } from "./workspace-types";
 
+/** Navigates to a workspace mode, optionally replacing details to keep Back one step from the list. */
 export function navigateToMode(
   mode: WorkspaceMode,
   router: Pick<ReturnType<typeof useRouter>, "navigate" | "push" | "replace">,

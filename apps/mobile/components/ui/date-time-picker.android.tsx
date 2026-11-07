@@ -6,6 +6,7 @@ import { useAppTranslation } from "@/localization/use-app-translation";
 import type { DateTimePickerProps } from "./date-time-picker";
 import { utcClockForDevice, deviceClockToUtc } from "./material-time";
 
+/** Presents the native date or UTC clock dialog with labels matching the selected mode. */
 export default function DateTimePicker({
   value,
   mode = "date",

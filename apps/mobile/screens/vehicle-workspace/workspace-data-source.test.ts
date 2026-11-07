@@ -9,6 +9,7 @@ import type {
 import type { RepositoryResult } from "@/application/repositories/repository-result";
 import { createHistoryEntry } from "@/domain/history/history-entry";
 import { vehicleIdFromUuidV7 } from "@/domain/shared/identifiers";
+import { calculateFuelConsumption } from "@/domain/refuelling/fuel-consumption";
 
 function services() {
   const vehicle = createVehicle(
@@ -303,6 +304,71 @@ it("keeps the full-history fuel summary when additional display pages are loaded
   });
   expect(consumption).toHaveBeenCalledTimes(2);
 });
+
+it.each([8, 6, 5])(
+  "refreshes three loaded fuel pages with %i remaining records and preserves the next cursor",
+  async (remaining) => {
+    const api = services();
+    let records = Array.from({ length: 8 }, (_, index) => ({
+      id: String(index),
+      occurredAt: "2026-09-05T08:00:00.000Z",
+      createdAt: "2026-09-05T08:00:00.000Z",
+      notes: "original",
+    }));
+    const listPage = jest.fn(async (_vehicle: unknown, cursor?: HistoryCursor) => {
+      const start = cursor ? records.findIndex(({ id }) => id === cursor.id) + 1 : 0;
+      const refuellings = records.slice(start, start + 2);
+      const last = refuellings.at(-1);
+      return repositorySuccess({
+        refuellings,
+        nextCursor:
+          last && start + 2 < records.length
+            ? { id: last.id, occurredAt: last.occurredAt, createdAt: last.createdAt }
+            : null,
+      });
+    });
+    const summary = calculateFuelConsumption([]);
+    const consumption = jest.fn(async () => repositorySuccess(summary));
+    const source = new WorkspaceDataSource({
+      ...api,
+      refuellings: { ...api.refuellings, listPage, consumption },
+    } as unknown as ApplicationServices);
+    await source.load("fuel");
+    await source.loadMore("fuel");
+    await source.loadMore("fuel");
+    expect(await source.load("fuel")).toMatchObject({
+      status: "ready",
+      data: { refuellingHistory: { refuellings: records.slice(0, 6) } },
+    });
+    expect(source.hasMore("fuel")).toBe(true);
+    listPage.mockClear();
+
+    records = records.slice(0, remaining).map((record) => ({ ...record, notes: "updated" }));
+    source.invalidate("fuel");
+    expect(await source.load("fuel")).toMatchObject({
+      status: "ready",
+      data: { refuellingHistory: { consumption: summary, refuellings: records.slice(0, 6) } },
+    });
+    expect(listPage.mock.calls.map(([, cursor]) => cursor?.id)).toEqual([undefined, "1", "3"]);
+    expect(consumption).toHaveBeenCalledTimes(2);
+    expect(source.hasMore("fuel")).toBe(remaining > 6);
+
+    await source.loadMore("fuel");
+    expect(listPage).toHaveBeenCalledTimes(remaining > 6 ? 4 : 3);
+    expect(listPage.mock.calls[3]?.[1]).toEqual(
+      remaining > 6
+        ? { id: "5", occurredAt: records[5].occurredAt, createdAt: records[5].createdAt }
+        : undefined,
+    );
+    expect(await source.load("fuel")).toMatchObject({
+      status: "ready",
+      data: { refuellingHistory: { consumption: summary, refuellings: records } },
+    });
+    expect(source.hasMore("fuel")).toBe(false);
+    expect(consumption).toHaveBeenCalledTimes(2);
+    expect(api.refuellings.list).not.toHaveBeenCalled();
+  },
+);
 
 it("loads document pages and refreshes the cached range without falling back to the full list", async () => {
   const api = services();

@@ -21,6 +21,7 @@ const materialButtons: Record<ButtonVariant, typeof FilledButton> = {
   text: TextButton,
 };
 
+/** Keeps the operation label when accessibility state marks the button busy and disables presses. */
 export function Button({
   label,
   busy = false,

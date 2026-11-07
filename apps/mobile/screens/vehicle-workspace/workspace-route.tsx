@@ -15,6 +15,7 @@ import type { WorkspaceMode } from "./workspace-types";
 import { VehicleWorkspaceScreen } from "./index";
 
 type Params = { kind?: string; id?: string; type?: string; returnTo?: string };
+/** Remounts route resolution when parameters change, giving an explicit kind precedence. */
 export function WorkspaceRoute({ kind }: { kind?: WorkspaceMode["kind"] }) {
   const { id, type, returnTo, kind: paramKind } = useLocalSearchParams<Params>();
   const routeKind = kind ?? paramKind;
@@ -29,6 +30,7 @@ export function WorkspaceRoute({ kind }: { kind?: WorkspaceMode["kind"] }) {
   );
 }
 
+/** Resolves the current route with loading and retry states while ignoring obsolete responses. */
 function ResolvedWorkspaceRoute({ id, type, returnTo, kind: routeKind }: Params) {
   const services = useApplicationServices();
   const { t } = useAppTranslation();

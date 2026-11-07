@@ -15,11 +15,13 @@ import { useAppTranslation } from "@/localization/use-app-translation";
 type Action = () => void;
 type Guard = (action: Action) => void;
 
+/** Coordinates guarded actions and publishes native removal blocking for the active form. */
 function createNavigationGuard() {
   let guard: Guard | null = null;
   let approved = false;
   let blocked = false;
   const listeners = new Set<() => void>();
+  /** Publishes only changes to the removal block so subscribers avoid redundant updates. */
   const setBlocked = (value: boolean) => {
     if (blocked === value) return;
     blocked = value;
@@ -33,6 +35,7 @@ function createNavigationGuard() {
       };
     },
     getSnapshot: () => blocked,
+    /** Registers a form guard and releases blocking when that registration leaves the tree. */
     register(next: Guard, preventRemoval: boolean) {
       guard = next;
       setBlocked(preventRemoval);
@@ -70,6 +73,10 @@ export function useGuardedNavigation() {
   return (action: Action) => (navigation ? navigation.navigate(action) : action());
 }
 
+/**
+ * Blocks departure during saves and asks before discarding a changed form.
+ * Registration follows dirty/busy state while navigation always invokes the latest form callback.
+ */
 export function useFormExitGuard(values: unknown, busy: boolean, onCancel: Action) {
   const navigation = useContext(NavigationContext);
   const { t } = useAppTranslation();

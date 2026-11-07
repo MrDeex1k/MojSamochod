@@ -31,6 +31,7 @@ export class WorkspaceDataSource {
 
   constructor(private readonly services: ApplicationServices) {}
 
+  /** Queues invalidation after pending reads so their completion cannot restore stale cache flags. */
   invalidate(section: WorkspaceSection) {
     // Apply after in-flight reads so they cannot mark invalidated data as loaded again.
     this.tail = this.tail.then(() => {
@@ -70,6 +71,10 @@ export class WorkspaceDataSource {
     return next;
   }
 
+  /**
+   * Appends one page and shares pending requests for the same section.
+   * Document pages fetch only history references missing from the cached relation set.
+   */
   loadMore(section: WorkspaceSection = "history") {
     const pending = this.pendingPages.get(section);
     if (pending) return pending;
@@ -134,6 +139,7 @@ export class WorkspaceDataSource {
     return next;
   }
 
+  /** Reports whether the requested paginated section has a remaining cursor. */
   hasMore(section: WorkspaceSection = "history") {
     return section === "documents"
       ? this.documentCursor !== null
@@ -142,6 +148,10 @@ export class WorkspaceDataSource {
         : section === "history" && this.cursor !== null;
   }
 
+  /**
+   * Loads missing section data and preserves previously loaded ranges during refresh.
+   * Refuelling refresh follows cursors until the previous count is restored or pages run out.
+   */
   private async loadSection(
     section: WorkspaceSection,
   ): Promise<{ status: "ready"; data: WorkspaceData } | { status: "missing" | "error" }> {

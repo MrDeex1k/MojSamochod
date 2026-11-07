@@ -14,6 +14,7 @@ export function formatLocalizedNumber(value: number, locale: string): string {
   return formatter.format(value);
 }
 
+/** Formats safe integer minor units without losing currency precision near MAX_SAFE_INTEGER. */
 export function formatCurrencyMinorUnits(
   minorUnits: number,
   currency: string,
