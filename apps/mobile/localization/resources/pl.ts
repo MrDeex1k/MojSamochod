@@ -207,7 +207,7 @@ export const pl = {
       "not-recorded": "Nie zapisano",
       passed: "Zaliczony",
     },
-    invalidCostError: "Wpisz poprawną nieujemną kwotę z najwyżej dwoma miejscami po przecinku.",
+    invalidCostError: "Wpisz poprawną nieujemną kwotę zgodną z precyzją wybranej waluty.",
     invalidOdometerError: "Wpisz poprawną nieujemną liczbę całkowitą.",
     itemLabel: "Wymieniony element",
     keepEditing: "Kontynuuj edycję",
@@ -222,6 +222,8 @@ export const pl = {
     serviceProviderLabel: "Warsztat lub usługodawca",
     subjectLabel: "Przedmiot naprawy",
     timeLabel: "Godzina (UTC)",
+    confirmTime: "Zatwierdź godzinę",
+    cancelTime: "Anuluj wybór godziny",
     title: { inspection: "Dodaj przegląd", repair: "Dodaj naprawę", replacement: "Dodaj wymianę" },
   },
   entryDetail: {

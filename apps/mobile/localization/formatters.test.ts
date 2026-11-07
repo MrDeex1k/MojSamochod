@@ -30,6 +30,14 @@ describe("currency formatters", () => {
     expect(formatCurrencyInputMinorUnits(123, "PLN", "pl-PL")).toBe("1,23");
   });
 
+  it.each([
+    ["en-US", "USD", 9007199254740991, "$90,071,992,547,409.91"],
+    ["pl-PL", "PLN", 9007199254740990, "90\u00a0071\u00a0992\u00a0547\u00a0409,90\u00a0zł"],
+    ["en-US", "KWD", 9007199254740991, "KWD\u00a09,007,199,254,740.991"],
+  ])("preserves every minor unit in large %s %s amounts", (locale, currency, amount, expected) => {
+    expect(formatCurrencyMinorUnits(amount, currency, locale)).toBe(expected);
+  });
+
   it("rejects precision unsupported by the selected currency", () => {
     expect(parseCurrencyInput("1.5", "JPY", "en-US")).toEqual({ kind: "invalid" });
     expect(parseCurrencyInput("1.234", "USD", "en-US")).toEqual({ kind: "invalid" });

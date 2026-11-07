@@ -25,8 +25,9 @@ export const alertStore = {
     emit();
     button?.onPress?.();
   },
-  dismiss() {
-    if (!current || current.options?.cancelable === false) return;
+  /** Dismisses the matching cancelable request, ignoring callbacks from a replaced alert. */
+  dismiss(expected: Request | null = current) {
+    if (!current || current !== expected || current.options?.cancelable === false) return;
     const request = current;
     current = null;
     emit();

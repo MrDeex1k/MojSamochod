@@ -6,6 +6,7 @@ import DateTimePicker from "@/components/ui/date-time-picker";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { nativeTheme } from "@/styles/native-theme";
 
+/** Edits UTC date and time separately and exposes each formatted value to assistive technology. */
 export function UtcDateTimeFields({
   value,
   onChange,
@@ -19,6 +20,10 @@ export function UtcDateTimeFields({
 }>) {
   const { t, i18n } = useAppTranslation();
   const [open, setOpen] = useState<"date" | "time" | null>(null);
+  const displayed = {
+    date: formatUtcDate(value, i18n.language),
+    time: formatUtcTime(value, i18n.language),
+  };
   return (
     <View>
       {(["date", "time"] as const).map((mode) => (
@@ -45,14 +50,11 @@ export function UtcDateTimeFields({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t(`entryForm.${mode}Label`)}
+              accessibilityValue={{ text: displayed[mode] }}
               onPress={() => setOpen(mode)}
               className="min-h-12 justify-center px-compact"
             >
-              <Text className="text-body text-accent">
-                {mode === "date"
-                  ? formatUtcDate(value, i18n.language)
-                  : formatUtcTime(value, i18n.language)}
-              </Text>
+              <Text className="text-body text-accent">{displayed[mode]}</Text>
             </Pressable>
           )}
         </View>

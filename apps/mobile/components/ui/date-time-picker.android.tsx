@@ -6,6 +6,7 @@ import { useAppTranslation } from "@/localization/use-app-translation";
 import type { DateTimePickerProps } from "./date-time-picker";
 import { utcClockForDevice, deviceClockToUtc } from "./material-time";
 
+/** Presents the native date or UTC clock dialog with labels matching the selected mode. */
 export default function DateTimePicker({
   value,
   mode = "date",
@@ -23,20 +24,22 @@ export default function DateTimePicker({
   const common = {
     onDateSelected: select,
     onDismissRequest: () => onDismiss?.(),
-    confirmButtonLabel: t("reminders.confirmDate"),
-    dismissButtonLabel: t("reminders.cancelDate"),
   };
   return (
     <Host colorScheme="dark" seedColor={materialSeed}>
       {mode === "time" ? (
         <TimePickerDialog
           {...common}
+          confirmButtonLabel={t("entryForm.confirmTime")}
+          dismissButtonLabel={t("entryForm.cancelTime")}
           initialDate={utcClockForDevice(value).toISOString()}
           is24Hour={is24Hour ?? getCalendars()[0]?.uses24hourClock ?? true}
         />
       ) : (
         <DatePickerDialog
           {...common}
+          confirmButtonLabel={t("reminders.confirmDate")}
+          dismissButtonLabel={t("reminders.cancelDate")}
           initialDate={value.toISOString()}
           selectableDates={{ start: minimumDate, end: maximumDate }}
         />

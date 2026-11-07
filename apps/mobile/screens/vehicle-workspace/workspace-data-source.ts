@@ -27,18 +27,23 @@ export class WorkspaceDataSource {
   private tail: Promise<unknown> = Promise.resolve();
   private data: WorkspaceData | null = null;
   private readonly loaded = new Set<string>();
+  private readonly pendingPages = new Map<WorkspaceSection, Promise<void>>();
 
   constructor(private readonly services: ApplicationServices) {}
 
+  /** Queues invalidation after pending reads so their completion cannot restore stale cache flags. */
   invalidate(section: WorkspaceSection) {
-    this.loaded.delete(section);
-    if (section === "reminders") this.loaded.delete("upcoming");
-    if (section === "documents" || section === "history") this.loaded.delete("counts");
-    if (section === "history") {
-      this.loaded.delete("documents");
-      this.relatedEntries = null;
-    }
-    if (section !== "documents") this.loaded.delete("vehicle");
+    // Apply after in-flight reads so they cannot mark invalidated data as loaded again.
+    this.tail = this.tail.then(() => {
+      this.loaded.delete(section);
+      if (section === "reminders") this.loaded.delete("upcoming");
+      if (section === "documents" || section === "history") this.loaded.delete("counts");
+      if (section === "history") {
+        this.loaded.delete("documents");
+        this.relatedEntries = null;
+      }
+      if (section !== "documents") this.loaded.delete("vehicle");
+    });
   }
 
   async changedHistory(entry?: HistoryEntry, deletedId?: HistoryEntryId) {
@@ -66,64 +71,87 @@ export class WorkspaceDataSource {
     return next;
   }
 
-  async loadMore(section: WorkspaceSection = "history") {
-    const next = this.tail.then(async () => {
-      if (section === "documents") {
-        if (!this.data || !this.documentCursor) return;
-        const page = unwrap(
-          await this.services.documents.listPage(this.data.vehicle.id, this.documentCursor),
-        );
-        const documents = [...this.data.documents, ...page.documents];
-        const ids = [
-          ...new Set(
-            documents.flatMap((document) =>
-              document.historyEntryId ? [document.historyEntryId] : [],
+  /**
+   * Appends one page and shares pending requests for the same section.
+   * Document pages fetch only history references missing from the cached relation set.
+   */
+  loadMore(section: WorkspaceSection = "history") {
+    const pending = this.pendingPages.get(section);
+    if (pending) return pending;
+    const next = this.tail
+      .then(async () => {
+        if (!this.loaded.has(section)) return;
+        if (section === "documents") {
+          if (!this.data || !this.documentCursor) return;
+          const page = unwrap(
+            await this.services.documents.listPage(this.data.vehicle.id, this.documentCursor),
+          );
+          const documents = [...this.data.documents, ...page.documents];
+          const knownIds = new Set(this.relatedEntries?.map(({ id }) => id));
+          const ids = [
+            ...new Set(
+              page.documents.flatMap(({ historyEntryId }) =>
+                historyEntryId && !knownIds.has(historyEntryId) ? [historyEntryId] : [],
+              ),
             ),
-          ),
-        ];
-        const entries = this.services.historyEntries.references
-          ? unwrap(await this.services.historyEntries.references(this.data.vehicle.id, ids))
-          : unwrap(await this.services.historyEntries.list(this.data.vehicle.id));
-        this.relatedEntries = entries;
-        this.data = { ...this.data, documents, relatedEntries: entries };
-        this.documentCursor = page.nextCursor;
-        return;
-      }
-      if (section === "fuel") {
-        if (!this.data || !this.fuelCursor) return;
+          ];
+          const entries = this.services.historyEntries.references
+            ? [
+                ...(this.relatedEntries ?? []),
+                ...(ids.length
+                  ? unwrap(await this.services.historyEntries.references(this.data.vehicle.id, ids))
+                  : []),
+              ]
+            : unwrap(await this.services.historyEntries.list(this.data.vehicle.id));
+          this.relatedEntries = entries;
+          this.data = { ...this.data, documents, relatedEntries: entries };
+          this.documentCursor = page.nextCursor;
+          return;
+        }
+        if (section === "fuel") {
+          if (!this.data || !this.fuelCursor) return;
+          const page = unwrap(
+            await this.services.refuellings.listPage(this.data.vehicle.id, this.fuelCursor),
+          );
+          this.data = {
+            ...this.data,
+            refuellingHistory: {
+              ...this.data.refuellingHistory,
+              refuellings: [...this.data.refuellingHistory.refuellings, ...page.refuellings],
+            },
+          };
+          this.fuelCursor = page.nextCursor;
+          return;
+        }
+        if (!this.data || !this.cursor || !this.services.historyEntries.listPage) return;
         const page = unwrap(
-          await this.services.refuellings.listPage(this.data.vehicle.id, this.fuelCursor),
+          await this.services.historyEntries.listPage(this.data.vehicle.id, this.cursor),
         );
-        this.data = {
-          ...this.data,
-          refuellingHistory: {
-            ...this.data.refuellingHistory,
-            refuellings: [...this.data.refuellingHistory.refuellings, ...page.refuellings],
-          },
-        };
-        this.fuelCursor = page.nextCursor;
-        return;
-      }
-      if (!this.data || !this.cursor || !this.services.historyEntries.listPage) return;
-      const page = unwrap(
-        await this.services.historyEntries.listPage(this.data.vehicle.id, this.cursor),
-      );
-      this.data = { ...this.data, entries: [...this.data.entries, ...page.entries] };
-      this.cursor = page.nextCursor;
-      this.loaded.delete("counts");
-    });
+        this.data = { ...this.data, entries: [...this.data.entries, ...page.entries] };
+        this.cursor = page.nextCursor;
+        this.loaded.delete("counts");
+      })
+      .finally(() => {
+        this.pendingPages.delete(section);
+      });
+    this.pendingPages.set(section, next);
     this.tail = next.catch(() => undefined);
-    await next;
+    return next;
   }
 
+  /** Reports whether the requested paginated section has a remaining cursor. */
   hasMore(section: WorkspaceSection = "history") {
     return section === "documents"
       ? this.documentCursor !== null
       : section === "fuel"
         ? this.fuelCursor !== null
-        : this.cursor !== null;
+        : section === "history" && this.cursor !== null;
   }
 
+  /**
+   * Loads missing section data and preserves previously loaded ranges during refresh.
+   * Refuelling refresh follows cursors until the previous count is restored or pages run out.
+   */
   private async loadSection(
     section: WorkspaceSection,
   ): Promise<{ status: "ready"; data: WorkspaceData } | { status: "missing" | "error" }> {
@@ -240,11 +268,17 @@ export class WorkspaceDataSource {
       }
       if (section === "fuel" && !this.loaded.has("fuel")) {
         if (this.services.refuellings.listPage) {
-          const page = unwrap(await this.services.refuellings.listPage(vehicle.id));
+          const target = this.data.refuellingHistory.refuellings.length;
+          let page = unwrap(await this.services.refuellings.listPage(vehicle.id));
+          const refuellings = [...page.refuellings];
+          while (page.nextCursor && refuellings.length < target) {
+            page = unwrap(await this.services.refuellings.listPage(vehicle.id, page.nextCursor));
+            refuellings.push(...page.refuellings);
+          }
           const consumption = unwrap(await this.services.refuellings.consumption(vehicle.id));
           this.data = {
             ...this.data,
-            refuellingHistory: { consumption, refuellings: page.refuellings },
+            refuellingHistory: { consumption, refuellings },
           };
           this.fuelCursor = page.nextCursor;
         } else {

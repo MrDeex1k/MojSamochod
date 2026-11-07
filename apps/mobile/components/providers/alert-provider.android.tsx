@@ -3,6 +3,7 @@ import { Host } from "@expo/ui";
 import { AlertDialog, TextButton, Text } from "@expo/ui/jetpack-compose";
 import { materialSeed, nativeTheme } from "@/styles/native-theme";
 import { alertStore } from "@/components/ui/alert-store";
+/** Renders the active Compose alert and ties dismiss callbacks to that specific request. */
 export function AlertProvider({ children }: PropsWithChildren) {
   const request = useSyncExternalStore(alertStore.subscribe, alertStore.getSnapshot);
   return (
@@ -11,7 +12,7 @@ export function AlertProvider({ children }: PropsWithChildren) {
       {request ? (
         <Host colorScheme="dark" seedColor={materialSeed}>
           <AlertDialog
-            onDismissRequest={alertStore.dismiss}
+            onDismissRequest={() => alertStore.dismiss(request)}
             properties={{
               dismissOnBackPress: request.options?.cancelable !== false,
               dismissOnClickOutside: request.options?.cancelable !== false,

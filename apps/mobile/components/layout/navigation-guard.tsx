@@ -15,11 +15,18 @@ import { useAppTranslation } from "@/localization/use-app-translation";
 type Action = () => void;
 type Guard = (action: Action) => void;
 
+/** Coordinates guarded actions and publishes native removal blocking for the active form. */
 function createNavigationGuard() {
   let guard: Guard | null = null;
   let approved = false;
   let blocked = false;
   const listeners = new Set<() => void>();
+  /** Publishes only changes to the removal block so subscribers avoid redundant updates. */
+  const setBlocked = (value: boolean) => {
+    if (blocked === value) return;
+    blocked = value;
+    listeners.forEach((listener) => listener());
+  };
   return {
     subscribe(listener: () => void) {
       listeners.add(listener);
@@ -28,14 +35,15 @@ function createNavigationGuard() {
       };
     },
     getSnapshot: () => blocked,
+    /** Registers a form guard and releases blocking when that registration leaves the tree. */
     register(next: Guard, preventRemoval: boolean) {
       guard = next;
-      if (blocked !== preventRemoval) {
-        blocked = preventRemoval;
-        listeners.forEach((listener) => listener());
-      }
+      setBlocked(preventRemoval);
       return () => {
-        if (guard === next) guard = null;
+        if (guard === next) {
+          guard = null;
+          setBlocked(false);
+        }
       };
     },
     navigate(action: Action) {
@@ -65,6 +73,10 @@ export function useGuardedNavigation() {
   return (action: Action) => (navigation ? navigation.navigate(action) : action());
 }
 
+/**
+ * Blocks departure during saves and asks before discarding a changed form.
+ * Registration follows dirty/busy state while navigation always invokes the latest form callback.
+ */
 export function useFormExitGuard(values: unknown, busy: boolean, onCancel: Action) {
   const navigation = useContext(NavigationContext);
   const { t } = useAppTranslation();
@@ -102,7 +114,15 @@ export function useFormExitGuard(values: unknown, busy: boolean, onCancel: Actio
     );
   };
   const cancel = () => (navigation ? navigation.navigate(onCancel) : guard(onCancel));
-  useEffect(() => navigation?.register(guard, busy || serialized !== initial));
+  const latestGuard = useRef(guard);
+  const preventRemoval = busy || serialized !== initial;
+  useEffect(() => {
+    latestGuard.current = guard;
+  });
+  useEffect(
+    () => navigation?.register((action) => latestGuard.current(action), preventRemoval),
+    [navigation, preventRemoval],
+  );
   useEffect(() => {
     if (navigation) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {

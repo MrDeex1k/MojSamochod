@@ -15,13 +15,27 @@ import type { WorkspaceMode } from "./workspace-types";
 import { VehicleWorkspaceScreen } from "./index";
 
 type Params = { kind?: string; id?: string; type?: string; returnTo?: string };
+/** Remounts route resolution when parameters change, giving an explicit kind precedence. */
 export function WorkspaceRoute({ kind }: { kind?: WorkspaceMode["kind"] }) {
   const { id, type, returnTo, kind: paramKind } = useLocalSearchParams<Params>();
+  const routeKind = kind ?? paramKind;
+  return (
+    <ResolvedWorkspaceRoute
+      key={JSON.stringify([routeKind, id, type, returnTo])}
+      id={id}
+      type={type}
+      returnTo={returnTo}
+      kind={routeKind}
+    />
+  );
+}
+
+/** Resolves the current route with loading and retry states while ignoring obsolete responses. */
+function ResolvedWorkspaceRoute({ id, type, returnTo, kind: routeKind }: Params) {
   const services = useApplicationServices();
   const { t } = useAppTranslation();
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<{ mode: WorkspaceMode } | { error: true } | null>(null);
-  const routeKind = kind ?? paramKind;
   useEffect(() => {
     let active = true;
     void resolveMode(services, { id, type, returnTo, kind: routeKind }).then(
@@ -49,7 +63,10 @@ export function WorkspaceRoute({ kind }: { kind?: WorkspaceMode["kind"] }) {
           title={t("workspace.errorTitle")}
           description={t("workspace.errorDescription")}
           actionLabel={t("database.errorAction")}
-          onAction={() => setAttempt((value) => value + 1)}
+          onAction={() => {
+            setState(null);
+            setAttempt((value) => value + 1);
+          }}
         />
       </Screen>
     );

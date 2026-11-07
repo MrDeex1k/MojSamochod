@@ -33,6 +33,7 @@ export function VehicleWorkspaceScreen({ mode }: { mode: WorkspaceMode }) {
   return <VehicleWorkspaceController mode={mode} />;
 }
 
+/** Loads the active workspace section and replaces peer detail routes when selection changes. */
 function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
   const router = useRouter();
   const services = useApplicationServices();
@@ -179,16 +180,27 @@ function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
           });
       }}
       onSelectEntry={(entry) => {
+        if (mode.kind === "detail" && mode.entry.id === entry.id) return;
         select("history", entry.id);
-        navigate(() => setMode({ entry, kind: "detail" }));
+        navigateToMode({ entry, kind: "detail" }, router, mode.kind === "detail");
       }}
       onSelectRefuelling={(refuelling) => {
+        if (mode.kind === "refuelling-detail" && mode.refuelling.id === refuelling.id) return;
         select("fuel", refuelling.id);
-        navigate(() => setMode({ kind: "refuelling-detail", refuelling }));
+        navigateToMode(
+          { kind: "refuelling-detail", refuelling },
+          router,
+          mode.kind === "refuelling-detail",
+        );
       }}
       onSelectDocument={(document) => {
+        if (mode.kind === "document-detail" && mode.document.id === document.id) return;
         select("documents", document.id);
-        navigate(() => setMode({ document, kind: "document-detail" }));
+        navigateToMode(
+          { document, kind: "document-detail" },
+          router,
+          mode.kind === "document-detail",
+        );
       }}
       services={services}
     />

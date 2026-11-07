@@ -9,6 +9,7 @@ import type {
 import type { RepositoryResult } from "@/application/repositories/repository-result";
 import { createHistoryEntry } from "@/domain/history/history-entry";
 import { vehicleIdFromUuidV7 } from "@/domain/shared/identifiers";
+import { calculateFuelConsumption } from "@/domain/refuelling/fuel-consumption";
 
 function services() {
   const vehicle = createVehicle(
@@ -147,6 +148,51 @@ it("refreshes attachment metadata after document changes without reloading histo
   expect(api.historyEntries.listPage).toHaveBeenCalledTimes(1);
 });
 
+it("keeps a section invalidated when its previous read finishes after the mutation", async () => {
+  const api = services();
+  const first = historyFixture(1);
+  const second = historyFixture(2);
+  let finishRead!: (value: RepositoryResult<HistoryPage>) => void;
+  let signalRead!: () => void;
+  const reading = new Promise<void>((resolve) => {
+    signalRead = resolve;
+  });
+  api.historyEntries.listPage
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishRead = resolve;
+          signalRead();
+        }),
+    )
+    .mockResolvedValueOnce(repositorySuccess({ entries: [second], nextCursor: null }));
+  const source = new WorkspaceDataSource(api as unknown as ApplicationServices);
+  const old = source.load("history");
+  await reading;
+  source.invalidate("history");
+  const refreshed = source.load("history");
+  finishRead(repositorySuccess({ entries: [first], nextCursor: null }));
+  await old;
+  expect(await refreshed).toMatchObject({ data: { entries: [second] } });
+});
+
+it("shares concurrent page requests and loads only one additional history page", async () => {
+  const api = services();
+  const first = historyFixture(1);
+  const second = historyFixture(2);
+  const third = historyFixture(3);
+  api.historyEntries.listPage
+    .mockResolvedValueOnce(repositorySuccess({ entries: [first], nextCursor: first }))
+    .mockResolvedValueOnce(repositorySuccess({ entries: [second], nextCursor: second }))
+    .mockResolvedValueOnce(repositorySuccess({ entries: [third], nextCursor: null }));
+  const source = new WorkspaceDataSource(api as unknown as ApplicationServices);
+  await source.load("history");
+  await Promise.all([source.loadMore(), source.loadMore(), source.loadMore()]);
+  expect(await source.load("history")).toMatchObject({ data: { entries: [first, second] } });
+  expect(api.historyEntries.listPage).toHaveBeenCalledTimes(2);
+  expect(source.hasMore()).toBe(true);
+});
+
 function historyFixture(index: number, date = "2026-09-05T08:00:00.000Z") {
   const result = createHistoryEntry(
     {
@@ -240,7 +286,89 @@ it("keeps the full-history fuel summary when additional display pages are loaded
   expect(consumption).toHaveBeenCalledTimes(1);
   expect(api.refuellings.list).not.toHaveBeenCalled();
   expect(source.hasMore("fuel")).toBe(false);
+  listPage
+    .mockResolvedValueOnce(
+      repositorySuccess({ refuellings: [{ id: "newest" }], nextCursor: cursor }),
+    )
+    .mockResolvedValueOnce(
+      repositorySuccess({ refuellings: [{ id: "edited" }], nextCursor: null }),
+    );
+  source.invalidate("fuel");
+  expect(await source.load("fuel")).toMatchObject({
+    data: {
+      refuellingHistory: {
+        consumption: summary,
+        refuellings: [{ id: "newest" }, { id: "edited" }],
+      },
+    },
+  });
+  expect(consumption).toHaveBeenCalledTimes(2);
 });
+
+it.each([8, 6, 5])(
+  "refreshes three loaded fuel pages with %i remaining records and preserves the next cursor",
+  async (remaining) => {
+    const api = services();
+    let records = Array.from({ length: 8 }, (_, index) => ({
+      id: String(index),
+      occurredAt: "2026-09-05T08:00:00.000Z",
+      createdAt: "2026-09-05T08:00:00.000Z",
+      notes: "original",
+    }));
+    const listPage = jest.fn(async (_vehicle: unknown, cursor?: HistoryCursor) => {
+      const start = cursor ? records.findIndex(({ id }) => id === cursor.id) + 1 : 0;
+      const refuellings = records.slice(start, start + 2);
+      const last = refuellings.at(-1);
+      return repositorySuccess({
+        refuellings,
+        nextCursor:
+          last && start + 2 < records.length
+            ? { id: last.id, occurredAt: last.occurredAt, createdAt: last.createdAt }
+            : null,
+      });
+    });
+    const summary = calculateFuelConsumption([]);
+    const consumption = jest.fn(async () => repositorySuccess(summary));
+    const source = new WorkspaceDataSource({
+      ...api,
+      refuellings: { ...api.refuellings, listPage, consumption },
+    } as unknown as ApplicationServices);
+    await source.load("fuel");
+    await source.loadMore("fuel");
+    await source.loadMore("fuel");
+    expect(await source.load("fuel")).toMatchObject({
+      status: "ready",
+      data: { refuellingHistory: { refuellings: records.slice(0, 6) } },
+    });
+    expect(source.hasMore("fuel")).toBe(true);
+    listPage.mockClear();
+
+    records = records.slice(0, remaining).map((record) => ({ ...record, notes: "updated" }));
+    source.invalidate("fuel");
+    expect(await source.load("fuel")).toMatchObject({
+      status: "ready",
+      data: { refuellingHistory: { consumption: summary, refuellings: records.slice(0, 6) } },
+    });
+    expect(listPage.mock.calls.map(([, cursor]) => cursor?.id)).toEqual([undefined, "1", "3"]);
+    expect(consumption).toHaveBeenCalledTimes(2);
+    expect(source.hasMore("fuel")).toBe(remaining > 6);
+
+    await source.loadMore("fuel");
+    expect(listPage).toHaveBeenCalledTimes(remaining > 6 ? 4 : 3);
+    expect(listPage.mock.calls[3]?.[1]).toEqual(
+      remaining > 6
+        ? { id: "5", occurredAt: records[5].occurredAt, createdAt: records[5].createdAt }
+        : undefined,
+    );
+    expect(await source.load("fuel")).toMatchObject({
+      status: "ready",
+      data: { refuellingHistory: { consumption: summary, refuellings: records } },
+    });
+    expect(source.hasMore("fuel")).toBe(false);
+    expect(consumption).toHaveBeenCalledTimes(2);
+    expect(api.refuellings.list).not.toHaveBeenCalled();
+  },
+);
 
 it("loads document pages and refreshes the cached range without falling back to the full list", async () => {
   const api = services();
@@ -261,15 +389,26 @@ it("loads document pages and refreshes the cached range without falling back to 
           : null,
     });
   });
+  const linkedEntry = historyFixture(1);
+  const nextEntry = historyFixture(2);
+  const references = jest.fn(async (_vehicle: unknown, ids: readonly string[]) =>
+    repositorySuccess([linkedEntry, nextEntry].filter(({ id }) => ids.includes(id))),
+  );
+  Object.assign(records[0], { historyEntryId: linkedEntry.id });
+  Object.assign(records[50], { historyEntryId: linkedEntry.id });
+  Object.assign(records[51], { historyEntryId: nextEntry.id });
+  Object.assign(records[100], { historyEntryId: nextEntry.id });
   const source = new WorkspaceDataSource({
     ...api,
     documents: { ...api.documents, listPage },
+    historyEntries: { ...api.historyEntries, references },
   } as unknown as ApplicationServices);
   expect(await source.load("documents")).toMatchObject({
     status: "ready",
     data: { documents: records.slice(0, 50) },
   });
   await source.loadMore("documents");
+  expect(references.mock.calls.map(([, ids]) => ids)).toEqual([[linkedEntry.id], [nextEntry.id]]);
   source.invalidate("documents");
   expect(await source.load("documents")).toMatchObject({
     status: "ready",
@@ -281,5 +420,6 @@ it("loads document pages and refreshes the cached range without falling back to 
     data: { documents: records },
   });
   expect(source.hasMore("documents")).toBe(false);
+  expect(references).toHaveBeenCalledTimes(3);
   expect(api.documents.list).not.toHaveBeenCalled();
 });

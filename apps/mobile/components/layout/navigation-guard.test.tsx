@@ -5,6 +5,7 @@ import {
   NavigationGuardProvider,
   useFormExitGuard,
   useGuardedNavigation,
+  useNavigationRemovalGuard,
 } from "./navigation-guard";
 
 function Form({ onLeave, busy = false }: { onLeave: () => void; busy?: boolean }) {
@@ -39,6 +40,25 @@ it("confirms a dirty cross-pane transition once, preserving the draft when cance
   );
   expect(onLeave).toHaveBeenCalledTimes(1);
   expect(alert).toHaveBeenCalledTimes(2);
+});
+
+it("clears native removal blocking when a dirty form unmounts", async () => {
+  function RemovalStatus() {
+    const { blocked } = useNavigationRemovalGuard();
+    return <Button title="Back" disabled={blocked} />;
+  }
+  const onLeave = jest.fn();
+  const tree = (show: boolean) => (
+    <NavigationGuardProvider>
+      <RemovalStatus />
+      {show && <Form onLeave={onLeave} />}
+    </NavigationGuardProvider>
+  );
+  const view = await render(tree(true));
+  await userEvent.type(screen.getByLabelText("Draft"), "Unsaved");
+  expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
+  await view.rerender(tree(false));
+  expect(screen.getByRole("button", { name: "Back" })).toBeEnabled();
 });
 
 it("blocks embedded-form hardware back during a write and permits an unchanged form afterwards", async () => {

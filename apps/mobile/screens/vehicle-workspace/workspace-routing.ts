@@ -1,9 +1,11 @@
 import type { useRouter } from "expo-router";
 import type { WorkspaceMode } from "./workspace-types";
 
+/** Navigates to a workspace mode, optionally replacing details to keep Back one step from the list. */
 export function navigateToMode(
   mode: WorkspaceMode,
-  router: Pick<ReturnType<typeof useRouter>, "navigate" | "push">,
+  router: Pick<ReturnType<typeof useRouter>, "navigate" | "push" | "replace">,
+  replaceDetail = false,
 ) {
   switch (mode.kind) {
     case "history":
@@ -31,8 +33,10 @@ export function navigateToMode(
   if ("refuelling" in mode && mode.refuelling) params.id = mode.refuelling.id;
   if ("type" in mode) params.type = mode.type;
   if ("returnTo" in mode) params.returnTo = mode.returnTo;
-  router.push({
+  const route = {
     pathname: mode.kind.endsWith("form") ? "/vehicle/editor" : "/vehicle/detail",
     params,
-  });
+  } as const;
+  if (replaceDetail && route.pathname === "/vehicle/detail") router.replace(route);
+  else router.push(route);
 }
