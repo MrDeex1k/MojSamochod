@@ -2,13 +2,13 @@
 
 ## Platform targets
 
-| Target          | Status           | Notes                                                                                         |
-| --------------- | ---------------- | --------------------------------------------------------------------------------------------- |
-| iOS             | Supported        | Simulator and physical-device development are available.                                      |
-| iPadOS          | Supported        | Adaptive layouts must be verified independently from iPhone layouts.                          |
-| Android phones  | Supported        | Emulator-based development is available; physical-device testing remains a later requirement. |
-| Android tablets | Supported        | Adaptive layouts must be verified independently from Android phone layouts.                   |
-| Web             | Development only | It is not a product release target.                                                           |
+| Target          | Status           | Notes                                                                                           |
+| --------------- | ---------------- | ----------------------------------------------------------------------------------------------- |
+| iOS             | Supported        | Simulator and physical-device development are available.                                        |
+| iPadOS          | Supported        | Adaptive layouts must be verified independently from iPhone layouts.                            |
+| Android phones  | Supported        | Emulator QA and limited manual physical-device checks are recorded; release acceptance remains. |
+| Android tablets | Supported        | Adaptive layouts must be verified independently from Android phone layouts.                     |
+| Web             | Development only | It is not a product release target.                                                             |
 
 Expo uses the default orientation policy. The workspace adapts to available window space and text
 scale across rotation, split screen, and foldable displays. It displays a companion list only when
@@ -81,7 +81,8 @@ The agreed racing-green, warm-ivory, and graphite palette and its alias rules ar
 - Husky and commitlint enforce Conventional Commits.
 - `nub run check` runs lint, formatting, native tooling tests, Expo autolinking checks, TypeScript,
   Drizzle migration checks, and Jest. GitHub Actions runs it on pull requests and on `main`,
-  using the pinned toolchain and a fresh dependency install through Socket Firewall.
+  using the pinned toolchain and a fresh dependency install through Socket Firewall. The workflow
+  does not build or publish native releases; see [current CI status](current-status.md#ci-and-release-automation).
 - Tests are colocated with source files and prefer accessible roles, labels, and user interactions
   over implementation details.
 - NativeWind theme lengths use `rem` values, while custom line heights remain unitless ratios. This

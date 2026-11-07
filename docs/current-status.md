@@ -1,47 +1,95 @@
-# Bieżący stan projektu
+# Current project status
 
-Stan na 5 listopada 2026 r., `main` w commicie `6e1088b`.
+Status as of 7 November 2026. Application baseline: `main` at `8630435`, after merging audit
+PRs [#23](https://github.com/MrDeex1k/MojSamochod/pull/23),
+[#24](https://github.com/MrDeex1k/MojSamochod/pull/24),
+[#25](https://github.com/MrDeex1k/MojSamochod/pull/25), and
+[#26](https://github.com/MrDeex1k/MojSamochod/pull/26).
 
-Obsługa składanych ekranów jest na `main`. [Wyniki lokalnych prób i ograniczenia odbioru](foldable-baseline-2026-11-04.md#wynik-wdrożenia-i-powtórki). Poprawki z audytu są w osobnym stosie PR. Ich testy opisują odpowiednie branche, a nie wersję wysłaną do TestFlight. [Sekcje 1–4](https://github.com/MrDeex1k/MojSamochod/pull/23), [5–8](https://github.com/MrDeex1k/MojSamochod/pull/24) i [9–12](https://github.com/MrDeex1k/MojSamochod/pull/25).
+## Application on main
 
-## Aplikacja na mainie
+The FREE scope from phases 0–7 is integrated. Users maintain one vehicle locally, including
+service history, refuelling and consumption calculations, insurance and inspection deadlines,
+and optional local notifications using the timezone retained when a deadline is saved.
+Polish and English are supported, with English as the fallback language.
 
-Zakres FREE z faz 0–7 jest zintegrowany. Użytkownik prowadzi lokalną ewidencję jednego pojazdu na urządzeniu. Aplikacja obsługuje historię przeglądów, wymian i napraw, tankowania z przeliczaniem jednostek oraz terminy ubezpieczenia i badania technicznego. Powiadomienia są opcjonalne i korzystają ze strefy zapamiętanej przy zapisie terminu. Interfejs jest dostępny po polsku i angielsku, z angielskim jako językiem zapasowym.
+SQLite and Drizzle store records and file metadata. Vehicle photos come from the gallery;
+PDF, JPEG, and PNG documents can be imported and previewed inside the app. Confirmed data erasure
+removes application records, managed file copies, and owned notifications while preserving
+original gallery and provider files. JSON v4 remains an internal contract; there is no user-facing
+database export, import, backup, or restore. See [product scope](product-scope.md) and
+[privacy and permissions](privacy-and-permissions.md).
 
-SQLite z Drizzle przechowuje dane i metadane plików. Zdjęcie pojazdu pochodzi z galerii, a dokumenty PDF, JPEG i PNG można importować i przeglądać wewnątrz aplikacji. Potwierdzone wyczyszczenie danych usuwa również zarządzane kopie plików i zaplanowane przypomnienia. Oryginały pozostają w galerii i u dostawcy plików. JSON v4 jest kontraktem wewnętrznym. Użytkownik nie ma funkcji eksportu ani odtwarzania bazy. [Zakres produktu](product-scope.md) i [zasady prywatności](privacy-and-permissions.md).
+The application uses Expo 58.0.22 and React Native 0.88.1. Native configuration declares version
+0.8.2, iOS build 5, and Android version code 1. The last documented App Store Connect upload is
+iOS 0.8.2 (5), dated 12 October. The November changes and QA builds are newer than that upload;
+merging them into `main` does not publish a new TestFlight or store build. See
+[TestFlight history](testflight-preparation.md) and the [delivery plan](delivery-plan.md).
 
-Aktualny stos to Expo 58.0.22 i React Native 0.88.1. Akceptację integracji natywnej prowadzimy na własnych lokalnych buildach. Ostatnia udokumentowana wysyłka do App Store Connect to iOS 0.8.2 (5) z 12 października. Listopadowe testy dotyczą nowszego kodu z lokalnych buildów Release. Kolejny etap według planu to faza 8, czyli stabilizacja na podstawie opinii użytkowników. [Historia TestFlight](testflight-preparation.md) i [plan faz](delivery-plan.md).
+## Integrated changes
 
-## Ostatnie zmiany
+- `6e1088b`: adaptive foldable layouts, following the Android Material controls and shared
+  phone/tablet navigation work. See the [foldable verification report](foldable-baseline-2026-11-04.md).
+- `12d621f`, audit sections 1–4: safer application/database shutdown and erasure, stricter domain
+  and stored-data contracts, stable document pagination and search, and recoverable managed-file
+  operations. See the [remediation report](audit-sections-1-4.md), including migration compatibility.
+- `ade7a78`, sections 5–8: guarded form submissions, timestamp preservation, serialized document
+  writes, cleanup failure handling, precise refuelling prices and overflow reporting, and reliable
+  reminder reconciliation. See the [remediation report](audit-sections-5-8.md).
+- `741a897`, sections 9–12: invalidation after in-flight reads, shared pagination requests,
+  preservation of loaded refuelling ranges, split-view Back behavior, navigation guard cleanup,
+  Android accessibility descriptions, alert dismissal isolation, and localized exact formatting.
+- `8630435`, sections 13–15: profile-aware native preparation, pinned transitive Expo modules for
+  clean installs, required native-module checks, consistent dark launch configuration, the Quality
+  workflow, and updated native build and release documentation. See [native QA builds](native-qa-builds.md)
+  and [Xcode project preparation](xcode-json-project-format.md).
 
-- `69e285a` wprowadza na Androidzie natywne kontrolki Material, ciemne tło `#010101`, formularze z walidacją i potwierdzeniem odrzucenia zmian. Telefon korzysta z zakładek, a szeroki układ z bocznej nawigacji oraz listy i szczegółów obok siebie. Na Pixel Tablet sprawdzono pion, poziom i zachowanie szkicu po obrocie. [Opis wdrożenia](android-material-expressive.md).
-- Poprawiono awarię na Pixel Tablet. Po zmianie rozmiaru tekstu systemowego ze 100% na 160% aplikacja zamykała się po wybraniu Ustawień. Nawigacja korzysta teraz z routera bieżącego drzewa komponentów przez `useRouter()`. Na poprawionym APK powtórzono zmianę skali, wejście w Ustawienia, edycję pojazdu i przejście do sekcji danych. [Reprodukcja i wynik powtórki](android-material-final-qa-2026-11-03.md#confirmed-issue-and-correction).
-- `f620569` stabilizuje typowanie stanu przycisku Androida i test akcji dialogu. Regresja startu iOS sprawdza teraz wygenerowane przez lokalny prebuild pliki `Info.plist` i `SceneDelegate.swift`.
+## Verification at integration
 
-## Weryfikacja listopadowa przed audytem
+On 7 November, `nub run check` passed on the final rebased application tree, which matches
+`8630435`: lint, formatting, 9 native tooling tests, Expo autolinking checks (28 Apple and 27 Android
+modules without duplicates), TypeScript, Drizzle checks, and 83 application suites / 566 tests.
+React Doctor 0.9.22 reported 100/100 with no findings in the final PR's changed scope; this is not
+a full-codebase score. Socket checks passed on all three updated PR heads before merging.
 
-W raporcie z **3 listopada** pełny `nub run check` przeszedł z wynikiem **76 zestawów i 488 testów**. React Doctor nie zgłosił problemów w zmienionym zakresie; skan wykonano bez oceny punktowej. Wyniki dotyczą przebiegu opisanego w raporcie, przed commitem `f620569`.
+Expo Doctor 1.21.6 passed 18/20 checks. It does not recognize the ignored local `nub.lock`, and
+reports differences from the SDK-recommended package versions, including the intentional TypeScript
+7.0.2 choice. No alternate lockfile, dependency upgrade, or diagnostic suppression was introduced.
 
-Ten sam APK Release z włączonym R8 przetestowano na Pixel 9 i Pixel Tablet z Androidem 17, zachowując istniejące dane QA. Sprawdzono m.in. walidację pustej ilości paliwa, terminy przy wyłączonych powiadomieniach, ochronę szkiców i nawigację po zmianie skali tekstu. Weryfikacja Apple objęła start Release i natywne kontrolki dodawania pojazdu na iPhone 18 Pro i iPad Air 11″ (M4) z systemem 27.2. [Macierz listopadowego QA](android-material-final-qa-2026-11-03.md#runtime-checks) i [wcześniejsze testy trwałości danych oraz PDF](android-regression-2026-10-17.md).
+Native QA recorded in the audit PRs includes Apple simulator and Android ARM64 builds and checks
+on iPhone 17, iPad A16, Pixel 9, and Pixel Tablet. These used the isolated `dev.mojeauto.qa` app.
+The merge operation preserved the PR patches and reran local repository checks; it did not repeat
+native device acceptance or upload a release. Earlier reports retain their original test counts,
+dates, and limitations; those counts are not the current integration result.
 
-## Weryfikacja TalkBack i gestu cofania na Androidzie
+## CI and release automation
 
-4 listopada użytkownik potwierdził wykonanie ręcznych testów TalkBack i gestu cofania na fizycznym urządzeniu z Androidem. Poniżej zapisano obserwacje z wcześniejszych prób na emulatorach oraz kryteria ręcznej weryfikacji. Wyników poszczególnych kryteriów na urządzeniu fizycznym nie odnotowano.
+The repository has one GitHub Actions workflow, [Quality](../.github/workflows/quality.yml).
+It runs for pull requests and pushes to `main` on Ubuntu 24.04, installs pinned NUB 0.9.3,
+checks the pinned Node version, installs dependencies through Socket Firewall, and runs
+`nub run check`. It does not build native release artifacts or publish to TestFlight or stores.
+Build, signing, and submission remain local; EAS is outside the accepted release setup.
 
-### TalkBack
+On 7 November, GitHub Actions jobs were prevented from starting because the account was locked
+due to a billing issue. See the [integration PR job annotation](https://github.com/MrDeex1k/MojSamochod/actions/runs/42365110093/job/128381413837).
+Local checks passed, but this does not establish a successful hosted CI run. Restore account
+access and rerun the workflow before relying on hosted verification.
 
-**Potwierdzono** działanie usługi i eksploracji dotykiem na obu emulatorach. Na telefonie obserwowano fokus m.in. na tytule selektora daty i dialogu odrzucenia zmian, a na tablecie na Ustawieniach i przycisku anulowania edycji. Automatyzacja nie pozwoliła wiarygodnie ocenić kolejności odczytu ani treści wypowiadanych komunikatów.
+## Historical accessibility verification and release gates
 
-**Kryteria ręcznej weryfikacji** przy włączonym TalkBack i odłączonej automatyzacji:
+On 4 November, the user confirmed manual TalkBack and Back-gesture testing on a physical Android
+device. Individual acceptance-criterion results were not recorded. Earlier emulator checks confirmed
+TalkBack activation and touch exploration on phone and tablet; automation did not reliably establish
+spoken content or reading order. See the [TalkBack report](android-material-final-qa-2026-11-03.md#talkback).
 
-1. Przejść przez wszystkie cztery pozycje nawigacji oraz formularz z błędem. Odsłuchać etykiety, role, stan zaznaczenia i komunikat walidacyjny. Sprawdzić kolejność odczytu, zrozumiałość wymowy oraz możliwość wykonania akcji podwójnym stuknięciem.
-2. Obsłużyć selektory daty i godziny oraz dialog odrzucenia zmian. Sprawdzić, czy fokus pozostaje w otwartym dialogu i wraca do właściwej kontrolki po jego zamknięciu.
-3. Otworzyć PDF, przejść między stronami i zamknąć podgląd, posługując się czytnikiem. [Wyniki próby TalkBack](android-material-final-qa-2026-11-03.md#talkback).
+Manual TalkBack acceptance should cover navigation and validation announcements, date/time pickers,
+discard dialogs and focus restoration, and PDF navigation and dismissal. The recorded Back tests
+confirmed navigation and dirty-form confirmation, but did not establish an interactive predictive
+preview. Verify both gesture completion and cancellation manually. See the
+[Back-gesture report](android-material-final-qa-2026-11-03.md#predictive-back).
 
-### Gest cofania (predictive back)
-
-**Potwierdzono** powrót ze szczegółów wpisu na telefonie i z sekcji danych do Ustawień na tablecie. Gest na zmienionym formularzu wywołał potwierdzenie, a wybór kontynuowania edycji zachował szkic. Przy powolnym geście zaobserwowano systemową strzałkę. Podczas próby anulowania szczegóły pozostały otwarte, ale nagranie nie wykazało rozpoczęcia interaktywnego podglądu poprzedniego ekranu.
-
-**Kryteria ręcznej weryfikacji.** Przy powolnym geście od krawędzi poprzedni ekran powinien stawać się widoczny proporcjonalnie do ruchu palca. Dokończenie gestu otwiera ekran docelowy. Cofnięcie palca do krawędzi powinno wycofać animację i pozostawić bieżący ekran. [Wyniki próby gestu cofania na emulatorach](android-material-final-qa-2026-11-03.md#predictive-back).
-
-Przed wydaniem pozostaje również sprawdzenie niezawodności powiadomień na fizycznym urządzeniu i ponowienie audytu podatności rejestru. Wcześniejszy pojedynczy incydent inicjalizacji SQLite jest śledzony jako nieodtworzony i nieblokujący. [Bramki wydaniowe](delivery-plan.md#recommended-next-step).
+Release preparation still includes physical-device notification delivery, the unavailable registry
+vulnerability audit, signing, store metadata, and acceptance of the intended release artifact.
+The earlier isolated Android SQLite-initialization incident remains tracked as non-reproduced and
+non-blocking; it has not been proven fixed. Phase 8 remains stabilization through user feedback.
+See the [release gates](delivery-plan.md#recommended-next-step).

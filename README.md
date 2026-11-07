@@ -70,7 +70,9 @@ nub run typecheck
 nub run check
 ```
 
-GitHub Actions runs the same repository checks for pull requests and pushes to `main`.
+[GitHub Actions Quality](.github/workflows/quality.yml) runs the same repository checks for pull
+requests and pushes to `main`. It does not build or publish native releases. See
+[current status](docs/current-status.md#ci-and-release-automation) for the hosted CI limitation.
 See [local native QA builds](./docs/native-qa-builds.md) for simulator and emulator verification.
 
 Automatyczne poprawki i formatowanie:

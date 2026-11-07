@@ -193,8 +193,8 @@ technical contract is in [local reminder notifications](local-reminder-notificat
 
 ## Phase 7 - Production hardening of the free application
 
-**Status:** Implementation complete and accepted. The final native UI refinement is prepared on its
-dedicated branch for integration into `main`. The phase delivers resumable erase-all, internal PDF
+**Status:** Implementation complete, accepted, and integrated into `main`, including the native UI
+refinement and audit PRs #23–#26. The phase delivers resumable erase-all, internal PDF
 previews without outbound document actions, draft preservation, paginated history, shared adaptive
 navigation and accessibility improvements. See the
 [implementation and verification report](code-review-improvements.md) for coverage and remaining
@@ -212,9 +212,11 @@ restriction applies to database/dataset export and outbound attachment actions. 
 previewed inside the app; do not expose general sharing, external opening or image-export actions.
 Attachment selection remains
 allowed, but importing datasets from other applications does not. Review OS backup behavior
-separately from app-level export. The publisher currently has no active Apple Developer Program
-membership or paid Google Play publisher registration; store distribution is not configured.
-The current pre-release application version is `0.8.0`; reserve `1.0.0` for the first store release.
+separately from app-level export. The last documented App Store Connect upload is iOS `0.8.2 (5)`
+from 12 October; it predates the November changes now on `main`. See the
+[TestFlight history](testflight-preparation.md). Public store distribution and current account
+readiness require confirmation during release preparation.
+The current pre-release application version is `0.8.2`; reserve `1.0.0` for the first store release.
 Build, signing and submission work remains local on the publisher's MacBook. Do not configure or
 upload the project to EAS Build, Submit, Update or Workflows for the current release. Reconsider EAS
 only as a separate future decision after the application is stable.
@@ -222,7 +224,7 @@ The five steps below describe the completed hardening scope and the release gate
 to release preparation. Retry and assess the unavailable vulnerability audit before release,
 alongside documented diagnostic exceptions.
 
-Step 1 is implemented on this branch: localized data-management/privacy guidance, permission
+Step 1 is integrated into `main`: localized data-management/privacy guidance, permission
 reduction and targeted accessibility checks. The isolated Android database-initialization incident
 after changing font scale remains a known, non-reproduced defect; by product decision it does not
 block the current phase progression. Published privacy information still requires contact details.
@@ -438,8 +440,9 @@ review the scope instead of introducing remote infrastructure implicitly.
 
 ## Recommended next step
 
-Complete and integrate the native UI refinement on its dedicated branch. Then prepare the release
-details, store metadata, screenshots and local signed builds as a separate change before distributing
+Native UI refinement and audit PRs #23–#26 are integrated into `main`. See the
+[current status](current-status.md) for the integration baseline, verification, and CI limitation.
+Prepare the release details, store metadata, screenshots and local signed builds before distributing
 the FREE release candidate for Phase 8 feedback. The non-reproduced Android SQLite initialization
 incident remains tracked as one known, non-blocking defect. Phase 6 is merged. Local build instructions
 are in [native-qa-builds.md](native-qa-builds.md). Retry the unavailable registry vulnerability audit
