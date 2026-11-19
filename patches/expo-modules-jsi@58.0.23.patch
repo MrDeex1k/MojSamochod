@@ -1,4 +1,5 @@
 diff --git a/Package.swift b/Package.swift
+new file mode 100644
 --- /dev/null
 +++ b/Package.swift
 @@ -0,0 +1,39 @@
@@ -44,7 +45,7 @@ diff --git a/Package.swift b/Package.swift
 diff --git a/apple/Sources/ExpoModulesJSI-Cxx/include/JSIUtils.h b/apple/Sources/ExpoModulesJSI-Cxx/include/JSIUtils.h
 --- a/apple/Sources/ExpoModulesJSI-Cxx/include/JSIUtils.h
 +++ b/apple/Sources/ExpoModulesJSI-Cxx/include/JSIUtils.h
-@@ -516,7 +516,7 @@
+@@ -533,7 +533,7 @@
   */
  inline jsi::ArrayBuffer createArrayBuffer(jsi::IRuntime &runtime, size_t size, bool initializeToZero, bool reportsMemory) {
    uint8_t *data = initializeToZero ? new uint8_t[size]() : new uint8_t[size];
@@ -53,7 +54,7 @@ diff --git a/apple/Sources/ExpoModulesJSI-Cxx/include/JSIUtils.h b/apple/Sources
    jsi::ArrayBuffer arrayBuffer(runtime, std::move(buffer));
    // Hermes does not count the memory of a buffer that it did not allocate, so without this
    // pressure the garbage collector does not run for these buffers alone. Only this array buffer
-@@ -577,7 +577,7 @@
+@@ -595,7 +595,7 @@
    // which would leak the data. The Swift caller always provides a retained Unmanaged pointer.
    assert(cleanupContext != nullptr && "cleanupContext must not be null; cleanup would be skipped and data leaked");
  
@@ -92,12 +93,14 @@ diff --git a/apple/Sources/ExpoModulesJSI-Cxx/include/MemoryBuffer.h b/apple/Sou
        cleanupFunc_();
      }
 diff --git a/spm/jsi.h b/spm/jsi.h
+new file mode 100644
 --- /dev/null
 +++ b/spm/jsi.h
 @@ -0,0 +1,2 @@
 +#include <jsi/jsi.h>
 +#include <jsi/instrumentation.h>
 diff --git a/spm/jsi.modulemap b/spm/jsi.modulemap
+new file mode 100644
 --- /dev/null
 +++ b/spm/jsi.modulemap
 @@ -0,0 +1,4 @@

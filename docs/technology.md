@@ -22,19 +22,19 @@ transitive versions; Git ignores that file.
 
 | Area                  | Current choice                                                                | Role                                                                        |
 | --------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Application framework | Expo SDK 58 (`expo` 58.0.22)                                                  | Cross-platform runtime, native modules, and development workflow.           |
+| Application framework | Expo SDK 58 (`expo` 58.0.26)                                                  | Cross-platform runtime, native modules, and development workflow.           |
 | UI runtime            | React Native 0.88.1 and React 19.3.0                                          | Shared Android phone/tablet, iOS, and iPadOS application code.              |
 | Language              | TypeScript 7.0.2                                                              | Static typing for application and domain code.                              |
-| Navigation            | Expo Router 58.0.29                                                           | File-based navigation and typed routes.                                     |
-| Styling               | NativeWind 5.0.0-rc.0, Tailwind CSS 4.3.4, `react-native-css` 3.1.0-rc.0      | Shared utility styling and CSS interoperability.                            |
+| Navigation            | Expo Router 58.0.32                                                           | File-based navigation and typed routes.                                     |
+| Styling               | NativeWind 5.0.0-rc.0, Tailwind CSS 4.3.5, `react-native-css` 3.1.0-rc.0      | Shared utility styling and CSS interoperability.                            |
 | Animation runtime     | React Native Reanimated 4.7.1 and React Native Worklets 0.13.0                | Performant native-thread interaction and motion where justified.            |
 | Gestures              | React Native Gesture Handler 3.3.0                                            | Platform-aware touch interactions.                                          |
 | System appearance     | Expo System UI 58.0.7                                                         | Applies the dark interface style consistently on Android.                   |
-| Unit/component tests  | Jest 30.5.2, Jest Expo 58.0.13, React Native Testing Library 14.1.0           | Tests pure logic and user-visible component behavior.                       |
-| Local database        | Expo SQLite 58.0.15 and Drizzle ORM 0.45.4                                    | Persistent SQLite access and typed queries.                                 |
+| Unit/component tests  | Jest 30.5.2, Jest Expo 58.0.15, React Native Testing Library 14.1.0           | Tests pure logic and user-visible component behavior.                       |
+| Local database        | Expo SQLite 58.0.18 and Drizzle ORM 0.45.4                                    | Persistent SQLite access and typed queries.                                 |
 | Database migrations   | Drizzle Kit 0.31.11                                                           | Generates reviewable SQL migrations bundled with the application.           |
-| Record identifiers    | UUID 14.0.3 and Expo Crypto 58.0.7                                            | UUIDv7 generation backed by native secure randomness.                       |
-| Document import       | Expo Document Picker 58.0.4                                                   | Native PDF/JPEG/PNG selection with platform-granted file access.            |
+| Record identifiers    | UUID 14.0.3 and Expo Crypto 58.0.8                                            | UUIDv7 generation backed by native secure randomness.                       |
+| Document import       | Expo Document Picker 58.0.5                                                   | Native PDF/JPEG/PNG selection with platform-granted file access.            |
 | In-app PDF preview    | Local `document-preview` Expo module, PDFKit/PdfRenderer and Expo File System | Bounded internal preview of one managed PDF; no outbound export or sharing. |
 
 NativeWind 5 is intentionally a release candidate dependency. Its compatibility with the active Expo SDK
@@ -44,11 +44,11 @@ Compatible dependencies were refreshed for SDK 58 without changing the Node pin 
 the `lightningcss` 1.30.1 override: the
 [NativeWind v5 installation guide](https://www.nativewind.dev/v5/getting-started/installation)
 still requires it to avoid CSS deserialization failures. React/RN and native modules follow the
-installed Expo compatibility matrix; Jest 30 matches the Jest 30 internals of `jest-expo` 58.0.13.
+installed Expo compatibility matrix; Jest 30 matches the Jest 30 internals of `jest-expo` 58.0.15.
 Newer registry versions alone are not a reason to bypass SDK compatibility.
 
 Versioned `packageExtensions` give Expo Linking, Expo Constants, Expo File System and Expo DOM WebView
-the same Expo Modules Core dependency used by the installed Expo SDK (currently 58.0.29).
+the same Expo Modules Core dependency used by the installed Expo SDK (currently 58.1.0).
 Update these entries when the SDK's core dependency changes, then run `native:check` to
 confirm that Apple and Android autolinking have no duplicate native modules.
 The root overrides keep Expo Asset, Modules Core, and Modules JSI on the versions used by the
@@ -223,7 +223,7 @@ archive containing binaries remains production-hardening work.
 
 ### Native development on SDK 58
 
-The current contract is Expo 58.0.22 and stable React Native 0.88.1. NativeWind and React Native CSS
+The current contract is Expo 58.0.26 and stable React Native 0.88.1. NativeWind and React Native CSS
 still use preview releases. Use the application's own native builds, including its local
 document-preview module. Rebuild after native dependency changes; Expo Go does not verify the
 application's native integration.

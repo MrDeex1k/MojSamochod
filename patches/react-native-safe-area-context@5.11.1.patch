@@ -1,3 +1,10 @@
+diff --git a/ios/RNCSafeAreaCornerAdaptation.h b/ios/RNCSafeAreaCornerAdaptation.h
+--- a/ios/RNCSafeAreaCornerAdaptation.h
++++ b/ios/RNCSafeAreaCornerAdaptation.h
+@@ -1 +1,3 @@
++#pragma once
++
+ #import <Foundation/Foundation.h>
 diff --git a/ios/RNCSafeAreaViewEdgeMode.h b/ios/RNCSafeAreaViewEdgeMode.h
 --- a/ios/RNCSafeAreaViewEdgeMode.h
 +++ b/ios/RNCSafeAreaViewEdgeMode.h
