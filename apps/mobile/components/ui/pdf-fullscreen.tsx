@@ -123,7 +123,8 @@ function Reader({
               }}
             >
               <Image
-                accessibilityLabel={text || `${name}, ${pageLabel}`}
+                accessible
+                accessibilityLabel={`${name}, ${pageLabel}${text ? `. ${text}` : ""}`}
                 source={{ uri: imageUri }}
                 contentFit="contain"
                 onLoad={({ source }) => {

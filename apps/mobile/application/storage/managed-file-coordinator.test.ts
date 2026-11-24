@@ -166,7 +166,7 @@ describe("ManagedFileCoordinator", () => {
     >();
     const discarded: string[] = [];
     const repository = repositoryFake([]);
-    repository.findReadyBySha256 = async () => repositorySuccess(null);
+    repository.findDocumentBySha256 = async () => repositorySuccess(null);
     repository.createStaged = async (metadata) => {
       if ([...records.values()].some((record) => record.sha256 === metadata.sha256)) {
         return repositoryFailure("conflict", "managedFile.createStaged");
@@ -346,7 +346,7 @@ function repositoryFake(events: string[]): ManagedFileRepository {
       events.push("repository.delete");
       return repositorySuccess(undefined);
     },
-    findReadyBySha256: async () => repositorySuccess(null),
+    findDocumentBySha256: async () => repositorySuccess(null),
     getReady: async () => repositorySuccess(null),
     listRecoverable: async () => repositorySuccess([]),
     listUnreferencedReadyFiles: async () => repositorySuccess([]),
@@ -396,7 +396,7 @@ it("releases a failed staged reservation when retrying without restarting", asyn
   const repository = repositoryFake(events);
   const storage = storageFake(events);
   let pending: StagedManagedFileMetadata | undefined;
-  repository.listRecoverable = async () => repositorySuccess(pending ? [pending] : []);
+  repository.findDocumentBySha256 = async () => repositorySuccess(pending ?? null);
   repository.createStaged = async (value) => {
     if (pending) return repositoryFailure("conflict", "createStaged");
     pending = value;
@@ -426,4 +426,99 @@ it("releases a failed staged reservation when retrying without restarting", asyn
   expect((await coordinator.import(source)).ok).toBe(false);
   expect(pending).toBeDefined();
   expect((await coordinator.import({ ...source, managedFileId: secondId })).ok).toBe(true);
+});
+
+it("leaves a second coordinator's live reservation and private copies intact", async () => {
+  const repository = repositoryFake([]);
+  const storage = storageFake([]);
+  let reserved: StagedManagedFileMetadata | null = null;
+  repository.findDocumentBySha256 = async () => repositorySuccess(reserved);
+  const reservedSignal = Promise.withResolvers<void>();
+  const releaseCommit = Promise.withResolvers<void>();
+  repository.createStaged = async (metadata) => {
+    reserved = metadata;
+    reservedSignal.resolve();
+    return repositorySuccess(undefined);
+  };
+  const commit = storage.commit;
+  storage.commit = async (staged) => {
+    await releaseCommit.promise;
+    return commit(staged);
+  };
+  const owner = new ManagedFileCoordinator(clock, repository, storage);
+  const competingStorage = storageFake([]);
+  const competingKey = `staging/${secondId}.pdf` as StagedObjectKey;
+  competingStorage.stage = async () =>
+    objectStorageSuccess({
+      byteSize: size,
+      extension: "pdf",
+      managedFileId: secondId,
+      sha256: hash,
+      stagingKey: competingKey,
+    });
+  const discard = jest.spyOn(competingStorage, "discard");
+  const deleted = jest.spyOn(repository, "delete");
+  const source = {
+    kind: "document" as const,
+    managedFileId: id,
+    mimeType: "application/pdf",
+    originalName: "invoice.pdf",
+    sourceUri: "file:///invoice.pdf",
+  };
+  const importing = owner.import(source);
+  await reservedSignal.promise;
+  const competing = new ManagedFileCoordinator(clock, repository, competingStorage);
+  const result = await competing.import({ ...source, managedFileId: secondId });
+  releaseCommit.resolve();
+  expect(await importing).toMatchObject({ ok: true });
+  expect(result).toMatchObject({ ok: false, error: { kind: "conflict" } });
+  expect(discard).toHaveBeenCalledTimes(1);
+  expect(discard).toHaveBeenCalledWith(competingKey);
+  expect(deleted).not.toHaveBeenCalled();
+});
+
+it("allows reimport of verified data after restart exposed a damaged document reservation", async () => {
+  const events: string[] = [];
+  const repository = repositoryFake(events);
+  let old: StagedManagedFileMetadata | null = {
+    id,
+    byteSize: size,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    kind: "document",
+    originalName: "receipt.pdf",
+    mimeType: "application/pdf",
+    sha256: hash,
+    stagingKey: `staging/${id}.pdf`,
+    status: "staged",
+  };
+  repository.listRecoverable = async () => repositorySuccess(old ? [old] : []);
+  repository.findDocumentBySha256 = async () => repositorySuccess(old);
+  repository.delete = async () => {
+    old = null;
+    return repositorySuccess(undefined);
+  };
+  const storage = storageFake(events);
+  storage.listStagedKeys = async () =>
+    objectStorageSuccess(old ? [old.stagingKey as StagedObjectKey] : []);
+  const commit = storage.commit;
+  storage.commit = jest
+    .fn()
+    .mockResolvedValueOnce(objectStorageFailure("integrity-failure", "commit"))
+    .mockImplementation(commit);
+  const coordinator = new ManagedFileCoordinator(clock, repository, storage);
+  expect(await coordinator.reconcile()).toMatchObject({
+    ok: false,
+    error: { kind: "corrupt-data" },
+  });
+  expect(
+    await coordinator.import({
+      kind: "document",
+      managedFileId: secondId,
+      mimeType: "application/pdf",
+      originalName: "receipt.pdf",
+      sourceUri: "file:///receipt.pdf",
+    }),
+  ).toMatchObject({ ok: true, value: { id: secondId } });
+  expect(old).toBeNull();
 });

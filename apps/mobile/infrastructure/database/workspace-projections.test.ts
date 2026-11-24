@@ -9,11 +9,23 @@ import { calculateFuelConsumption } from "@/domain/refuelling/fuel-consumption";
 import { DrizzleVehicleHistoryRepository } from "./drizzle-vehicle-history-repository";
 import { DrizzleRefuellingRepository } from "./drizzle-refuelling-repository";
 import { DrizzleVehicleDocumentRepository } from "./drizzle-vehicle-document-repository";
+import { createReferenceMatcher } from "@/localization/history-reference-label";
+import { createAppI18n } from "@/localization/i18n";
+import { updateVehicle, hasFuelConfiguration } from "@/domain/vehicle/vehicle";
+import { DrizzleManagedFileRepository } from "./drizzle-managed-file-repository";
+import { sha256Digest } from "@/domain/files/managed-file";
 import * as schema from "./schema";
+
+const english = createAppI18n("en");
+const polish = createAppI18n("pl");
+const match = (query: string, i18n = english) =>
+  createReferenceMatcher(query, i18n.t, i18n.language);
 
 const stamp = "2026-09-01T00:00:00.000Z";
 const id = (index: number) => `01990000-0001-7000-8000-${String(index).padStart(12, "0")}`;
 const vehicleId = vehicleIdFromUuidV7(id(0));
+let files: DrizzleManagedFileRepository;
+const logQuery = jest.fn<void, [string, unknown[]]>();
 let sqlite: DatabaseSync;
 let history: DrizzleVehicleHistoryRepository;
 let fuel: DrizzleRefuellingRepository;
@@ -46,7 +58,9 @@ beforeEach(() => {
       };
     },
   } as unknown as SQLiteDatabase;
-  const database = drizzle(client, { schema });
+  const database = drizzle(client, { schema, logger: { logQuery } });
+  logQuery.mockClear();
+  files = new DrizzleManagedFileRepository(database);
   history = new DrizzleVehicleHistoryRepository(database);
   fuel = new DrizzleRefuellingRepository(database);
   documents = new DrizzleVehicleDocumentRepository(database);
@@ -72,18 +86,18 @@ function addHistory(index: number, subject: string) {
 it("pages references with tied timestamps and treats search metacharacters literally", async () => {
   for (let index = 1; index <= 105; index++) addHistory(index, `Repair ${index}`);
   addHistory(106, "100%_complete\\receipt");
-  const first = await history.searchReferences(vehicleId, "");
+  const first = await history.searchReferences(vehicleId, match(""));
   if (!first.ok) throw first.error;
   expect(first.value.entries).toHaveLength(50);
   expect(first.value.entries[0]).not.toHaveProperty("notes");
-  const second = await history.searchReferences(vehicleId, "", first.value.nextCursor!);
+  const second = await history.searchReferences(vehicleId, match(""), first.value.nextCursor!);
   if (!second.ok) throw second.error;
   expect(second.value.entries[0]?.id).toBe(id(51));
-  const third = await history.searchReferences(vehicleId, "", second.value.nextCursor!);
+  const third = await history.searchReferences(vehicleId, match(""), second.value.nextCursor!);
   if (!third.ok) throw third.error;
   expect(third.value.entries).toHaveLength(6);
   expect(third.value.nextCursor).toBeNull();
-  const literal = await history.searchReferences(vehicleId, "%_complete\\");
+  const literal = await history.searchReferences(vehicleId, match("%_complete\\"));
   expect(literal).toMatchObject({ ok: true, value: { entries: [{ id: id(106) }] } });
   if (literal.ok) expect(literal.value.entries).toHaveLength(1);
   expect(
@@ -133,6 +147,11 @@ it("counts only requested associations and supports an empty selection", async (
     ok: true,
     value: { [id(1)]: 2 },
   });
+  const [sql, params] = logQuery.mock.lastCall!;
+  const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + sql).all(...(params as SQLInputValue[]));
+  expect(plan[0]?.detail).toMatch(
+    /SEARCH .*COVERING INDEX vehicle_documents_vehicle_history_entry_index.*vehicle_id=\? AND history_entry_id=\?/,
+  );
   expect(await documents.attachmentCounts(vehicleId, [])).toEqual({ ok: true, value: {} });
 });
 
@@ -173,10 +192,14 @@ it("pages fuel records without changing consumption calculated from the complete
 
 it("matches Unicode letters literally across reference pages", async () => {
   for (let index = 1; index <= 105; index++) addHistory(index, "ŁĄCZNIK ŻÓŁTY %_\\");
-  const first = await history.searchReferences(vehicleId, "łącznik żółty %_\\");
+  const first = await history.searchReferences(vehicleId, match("łącznik żółty %_\\"));
   if (!first.ok) throw first.error;
   expect(first.value.entries).toHaveLength(50);
-  const second = await history.searchReferences(vehicleId, "ŁĄCZNIK", first.value.nextCursor!);
+  const second = await history.searchReferences(
+    vehicleId,
+    match("ŁĄCZNIK"),
+    first.value.nextCursor!,
+  );
   if (!second.ok) throw second.error;
   expect(second.value.entries[0]?.id).toBe(id(51));
 });
@@ -241,4 +264,140 @@ it("satisfies timeline ordering directly from the index", () => {
     )
     .all(vehicleId);
   expect(JSON.stringify(plan)).not.toContain("TEMP B-TREE");
+});
+
+it("finds a reference by its complete displayed label in Polish and English", async () => {
+  sqlite
+    .prepare(
+      "INSERT INTO history_entries (id,vehicle_id,type,occurred_at,created_at,updated_at) VALUES (?,?,'inspection',?,?,?)",
+    )
+    .run(id(1), vehicleId, stamp, stamp, stamp);
+  sqlite
+    .prepare(
+      "INSERT INTO inspection_details (history_entry_id,kind,result) VALUES (?,'technical','passed')",
+    )
+    .run(id(1));
+  addHistory(2, "Oil");
+  for (const matches of [
+    match(" PrZeGlĄd - TechNicZny ", polish),
+    match("Inspection - Technical"),
+  ]) {
+    expect(await history.searchReferences(vehicleId, matches)).toMatchObject({
+      ok: true,
+      value: { entries: [{ id: id(1) }], nextCursor: null },
+    });
+  }
+});
+
+it("seeds a missing current odometer and preserves a newer reading on stale vehicle updates", async () => {
+  const initial = await history.get();
+  if (!initial.ok || !initial.value || !hasFuelConfiguration(initial.value))
+    throw new Error("Invalid vehicle fixture");
+  const edited = updateVehicle(
+    initial.value,
+    { ...initial.value, initialOdometerMetres: 82_000 },
+    { now: () => new Date(stamp) },
+  );
+  if (!edited.ok) throw new Error("Invalid update");
+  expect(await history.update(edited.value)).toMatchObject({ ok: true });
+  expect(await history.get()).toMatchObject({ ok: true, value: { currentOdometerMetres: 82_000 } });
+  sqlite.prepare("UPDATE vehicles SET current_odometer_metres = 95000 WHERE id = ?").run(vehicleId);
+  expect(await history.update(edited.value)).toMatchObject({ ok: true });
+  expect(await history.get()).toMatchObject({
+    ok: true,
+    value: { initialOdometerMetres: 82_000, currentOdometerMetres: 95_000 },
+  });
+});
+
+it("uses the partial hash index for the bound document lookup and respects reservation states", async () => {
+  const digest = sha256Digest("ab".repeat(32));
+  if (!digest.ok) throw new Error("Invalid digest");
+  const fileId = id(7);
+  sqlite
+    .prepare(
+      "INSERT INTO managed_files (id,kind,status,staging_key,mime_type,original_name,byte_size,sha256,created_at,updated_at) VALUES (?,'document','staged',?,'application/pdf','invoice.pdf',1,?,?,?)",
+    )
+    .run(fileId, `staging/${fileId}.pdf`, digest.value, stamp, stamp);
+  expect(await files.findDocumentBySha256(digest.value)).toMatchObject({
+    ok: true,
+    value: { id: fileId, status: "staged" },
+  });
+  const [sql, params] = logQuery.mock.lastCall!;
+  expect(params).toContain(digest.value);
+  const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + sql).all(...(params as SQLInputValue[]));
+  expect(plan).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        detail: expect.stringMatching(/SEARCH .*managed_files_document_sha256_unique .*sha256=\?/),
+      }),
+    ]),
+  );
+  sqlite
+    .prepare("UPDATE managed_files SET status='ready',staging_key=NULL,storage_key=? WHERE id=?")
+    .run(`objects/${fileId}.pdf`, fileId);
+  expect(await files.findDocumentBySha256(digest.value)).toMatchObject({
+    ok: true,
+    value: { id: fileId, status: "ready" },
+  });
+  sqlite.prepare("UPDATE managed_files SET status='deleting' WHERE id=?").run(fileId);
+  expect(await files.findDocumentBySha256(digest.value)).toEqual({ ok: true, value: null });
+});
+
+it("seeks into the timeline index and pages across both timestamp ties without gaps", async () => {
+  const insertEntry = sqlite.prepare(
+    "INSERT INTO history_entries (id,vehicle_id,type,occurred_at,created_at,updated_at) VALUES (?,?,'repair',?,?,?)",
+  );
+  const insertRepair = sqlite.prepare(
+    "INSERT INTO repair_details (history_entry_id,subject) VALUES (?,'Repair')",
+  );
+  const date = (index: number) => new Date(Date.parse(stamp) - index * 1000).toISOString();
+  const expected = Array.from({ length: 10000 }, (_, index) => id(index + 1));
+  sqlite.exec("BEGIN");
+  for (let index = 0; index < expected.length; index++) {
+    insertEntry.run(
+      expected[index]!,
+      vehicleId,
+      date(Math.floor(index / 120)),
+      date(Math.floor(index / 60)),
+      stamp,
+    );
+    insertRepair.run(expected[index]!);
+  }
+  sqlite.exec("COMMIT");
+
+  const first = await history.listPage(vehicleId);
+  if (!first.ok) throw first.error;
+  const seen = first.value.entries.map(({ id }) => id);
+  let cursor = first.value.nextCursor;
+  while (cursor) {
+    logQuery.mockClear();
+    const page = await history.listPage(vehicleId, cursor);
+    if (!page.ok) throw page.error;
+    for (const [query, params] of logQuery.mock.calls) {
+      const plan = sqlite
+        .prepare("EXPLAIN QUERY PLAN " + query)
+        .all(...(params as SQLInputValue[]));
+      expect(plan[0]?.detail).toMatch(
+        /SEARCH .*history_entries_vehicle_timeline_index.*vehicle_id=\? AND occurred_at[=<]\?/,
+      );
+      expect(plan.some(({ detail }) => String(detail).includes("TEMP B-TREE"))).toBe(false);
+    }
+    seen.push(...page.value.entries.map(({ id }) => id));
+    cursor = page.value.nextCursor;
+  }
+  expect(seen).toEqual(expected);
+});
+
+it("stops an obsolete reference search before reading the next database batch", async () => {
+  for (let index = 1; index <= 201; index++) addHistory(index, "Old invoice");
+  const controller = new AbortController();
+  const matcher = jest.fn(() => {
+    controller.abort();
+    return false;
+  });
+  logQuery.mockClear();
+  const result = await history.searchReferences(vehicleId, matcher, undefined, controller.signal);
+  expect(result).toEqual({ ok: true, value: { entries: [], nextCursor: null } });
+  expect(logQuery).toHaveBeenCalledTimes(1);
+  expect(matcher).toHaveBeenCalledTimes(100);
 });

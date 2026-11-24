@@ -83,7 +83,23 @@ it("hides old search results and never applies their cursor to a new query durin
     await act(async () => {
       jest.advanceTimersByTime(150);
     });
-    expect(searchReferences).toHaveBeenLastCalledWith(vehicle.id, "new query");
+    expect(searchReferences).toHaveBeenLastCalledWith(
+      vehicle.id,
+      expect.any(Function),
+      undefined,
+      expect.any(AbortSignal),
+    );
+    expect(searchReferences.mock.calls[0]?.[3].aborted).toBe(true);
+    const [, matches] = searchReferences.mock.lastCall!;
+    expect(
+      matches({
+        id: first.id,
+        occurredAt: first.occurredAt,
+        type: "repair",
+        subject: "New query results",
+      }),
+    ).toBe(true);
+    expect(matches(first)).toBe(false);
   } finally {
     jest.useRealTimers();
   }

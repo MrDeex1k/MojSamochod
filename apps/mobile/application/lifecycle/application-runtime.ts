@@ -19,6 +19,7 @@ export class ApplicationRuntime {
       resume: () => Promise<RepositoryResult<void>>;
       recover: (ready: () => void) => Promise<RepositoryResult<void>>;
       startSchedule: () => () => void;
+      onStop?: () => void;
       stopSchedule: () => Promise<void>;
     },
   ) {}
@@ -59,6 +60,7 @@ export class ApplicationRuntime {
   }
 
   private async stopNow(): Promise<void> {
+    this.dependencies.onStop?.();
     await this.operations.stop();
     await this.starting;
     await this.dependencies.stopSchedule();

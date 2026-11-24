@@ -154,10 +154,10 @@ JPEG processing, `expo-image` for native rendering, `expo-file-system` for priva
 and `@react-native-community/datetimepicker` for separate native date and UTC-time controls. Direct
 dependencies are pinned to Expo SDK-compatible versions in the application manifest.
 
-Document selection uses `expo-document-picker`. Android imports preserve the picker-granted `content://` URI until `expo-file-system` copies
-the file into private managed storage; copying first into Expo Go's shared cache can lose scoped
-read permission. iOS uses `copyToCacheDirectory: true` so a selected document remains readable
-after picker dismissal. Phase 7 previews managed PDFs inside the application through the local
+Android uses `expo-document-picker` to select a document and retains its granted `content://` URI.
+On iOS the system picker opens the file in place and returns a bookmark for scoped access on save.
+The local Expo module streams either source into private staging with a 20 MiB limit and rejects
+empty files before metadata changes. Phase 7 previews managed PDFs inside the application through the local
 `document-preview` Expo module, using PDFKit on Apple and PdfRenderer on Android. Preview work is
 bounded and temporary render files are cleaned up after use. The `expo-sharing` package and plugin
 were removed because there are no outbound document sharing, export, download or automatic external

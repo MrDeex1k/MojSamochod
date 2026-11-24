@@ -279,6 +279,10 @@ export const vehicleDocuments = sqliteTable(
       desc(table.createdAt),
       table.id,
     ),
+    index("vehicle_documents_vehicle_history_entry_index").on(
+      table.vehicleId,
+      table.historyEntryId,
+    ),
     index("vehicle_documents_history_entry_index").on(table.historyEntryId),
     check("vehicle_documents_name_length", sql`length(trim(${table.name})) between 1 and 255`),
     check(

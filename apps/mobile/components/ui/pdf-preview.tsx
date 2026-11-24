@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { File } from "expo-file-system";
 import { Text, View } from "react-native";
-import DocumentPreview from "@/modules/document-preview/src/DocumentPreviewModule";
+import { useApplicationServices } from "@/components/providers/application-provider";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { Button } from "./button";
 import { Image } from "./image";
@@ -12,6 +12,7 @@ export function PdfPreview({ uri, name }: Readonly<{ uri: string; name: string }
 }
 
 function PdfPreviewSession({ uri, name }: Readonly<{ uri: string; name: string }>) {
+  const { documentPreview } = useApplicationServices();
   const { t } = useAppTranslation();
   const [fullscreen, setFullscreen] = useState(false);
   const [aspectRatio, setAspectRatio] = useState(0.7);
@@ -38,8 +39,9 @@ function PdfPreviewSession({ uri, name }: Readonly<{ uri: string; name: string }
         /* Startup/reset retries private preview cleanup. */
       }
     };
-    if (!DocumentPreview) return;
-    void DocumentPreview.renderPage(uri, page)
+    if (!documentPreview) return;
+    void documentPreview
+      .renderPage(uri, page)
       .then((result) => {
         renderedUri = result.uri;
         if (!active) {
@@ -62,7 +64,7 @@ function PdfPreviewSession({ uri, name }: Readonly<{ uri: string; name: string }
       active = false;
       remove();
     };
-  }, [uri, page, attempt]);
+  }, [uri, page, attempt, documentPreview]);
   const current =
     state?.source === uri && state.page === page && state.attempt === attempt ? state : null;
   const changePage = (next: number) => {
@@ -88,13 +90,13 @@ function PdfPreviewSession({ uri, name }: Readonly<{ uri: string; name: string }
           count={state?.count ?? 0}
           imageUri={current?.uri}
           text={current?.text}
-          error={error || !DocumentPreview}
+          error={error || !documentPreview}
           onRetry={retry}
           onPage={changePage}
           onClose={() => setFullscreen(false)}
         />
       )}
-      {error || !DocumentPreview ? (
+      {error || !documentPreview ? (
         <>
           <Text accessibilityRole="alert" className="text-body text-danger">
             {t("documents.previewError")}
@@ -110,10 +112,8 @@ function PdfPreviewSession({ uri, name }: Readonly<{ uri: string; name: string }
       ) : current ? (
         <>
           <Image
-            accessibilityLabel={
-              current.text ||
-              `${name}, ${t("documents.page", { page: page + 1, count: current.count })}`
-            }
+            accessible
+            accessibilityLabel={`${name}, ${t("documents.page", { page: page + 1, count: current.count })}${current.text ? `. ${current.text}` : ""}`}
             source={{ uri: current.uri }}
             contentFit="contain"
             onLoad={({ source }) => {

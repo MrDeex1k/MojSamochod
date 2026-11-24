@@ -33,6 +33,13 @@ export type ScheduledReminderNotification = Readonly<{
 }>;
 
 export interface ReminderNotifications {
+  /** Prepares one reconciliation pass with a fresh permission and channel snapshot. */
+  prepareScheduling?(): Promise<
+    NotificationResult<{
+      permission: ReminderNotificationPermission;
+      schedule(request: ReminderNotificationRequest): Promise<NotificationResult<string>>;
+    }>
+  >;
   getPermission(): Promise<NotificationResult<ReminderNotificationPermission>>;
   /** Call only after the user accepts the contextual explanation, never on startup or save. */
   requestPermissionAfterExplanation(): Promise<NotificationResult<ReminderNotificationPermission>>;

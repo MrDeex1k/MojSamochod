@@ -1,3 +1,4 @@
+import { documentImport } from "@/modules/document-preview/src/DocumentImportModule";
 import { Directory, File, Paths } from "expo-file-system";
 
 import {
@@ -22,7 +23,7 @@ import type { ManagedFileId } from "@/domain/shared/identifiers";
 export { maximumDocumentBytes, maximumVehiclePhotoBytes };
 
 export interface ObjectStorageDriver {
-  copyFrom(sourceUri: string, key: string): Promise<void>;
+  copyFrom(sourceUri: string, key: string, maximumBytes: number): Promise<boolean>;
   copyTo(key: string, destinationUri: string): Promise<void>;
   delete(key: string): Promise<void>;
   exists(key: string): boolean;
@@ -46,12 +47,13 @@ export class LocalObjectStorage implements ObjectStorage {
     const stagingKey = `staging/${input.managedFileId}.${input.extension}` as StagedObjectKey;
 
     try {
-      await this.driver.copyFrom(input.sourceUri, stagingKey);
-      if (this.driver.size(stagingKey) > input.maximumBytes) {
-        await this.driver.delete(stagingKey);
+      const copied = await this.driver.copyFrom(input.sourceUri, stagingKey, input.maximumBytes);
+      const length = copied ? this.driver.size(stagingKey) : 0;
+      if (length <= 0 || length > input.maximumBytes) {
+        if (this.driver.exists(stagingKey)) await this.driver.delete(stagingKey);
         return objectStorageFailure("invalid-source", operation);
       }
-      const size = byteSize(this.driver.size(stagingKey));
+      const size = byteSize(length);
       const hash = sha256Digest(await this.driver.digest(stagingKey));
       if (!size.ok || !hash.ok) {
         await this.driver.delete(stagingKey);
@@ -177,9 +179,17 @@ export class ExpoFileSystemDriver implements ObjectStorageDriver {
     new Directory(this.root, "objects").create({ idempotent: true, intermediates: true });
   }
 
-  async copyFrom(sourceUri: string, key: string): Promise<void> {
+  async copyFrom(sourceUri: string, key: string, maximumBytes: number): Promise<boolean> {
     this.ensureDirectories();
-    await new File(sourceUri).copy(this.file(key), { overwrite: true });
+    const target = this.file(key);
+    if (sourceUri.startsWith("content:") || sourceUri.startsWith("document-bookmark:")) {
+      return documentImport().copyToStaging(sourceUri, target.uri, maximumBytes);
+    }
+    const source = new File(sourceUri);
+    const size = source.size;
+    if (size <= 0 || size > maximumBytes) return false;
+    await source.copy(target, { overwrite: true });
+    return true;
   }
 
   async copyTo(key: string, destinationUri: string): Promise<void> {
@@ -232,8 +242,9 @@ async function safelyDelete(driver: ObjectStorageDriver, key: string): Promise<v
   }
 }
 
-export function cleanTransientDocumentFiles(): void {
+export function cleanTransientDocumentFiles(preservePicker = false): void {
   for (const name of transientFileDirectories) {
+    if (preservePicker && (name === "ImagePicker" || name === "ImageManipulator")) continue;
     try {
       const directory = new Directory(Paths.cache, name);
       if (directory.exists) directory.delete();

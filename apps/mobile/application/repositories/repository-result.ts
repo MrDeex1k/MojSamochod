@@ -19,7 +19,7 @@ export function repositoryFailure<T = never>(
   kind: RepositoryErrorKind,
   operation: string,
   cause?: unknown,
-): RepositoryResult<T> {
+): Extract<RepositoryResult<T>, { ok: false }> {
   return { error: { cause, kind, operation }, ok: false };
 }
 

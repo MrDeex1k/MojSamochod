@@ -14,6 +14,7 @@ export type HistoryEntryReference = Pick<HistoryEntry, "id" | "type" | "occurred
     subject?: string;
     inspectionKind?: string;
   }>;
+export type HistoryReferenceMatcher = (entry: HistoryEntryReference) => boolean;
 export type HistoryReferencePage = Readonly<{
   entries: readonly HistoryEntryReference[];
   nextCursor: HistoryCursor | null;
@@ -25,8 +26,9 @@ export interface HistoryEntryRepository {
   ): Promise<RepositoryResult<readonly HistoryEntryReference[]>>;
   searchReferences?(
     vehicleId: VehicleId,
-    query: string,
+    matches: HistoryReferenceMatcher,
     cursor?: HistoryCursor,
+    signal?: AbortSignal,
   ): Promise<RepositoryResult<HistoryReferencePage>>;
 
   listPage?(

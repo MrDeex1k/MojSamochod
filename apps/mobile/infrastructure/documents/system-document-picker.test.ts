@@ -1,3 +1,8 @@
+const mockPick = jest.fn();
+jest.mock("@/modules/document-preview/src/DocumentImportModule", () => ({
+  documentImport: () => ({ pick: mockPick }),
+}));
+
 const mockGetDocumentAsync = jest.fn();
 
 jest.mock("expo-document-picker", () => ({
@@ -10,8 +15,42 @@ import { SystemDocumentPicker } from "./system-document-picker";
 import { Platform } from "react-native";
 
 describe("SystemDocumentPicker", () => {
-  it("preserves Android URI permission without copying through the picker cache", async () => {
+  beforeEach(() => {
     jest.replaceProperty(Platform, "OS", "android");
+  });
+
+  it("opens iOS documents in place through the bounded native importer", async () => {
+    jest.replaceProperty(Platform, "OS", "ios");
+    const selection = {
+      kind: "selected",
+      document: {
+        uri: "document-bookmark:fixture",
+        mimeType: "application/pdf",
+        name: "invoice.pdf",
+      },
+    };
+    mockPick.mockResolvedValue(selection);
+    await expect(new SystemDocumentPicker().pick()).resolves.toEqual(selection);
+    expect(mockPick).toHaveBeenCalledWith(maximumDocumentBytes);
+    expect(mockGetDocumentAsync).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [0, "invalid-size"],
+    [maximumDocumentBytes, "selected"],
+    [maximumDocumentBytes + 1, "invalid-size"],
+    [undefined, "selected"],
+  ] as const)("classifies Android provider size %s as %s", async (size, kind) => {
+    mockGetDocumentAsync.mockResolvedValue({
+      canceled: false,
+      assets: [
+        { mimeType: "application/pdf", name: "doc.pdf", size, uri: "content://provider/doc" },
+      ],
+    });
+    await expect(new SystemDocumentPicker().pick()).resolves.toMatchObject({ kind });
+  });
+
+  it("preserves Android URI permission without copying through the picker cache", async () => {
     mockGetDocumentAsync.mockResolvedValue({ canceled: true });
     await new SystemDocumentPicker().pick();
     expect(mockGetDocumentAsync).toHaveBeenCalledWith(
@@ -36,7 +75,7 @@ describe("SystemDocumentPicker", () => {
       kind: "selected",
     });
     expect(mockGetDocumentAsync).toHaveBeenCalledWith({
-      copyToCacheDirectory: true,
+      copyToCacheDirectory: false,
       multiple: false,
       type: ["application/pdf", "image/jpeg", "image/png"],
     });
@@ -62,6 +101,17 @@ describe("SystemDocumentPicker", () => {
 
     await expect(new SystemDocumentPicker().pick()).resolves.toEqual({ kind: "invalid-size" });
     await expect(new SystemDocumentPicker().pick()).resolves.toEqual({ kind: "unsupported" });
+  });
+
+  it.each([null, -1])("defers size validation when the provider reports %s", async (size) => {
+    mockGetDocumentAsync.mockResolvedValue({
+      canceled: false,
+      assets: [{ name: "invoice.pdf", size, uri: "content://provider/doc" }],
+    });
+    await expect(new SystemDocumentPicker().pick()).resolves.toMatchObject({
+      kind: "selected",
+      document: { size: undefined },
+    });
   });
 
   it("uses the extension when a platform omits the MIME type", async () => {

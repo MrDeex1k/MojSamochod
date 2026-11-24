@@ -1,3 +1,4 @@
+import DocumentPreview from "@/modules/document-preview/src/DocumentPreviewModule";
 import { EraseAllData } from "@/application/storage/erase-all-data";
 import { LocalEraseDataStorage } from "@/infrastructure/storage/local-erase-data-storage";
 
@@ -47,6 +48,7 @@ export type ApplicationServices = Readonly<{
   clock: Clock;
   eraseData: EraseAllData;
   documentPicker: DocumentFilePicker;
+  documentPreview: typeof DocumentPreview;
   documents: VehicleDocumentService;
   historyEntries: HistoryEntryRepository & HistoryEntryReadRepository;
   idGenerator: IdGenerator;
@@ -84,24 +86,41 @@ export function createApplicationServices(database: AppDatabase) {
     new DrizzleManagedFileRepository(database),
     new LocalObjectStorage(),
   );
-  const runtime = new ApplicationRuntime({
+  const refuellings = new RefuellingService(clock, idGenerator, refuellingRepository);
+  const photoPicker = new GalleryVehiclePhotoPicker();
+  const runtime: ApplicationRuntime = new ApplicationRuntime({
     resume: () => services.eraseData.resume(),
-    recover: (ready) => {
-      cleanTransientDocumentFiles();
-      return managedFiles.reconcile(ready);
-    },
+    recover: (ready) =>
+      runtime.operations.track(async () => {
+        cleanTransientDocumentFiles(await photoPicker.recoverBeforeCleanup());
+        return managedFiles.reconcile(ready);
+      }),
     startSchedule: () => startReminderScheduleLifecycle(reminderSchedule, appI18n),
+    onStop: () => photoPicker.detachSelection(),
     stopSchedule: () => reminderSchedule.stop(),
   });
   const services = {
     clock,
-    eraseData: new EraseAllData(new LocalEraseDataStorage(database), async () => {
-      const reconciled = await reminderSchedule.reconcile();
-      if (!reconciled.ok) return reconciled;
-      await reminderNotifications.clearOwned();
-      return { ok: true };
-    }),
+    eraseData: new EraseAllData(
+      new LocalEraseDataStorage(database),
+      async () => {
+        await reminderNotifications.clearOwned();
+        return { ok: true };
+      },
+      (work) =>
+        runtime.operations.reset(async () => {
+          await reminderSchedule.stop();
+          const result = await work();
+          if (result.ok) {
+            photoPicker.forgetRecovered();
+            refuellings.clearConsumptionCache();
+            reminderSchedule.resume();
+          }
+          return result;
+        }),
+    ),
     documentPicker: new SystemDocumentPicker(),
+    documentPreview: DocumentPreview && runtime.operations.wrap(DocumentPreview),
     documents: new VehicleDocumentService(
       clock,
       idGenerator,
@@ -111,8 +130,8 @@ export function createApplicationServices(database: AppDatabase) {
     historyEntries: vehicleHistory,
     idGenerator,
     managedFiles,
-    photoPicker: new GalleryVehiclePhotoPicker(),
-    refuellings: new RefuellingService(clock, idGenerator, refuellingRepository),
+    photoPicker,
+    refuellings,
     reminders: new ReminderService(
       clock,
       idGenerator,
@@ -124,7 +143,7 @@ export function createApplicationServices(database: AppDatabase) {
   };
   const exposed: ApplicationServices = {
     ...services,
-    eraseData: runtime.operations.wrap(services.eraseData),
+    reminderNotifications: runtime.operations.wrap(reminderNotifications),
     documents: runtime.operations.wrap(services.documents),
     historyEntries: runtime.operations.wrap(services.historyEntries),
     managedFiles: runtime.operations.wrap(services.managedFiles),

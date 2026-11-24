@@ -52,6 +52,18 @@ export class NativeReminderNotifications implements ReminderNotifications {
     return this.perform("notifications.openSettings", () => Linking.openSettings());
   }
 
+  prepareScheduling() {
+    return this.perform("notifications.prepareScheduling", async () => {
+      await this.ensureChannel();
+      const permission = await this.readPermission();
+      return {
+        permission,
+        schedule: (request: ReminderNotificationRequest) =>
+          this.schedulePrepared(request, permission),
+      };
+    });
+  }
+
   async schedule(request: ReminderNotificationRequest): Promise<NotificationResult<string>> {
     const operation = "notifications.schedule";
     if (!validRequest(request)) return failure("invalid-request", operation);
@@ -64,10 +76,19 @@ export class NativeReminderNotifications implements ReminderNotifications {
       return this.readPermission();
     });
     if (!channel.ok) return channel;
-    if (!channel.value.canSchedule) return failure("permission-denied", operation);
+    return this.schedulePrepared(request, channel.value);
+  }
+
+  private schedulePrepared(
+    request: ReminderNotificationRequest,
+    permission: ReminderNotificationPermission,
+  ): Promise<NotificationResult<string>> {
+    const operation = "notifications.schedule";
+    if (!validRequest(request)) return Promise.resolve(failure("invalid-request", operation));
+    if (!permission.canSchedule) return Promise.resolve(failure("permission-denied", operation));
     const now = this.clock.now().getTime();
     if (!Number.isFinite(now) || Date.parse(request.plan.fireAt) <= now)
-      return failure("invalid-request", operation);
+      return Promise.resolve(failure("invalid-request", operation));
     return this.perform(operation, () =>
       Notifications.scheduleNotificationAsync({
         identifier: request.plan.key,

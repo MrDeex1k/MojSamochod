@@ -1,7 +1,8 @@
+import { readTimelinePage } from "./timeline-page";
 import type { ConsumptionRecord } from "@/domain/refuelling/fuel-consumption";
 import type { HistoryCursor } from "@/application/repositories/history-entry-repository";
 import type { RefuellingPage } from "@/application/repositories/refuelling-repository";
-import { and, asc, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, lt, or } from "drizzle-orm";
 
 import type { RefuellingRepository } from "@/application/repositories/refuelling-repository";
 import {
@@ -103,27 +104,15 @@ export class DrizzleRefuellingRepository implements RefuellingRepository {
     cursor?: HistoryCursor,
   ): Promise<RepositoryResult<RefuellingPage>> {
     try {
-      const after = cursor
-        ? or(
-            lt(refuellings.occurredAt, cursor.occurredAt),
-            and(
-              eq(refuellings.occurredAt, cursor.occurredAt),
-              lt(refuellings.createdAt, cursor.createdAt),
-            ),
-            and(
-              eq(refuellings.occurredAt, cursor.occurredAt),
-              eq(refuellings.createdAt, cursor.createdAt),
-              gt(refuellings.id, cursor.id),
-            ),
-          )
-        : undefined;
-      const rows = this.database
-        .select()
-        .from(refuellings)
-        .where(and(eq(refuellings.vehicleId, vehicleId), after))
-        .orderBy(desc(refuellings.occurredAt), desc(refuellings.createdAt), asc(refuellings.id))
-        .limit(51)
-        .all();
+      const rows = readTimelinePage(refuellings, cursor, 51, (after, limit) =>
+        this.database
+          .select()
+          .from(refuellings)
+          .where(and(eq(refuellings.vehicleId, vehicleId), after))
+          .orderBy(desc(refuellings.occurredAt), desc(refuellings.createdAt), asc(refuellings.id))
+          .limit(limit)
+          .all(),
+      );
       const entries = rows.slice(0, 50).map(mapRefuellingRow);
       const last = entries.at(-1);
       return repositorySuccess({
@@ -192,7 +181,7 @@ export class DrizzleRefuellingRepository implements RefuellingRepository {
     }
   }
 
-  async update(refuelling: Refuelling): Promise<RepositoryResult<void>> {
+  async update(refuelling: Refuelling): Promise<RepositoryResult<{ consumptionChanged: boolean }>> {
     const operation = "refuelling.update";
     try {
       return this.database.transaction((transaction) => {
@@ -203,7 +192,12 @@ export class DrizzleRefuellingRepository implements RefuellingRepository {
         }
 
         const existing = transaction
-          .select({ id: refuellings.id })
+          .select({
+            occurredAt: refuellings.occurredAt,
+            odometerMetres: refuellings.odometerMetres,
+            quantityMicrolitres: refuellings.quantityMicrolitres,
+            fillKind: refuellings.fillKind,
+          })
           .from(refuellings)
           .where(
             and(eq(refuellings.vehicleId, refuelling.vehicleId), eq(refuellings.id, refuelling.id)),
@@ -218,7 +212,13 @@ export class DrizzleRefuellingRepository implements RefuellingRepository {
           .where(eq(refuellings.id, refuelling.id))
           .run();
         advanceVehicleOdometer(transaction, refuelling);
-        return repositorySuccess(undefined);
+        return repositorySuccess({
+          consumptionChanged:
+            existing.occurredAt !== refuelling.occurredAt ||
+            existing.odometerMetres !== refuelling.odometerMetres ||
+            existing.quantityMicrolitres !== refuelling.quantityMicrolitres ||
+            existing.fillKind !== refuelling.fillKind,
+        });
       });
     } catch (error) {
       return mapFailure(operation, error);

@@ -2,10 +2,11 @@ import { InteractiveRow as Pressable } from "@/components/layout/interactive-row
 import type {
   HistoryEntryRepository,
   HistoryCursor,
+  HistoryReferenceMatcher,
 } from "@/application/repositories/history-entry-repository";
 import type { VehicleId } from "@/domain/shared/identifiers";
-import type { HistoryEntry } from "@/domain/history/history-entry";
-import { useEffect, useRef, useState } from "react";
+import { createReferenceMatcher, referenceLabel } from "@/localization/history-reference-label";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Modal, Text, View } from "react-native";
 import type { HistoryEntryReference } from "@/application/repositories/history-entry-repository";
 import { ScreenFrame } from "@/components/layout/screen-frame";
@@ -37,15 +38,15 @@ export function DocumentEntrySelector({
   const selected =
     entries.find((entry) => entry.id === selectedId) ??
     (selection?.id === selectedId ? selection : undefined);
-  const results = useReferenceSearch(open, query, historyEntries, vehicleId);
+  const matches = useMemo(
+    () => createReferenceMatcher(query, t, i18n.language),
+    [query, t, i18n.language],
+  );
+  const results = useReferenceSearch(open, matches, historyEntries, vehicleId);
   const filtered = historyEntries?.searchReferences
     ? results.entries
     : open
-      ? entries.filter((entry) =>
-          label(entry)
-            .toLocaleLowerCase(i18n.language)
-            .includes(query.trim().toLocaleLowerCase(i18n.language)),
-        )
+      ? entries.filter(matches)
       : [];
   const choose = (id: string) => {
     setSelection(filtered.find((entry) => entry.id === id));
@@ -137,28 +138,13 @@ export function DocumentEntrySelector({
   );
 }
 
-function referenceLabel(entry: HistoryEntryReference | HistoryEntry, t: (key: string) => string) {
-  let subject = "subject" in entry ? entry.subject : undefined;
-  let inspectionKind = "inspectionKind" in entry ? entry.inspectionKind : undefined;
-  if ("details" in entry) {
-    subject =
-      entry.type === "replacement"
-        ? entry.details.item
-        : entry.type === "repair"
-          ? entry.details.subject
-          : entry.details.description;
-    if (entry.type === "inspection") inspectionKind = entry.details.kind;
-  }
-  return `${t(`workspace.entryType.${entry.type}`)} - ${subject ?? t(`entryForm.inspectionKinds.${inspectionKind ?? "other"}`)}`;
-}
-
 /**
  * Debounces reference search and exposes pages only for the current query and repository.
  * Query changes invalidate previous requests and prevent reuse of their pagination cursors.
  */
 function useReferenceSearch(
   open: boolean,
-  query: string,
+  matches: HistoryReferenceMatcher,
   repository?: HistoryEntryRepository,
   vehicleId?: VehicleId,
 ) {
@@ -168,30 +154,33 @@ function useReferenceSearch(
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [search, setSearch] = useState<{
-    query: string;
+    matches: HistoryReferenceMatcher;
     vehicleId: VehicleId;
     repository: HistoryEntryRepository;
     attempt: number;
   } | null>(null);
   const currentSearch =
     open &&
-    search?.query === query &&
+    search?.matches === matches &&
     search?.vehicleId === vehicleId &&
     search?.repository === repository &&
     search?.attempt === attempt;
   const generation = useRef(0);
   const pending = useRef(false);
+  const abort = useRef<AbortController | null>(null);
   useEffect(() => {
     const current = ++generation.current;
     pending.current = false;
     if (!open || !vehicleId || !repository?.searchReferences) return;
+    const controller = new AbortController();
+    abort.current = controller;
     const timer = setTimeout(() => {
-      setSearch({ query, vehicleId, repository, attempt });
+      setSearch({ matches, vehicleId, repository, attempt });
       setEntries([]);
       setCursor(null);
       setError(false);
       setLoading(true);
-      void repository.searchReferences!(vehicleId, query)
+      void repository.searchReferences!(vehicleId, matches, undefined, controller.signal)
         .then((result) => {
           if (current !== generation.current) return;
           if (!result.ok) {
@@ -209,10 +198,11 @@ function useReferenceSearch(
         });
     }, 150);
     return () => {
+      controller.abort();
       clearTimeout(timer);
       generation.current = current + 1;
     };
-  }, [open, query, repository, vehicleId, attempt]);
+  }, [open, matches, repository, vehicleId, attempt]);
   const loadMore = () => {
     if (
       !currentSearch ||
@@ -228,7 +218,7 @@ function useReferenceSearch(
     setLoading(true);
     const current = generation.current;
     void repository
-      .searchReferences(vehicleId, query, cursor)
+      .searchReferences(vehicleId, matches, cursor, abort.current?.signal)
       .then((result) => {
         if (current !== generation.current) return;
         if (!result.ok) {

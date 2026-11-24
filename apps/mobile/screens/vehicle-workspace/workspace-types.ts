@@ -1,3 +1,4 @@
+import type { HistoryEntryId } from "@/domain/shared/identifiers";
 import type { Reminder } from "@/domain/reminders/reminder";
 import type { HistoryEntryReference } from "@/application/repositories/history-entry-repository";
 import type { ApplicationServices } from "@/components/providers/application-provider";
@@ -35,21 +36,20 @@ export type WorkspaceMode =
 
 export type VehicleWorkspaceViewProps = WorkspaceData &
   Readonly<{
-    mode: WorkspaceMode;
-    revision?: number;
+    mode: Exclude<WorkspaceMode, { kind: "data-management" }>;
+    remindersRevision?: number;
     selectedId?: string;
     onLoadMore?: () => void;
     loadMoreError?: boolean;
     loadingMore?: boolean;
     onDataManagement: () => void;
-    onErased: () => void;
     onAddEntry: () => void;
     onAddDocument: () => void;
     onCancelFlow: () => void;
     onChooseType: (type: HistoryEntry["type"]) => void;
     onConfigureFuel: () => void;
     onDocuments: () => void;
-    onDocumentsChanged: () => void;
+    onDocumentsChanged: (ids: readonly HistoryEntryId[]) => void;
     onEditDocument: (document: VehicleDocument) => void;
     onEditEntry: (entry: HistoryEntry) => void;
     onEditRefuelling: (refuelling: Refuelling) => void;

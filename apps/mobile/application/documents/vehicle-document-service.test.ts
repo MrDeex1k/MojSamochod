@@ -1,9 +1,14 @@
+import { maximumDocumentBytes } from "@/application/storage/object-storage";
 import { repositoryFailure, repositorySuccess } from "@/application/repositories/repository-result";
 import type { VehicleDocumentRepository } from "@/application/repositories/vehicle-document-repository";
 import type { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { createVehicleDocument } from "@/domain/documents/vehicle-document";
 import { byteSize, sha256Digest, storageObjectKey } from "@/domain/files/managed-file";
-import { managedFileIdFromUuidV7, vehicleIdFromUuidV7 } from "@/domain/shared/identifiers";
+import {
+  historyEntryIdFromUuidV7,
+  managedFileIdFromUuidV7,
+  vehicleIdFromUuidV7,
+} from "@/domain/shared/identifiers";
 import { utcTimestamp } from "@/domain/shared/value-objects";
 
 import { VehicleDocumentService } from "./vehicle-document-service";
@@ -233,4 +238,71 @@ it("does not import a replacement for a document that was deleted after its scre
     error: { kind: "not-found" },
   });
   expect(events).toEqual([]);
+});
+
+it.each([0, maximumDocumentBytes + 1])(
+  "keeps the existing attachment readable after rejecting %i bytes",
+  async (size) => {
+    const events: string[] = [];
+    const existing = createVehicleDocument(
+      { fileReference: managedFileIdFromUuidV7(fileId), name: "Invoice", vehicleId },
+      { clock: { now: () => now }, idGenerator: { generate: () => documentId } },
+    );
+    if (!existing.ok) throw new Error("Invalid fixture");
+    const repository = repositoryFake(events);
+    repository.get = async () => repositorySuccess(existing.value);
+    const service = new VehicleDocumentService(
+      { now: () => now },
+      { generate: () => replacementFileId },
+      repository,
+      managedFilesFake(events),
+    );
+    expect(await service.replace(existing.value, { ...picked, size })).toMatchObject({
+      ok: false,
+      error: { kind: "unsupported", operation: "managedFile.import" },
+    });
+    expect(await service.getFile(existing.value)).toMatchObject({
+      ok: true,
+      value: { uri: `file:///managed/${fileId}` },
+    });
+    expect(events).toEqual([]);
+  },
+);
+
+it("reports the stored owners when an older editor reassigns and deletes an attachment", async () => {
+  const from = historyEntryIdFromUuidV7("018f47e2-7b31-7658-b336-34613389d010");
+  const to = historyEntryIdFromUuidV7("018f47e2-7b31-7658-b336-34613389d011");
+  const draft = expectValid(
+    createVehicleDocument(
+      {
+        fileReference: managedFileIdFromUuidV7(fileId),
+        historyEntryId: to,
+        name: "Invoice",
+        vehicleId,
+      },
+      { clock: { now: () => now }, idGenerator: { generate: () => documentId } },
+    ),
+  );
+  let stored = { ...draft, historyEntryId: from };
+  const repository = repositoryFake([]);
+  repository.get = async () => repositorySuccess(stored);
+  repository.update = async (value) => {
+    stored = { ...value, historyEntryId: value.historyEntryId! };
+    return repositorySuccess(undefined);
+  };
+  repository.delete = async () => repositorySuccess(stored);
+  const service = new VehicleDocumentService(
+    { now: () => now },
+    { generate: () => fileId },
+    repository,
+    managedFilesFake([]),
+  );
+  expect(await service.update(draft, { name: draft.name, historyEntryId: to })).toMatchObject({
+    ok: true,
+    affectedHistoryEntryIds: [from, to],
+  });
+  expect(await service.delete(vehicleId, draft.id)).toMatchObject({
+    ok: true,
+    affectedHistoryEntryIds: [to],
+  });
 });

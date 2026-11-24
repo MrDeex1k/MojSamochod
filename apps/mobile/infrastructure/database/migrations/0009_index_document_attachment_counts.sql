@@ -1,0 +1,1 @@
+CREATE INDEX `vehicle_documents_vehicle_history_entry_index` ON `vehicle_documents` (`vehicle_id`,`history_entry_id`);

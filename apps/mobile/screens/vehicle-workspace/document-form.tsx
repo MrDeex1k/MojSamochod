@@ -1,9 +1,11 @@
+import type { HistoryEntryId } from "@/domain/shared/identifiers";
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 
 import { FormActions, FormTitle } from "@/components/layout/native-form";
 import { DocumentEntrySelector } from "./document-entry-selector";
 import { CalendarDateField } from "@/components/ui/calendar-date-field";
 
+import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
@@ -35,10 +37,11 @@ export function DocumentForm({
   entries: readonly HistoryEntryReference[];
   historyEntries?: HistoryEntryRepository;
   onCancel: () => void;
-  onSaved: () => void;
+  onSaved: (ids: readonly HistoryEntryId[]) => void;
   picker: DocumentFilePicker;
   vehicle: Vehicle;
 }>) {
+  const [draftDate, setDraftDate] = useState<Date | null>(null);
   const {
     t,
     file,
@@ -99,6 +102,8 @@ export function DocumentForm({
         value={name}
       />
       <CalendarDateField
+        picker={draftDate}
+        setPicker={setDraftDate}
         label={t("documents.date")}
         value={date}
         onChange={(value) => {
@@ -145,10 +150,12 @@ export function DocumentForm({
         </Text>
       ) : null}
       <FormActions
-        busy={saving}
+        busy={saving || draftDate !== null}
         saveLabel={t("documents.save")}
         cancelLabel={t("documents.cancel")}
-        onSave={() => void save()}
+        onSave={() => {
+          if (!draftDate) void save();
+        }}
         onCancel={cancel}
       />
     </FormSection>

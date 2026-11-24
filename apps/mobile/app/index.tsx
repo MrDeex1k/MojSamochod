@@ -1,3 +1,4 @@
+import { editPhotoOwner } from "@/application/storage/vehicle-photo-picker";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -9,21 +10,40 @@ import { useAppTranslation } from "@/localization/use-app-translation";
 import { FirstVehicleSetupScreen } from "@/screens/first-vehicle-setup";
 
 export default function HomeScreen() {
-  const { vehicles } = useApplicationServices();
+  const { vehicles, photoPicker } = useApplicationServices();
   const { t } = useAppTranslation();
   const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState<"empty" | "error" | "loading" | "ready">("loading");
+  const [state, setState] = useState<"empty" | "error" | "loading" | "ready" | "restore-edit">(
+    "loading",
+  );
 
   useEffect(() => {
     let active = true;
-    void vehicles.get().then((result) => {
-      if (active) setState(result.ok ? (result.value ? "ready" : "empty") : "error");
+    void vehicles.get().then(async (result) => {
+      if (!active) return;
+      if (!result.ok || !result.value) {
+        setState(result.ok ? "empty" : "error");
+        return;
+      }
+      const restore = await photoPicker
+        .isRestoring?.(editPhotoOwner(result.value.id))
+        .catch(() => false);
+      if (active) setState(restore ? "restore-edit" : "ready");
     });
     return () => {
       active = false;
     };
-  }, [attempt, vehicles]);
+  }, [attempt, vehicles, photoPicker]);
 
+  if (state === "restore-edit")
+    return (
+      <Redirect
+        href={{
+          pathname: "/vehicle/editor",
+          params: { kind: "vehicle-form", returnTo: "history" },
+        }}
+      />
+    );
   if (state === "ready") return <Redirect href="/vehicle" />;
   if (state === "empty") return <FirstVehicleSetupScreen />;
   if (state === "error") {

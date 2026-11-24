@@ -1,6 +1,6 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
 
-jest.mock("expo-router", () => ({ Redirect: () => null }));
+jest.mock("expo-router", () => ({ Redirect: () => null, useRouter: () => ({}) }));
 
 jest.mock("@/components/providers/application-provider", () => ({
   useApplicationServices: jest.fn(),
@@ -22,11 +22,14 @@ jest.mock("./vehicle-edit-form", () => {
   };
 });
 
-import type { ApplicationServices } from "@/components/providers/application-provider";
+import {
+  useApplicationServices,
+  type ApplicationServices,
+} from "@/components/providers/application-provider";
 import { calculateFuelConsumption } from "@/domain/refuelling/fuel-consumption";
 import { createVehicle } from "@/domain/vehicle/vehicle";
 
-import { VehicleWorkspaceView } from "./index";
+import { VehicleWorkspaceScreen, VehicleWorkspaceView } from "./index";
 
 const now = new Date("2026-09-02T08:00:00.000Z");
 const vehicle = expectValid(
@@ -47,6 +50,17 @@ const vehicle = expectValid(
 );
 
 describe("VehicleWorkspaceView", () => {
+  it("opens erase controls even when workspace history cannot be read", async () => {
+    const list = jest.fn().mockRejectedValue(new Error("Corrupt history"));
+    jest.mocked(useApplicationServices).mockReturnValue({
+      historyEntries: { list },
+      eraseData: { erase: jest.fn() },
+    } as unknown as ApplicationServices);
+    await render(<VehicleWorkspaceScreen mode={{ kind: "data-management" }} />);
+    expect(screen.getByRole("button", { name: /erase|usuń/i })).toBeOnTheScreen();
+    expect(list).not.toHaveBeenCalled();
+  });
+
   it("does not render section tabs inside an editor", async () => {
     await renderView("fuel", { onFuelChanged: jest.fn(), onSaved: jest.fn() });
     expect(screen.queryAllByRole("tab")).toHaveLength(0);
@@ -87,7 +101,6 @@ async function renderView(
   await render(
     <VehicleWorkspaceView
       onDataManagement={jest.fn()}
-      onErased={jest.fn()}
       documents={[]}
       entries={[]}
       mode={{ kind: "vehicle-form", returnTo }}

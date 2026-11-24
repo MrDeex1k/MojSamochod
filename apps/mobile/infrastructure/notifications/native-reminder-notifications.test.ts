@@ -416,3 +416,26 @@ function request(): ReminderNotificationRequest {
     body: "Valid until 2026-12-01",
   };
 }
+
+it("prepares one Android permission snapshot per batch and preserves per-alert errors", async () => {
+  jest.replaceProperty(Platform, "OS", "android");
+  const adapter = notifications();
+  const batch = await adapter.prepareScheduling();
+  if (!batch.ok) throw batch.error;
+  native.scheduleNotificationAsync.mockRejectedValueOnce(new Error("storage full"));
+  expect(await batch.value.schedule(request())).toMatchObject({
+    ok: false,
+    error: { kind: "unavailable" },
+  });
+  expect(await batch.value.schedule(request())).toMatchObject({ ok: true });
+  expect(native.getPermissionsAsync).toHaveBeenCalledTimes(1);
+  expect(native.setNotificationChannelAsync).toHaveBeenCalledTimes(1);
+  native.getPermissionsAsync.mockResolvedValue(permission({ granted: false, status: "denied" }));
+  const revoked = await adapter.prepareScheduling();
+  if (!revoked.ok) throw revoked.error;
+  expect(await revoked.value.schedule(request())).toMatchObject({
+    ok: false,
+    error: { kind: "permission-denied" },
+  });
+  expect(native.scheduleNotificationAsync).toHaveBeenCalledTimes(2);
+});

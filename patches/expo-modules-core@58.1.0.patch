@@ -1,0 +1,81 @@
+diff --git a/android/src/main/java/expo/modules/kotlin/activityresult/AppContextActivityResultLauncher.kt b/android/src/main/java/expo/modules/kotlin/activityresult/AppContextActivityResultLauncher.kt
+--- a/android/src/main/java/expo/modules/kotlin/activityresult/AppContextActivityResultLauncher.kt
++++ b/android/src/main/java/expo/modules/kotlin/activityresult/AppContextActivityResultLauncher.kt
+@@ -23,13 +23,20 @@
+   abstract fun launch(input: I, callback: ActivityResultCallback<O>)
+ 
+   suspend fun launch(input: I): O = suspendCancellableCoroutine { continuation ->
+-    launch(input) { output ->
+-      // avoids IllegalStateException: Already resumed - a rare crash likely due to race condition in lifecycle events
+-      if (continuation.isActive) {
+-        continuation.resume(output)
++    launch(input, object : InterruptibleActivityResultCallback<O> {
++      override fun onActivityResult(output: O) {
++        if (continuation.isActive) continuation.resume(output)
+       }
+-    }
++
++      override fun onActivityRecreated() {
++        continuation.cancel()
++      }
++    })
+   }
+ 
+   abstract val contract: AppContextActivityResultContract<I, O>
+ }
++
++internal interface InterruptibleActivityResultCallback<O> : ActivityResultCallback<O> {
++  fun onActivityRecreated()
++}
+diff --git a/android/src/main/java/expo/modules/kotlin/activityresult/AppContextActivityResultRegistry.kt b/android/src/main/java/expo/modules/kotlin/activityresult/AppContextActivityResultRegistry.kt
+--- a/android/src/main/java/expo/modules/kotlin/activityresult/AppContextActivityResultRegistry.kt
++++ b/android/src/main/java/expo/modules/kotlin/activityresult/AppContextActivityResultRegistry.kt
+@@ -314,9 +314,12 @@
+     if (!launchedKeys.contains(key)) {
+       // Only remove the key -> requestCode mapping if there isn't a launch in flight
+       keyToRequestCode.remove(key)?.let { requestCodeToKey.remove(it) }
+-    }
+-    keyToCallbacksAndContract.remove(key)
+-    if (pendingResults.containsKey(key)) {
++      keyToCallbacksAndContract.remove(key)
++      keyToInputParam.remove(key)
++    }
++    // The React instance can survive Activity destruction. Keep the in-flight contract
++    // until that instance receives the result through the replacement Activity.
++    if (!launchedKeys.contains(key) && pendingResults.containsKey(key)) {
+       Log.w(TAG, "Dropping pending result for request $key : ${pendingResults.safeGetParcelable<ActivityResult>(key)}")
+       pendingResults.remove(key)
+     }
+@@ -353,18 +356,27 @@
+   ) {
+     val currentLifecycleState = keyToLifecycleContainers[key]?.lifecycle?.currentState
+ 
+-    if (callbacksAndContract?.mainCallback != null && launchedKeys.contains(key)) {
++    if (currentLifecycleState != null && callbacksAndContract?.mainCallback != null && launchedKeys.contains(key)) {
+       // 1. There's main callback available, so use it right away
+       @Suppress("UNCHECKED_CAST")
+       val input = keyToInputParam[key] as I
+       callbacksAndContract.mainCallback.onActivityResult(callbacksAndContract.contract.parseResult(input, resultCode, data))
+       launchedKeys.remove(key)
+-    } else if (currentLifecycleState != null && currentLifecycleState.isAtLeast(Lifecycle.State.STARTED) && callbacksAndContract != null && launchedKeys.contains(key)) {
+-      // 2. Activity has already started, so let's proceed with fallback callback scenario
++    } else if (callbacksAndContract != null && launchedKeys.contains(key) &&
++      (currentLifecycleState == null || currentLifecycleState.isAtLeast(Lifecycle.State.STARTED))
++    ) {
++      // A new Activity can deliver the result to the original React instance before
++      // anything registers against its lifecycle. Dispatch to the retained fallback.
+       @Suppress("UNCHECKED_CAST")
+       val input = keyToInputParam[key] as I
+-      callbacksAndContract.fallbackCallback.onActivityResult(input, callbacksAndContract.contract.parseResult(input, resultCode, data))
+-      launchedKeys.remove(key)
++      try {
++        callbacksAndContract.fallbackCallback.onActivityResult(input, callbacksAndContract.contract.parseResult(input, resultCode, data))
++      } finally {
++        (callbacksAndContract.mainCallback as? InterruptibleActivityResultCallback<*>)?.onActivityRecreated()
++        launchedKeys.remove(key)
++        keyToInputParam.remove(key)
++        if (currentLifecycleState == null) unregister(key)
++      }
+     } else {
+       // 3. Add these pending results in their place in order to wait for Lifecycle-based path
+       pendingResults.putParcelable(key, ActivityResult(resultCode, data))

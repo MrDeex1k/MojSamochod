@@ -15,8 +15,8 @@ and document files remain outside erase-all scope.
 
 Reset stops new data operations, waits for accepted writes/pickers and notification scheduling,
 then persists an intent marker before cancelling owned scheduled/delivered notifications and
-deleting user records, managed files and app-owned picker/image caches. The marker is removed
-only after cleanup succeeds. Startup resumes an interrupted reset before exposing records or
+deleting user records, managed files and app-owned picker/image caches. Each completed stage has a durable checkpoint. A notification API error leaves database and file
+cleanup free to complete. A retry skips completed stages. The marker is removed only after cleanup succeeds. Startup resumes an interrupted reset before exposing records or
 starting scheduling. Errors offer retry, never an automatic unrequested database wipe. Schema and
 migration metadata remain; OS permissions and external copies are not reset. This is logical
 application-data deletion, not a claim of forensic erasure from flash storage or OS backups.

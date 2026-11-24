@@ -1,3 +1,5 @@
+import { calculateFuelConsumption } from "@/domain/refuelling/fuel-consumption";
+
 import type { RefuellingRepository } from "@/application/repositories/refuelling-repository";
 import { repositoryFailure, repositorySuccess } from "@/application/repositories/repository-result";
 import { createRefuelling, type Refuelling } from "@/domain/refuelling/refuelling";
@@ -168,3 +170,53 @@ function refuellingFixture(): Refuelling {
   if (!result.ok) throw new Error("Expected a valid refuelling fixture");
   return result.value;
 }
+
+it("shares consumption reads, then recomputes after editing and deleting an old refuelling", async () => {
+  const old = refuellingFixture();
+  const newer = {
+    ...old,
+    id: "018f47e2-7b36-7658-b336-34613389d00f" as Refuelling["id"],
+    occurredAt: "2026-09-01T08:00:00.000Z" as Refuelling["occurredAt"],
+    odometerMetres: 99_600_000 as Refuelling["odometerMetres"],
+  };
+  let records = [old, newer];
+  const repository = repositoryFake();
+  repository.list.mockImplementation(async () => repositorySuccess(records));
+  repository.update.mockImplementation(async (value: Refuelling) => {
+    records = records.map((entry) => (entry.id === value.id ? value : entry));
+    return repositorySuccess(undefined);
+  });
+  repository.delete.mockImplementation(async (_vehicle, id) => {
+    records = records.filter((entry) => entry.id !== id);
+    return repositorySuccess(undefined);
+  });
+  const service = serviceWith(repository, updatedAt);
+  const initial = service.consumption(vehicleId);
+  expect(service.consumption(vehicleId)).toBe(initial);
+  expect(await initial).toEqual(repositorySuccess(calculateFuelConsumption(records)));
+  expect(repository.list).toHaveBeenCalledTimes(1);
+  expect(await service.update(old, { ...refuellingInput(), fillKind: "partial" })).toMatchObject({
+    ok: true,
+  });
+  expect(await service.consumption(vehicleId)).toEqual(
+    repositorySuccess(calculateFuelConsumption(records)),
+  );
+  expect(await service.delete(vehicleId, old.id)).toMatchObject({ ok: true });
+  expect(await service.consumption(vehicleId)).toEqual(
+    repositorySuccess(calculateFuelConsumption(records)),
+  );
+  expect(repository.list).toHaveBeenCalledTimes(3);
+});
+
+it("retains the cached summary when the persisted update only changes pricing", async () => {
+  const repository = repositoryFake();
+  repository.update.mockResolvedValue(repositorySuccess({ consumptionChanged: false }));
+  const service = serviceWith(repository, updatedAt);
+  const summary = await service.consumption(vehicleId);
+  expect(await service.update(refuellingFixture(), refuellingInput())).toMatchObject({ ok: true });
+  expect(await service.consumption(vehicleId)).toBe(summary);
+  expect(repository.list).toHaveBeenCalledTimes(1);
+  service.clearConsumptionCache();
+  await service.consumption(vehicleId);
+  expect(repository.list).toHaveBeenCalledTimes(2);
+});

@@ -2,11 +2,27 @@ import { render, screen, userEvent, waitFor } from "@testing-library/react-nativ
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import type { VehicleDocumentService } from "@/application/documents/vehicle-document-service";
-import { repositorySuccess } from "@/application/repositories/repository-result";
+import { repositoryFailure, repositorySuccess } from "@/application/repositories/repository-result";
 import { createVehicle } from "@/domain/vehicle/vehicle";
 import type { DocumentFilePicker } from "@/infrastructure/documents/system-document-picker";
 
 import { DocumentForm } from "./document-form";
+
+jest.mock("@react-native-community/datetimepicker", () => {
+  const { Button } = jest.requireActual("react-native");
+  return function Picker({
+    onValueChange,
+  }: {
+    onValueChange: (event: unknown, date: Date) => void;
+  }) {
+    return (
+      <Button
+        title="Move date spinner"
+        onPress={() => onValueChange({}, new Date("2026-12-01T12:00:00Z"))}
+      />
+    );
+  };
+});
 
 const now = new Date("2026-08-31T08:00:00.000Z");
 const vehicle = expectValid(
@@ -71,7 +87,62 @@ describe("DocumentForm", () => {
 
     await userEvent.press(screen.getByRole("button", { name: "Choose file" }));
 
-    expect(await screen.findByText("The file exceeds the 20 MB limit.")).toBeOnTheScreen();
+    expect(await screen.findByText("Choose a non-empty file of at most 20 MiB.")).toBeOnTheScreen();
+  });
+
+  it.each([
+    ["Confirm date", "2026-12-01"],
+    ["Cancel date selection", ""],
+  ])("only submits the committed iOS date after %s", async (action, expectedDate) => {
+    const create = jest.fn(async () => repositorySuccess({} as never));
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <DocumentForm
+          documents={{ create } as unknown as VehicleDocumentService}
+          entries={[]}
+          onCancel={jest.fn()}
+          onSaved={jest.fn()}
+          picker={picker()}
+          vehicle={vehicle}
+        />
+      </SafeAreaProvider>,
+    );
+    await userEvent.press(screen.getByRole("button", { name: "Choose file" }));
+    await userEvent.press(screen.getByRole("button", { name: "Document date" }));
+    await userEvent.press(screen.getByRole("button", { name: "Move date spinner" }));
+    const blockedSave = screen.getByRole("button", { name: "Saving…" });
+    expect(blockedSave).toBeDisabled();
+    await userEvent.press(blockedSave);
+    expect(create).not.toHaveBeenCalled();
+    await userEvent.press(screen.getByRole("button", { name: action }));
+    await userEvent.press(screen.getByRole("button", { name: "Save document" }));
+    expect(create).toHaveBeenCalledWith(
+      vehicle.id,
+      expect.anything(),
+      expect.objectContaining({ documentDate: expectedDate }),
+    );
+  });
+
+  it("reports the actual size rejected during import and keeps the draft", async () => {
+    const create = jest.fn(async () => repositoryFailure("unsupported", "managedFile.import"));
+    const onSaved = jest.fn();
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <DocumentForm
+          documents={{ create } as unknown as VehicleDocumentService}
+          entries={[]}
+          onCancel={jest.fn()}
+          onSaved={onSaved}
+          picker={picker()}
+          vehicle={vehicle}
+        />
+      </SafeAreaProvider>,
+    );
+    await userEvent.press(screen.getByRole("button", { name: "Choose file" }));
+    await userEvent.press(screen.getByRole("button", { name: "Save document" }));
+    expect(await screen.findByText("Choose a non-empty file of at most 20 MiB.")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Name")).toHaveDisplayValue("invoice");
+    expect(onSaved).not.toHaveBeenCalled();
   });
 
   it("shows an amount field error without writing invalid metadata", async () => {
