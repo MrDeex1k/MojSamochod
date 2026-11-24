@@ -30,11 +30,36 @@ import { RemindersSection } from "./reminders-section";
 
 import type { WorkspaceData, WorkspaceMode, VehicleWorkspaceViewProps } from "./workspace-types";
 export function VehicleWorkspaceScreen({ mode }: { mode: WorkspaceMode }) {
+  if (mode.kind === "data-management") return <DataManagementScreen />;
   return <VehicleWorkspaceController mode={mode} />;
 }
 
+function DataManagementScreen() {
+  const { eraseData } = useApplicationServices();
+  const router = useRouter();
+  const finish = useFinishNativeForm();
+  return (
+    <DataManagement
+      eraseData={eraseData}
+      onBack={() => {
+        finish?.();
+        if (router.canGoBack()) router.back();
+        else navigateToMode({ kind: "history" }, router);
+      }}
+      onErased={() => {
+        finish?.();
+        router.replace("/");
+      }}
+    />
+  );
+}
+
 /** Loads the active workspace section and replaces peer detail routes when selection changes. */
-function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
+function VehicleWorkspaceController({
+  mode,
+}: {
+  mode: Exclude<WorkspaceMode, { kind: "data-management" }>;
+}) {
   const router = useRouter();
   const services = useApplicationServices();
   const { source, revision: attempt, refresh, selection, select } = useWorkspaceSource();
@@ -88,6 +113,11 @@ function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
           }}
           title={t("workspace.errorTitle")}
         />
+        <Button
+          label={t("dataManagement.title")}
+          variant="secondary"
+          onPress={() => setMode({ kind: "data-management" })}
+        />
         {section !== "history" ? (
           <Button
             label={t("documents.back")}
@@ -114,10 +144,6 @@ function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
       mode={mode}
       revision={attempt}
       selectedId={selection[section]}
-      onErased={() => {
-        finish?.();
-        router.replace("/");
-      }}
       onLoadMore={
         source.hasMore(section) && !loadingMore
           ? () => {
@@ -208,11 +234,7 @@ function VehicleWorkspaceController({ mode }: { mode: WorkspaceMode }) {
 }
 
 export function VehicleWorkspaceView(props: VehicleWorkspaceViewProps) {
-  if (
-    props.mode.kind.includes("form") ||
-    props.mode.kind === "select-type" ||
-    props.mode.kind === "data-management"
-  )
+  if (props.mode.kind.includes("form") || props.mode.kind === "select-type")
     return renderContent(props, false);
   const isDetail = ["detail", "document-detail", "refuelling-detail"].includes(props.mode.kind);
   return (
@@ -227,14 +249,6 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
   const configuredVehicle = hasFuelConfiguration(vehicle) ? vehicle : undefined;
   const kind = showList ? workspaceSection(mode) : mode.kind;
   switch (kind) {
-    case "data-management":
-      return (
-        <DataManagement
-          eraseData={services.eraseData}
-          onBack={props.onCancelFlow}
-          onErased={props.onErased}
-        />
-      );
     case "reminders":
       return (
         <RemindersSection

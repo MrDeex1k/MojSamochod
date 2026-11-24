@@ -1,10 +1,13 @@
 import { EraseAllData, type EraseDataStorage } from "./erase-all-data";
 
+const runStage: EraseDataStorage["runStage"] = (_stage, work) => work();
+
 it.each(["clearDatabase", "clearFiles", "finish"] as const)(
   "resumes an erase interrupted at %s with a new coordinator",
   async (stage) => {
     let marker = false;
     const storage: EraseDataStorage = {
+      runStage,
       begin: jest.fn(async () => {
         marker = true;
       }),
@@ -32,6 +35,7 @@ it.each(["clearDatabase", "clearFiles", "finish"] as const)(
 it("retains the marker until owned notifications are cancelled", async () => {
   let marker = false;
   const storage = {
+    runStage,
     begin: async () => {
       marker = true;
     },
@@ -45,6 +49,7 @@ it("retains the marker until owned notifications are cancelled", async () => {
   const cancel = jest.fn().mockResolvedValueOnce({ ok: false }).mockResolvedValue({ ok: true });
   const erase = new EraseAllData(storage, cancel);
   expect(await erase.erase()).toMatchObject({ ok: false });
+  expect(storage.clearFiles).toHaveBeenCalledTimes(1);
   expect(storage.finish).not.toHaveBeenCalled();
   expect(marker).toBe(true);
   expect(await new EraseAllData(storage, cancel).resume()).toMatchObject({ ok: true });
@@ -53,6 +58,7 @@ it("retains the marker until owned notifications are cancelled", async () => {
 
 it("does not erase an ordinary startup and coalesces duplicate requests", async () => {
   const storage = {
+    runStage,
     begin: jest.fn(async () => undefined),
     isPending: async () => false,
     clearDatabase: jest.fn(async () => undefined),

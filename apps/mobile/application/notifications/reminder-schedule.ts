@@ -95,6 +95,10 @@ export class ReminderSchedule {
     await this.tail;
   }
 
+  resume(): void {
+    this.stopped = false;
+  }
+
   private async runSafely(): Promise<ReconciliationResult> {
     const progress = { cancelled: 0, scheduled: 0, unchanged: 0 };
     let permission: ReminderNotificationPermission | null = null;

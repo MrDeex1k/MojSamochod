@@ -108,3 +108,22 @@ it("retains the pending marker when cache listing fails and resumes when accessi
   expect((await make().resume()).ok).toBe(true);
   expect(mockPaths.size).toBe(0);
 });
+
+it("resumes only outstanding stages after notification failure, including across a restart", async () => {
+  const db = {} as AppDatabase;
+  const storage = new LocalEraseDataStorage(db);
+  const doc = "/documents/managed-objects/objects/doc.pdf";
+  mockPaths.add(doc);
+  const erase = new EraseAllData(storage, async () => {
+    throw new Error("Native failure");
+  });
+  expect((await erase.erase()).ok).toBe(false);
+  expect(mockPaths.has(doc)).toBe(false);
+  const restarted = new LocalEraseDataStorage(db);
+  const removeFiles = jest.spyOn(restarted, "clearFiles");
+  const clearDatabase = jest.spyOn(restarted, "clearDatabase");
+  expect((await new EraseAllData(restarted, async () => ({ ok: true })).resume()).ok).toBe(true);
+  expect(removeFiles).not.toHaveBeenCalled();
+  expect(clearDatabase).not.toHaveBeenCalled();
+  expect(mockPaths.has("/documents/erase-data-pending")).toBe(false);
+});

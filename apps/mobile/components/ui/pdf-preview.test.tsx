@@ -4,6 +4,13 @@ import { PdfPreview } from "./pdf-preview";
 import { AdaptiveWorkspace } from "../layout/adaptive-workspace";
 import * as Native from "react-native";
 
+jest.mock("@/components/providers/application-provider", () => ({
+  useApplicationServices: () => ({
+    documentPreview: jest.requireMock("@/modules/document-preview/src/DocumentPreviewModule")
+      .default,
+  }),
+}));
+
 jest.mock("react-native", () => {
   const native = jest.requireActual("react-native");
   return Object.defineProperties(

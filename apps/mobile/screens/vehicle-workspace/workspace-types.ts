@@ -35,14 +35,13 @@ export type WorkspaceMode =
 
 export type VehicleWorkspaceViewProps = WorkspaceData &
   Readonly<{
-    mode: WorkspaceMode;
+    mode: Exclude<WorkspaceMode, { kind: "data-management" }>;
     revision?: number;
     selectedId?: string;
     onLoadMore?: () => void;
     loadMoreError?: boolean;
     loadingMore?: boolean;
     onDataManagement: () => void;
-    onErased: () => void;
     onAddEntry: () => void;
     onAddDocument: () => void;
     onCancelFlow: () => void;
