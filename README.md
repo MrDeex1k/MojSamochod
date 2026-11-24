@@ -74,6 +74,17 @@ Run repository checks locally before committing or opening a pull request. The r
 CI/CD workflows; native builds and publication are performed locally.
 See [local native QA builds](./docs/native-qa-builds.md) for simulator and emulator verification.
 
+Run the optional [Flashwright](https://github.com/xcodebeast/flashwright) smoke tests for the
+Expo Web development server:
+
+```sh
+nub run test:web:install
+nub run test:web
+```
+
+These tests check the initial HTML and browser bundle on the home and documents routes.
+Verify application flows that use native storage, pickers, or notifications on iOS and Android.
+
 Automatyczne poprawki i formatowanie:
 
 ```sh
