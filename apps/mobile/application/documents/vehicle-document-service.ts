@@ -5,6 +5,7 @@ import {
   repositorySuccess,
   type RepositoryResult,
 } from "@/application/repositories/repository-result";
+import { maximumDocumentBytes } from "@/application/storage/object-storage";
 import type { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import {
   createVehicleDocument,
@@ -215,6 +216,8 @@ export class VehicleDocumentService {
     file: PickedDocument,
     id = managedFileIdFromUuidV7(this.idGenerator.generate()),
   ) {
+    if (file.size !== undefined && (file.size <= 0 || file.size > maximumDocumentBytes))
+      return repositoryFailure("unsupported", "managedFile.import");
     return this.managedFiles.import({
       kind: "document",
       managedFileId: id,

@@ -2,6 +2,7 @@ import { storedUtcTimestamp } from "@/domain/shared/value-objects";
 import type {
   HistoryEntryReference,
   HistoryReferencePage,
+  HistoryReferenceMatcher,
   HistoryCursor,
   HistoryPage,
 } from "@/application/repositories/history-entry-repository";
@@ -163,13 +164,11 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
 
   async searchReferences(
     vehicleId: VehicleId,
-    query: string,
+    matches: HistoryReferenceMatcher,
     cursor?: HistoryCursor,
   ): Promise<RepositoryResult<HistoryReferencePage>> {
     try {
-      const normalized = query.trim().normalize("NFC").toLowerCase();
-      const rows: ReturnType<ReturnType<DrizzleVehicleHistoryRepository["referenceQuery"]>["all"]> =
-        [];
+      const rows: { reference: HistoryEntryReference; cursor: HistoryCursor }[] = [];
       let boundary = cursor;
       while (rows.length < 51) {
         const after = boundary
@@ -198,13 +197,12 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
           .limit(100)
           .all();
         for (const row of batch) {
-          if (
-            (row.subject ?? row.inspectionKind ?? "")
-              .normalize("NFC")
-              .toLowerCase()
-              .includes(normalized)
-          )
-            rows.push(row);
+          const reference = mapReference(row);
+          if (matches(reference))
+            rows.push({
+              reference,
+              cursor: { id: row.id, occurredAt: row.occurredAt, createdAt: row.createdAt },
+            });
           if (rows.length === 51) break;
         }
         if (batch.length < 100) break;
@@ -214,11 +212,8 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
       const visible = rows.slice(0, 50);
       const last = visible.at(-1);
       return repositorySuccess({
-        entries: visible.map(mapReference),
-        nextCursor:
-          rows.length > 50 && last
-            ? { id: last.id, occurredAt: last.occurredAt, createdAt: last.createdAt }
-            : null,
+        entries: visible.map(({ reference }) => reference),
+        nextCursor: rows.length > 50 && last ? last.cursor : null,
       });
     } catch (error) {
       return mapFailure("historyEntry.searchReferences", error);
@@ -295,7 +290,13 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
     try {
       const result = this.database
         .update(vehicles)
-        .set(vehicleMutableValues(vehicle))
+        .set({
+          ...vehicleMutableValues(vehicle),
+          currentOdometerMetres:
+            vehicle.initialOdometerMetres === undefined
+              ? undefined
+              : sql`max(coalesce(${vehicles.currentOdometerMetres}, 0), ${vehicle.initialOdometerMetres})`,
+        })
         .where(eq(vehicles.id, vehicle.id))
         .run();
       return result.changes === 0

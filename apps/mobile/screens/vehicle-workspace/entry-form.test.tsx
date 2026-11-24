@@ -1,4 +1,4 @@
-import { render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import { fireEvent, render, screen, userEvent, waitFor } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 jest.mock("@react-native-community/datetimepicker", () => () => null);
@@ -116,6 +116,45 @@ describe("EntryForm", () => {
       expect.objectContaining({ cost: { currency: "JPY", minorUnits: 430 } }),
     );
   });
+
+  it.each([
+    ["Workshop or service provider", 120],
+    ["Description", 200],
+  ] as const)(
+    "accepts the exact inspection field limit for %s after a validation error",
+    async (label, limit) => {
+      const repository = historyRepository();
+      await render(
+        <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+          <EntryForm
+            clock={{ now: () => now }}
+            historyEntries={repository}
+            idGenerator={{ generate: () => "018f47e2-7b30-7b80-99c0-81b80d9a57ce" }}
+            onCancel={jest.fn()}
+            onSaved={jest.fn()}
+            type="inspection"
+            vehicle={vehicleResult.value}
+          />
+        </SafeAreaProvider>,
+      );
+      const field = screen.getByLabelText(label);
+      const save = screen.getByRole("button", { name: "Save" });
+      const valid = "a".repeat(limit);
+      await fireEvent.changeText(field, valid + "b");
+      await userEvent.press(save);
+      expect(field).toHaveProp("accessibilityHint", "This value is too long.");
+      expect(screen.getByText("This value is too long.")).toBeOnTheScreen();
+      expect(repository.create).not.toHaveBeenCalled();
+
+      await fireEvent.changeText(field, valid);
+      await userEvent.press(save);
+      const expected =
+        label === "Description"
+          ? { details: expect.objectContaining({ description: valid }) }
+          : { serviceProvider: valid };
+      expect(repository.create).toHaveBeenCalledWith(expect.objectContaining(expected));
+    },
+  );
 
   it("keeps an invalid required field in the form without writing", async () => {
     const repository = historyRepository();

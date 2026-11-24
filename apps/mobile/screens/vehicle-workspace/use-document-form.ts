@@ -1,3 +1,4 @@
+import { documentWriteErrorKey } from "./document-write-error";
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 import { historyEntryIdFromUuidV7 } from "@/domain/shared/identifiers";
 
@@ -75,7 +76,7 @@ export function useDocumentForm({
       const result = await picker.pick();
       if (result.kind === "cancelled") return;
       if (result.kind === "invalid-size") {
-        setFileError(t("documents.fileTooLarge"));
+        setFileError(t("documents.invalidFileSize"));
         return;
       }
       if (result.kind === "unsupported") {
@@ -136,9 +137,7 @@ export function useDocumentForm({
         setSaving(false);
       });
     if (!result.ok) {
-      setFormError(
-        result.error.kind === "conflict" ? t("documents.duplicateError") : t("documents.saveError"),
-      );
+      setFormError(t(documentWriteErrorKey(result.error, "documents.saveError")));
       return;
     }
     onSaved();

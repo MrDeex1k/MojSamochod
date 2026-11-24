@@ -423,3 +423,27 @@ it("loads document pages and refreshes the cached range without falling back to 
   expect(references).toHaveBeenCalledTimes(3);
   expect(api.documents.list).not.toHaveBeenCalled();
 });
+
+it.each([false, true])(
+  "resolves an off-page document relation by ID (cached=%s)",
+  async (cached) => {
+    const api = services();
+    const entry = historyFixture(7);
+    const references = jest.fn(async (_vehicle: unknown, ids: readonly string[]) =>
+      repositorySuccess(ids.includes(entry.id) ? [entry] : []),
+    );
+    const source = new WorkspaceDataSource({
+      ...api,
+      historyEntries: { ...api.historyEntries, references },
+    } as unknown as ApplicationServices);
+    if (cached) await source.load("documents");
+    expect(await source.load("documents", entry.id)).toMatchObject({
+      status: "ready",
+      data: { documents: [], relatedEntries: [entry] },
+    });
+    expect(references.mock.calls.at(-1)?.[1]).toEqual([entry.id]);
+    await source.load("documents", entry.id);
+    expect(references).toHaveBeenCalledTimes(cached ? 2 : 1);
+    expect(api.documents.list).toHaveBeenCalledTimes(1);
+  },
+);

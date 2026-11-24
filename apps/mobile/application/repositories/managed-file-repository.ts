@@ -15,10 +15,9 @@ export interface ManagedFileRepository {
   ): Promise<RepositoryResult<readonly ReadyManagedFileMetadata[]>>;
   createStaged(metadata: StagedManagedFileMetadata): Promise<RepositoryResult<void>>;
   delete(id: ManagedFileId): Promise<RepositoryResult<void>>;
-  findReadyBySha256(
-    kind: "document",
+  findDocumentBySha256(
     sha256: ReadyManagedFileMetadata["sha256"],
-  ): Promise<RepositoryResult<ReadyManagedFileMetadata | null>>;
+  ): Promise<RepositoryResult<ReadyManagedFileMetadata | StagedManagedFileMetadata | null>>;
   getReady(id: ManagedFileId): Promise<RepositoryResult<ReadyManagedFileMetadata | null>>;
   listUnreferencedReadyFiles(): Promise<RepositoryResult<readonly ReadyManagedFileMetadata[]>>;
   listRecoverable(): Promise<

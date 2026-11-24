@@ -148,7 +148,12 @@ export function updateVehicle(
     ? valid({
         ...validated.value,
         createdAt: existing.createdAt,
-        currentOdometerMetres: existing.currentOdometerMetres,
+        currentOdometerMetres:
+          validated.value.initialOdometerMetres !== undefined &&
+          (existing.currentOdometerMetres === undefined ||
+            validated.value.initialOdometerMetres > existing.currentOdometerMetres)
+            ? validated.value.initialOdometerMetres
+            : existing.currentOdometerMetres,
         id: existing.id,
       })
     : validated;

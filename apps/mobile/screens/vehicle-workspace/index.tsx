@@ -78,6 +78,10 @@ function VehicleWorkspaceController({
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(false);
   const section = workspaceSection(mode);
+  const relatedId =
+    mode.kind === "document-detail" || mode.kind === "document-form"
+      ? mode.document?.historyEntryId
+      : undefined;
   const loadMore = async () => {
     if (loadingMore || !source.hasMore(section)) return;
     setLoadingMore(true);
@@ -92,13 +96,13 @@ function VehicleWorkspaceController({
   };
   useEffect(() => {
     let active = true;
-    void source.load(section).then((result) => {
+    void source.load(section, relatedId).then((result) => {
       if (active) setState(result);
     });
     return () => {
       active = false;
     };
-  }, [attempt, section, source]);
+  }, [attempt, section, source, relatedId]);
 
   if (state.status === "missing") return <Redirect href="/" />;
   if (state.status === "error") {

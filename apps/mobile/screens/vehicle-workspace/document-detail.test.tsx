@@ -152,6 +152,35 @@ describe("DocumentDetail", () => {
     expect(screen.queryByLabelText("Second invoice")).toBeNull();
   });
 
+  it("explains an invalid file size reported during replacement", async () => {
+    const services = service();
+    const onChanged = jest.fn();
+    const replace = jest.fn(async () => repositoryFailure("unsupported", "managedFile.import"));
+    await render(
+      <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+        <DocumentDetail
+          document={document}
+          documents={Object.assign(services, { replace })}
+          entries={[]}
+          onBack={jest.fn()}
+          onChanged={onChanged}
+          onEdit={jest.fn()}
+          picker={{
+            pick: async () => ({
+              kind: "selected",
+              document: { mimeType: "image/png", name: "new.png", uri: "file:///new.png" },
+            }),
+          }}
+          vehicle={vehicle}
+        />
+      </SafeAreaProvider>,
+    );
+    await userEvent.press(screen.getByRole("button", { name: "Replace file" }));
+    expect(await screen.findByText("Choose a non-empty file of at most 20 MiB.")).toBeOnTheScreen();
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(onChanged).not.toHaveBeenCalled();
+  });
+
   it("deletes metadata and managed content only after confirmation", async () => {
     const services = service();
     const onChanged = jest.fn();

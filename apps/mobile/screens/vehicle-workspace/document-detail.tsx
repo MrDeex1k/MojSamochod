@@ -1,3 +1,4 @@
+import { documentWriteErrorKey } from "./document-write-error";
 import { Alert } from "@/components/ui/app-alert";
 import { BackAction } from "@/components/layout/back-action";
 import { PdfPreview } from "@/components/ui/pdf-preview";
@@ -84,7 +85,7 @@ export function DocumentDetail({
       .then((picked) => {
         if (picked.kind === "cancelled") return;
         if (picked.kind === "invalid-size") {
-          setError(t("documents.fileTooLarge"));
+          setError(t("documents.invalidFileSize"));
           return;
         }
         if (picked.kind === "unsupported") {
@@ -94,11 +95,7 @@ export function DocumentDetail({
         return documents.replace(document, picked.document).then((result) => {
           if (result.ok) onChanged();
           else {
-            setError(
-              result.error.kind === "conflict"
-                ? t("documents.duplicateError")
-                : t("documents.replaceError"),
-            );
+            setError(t(documentWriteErrorKey(result.error, "documents.replaceError")));
           }
         });
       })

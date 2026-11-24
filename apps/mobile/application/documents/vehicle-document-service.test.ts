@@ -1,3 +1,4 @@
+import { maximumDocumentBytes } from "@/application/storage/object-storage";
 import { repositoryFailure, repositorySuccess } from "@/application/repositories/repository-result";
 import type { VehicleDocumentRepository } from "@/application/repositories/vehicle-document-repository";
 import type { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
@@ -234,3 +235,32 @@ it("does not import a replacement for a document that was deleted after its scre
   });
   expect(events).toEqual([]);
 });
+
+it.each([0, maximumDocumentBytes + 1])(
+  "keeps the existing attachment readable after rejecting %i bytes",
+  async (size) => {
+    const events: string[] = [];
+    const existing = createVehicleDocument(
+      { fileReference: managedFileIdFromUuidV7(fileId), name: "Invoice", vehicleId },
+      { clock: { now: () => now }, idGenerator: { generate: () => documentId } },
+    );
+    if (!existing.ok) throw new Error("Invalid fixture");
+    const repository = repositoryFake(events);
+    repository.get = async () => repositorySuccess(existing.value);
+    const service = new VehicleDocumentService(
+      { now: () => now },
+      { generate: () => replacementFileId },
+      repository,
+      managedFilesFake(events),
+    );
+    expect(await service.replace(existing.value, { ...picked, size })).toMatchObject({
+      ok: false,
+      error: { kind: "unsupported", operation: "managedFile.import" },
+    });
+    expect(await service.getFile(existing.value)).toMatchObject({
+      ok: true,
+      value: { uri: `file:///managed/${fileId}` },
+    });
+    expect(events).toEqual([]);
+  },
+);

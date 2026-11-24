@@ -44,6 +44,46 @@ describe("LocalObjectStorage", () => {
     expect(driver.copiedSources).toEqual(["file:///selected.jpg"]);
   });
 
+  it.each([
+    [0, false],
+    [64, true],
+    [65, false],
+  ] as const)(
+    "validates the actual size of a document with unknown length (%i bytes)",
+    async (size, valid) => {
+      const driver = new MemoryDriver(new Uint8Array(size));
+      const result = await new LocalObjectStorage(driver).stage({
+        extension: "pdf",
+        managedFileId,
+        maximumBytes: 64,
+        sourceUri: "content://provider/document",
+      });
+
+      expect(result.ok).toBe(valid);
+      expect(driver.files.size).toBe(valid ? 1 : 0);
+      expect(driver.readCalls).toBe(valid ? 1 : 0);
+      if (!valid) expect(result).toMatchObject({ error: { kind: "invalid-source" } });
+    },
+  );
+
+  it("cleans up an incomplete stream when the native copy reports a size failure", async () => {
+    const driver = new MemoryDriver(new Uint8Array());
+    jest.spyOn(driver, "copyFrom").mockImplementation(async (_uri, key) => {
+      driver.files.set(key, new Uint8Array(64));
+      return false;
+    });
+
+    const result = await new LocalObjectStorage(driver).stage({
+      extension: "pdf",
+      managedFileId,
+      maximumBytes: 64,
+      sourceUri: "document-bookmark:example",
+    });
+    expect(result).toMatchObject({ ok: false, error: { kind: "invalid-source" } });
+    expect(driver.files.size).toBe(0);
+    expect(driver.readCalls).toBe(0);
+  });
+
   it("removes a staged photo that exceeds the final size limit", async () => {
     const driver = new MemoryDriver(new Uint8Array(maximumVehiclePhotoBytes + 1));
     const storage = new LocalObjectStorage(driver);
@@ -164,9 +204,10 @@ class MemoryDriver implements ObjectStorageDriver {
 
   constructor(private readonly source: Uint8Array<ArrayBuffer>) {}
 
-  async copyFrom(sourceUri: string, key: string): Promise<void> {
+  async copyFrom(sourceUri: string, key: string): Promise<boolean> {
     this.copiedSources.push(sourceUri);
     this.files.set(key, this.source);
+    return true;
   }
 
   async copyTo(): Promise<void> {}

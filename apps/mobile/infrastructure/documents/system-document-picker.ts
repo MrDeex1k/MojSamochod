@@ -1,3 +1,4 @@
+import { documentImport } from "@/modules/document-preview/src/DocumentImportModule";
 import * as DocumentPicker from "expo-document-picker";
 import { Platform } from "react-native";
 
@@ -17,22 +18,23 @@ import { supportedDocumentMimeTypes } from "@/application/documents/document-fil
 export { supportedDocumentMimeTypes } from "@/application/documents/document-file-picker";
 export class SystemDocumentPicker implements DocumentFilePicker {
   async pick(): Promise<DocumentPickResult> {
+    if (Platform.OS === "ios") return documentImport().pick(maximumDocumentBytes);
     const result = await DocumentPicker.getDocumentAsync({
-      // iOS needs a stable private copy after dismissal; Android retains its granted URI.
-      copyToCacheDirectory: Platform.OS === "ios",
+      copyToCacheDirectory: false,
       multiple: false,
       type: [...supportedDocumentMimeTypes],
     });
     if (result.canceled) return { kind: "cancelled" };
     const asset = result.assets[0];
     if (!asset) return { kind: "unsupported" };
-    if (asset.size !== undefined && asset.size > maximumDocumentBytes) {
+    const size = typeof asset.size === "number" && asset.size >= 0 ? asset.size : undefined;
+    if (size !== undefined && (size === 0 || size > maximumDocumentBytes)) {
       return { kind: "invalid-size" };
     }
     const mimeType = normalizeMimeType(asset.mimeType, asset.name);
     if (!mimeType) return { kind: "unsupported" };
     return {
-      document: { mimeType, name: asset.name, size: asset.size, uri: asset.uri },
+      document: { mimeType, name: asset.name, size, uri: asset.uri },
       kind: "selected",
     };
   }

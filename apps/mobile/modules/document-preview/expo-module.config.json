@@ -1,9 +1,12 @@
 {
   "platforms": ["apple", "android"],
   "apple": {
-    "modules": ["DocumentPreviewModule"]
+    "modules": ["DocumentPreviewModule", "DocumentImportModule"]
   },
   "android": {
-    "modules": ["expo.modules.documentpreview.DocumentPreviewModule"]
+    "modules": [
+      "expo.modules.documentpreview.DocumentPreviewModule",
+      "expo.modules.documentpreview.DocumentImportModule"
+    ]
   }
 }

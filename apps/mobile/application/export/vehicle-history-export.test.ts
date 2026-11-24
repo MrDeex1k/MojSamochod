@@ -369,7 +369,7 @@ function managedFilesFake() {
   return {
     createStaged: jest.fn(),
     delete: jest.fn(),
-    findReadyBySha256: jest.fn(),
+    findDocumentBySha256: jest.fn(),
     getReady: jest.fn(),
     listRecoverable: jest.fn(),
     listUnreferencedReadyFiles: jest.fn(),

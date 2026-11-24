@@ -1,5 +1,5 @@
 import { CorruptStoredDataError } from "./row-mappers";
-import { and, eq, inArray, isNull, ne, or } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 
 import type { ManagedFileRepository } from "@/application/repositories/managed-file-repository";
 import {
@@ -126,27 +126,25 @@ export class DrizzleManagedFileRepository implements ManagedFileRepository {
     }
   }
 
-  async findReadyBySha256(
-    kind: "document",
+  async findDocumentBySha256(
     sha256: Sha256Digest,
-  ): Promise<RepositoryResult<ReadyManagedFileMetadata | null>> {
-    const operation = "managedFile.findReadyBySha256";
+  ): Promise<RepositoryResult<ReadyManagedFileMetadata | StagedManagedFileMetadata | null>> {
+    const operation = "managedFile.findDocumentBySha256";
     try {
       const row = this.database
         .select()
         .from(managedFiles)
         .where(
           and(
-            eq(managedFiles.kind, kind),
+            sql`${managedFiles.kind} = 'document' and ${managedFiles.status} in ('staged', 'ready')`,
             eq(managedFiles.sha256, sha256),
-            eq(managedFiles.status, "ready"),
           ),
         )
         .limit(1)
         .get();
       if (!row) return repositorySuccess(null);
       const metadata = mapManagedFileRow(row);
-      return metadata.status === "ready"
+      return metadata.status !== "deleting"
         ? repositorySuccess(metadata)
         : repositoryFailure("corrupt-data", operation);
     } catch (error) {

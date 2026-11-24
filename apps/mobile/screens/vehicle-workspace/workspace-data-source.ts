@@ -65,8 +65,8 @@ export class WorkspaceDataSource {
     await next;
   }
 
-  load(section: WorkspaceSection) {
-    const next = this.tail.then(() => this.loadSection(section));
+  load(section: WorkspaceSection, requiredEntryId?: HistoryEntryId) {
+    const next = this.tail.then(() => this.loadSection(section, requiredEntryId));
     this.tail = next;
     return next;
   }
@@ -154,6 +154,7 @@ export class WorkspaceDataSource {
    */
   private async loadSection(
     section: WorkspaceSection,
+    requiredEntryId?: HistoryEntryId,
   ): Promise<{ status: "ready"; data: WorkspaceData } | { status: "missing" | "error" }> {
     try {
       if (!this.loaded.has("vehicle")) {
@@ -235,18 +236,30 @@ export class WorkspaceDataSource {
         }
         this.documentCursor = page.nextCursor;
         this.data = { ...this.data, documents: page.documents };
-        const ids = [
-          ...new Set(
-            this.data.documents.flatMap((document) =>
-              document.historyEntryId ? [document.historyEntryId] : [],
-            ),
-          ),
-        ];
+        const ids = new Set(
+          page.documents.flatMap(({ historyEntryId }) => (historyEntryId ? [historyEntryId] : [])),
+        );
+        if (requiredEntryId) ids.add(requiredEntryId);
         this.relatedEntries = this.services.historyEntries.references
-          ? unwrap(await this.services.historyEntries.references(vehicle.id, ids))
+          ? unwrap(await this.services.historyEntries.references(vehicle.id, [...ids]))
           : unwrap(await this.services.historyEntries.list(vehicle.id));
         this.loaded.add("documents");
+      } else if (
+        section === "documents" &&
+        requiredEntryId &&
+        !this.relatedEntries?.some(({ id }) => id === requiredEntryId)
+      ) {
+        const entry = this.services.historyEntries.references
+          ? unwrap(await this.services.historyEntries.references(vehicle.id, [requiredEntryId]))[0]
+          : unwrap(await this.services.historyEntries.get(vehicle.id, requiredEntryId));
+        if (entry) this.relatedEntries = [...(this.relatedEntries ?? []), entry];
       }
+      if (
+        section === "documents" &&
+        requiredEntryId &&
+        !this.relatedEntries?.some(({ id }) => id === requiredEntryId)
+      )
+        return { status: "error" };
       if (section === "history" && !this.loaded.has("counts")) {
         if (this.services.documents.attachmentCounts) {
           this.data = {

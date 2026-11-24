@@ -28,6 +28,7 @@ export type ManagedFileSource = Readonly<{
 }>;
 
 export class ManagedFileCoordinator {
+  private readonly failedDocumentImports = new Set<ManagedFileId>();
   private tail: Promise<unknown> = Promise.resolve();
 
   private enqueue<T>(work: () => Promise<T>): Promise<T> {
@@ -57,49 +58,38 @@ export class ManagedFileCoordinator {
     if (!staged.ok) return storageFailure(staged.error, "managedFile.import");
 
     if (source.kind === "document") {
-      // Imports are serialized: a staged reservation here belongs to a failed earlier attempt.
-      const pending = await this.repository.listRecoverable();
-      if (!pending.ok) {
-        await this.storage.discard(staged.value.stagingKey);
-        return pending;
-      }
-      for (const file of pending.value) {
-        if (
-          file.status !== "staged" ||
-          file.kind !== "document" ||
-          file.sha256 !== staged.value.sha256
-        )
-          continue;
-        if (file.id === source.managedFileId) {
-          const deleted = await this.repository.delete(file.id);
-          if (!deleted.ok) return deleted;
-          continue;
-        }
-        const key = storageObjectKey(`objects/${file.id}.${extensionForMimeType(file.mimeType)}`);
-        if (!key.ok)
-          return { ok: false, error: { kind: "corrupt-data", operation: "managedFile.retry" } };
-        const discarded = await this.storage.discard(file.stagingKey as StagedObjectKey);
-        const removed = discarded.ok ? await this.storage.delete(key.value) : discarded;
-        if (!removed.ok) {
-          await this.storage.discard(staged.value.stagingKey);
-          return storageFailure(removed.error, "managedFile.retry");
-        }
-        const deleted = await this.repository.delete(file.id);
-        if (!deleted.ok) {
-          await this.storage.discard(staged.value.stagingKey);
-          return deleted;
-        }
-      }
-      const duplicate = await this.repository.findReadyBySha256("document", staged.value.sha256);
+      const duplicate = await this.repository.findDocumentBySha256(staged.value.sha256);
       if (!duplicate.ok) {
         await this.storage.discard(staged.value.stagingKey);
         return duplicate;
       }
-      if (duplicate.value) {
+      const file = duplicate.value;
+      if (file?.status === "staged" && this.failedDocumentImports.has(file.id)) {
+        // A retry can release only a reservation whose write failed in this coordinator.
+        if (file.id !== source.managedFileId) {
+          const key = storageObjectKey(`objects/${file.id}.${extensionForMimeType(file.mimeType)}`);
+          if (!key.ok) {
+            await this.storage.discard(staged.value.stagingKey);
+            return { ok: false, error: { kind: "corrupt-data", operation: "managedFile.retry" } };
+          }
+          const discarded = await this.storage.discard(file.stagingKey as StagedObjectKey);
+          const removed = discarded.ok ? await this.storage.delete(key.value) : discarded;
+          if (!removed.ok) {
+            await this.storage.discard(staged.value.stagingKey);
+            return storageFailure(removed.error, "managedFile.retry");
+          }
+        }
+        const deleted = await this.repository.delete(file.id);
+        if (!deleted.ok) {
+          if (file.id !== source.managedFileId) await this.storage.discard(staged.value.stagingKey);
+          return deleted;
+        }
+        this.failedDocumentImports.delete(file.id);
+      } else if (file) {
         await this.storage.discard(staged.value.stagingKey);
         return {
           error: {
-            cause: { managedFileId: duplicate.value.id },
+            cause: { managedFileId: file.id },
             kind: "conflict",
             operation: "managedFile.importDuplicate",
           },
@@ -126,7 +116,10 @@ export class ManagedFileCoordinator {
       return metadataResult;
     }
 
-    return this.commit(staged.value, source, timestamp);
+    const result = await this.commit(staged.value, source, timestamp);
+    if (!result.ok && source.kind === "document")
+      this.failedDocumentImports.add(source.managedFileId);
+    return result;
   }
 
   async getReadyUri(id: ManagedFileId): Promise<RepositoryResult<string | null>> {
@@ -178,6 +171,7 @@ export class ManagedFileCoordinator {
         if (committed.error.kind === "not-found") {
           const deleted = await this.repository.delete(metadata.id);
           if (!deleted.ok && deleted.error.kind !== "not-found") return deleted;
+          this.failedDocumentImports.delete(metadata.id);
           continue;
         }
         return storageFailure(committed.error, "managedFile.reconcile");
@@ -188,6 +182,7 @@ export class ManagedFileCoordinator {
         utcTimestampFromDate(this.clock.now()),
       );
       if (!ready.ok) return ready;
+      this.failedDocumentImports.delete(metadata.id);
     }
 
     const unreferencedFiles = await this.repository.listUnreferencedReadyFiles();

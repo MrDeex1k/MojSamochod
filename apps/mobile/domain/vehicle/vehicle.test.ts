@@ -129,6 +129,35 @@ describe("createVehicle", () => {
 });
 
 describe("updateVehicle", () => {
+  it.each([undefined, 50_000])(
+    "raises a current reading of %s to the edited initial odometer",
+    (initialOdometerMetres) => {
+      const created = createVehicle(
+        {
+          make: "Volvo",
+          model: "V60",
+          distanceUnitPreference: "kilometres",
+          fuelConsumptionUnitPreference: "litresPer100Kilometres",
+          fuelTankCapacityMicrolitres: 60_000_000,
+          fuelVolumeUnitPreference: "litres",
+          initialOdometerMetres,
+        },
+        dependencies(),
+      );
+      if (!created.ok) throw new Error("Invalid vehicle fixture");
+      expect(
+        updateVehicle(
+          created.value,
+          { ...created.value, initialOdometerMetres: 82_000 },
+          dependencies().clock,
+        ),
+      ).toMatchObject({
+        ok: true,
+        value: { initialOdometerMetres: 82_000, currentOdometerMetres: 82_000 },
+      });
+    },
+  );
+
   it("preserves identity, creation time, and the entry-controlled current odometer", () => {
     const created = createVehicle(
       {

@@ -230,10 +230,16 @@ function mapIssues(issues: readonly ValidationIssue[], t: (key: string) => strin
     if (issue.field === "occurredAt") errors.occurredAt = t("entryForm.futureError");
     else if (issue.field === "odometerMetres") {
       errors.odometerMetres = t("entryForm.invalidOdometerError");
+    } else if (issue.field === "cost.currency") {
+      errors.currency = t("refuelling.invalidCurrency");
     } else if (issue.field.startsWith("cost.")) {
       errors.cost = t("entryForm.invalidCostError");
-    } else if (issue.field === "details.item" || issue.field === "details.subject") {
-      errors.details = t("entryForm.requiredError");
+    } else if (issue.code === "too-long") {
+      errors[issue.field] = t("entryForm.tooLong");
+    } else {
+      errors[issue.field] = t(
+        issue.code === "required" ? "entryForm.requiredError" : "entryForm.invalidText",
+      );
     }
   }
   return errors;

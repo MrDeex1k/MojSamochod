@@ -154,12 +154,14 @@ export function EntryForm({
       <FormGroup title={t("formGroups.details")}>
         <TextField
           label={t("entryForm.serviceProviderLabel")}
+          error={errors.serviceProvider}
           onChangeText={setServiceProvider}
           value={serviceProvider}
         />
         <TextField
           label={t("entryForm.notesLabel")}
           multiline
+          error={errors.notes}
           onChangeText={setNotes}
           value={notes}
         />
@@ -242,6 +244,7 @@ function TypeSpecificFields(props: TypeFieldsProps) {
         />
         <TextField
           label={t("entryForm.descriptionLabel")}
+          error={props.errors["details.description"]}
           onChangeText={props.setDescription}
           value={props.description}
         />
@@ -252,18 +255,20 @@ function TypeSpecificFields(props: TypeFieldsProps) {
     return (
       <View className="gap-content">
         <TextField
-          error={props.errors.details}
+          error={props.errors["details.item"]}
           label={t("entryForm.itemLabel")}
           onChangeText={props.setItem}
           value={props.item}
         />
         <TextField
           label={t("entryForm.manufacturerLabel")}
+          error={props.errors["details.manufacturer"]}
           onChangeText={props.setManufacturer}
           value={props.manufacturer}
         />
         <TextField
           label={t("entryForm.partNumberLabel")}
+          error={props.errors["details.partNumber"]}
           onChangeText={props.setPartNumber}
           value={props.partNumber}
         />
@@ -273,7 +278,7 @@ function TypeSpecificFields(props: TypeFieldsProps) {
   return (
     <View className="gap-content">
       <TextField
-        error={props.errors.details}
+        error={props.errors["details.subject"]}
         label={t("entryForm.subjectLabel")}
         onChangeText={props.setSubject}
         value={props.subject}
@@ -281,6 +286,7 @@ function TypeSpecificFields(props: TypeFieldsProps) {
       <TextField
         label={t("entryForm.descriptionLabel")}
         multiline
+        error={props.errors["details.description"]}
         onChangeText={props.setDescription}
         value={props.description}
       />

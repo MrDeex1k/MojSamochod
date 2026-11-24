@@ -1,17 +1,20 @@
 import DateTimePicker from "@/components/ui/date-time-picker";
-import { useState } from "react";
 import { Platform, Text, View } from "react-native";
 import { formatCalendarDate } from "@/localization/formatters";
 import { useAppTranslation } from "@/localization/use-app-translation";
 import { Button } from "./button";
 
 export function CalendarDateField({
+  picker,
+  setPicker,
   value,
   onChange,
   label,
   disabled,
   error,
 }: Readonly<{
+  picker: Date | null;
+  setPicker: (date: Date | null) => void;
   value: string;
   onChange: (value: string) => void;
   label: string;
@@ -19,7 +22,6 @@ export function CalendarDateField({
   error?: string;
 }>) {
   const { t, i18n } = useAppTranslation();
-  const [picker, setPicker] = useState<Date | null>(null);
   return (
     <View className="gap-compact">
       <Text className="text-label font-semibold text-primary">{label}</Text>
