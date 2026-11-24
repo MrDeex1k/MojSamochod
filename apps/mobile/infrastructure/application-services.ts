@@ -96,6 +96,7 @@ export function createApplicationServices(database: AppDatabase) {
         return managedFiles.reconcile(ready);
       }),
     startSchedule: () => startReminderScheduleLifecycle(reminderSchedule, appI18n),
+    onStop: () => photoPicker.detachSelection(),
     stopSchedule: () => reminderSchedule.stop(),
   });
   const services = {

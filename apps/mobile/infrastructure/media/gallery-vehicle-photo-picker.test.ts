@@ -134,3 +134,29 @@ it("recovers an Android selection only for its originating form and protects def
   await expect(picker.takeRecovered("edit:vehicle")).resolves.toBeUndefined();
   expect(mockOwner).toBeUndefined();
 });
+
+it("settles an abandoned Android selection without losing its owner for the replacement activity", async () => {
+  jest.replaceProperty(Platform, "OS", "android");
+  const launched = Promise.withResolvers<void>();
+  mockPendingResult.mockResolvedValue(null);
+  mockLaunchImageLibrary.mockImplementationOnce(() => {
+    launched.resolve();
+    return new Promise(() => undefined);
+  });
+  const previous = new GalleryVehiclePhotoPicker();
+  const selection = previous.select("edit:vehicle");
+  await launched.promise;
+  previous.detachSelection();
+  await expect(selection).resolves.toEqual({ kind: "cancelled" });
+  expect(mockOwner).toBe("edit:vehicle");
+  mockPendingResult.mockResolvedValueOnce({
+    canceled: false,
+    assets: [{ uri: "file:///cropped.jpg", height: 500, width: 500 }],
+  });
+  const replacement = new GalleryVehiclePhotoPicker();
+  await expect(replacement.recoverBeforeCleanup()).resolves.toBe(true);
+  await expect(replacement.takeRecovered("edit:vehicle")).resolves.toMatchObject({
+    kind: "selected",
+  });
+  expect(mockOwner).toBeUndefined();
+});

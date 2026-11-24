@@ -81,6 +81,7 @@
     "react-native-css@3.1.0-rc.0": "patches/react-native-css@3.1.0-rc.0.patch",
     "react-native-safe-area-context@5.11.1": "patches/react-native-safe-area-context@5.11.1.patch",
     "@expo/ui@58.0.29": "patches/@expo+ui@58.0.29.patch",
+    "expo-modules-core@58.1.0": "patches/expo-modules-core@58.1.0.patch",
     "expo-modules-jsi@58.0.23": "patches/expo-modules-jsi@58.0.23.patch",
     "expo-notifications@58.1.9": "patches/expo-notifications@58.1.9.patch",
     "expo-sqlite@58.0.18": "patches/expo-sqlite@58.0.18.patch",

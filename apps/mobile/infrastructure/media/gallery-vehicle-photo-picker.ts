@@ -17,6 +17,8 @@ const markerLifetimeMs = 24 * 60 * 60 * 1000;
 
 export class GalleryVehiclePhotoPicker implements VehiclePhotoPicker {
   private selecting = false;
+  private detached = false;
+  private detachPendingSelection?: () => void;
   private recovery?: Promise<void>;
   private recovered?: { owner: string; result: VehiclePhotoSelectionResult };
 
@@ -25,7 +27,7 @@ export class GalleryVehiclePhotoPicker implements VehiclePhotoPicker {
   }
 
   async select(owner: string): Promise<VehiclePhotoSelectionResult> {
-    if (this.selecting) return { kind: "cancelled" };
+    if (this.selecting || this.detached) return { kind: "cancelled" };
     this.selecting = true;
     try {
       if (Platform.OS === "ios") {
@@ -36,24 +38,43 @@ export class GalleryVehiclePhotoPicker implements VehiclePhotoPicker {
         await this.recovery;
         // Drain an older result before assigning the system picker to this form.
         await ImagePicker.getPendingResultAsync();
+        if (this.detached) return { kind: "cancelled" };
         this.recovered = undefined;
         this.marker.write(owner);
       }
-      return await processResult(
-        await ImagePicker.launchImageLibraryAsync({
-          allowsEditing: true,
-          aspect: [1, 1],
-          mediaTypes: ["images"],
-          quality: 1,
-          selectionLimit: 1,
-        }),
-      );
+      const selection = ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        mediaTypes: ["images"],
+        quality: 1,
+        selectionLimit: 1,
+      });
+      const result =
+        Platform.OS === "android"
+          ? await Promise.race([
+              selection,
+              new Promise<undefined>((resolve) => {
+                this.detachPendingSelection = () => resolve(undefined);
+              }),
+            ])
+          : await selection;
+      if (!result) return { kind: "cancelled" };
+      this.detachPendingSelection = undefined;
+      return await processResult(result);
     } catch (cause) {
       return { cause, kind: "unavailable" };
     } finally {
+      // A native result can outlive the React surface that launched it. Keep its
+      // marker until the replacement surface can read the Expo pending result.
+      if (!this.detached || !this.detachPendingSelection) this.clearOwner();
+      this.detachPendingSelection = undefined;
       this.selecting = false;
-      this.clearOwner();
     }
+  }
+
+  detachSelection(): void {
+    this.detached = true;
+    this.detachPendingSelection?.();
   }
 
   /** Keeps picker inputs across bootstrap when Android has not dispatched its result yet. */
