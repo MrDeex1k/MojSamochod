@@ -1,7 +1,9 @@
 /** @jest-environment node */
 
 import { execFileSync } from "node:child_process";
-import { join } from "node:path";
+import { cpSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 
 jest.mock("expo/config-plugins", () => ({
   withEntitlementsPlist: (config: unknown, action: (value: unknown) => unknown) => action(config),
@@ -11,15 +13,27 @@ const withLocalOnlyNotifications = require("./with-local-only-notifications.cjs"
 
 describe("local-only notification configuration", () => {
   it("keeps the final Expo configuration local-only after all plugins run", () => {
-    const output = execFileSync(
-      "nub",
-      ["exec", "expo", "config", "--type", "introspect", "--json"],
-      {
-        cwd: join(__dirname, ".."),
+    // Introspect the managed config independently of the developer's generated Xcode format.
+    const mobile = join(__dirname, "..");
+    const fixture = mkdtempSync(join(tmpdir(), "moje-auto-expo-config-"));
+    let output: string;
+    try {
+      for (const file of ["package.json", "app.json", "app.config.js"]) {
+        cpSync(join(mobile, file), join(fixture, file));
+      }
+      for (const dir of ["assets", "locales", "plugins"]) {
+        symlinkSync(join(mobile, dir), join(fixture, dir), "dir");
+      }
+      const modules = dirname(dirname(require.resolve("expo/package.json")));
+      symlinkSync(modules, join(fixture, "node_modules"), "dir");
+      output = execFileSync("nub", ["exec", "expo", "config", "--type", "introspect", "--json"], {
+        cwd: fixture,
         encoding: "utf8",
         timeout: 20_000,
-      },
-    );
+      });
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
     const config = JSON.parse(output);
     const native = config._internal.modResults;
     expect(native.ios.entitlements["aps-environment"]).toBeUndefined();
