@@ -65,7 +65,7 @@ export class ManagedFileCoordinator {
       }
       const file = duplicate.value;
       if (file?.status === "staged" && this.failedDocumentImports.has(file.id)) {
-        // A retry can release only a reservation whose write failed in this coordinator.
+        // Release a reservation only after this coordinator confirmed that its import or recovery failed.
         if (file.id !== source.managedFileId) {
           const key = storageObjectKey(`objects/${file.id}.${extensionForMimeType(file.mimeType)}`);
           if (!key.ok) {
@@ -165,6 +165,7 @@ export class ManagedFileCoordinator {
       if (!committed.ok) {
         if (committed.error.kind === "integrity-failure") {
           // Leave the reservation and copies intact for recovery without blocking other files.
+          if (metadata.kind === "document") this.failedDocumentImports.add(metadata.id);
           integrityFailure ??= committed.error;
           continue;
         }

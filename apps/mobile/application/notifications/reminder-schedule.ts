@@ -122,12 +122,28 @@ export class ReminderSchedule {
         issues.push({ stage: "data", cause: records.error });
         return finish();
       }
-      const access = await this.notifications.getPermission();
+      const access =
+        records.value.some(({ notificationDaysBefore }) => notificationDaysBefore.length) &&
+        this.notifications.prepareScheduling
+          ? await this.notifications.prepareScheduling()
+          : await this.notifications.getPermission().then((result) =>
+              result.ok
+                ? {
+                    ok: true as const,
+                    value: {
+                      permission: result.value,
+                      schedule: (request: ReminderNotificationRequest) =>
+                        this.notifications.schedule(request),
+                    },
+                  }
+                : result,
+            );
       if (!access.ok) {
         issues.push({ stage: "permission", cause: access.error });
         return finish();
       }
-      permission = access.value;
+      const { permission: snapshot, schedule } = access.value;
+      permission = snapshot;
 
       const desired = new Map<string, ReminderNotificationRequest>();
       if (permission.canSchedule && vehicle.value) {
@@ -178,7 +194,7 @@ export class ReminderSchedule {
       if (issues.length > 0) return finish();
       for (const request of desired.values()) {
         if (Date.parse(request.plan.fireAt) <= this.clock.now().getTime()) continue;
-        const result = await this.notifications.schedule(request);
+        const result = await schedule(request);
         if (result.ok) progress.scheduled += 1;
         else issues.push({ stage: "schedule", cause: result.error, identifier: request.plan.key });
       }

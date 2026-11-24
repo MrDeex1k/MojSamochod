@@ -4,7 +4,11 @@ import type { VehicleDocumentRepository } from "@/application/repositories/vehic
 import type { ManagedFileCoordinator } from "@/application/storage/managed-file-coordinator";
 import { createVehicleDocument } from "@/domain/documents/vehicle-document";
 import { byteSize, sha256Digest, storageObjectKey } from "@/domain/files/managed-file";
-import { managedFileIdFromUuidV7, vehicleIdFromUuidV7 } from "@/domain/shared/identifiers";
+import {
+  historyEntryIdFromUuidV7,
+  managedFileIdFromUuidV7,
+  vehicleIdFromUuidV7,
+} from "@/domain/shared/identifiers";
 import { utcTimestamp } from "@/domain/shared/value-objects";
 
 import { VehicleDocumentService } from "./vehicle-document-service";
@@ -264,3 +268,41 @@ it.each([0, maximumDocumentBytes + 1])(
     expect(events).toEqual([]);
   },
 );
+
+it("reports the stored owners when an older editor reassigns and deletes an attachment", async () => {
+  const from = historyEntryIdFromUuidV7("018f47e2-7b31-7658-b336-34613389d010");
+  const to = historyEntryIdFromUuidV7("018f47e2-7b31-7658-b336-34613389d011");
+  const draft = expectValid(
+    createVehicleDocument(
+      {
+        fileReference: managedFileIdFromUuidV7(fileId),
+        historyEntryId: to,
+        name: "Invoice",
+        vehicleId,
+      },
+      { clock: { now: () => now }, idGenerator: { generate: () => documentId } },
+    ),
+  );
+  let stored = { ...draft, historyEntryId: from };
+  const repository = repositoryFake([]);
+  repository.get = async () => repositorySuccess(stored);
+  repository.update = async (value) => {
+    stored = { ...value, historyEntryId: value.historyEntryId! };
+    return repositorySuccess(undefined);
+  };
+  repository.delete = async () => repositorySuccess(stored);
+  const service = new VehicleDocumentService(
+    { now: () => now },
+    { generate: () => fileId },
+    repository,
+    managedFilesFake([]),
+  );
+  expect(await service.update(draft, { name: draft.name, historyEntryId: to })).toMatchObject({
+    ok: true,
+    affectedHistoryEntryIds: [from, to],
+  });
+  expect(await service.delete(vehicleId, draft.id)).toMatchObject({
+    ok: true,
+    affectedHistoryEntryIds: [to],
+  });
+});

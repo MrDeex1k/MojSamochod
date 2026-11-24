@@ -1,3 +1,4 @@
+import type { HistoryEntryId } from "@/domain/shared/identifiers";
 import { documentWriteErrorKey } from "./document-write-error";
 import { Alert } from "@/components/ui/app-alert";
 import { BackAction } from "@/components/layout/back-action";
@@ -35,7 +36,7 @@ export function DocumentDetail({
   embedded?: boolean;
   entries: readonly HistoryEntryReference[];
   onBack: () => void;
-  onChanged: () => void;
+  onChanged: (ids: readonly HistoryEntryId[]) => void;
   onEdit: () => void;
   picker: DocumentFilePicker;
   vehicle: Vehicle;
@@ -93,7 +94,7 @@ export function DocumentDetail({
           return;
         }
         return documents.replace(document, picked.document).then((result) => {
-          if (result.ok) onChanged();
+          if (result.ok) onChanged([]);
           else {
             setError(t(documentWriteErrorKey(result.error, "documents.replaceError")));
           }
@@ -115,7 +116,11 @@ export function DocumentDetail({
             setError(null);
             void documents
               .delete(vehicle.id, document.id)
-              .then((result) => (result.ok ? onChanged() : setError(t("documents.deleteError"))))
+              .then((result) =>
+                result.ok
+                  ? onChanged(result.affectedHistoryEntryIds)
+                  : setError(t("documents.deleteError")),
+              )
               .catch(() => setError(t("documents.deleteError")))
               .finally(() => setBusy(false));
           },

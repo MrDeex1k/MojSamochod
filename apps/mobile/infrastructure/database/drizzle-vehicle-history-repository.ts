@@ -1,3 +1,4 @@
+import { readTimelinePage } from "./timeline-page";
 import { storedUtcTimestamp } from "@/domain/shared/value-objects";
 import type {
   HistoryEntryReference,
@@ -6,7 +7,7 @@ import type {
   HistoryCursor,
   HistoryPage,
 } from "@/application/repositories/history-entry-repository";
-import { and, asc, desc, eq, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 
 import type { HistoryEntry } from "@/domain/history/history-entry";
 import {
@@ -95,34 +96,22 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
     const operation = "historyEntry.listPage";
     const pageSize = Math.max(1, Math.min(100, Number.isFinite(limit) ? Math.trunc(limit) : 50));
     try {
-      const after = cursor
-        ? or(
-            lt(historyEntries.occurredAt, cursor.occurredAt),
-            and(
-              eq(historyEntries.occurredAt, cursor.occurredAt),
-              lt(historyEntries.createdAt, cursor.createdAt),
-            ),
-            and(
-              eq(historyEntries.occurredAt, cursor.occurredAt),
-              eq(historyEntries.createdAt, cursor.createdAt),
-              gt(historyEntries.id, cursor.id),
-            ),
+      const rows = readTimelinePage(historyEntries, cursor, pageSize + 1, (after, limit) =>
+        this.database
+          .select(historySelection)
+          .from(historyEntries)
+          .leftJoin(inspectionDetails, eq(inspectionDetails.historyEntryId, historyEntries.id))
+          .leftJoin(replacementDetails, eq(replacementDetails.historyEntryId, historyEntries.id))
+          .leftJoin(repairDetails, eq(repairDetails.historyEntryId, historyEntries.id))
+          .where(and(eq(historyEntries.vehicleId, vehicleId), after))
+          .orderBy(
+            desc(historyEntries.occurredAt),
+            desc(historyEntries.createdAt),
+            asc(historyEntries.id),
           )
-        : undefined;
-      const rows = this.database
-        .select(historySelection)
-        .from(historyEntries)
-        .leftJoin(inspectionDetails, eq(inspectionDetails.historyEntryId, historyEntries.id))
-        .leftJoin(replacementDetails, eq(replacementDetails.historyEntryId, historyEntries.id))
-        .leftJoin(repairDetails, eq(repairDetails.historyEntryId, historyEntries.id))
-        .where(and(eq(historyEntries.vehicleId, vehicleId), after))
-        .orderBy(
-          desc(historyEntries.occurredAt),
-          desc(historyEntries.createdAt),
-          asc(historyEntries.id),
-        )
-        .limit(pageSize + 1)
-        .all();
+          .limit(limit)
+          .all(),
+      );
       const entries = rows.slice(0, pageSize).map(mapHistoryRow);
       const last = entries.at(-1);
       return repositorySuccess({
@@ -166,36 +155,26 @@ export class DrizzleVehicleHistoryRepository implements VehicleRepository, Histo
     vehicleId: VehicleId,
     matches: HistoryReferenceMatcher,
     cursor?: HistoryCursor,
+    signal?: AbortSignal,
   ): Promise<RepositoryResult<HistoryReferencePage>> {
     try {
       const rows: { reference: HistoryEntryReference; cursor: HistoryCursor }[] = [];
       let boundary = cursor;
       while (rows.length < 51) {
-        const after = boundary
-          ? or(
-              lt(historyEntries.occurredAt, boundary.occurredAt),
-              and(
-                eq(historyEntries.occurredAt, boundary.occurredAt),
-                lt(historyEntries.createdAt, boundary.createdAt),
-              ),
-              and(
-                eq(historyEntries.occurredAt, boundary.occurredAt),
-                eq(historyEntries.createdAt, boundary.createdAt),
-                gt(historyEntries.id, boundary.id),
-              ),
-            )
-          : undefined;
         // SQLite LIKE folds ASCII only. Scan bounded reference projections and match Unicode
         // in JS, retaining the same keyset order and literal substring semantics.
-        const batch = this.referenceQuery()
-          .where(and(eq(historyEntries.vehicleId, vehicleId), after))
-          .orderBy(
-            desc(historyEntries.occurredAt),
-            desc(historyEntries.createdAt),
-            asc(historyEntries.id),
-          )
-          .limit(100)
-          .all();
+        if (signal?.aborted) return repositorySuccess({ entries: [], nextCursor: null });
+        const batch = readTimelinePage(historyEntries, boundary, 100, (after, limit) =>
+          this.referenceQuery()
+            .where(and(eq(historyEntries.vehicleId, vehicleId), after))
+            .orderBy(
+              desc(historyEntries.occurredAt),
+              desc(historyEntries.createdAt),
+              asc(historyEntries.id),
+            )
+            .limit(limit)
+            .all(),
+        );
         for (const row of batch) {
           const reference = mapReference(row);
           if (matches(reference))

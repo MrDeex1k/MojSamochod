@@ -1,3 +1,4 @@
+import type { HistoryEntryId } from "@/domain/shared/identifiers";
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
 
 import { FormActions, FormTitle } from "@/components/layout/native-form";
@@ -36,7 +37,7 @@ export function DocumentForm({
   entries: readonly HistoryEntryReference[];
   historyEntries?: HistoryEntryRepository;
   onCancel: () => void;
-  onSaved: () => void;
+  onSaved: (ids: readonly HistoryEntryId[]) => void;
   picker: DocumentFilePicker;
   vehicle: Vehicle;
 }>) {

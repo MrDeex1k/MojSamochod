@@ -1,6 +1,6 @@
 import { documentWriteErrorKey } from "./document-write-error";
 import type { HistoryEntryRepository } from "@/application/repositories/history-entry-repository";
-import { historyEntryIdFromUuidV7 } from "@/domain/shared/identifiers";
+import { historyEntryIdFromUuidV7, type HistoryEntryId } from "@/domain/shared/identifiers";
 
 import { documentDate } from "@/domain/documents/vehicle-document";
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
@@ -35,7 +35,7 @@ export function useDocumentForm({
   entries: readonly HistoryEntryReference[];
   historyEntries?: HistoryEntryRepository;
   onCancel: () => void;
-  onSaved: () => void;
+  onSaved: (ids: readonly HistoryEntryId[]) => void;
   picker: DocumentFilePicker;
   vehicle: Vehicle;
 }>) {
@@ -140,7 +140,7 @@ export function useDocumentForm({
       setFormError(t(documentWriteErrorKey(result.error, "documents.saveError")));
       return;
     }
-    onSaved();
+    onSaved(result.affectedHistoryEntryIds);
   };
 
   return {

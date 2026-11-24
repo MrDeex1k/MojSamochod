@@ -20,6 +20,8 @@ export function workspaceSection(mode: WorkspaceMode): WorkspaceSection {
 }
 
 export class WorkspaceDataSource {
+  remindersRevision = 0;
+  private readonly dirtyAttachmentIds = new Set<HistoryEntryId>();
   private documentCursor: DocumentCursor | null = null;
   private fuelCursor: HistoryCursor | null = null;
   private cursor: HistoryCursor | null = null;
@@ -32,12 +34,21 @@ export class WorkspaceDataSource {
   constructor(private readonly services: ApplicationServices) {}
 
   /** Queues invalidation after pending reads so their completion cannot restore stale cache flags. */
-  invalidate(section: WorkspaceSection) {
+  invalidate(section: WorkspaceSection, attachmentIds?: readonly HistoryEntryId[]) {
+    if (section === "reminders") this.remindersRevision += 1;
     // Apply after in-flight reads so they cannot mark invalidated data as loaded again.
     this.tail = this.tail.then(() => {
       this.loaded.delete(section);
       if (section === "reminders") this.loaded.delete("upcoming");
-      if (section === "documents" || section === "history") this.loaded.delete("counts");
+      if (
+        section === "documents" &&
+        attachmentIds &&
+        typeof this.services.documents.attachmentCounts === "function"
+      ) {
+        for (const id of attachmentIds) this.dirtyAttachmentIds.add(id);
+      } else if (section === "documents" || section === "history") {
+        this.loaded.delete("counts");
+      }
       if (section === "history") {
         this.loaded.delete("documents");
         this.relatedEntries = null;
@@ -50,7 +61,8 @@ export class WorkspaceDataSource {
     const next = this.tail.then(() => {
       this.loaded.delete("vehicle");
       this.loaded.delete("documents");
-      this.loaded.delete("counts");
+      if (!this.services.documents.attachmentCounts) this.loaded.delete("counts");
+      if (entry) this.dirtyAttachmentIds.add(entry.id);
       this.relatedEntries = null;
       if (!this.data || !this.loaded.has("history")) return;
       const id = entry?.id ?? deletedId;
@@ -59,7 +71,16 @@ export class WorkspaceDataSource {
       // A record moved beyond it belongs to a later page and must not appear twice.
       if (entry && (!this.cursor || compareHistory(entry, this.cursor) <= 0))
         entries = [...entries, entry].sort(compareHistory);
-      this.data = { ...this.data, entries };
+      const attachmentCounts = { ...this.data.attachmentCounts };
+      if (deletedId) {
+        delete attachmentCounts[deletedId];
+        this.dirtyAttachmentIds.delete(deletedId);
+      }
+      this.data = {
+        ...this.data,
+        entries,
+        attachmentCounts: this.data.attachmentCounts && attachmentCounts,
+      };
     });
     this.tail = next.catch(() => undefined);
     await next;
@@ -127,9 +148,17 @@ export class WorkspaceDataSource {
         const page = unwrap(
           await this.services.historyEntries.listPage(this.data.vehicle.id, this.cursor),
         );
-        this.data = { ...this.data, entries: [...this.data.entries, ...page.entries] };
+        const ids = page.entries.map(({ id }) => id);
+        const attachmentCounts =
+          typeof this.services.documents.attachmentCounts === "function"
+            ? await this.refreshCounts(this.data, ids)
+            : this.data.attachmentCounts;
+        this.data = {
+          ...this.data,
+          entries: [...this.data.entries, ...page.entries],
+          attachmentCounts,
+        };
         this.cursor = page.nextCursor;
-        this.loaded.delete("counts");
       })
       .finally(() => {
         this.pendingPages.delete(section);
@@ -260,23 +289,21 @@ export class WorkspaceDataSource {
         !this.relatedEntries?.some(({ id }) => id === requiredEntryId)
       )
         return { status: "error" };
-      if (section === "history" && !this.loaded.has("counts")) {
-        if (this.services.documents.attachmentCounts) {
-          this.data = {
-            ...this.data,
-            attachmentCounts: unwrap(
-              await this.services.documents.attachmentCounts(
-                vehicle.id,
-                this.data.entries.map((entry) => entry.id),
-              ),
-            ),
-          };
+      if (section === "history" && (!this.loaded.has("counts") || this.dirtyAttachmentIds.size)) {
+        if (typeof this.services.documents.attachmentCounts === "function") {
+          const hasCounts = this.loaded.has("counts");
+          const ids = this.data.entries
+            .filter(({ id }) => !hasCounts || this.dirtyAttachmentIds.has(id))
+            .map(({ id }) => id);
+          const attachmentCounts = await this.refreshCounts(this.data, ids, hasCounts);
+          this.data = { ...this.data, attachmentCounts };
         } else {
           this.data = {
             ...this.data,
             documents: unwrap(await this.services.documents.list(vehicle.id)),
           };
         }
+        this.dirtyAttachmentIds.clear();
         this.loaded.add("counts");
       }
       if (section === "fuel" && !this.loaded.has("fuel")) {
@@ -312,6 +339,16 @@ export class WorkspaceDataSource {
     } catch {
       return { status: "error" };
     }
+  }
+
+  private async refreshCounts(data: WorkspaceData, ids: readonly HistoryEntryId[], merge = true) {
+    const counts = merge ? { ...data.attachmentCounts } : {};
+    if (ids.length) {
+      const latest = unwrap(await this.services.documents.attachmentCounts(data.vehicle.id, ids));
+      for (const id of ids) delete counts[id];
+      Object.assign(counts, latest);
+    }
+    return counts;
   }
 }
 

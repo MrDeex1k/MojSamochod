@@ -476,3 +476,49 @@ it("leaves a second coordinator's live reservation and private copies intact", a
   expect(discard).toHaveBeenCalledWith(competingKey);
   expect(deleted).not.toHaveBeenCalled();
 });
+
+it("allows reimport of verified data after restart exposed a damaged document reservation", async () => {
+  const events: string[] = [];
+  const repository = repositoryFake(events);
+  let old: StagedManagedFileMetadata | null = {
+    id,
+    byteSize: size,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    kind: "document",
+    originalName: "receipt.pdf",
+    mimeType: "application/pdf",
+    sha256: hash,
+    stagingKey: `staging/${id}.pdf`,
+    status: "staged",
+  };
+  repository.listRecoverable = async () => repositorySuccess(old ? [old] : []);
+  repository.findDocumentBySha256 = async () => repositorySuccess(old);
+  repository.delete = async () => {
+    old = null;
+    return repositorySuccess(undefined);
+  };
+  const storage = storageFake(events);
+  storage.listStagedKeys = async () =>
+    objectStorageSuccess(old ? [old.stagingKey as StagedObjectKey] : []);
+  const commit = storage.commit;
+  storage.commit = jest
+    .fn()
+    .mockResolvedValueOnce(objectStorageFailure("integrity-failure", "commit"))
+    .mockImplementation(commit);
+  const coordinator = new ManagedFileCoordinator(clock, repository, storage);
+  expect(await coordinator.reconcile()).toMatchObject({
+    ok: false,
+    error: { kind: "corrupt-data" },
+  });
+  expect(
+    await coordinator.import({
+      kind: "document",
+      managedFileId: secondId,
+      mimeType: "application/pdf",
+      originalName: "receipt.pdf",
+      sourceUri: "file:///receipt.pdf",
+    }),
+  ).toMatchObject({ ok: true, value: { id: secondId } });
+  expect(old).toBeNull();
+});

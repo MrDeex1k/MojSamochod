@@ -172,7 +172,7 @@ it("can return from a failed page in fullscreen without trapping the reader", as
     "Could not display this PDF. Try again.",
   );
   await userEvent.press(modal.getByRole("button", { name: "Previous page" }));
-  expect(await modal.findByLabelText("PDF page 1")).toBeOnTheScreen();
+  expect(await modal.findByLabelText(/Page 1 of 2.*PDF page 1/i)).toBeOnTheScreen();
   expect(screen.queryByRole("alert")).toBeNull();
 });
 
@@ -189,6 +189,6 @@ it("can skip forward from a failed page in fullscreen", async () => {
     "Could not display this PDF. Try again.",
   );
   await userEvent.press(modal.getByRole("button", { name: "Next page" }));
-  expect(await modal.findByLabelText("PDF page 2")).toBeOnTheScreen();
+  expect(await modal.findByLabelText(/Page 2 of 2.*PDF page 2/i)).toBeOnTheScreen();
   expect(screen.queryByRole("alert")).toBeNull();
 });

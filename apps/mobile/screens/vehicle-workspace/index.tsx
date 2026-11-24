@@ -1,3 +1,4 @@
+import type { HistoryEntryId } from "@/domain/shared/identifiers";
 import { DataManagement } from "./data-management";
 import { workspaceSection } from "./workspace-data-source";
 import { PhoneWorkspace } from "./workspace-history";
@@ -146,7 +147,7 @@ function VehicleWorkspaceController({
       loadMoreError={loadMoreError}
       loadingMore={loadingMore}
       mode={mode}
-      revision={attempt}
+      remindersRevision={source.remindersRevision}
       selectedId={selection[section]}
       onLoadMore={
         source.hasMore(section) && !loadingMore
@@ -171,8 +172,8 @@ function VehicleWorkspaceController({
         if (mode.kind === "history") setMode({ kind: "documents" });
         else router.dismissTo("/vehicle/documents");
       }}
-      onDocumentsChanged={() => {
-        source.invalidate("documents");
+      onDocumentsChanged={(ids?: readonly HistoryEntryId[]) => {
+        source.invalidate("documents", ids);
         finish?.();
         router.dismissTo("/vehicle/documents");
         setAttempt();
@@ -256,7 +257,7 @@ function renderContent(props: VehicleWorkspaceViewProps, embedded: boolean, show
     case "reminders":
       return (
         <RemindersSection
-          key={props.revision}
+          key={props.remindersRevision}
           onEditReminder={props.onEditReminder}
           {...services}
           embedded={embedded}

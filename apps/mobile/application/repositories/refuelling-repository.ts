@@ -25,5 +25,5 @@ export interface RefuellingRepository {
     refuellingId: RefuellingId,
   ): Promise<RepositoryResult<Refuelling | null>>;
   list(vehicleId: VehicleId): Promise<RepositoryResult<readonly Refuelling[]>>;
-  update(refuelling: Refuelling): Promise<RepositoryResult<void>>;
+  update(refuelling: Refuelling): Promise<RepositoryResult<void | { consumptionChanged: boolean }>>;
 }

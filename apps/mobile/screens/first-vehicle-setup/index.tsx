@@ -1,3 +1,5 @@
+import { setupPhotoOwner } from "@/application/storage/vehicle-photo-picker";
+import { useRecoveredVehiclePhoto } from "@/screens/use-recovered-vehicle-photo";
 import { ChoiceField } from "@/components/ui/choice-field";
 import { getLocales } from "expo-localization";
 import { useRouter } from "expo-router";
@@ -85,12 +87,15 @@ export function CreateFirstVehicleForm({
   const [saving, setSaving] = useState(false);
   const pendingSave = useRef(false);
 
-  const selectPhoto = async () => {
-    setFormError(null);
-    const result = await photoPicker.select();
+  const receivePhoto = (result: VehiclePhotoSelectionResult) => {
     if (result.kind === "selected") setPhoto(result);
     if (result.kind === "denied") setFormError(t("firstVehicle.photoDenied"));
     if (result.kind === "unavailable") setFormError(t("firstVehicle.photoError"));
+  };
+  useRecoveredVehiclePhoto(photoPicker, setupPhotoOwner, receivePhoto);
+  const selectPhoto = async () => {
+    setFormError(null);
+    receivePhoto(await photoPicker.select(setupPhotoOwner));
   };
 
   const changeDistanceUnit = (nextUnit: DistanceUnit) => {

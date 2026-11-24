@@ -25,6 +25,11 @@ export type RefuellingHistory = Readonly<{
 }>;
 
 export class RefuellingService {
+  private readonly summaries = new Map<
+    VehicleId,
+    Promise<RepositoryResult<FuelConsumptionSummary>>
+  >();
+
   constructor(
     private readonly clock: Clock,
     private readonly idGenerator: IdGenerator,
@@ -41,11 +46,14 @@ export class RefuellingService {
     }
 
     const created = await this.repository.create(refuelling.value);
+    if (created.ok) this.summaries.delete(input.vehicleId);
     return created.ok ? repositorySuccess(refuelling.value) : created;
   }
 
-  delete(vehicleId: VehicleId, refuellingId: RefuellingId): Promise<RepositoryResult<void>> {
-    return this.repository.delete(vehicleId, refuellingId);
+  async delete(vehicleId: VehicleId, refuellingId: RefuellingId): Promise<RepositoryResult<void>> {
+    const result = await this.repository.delete(vehicleId, refuellingId);
+    if (result.ok) this.summaries.delete(vehicleId);
+    return result;
   }
 
   get(
@@ -74,7 +82,25 @@ export class RefuellingService {
     return result.ok ? repositorySuccess({ refuellings: result.value, nextCursor: null }) : result;
   }
 
-  async consumption(vehicleId: VehicleId): Promise<RepositoryResult<FuelConsumptionSummary>> {
+  clearConsumptionCache(): void {
+    this.summaries.clear();
+  }
+
+  consumption(vehicleId: VehicleId): Promise<RepositoryResult<FuelConsumptionSummary>> {
+    const cached = this.summaries.get(vehicleId);
+    if (cached) return cached;
+    const pending = this.calculateConsumption(vehicleId);
+    this.summaries.set(vehicleId, pending);
+    const clear = () => {
+      if (this.summaries.get(vehicleId) === pending) this.summaries.delete(vehicleId);
+    };
+    void pending.then((result) => {
+      if (!result.ok) clear();
+    }, clear);
+    return pending;
+  }
+
+  private async calculateConsumption(vehicleId: VehicleId) {
     const result = this.repository.consumptionRecords
       ? await this.repository.consumptionRecords(vehicleId)
       : await this.repository.list(vehicleId);
@@ -91,6 +117,9 @@ export class RefuellingService {
     }
 
     const updated = await this.repository.update(refuelling.value);
+    // The repository compares against the row it updated, which may differ from the form's draft.
+    if (updated.ok && updated.value?.consumptionChanged !== false)
+      this.summaries.delete(existing.vehicleId);
     return updated.ok ? repositorySuccess(refuelling.value) : updated;
   }
 }

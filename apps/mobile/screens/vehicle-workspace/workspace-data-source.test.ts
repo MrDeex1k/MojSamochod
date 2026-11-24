@@ -447,3 +447,46 @@ it.each([false, true])(
     expect(api.documents.list).toHaveBeenCalledTimes(1);
   },
 );
+
+it("counts just 5000 distinct IDs across 100 pages, then refreshes only reassigned attachments", async () => {
+  const api = services();
+  const entries = Array.from({ length: 5000 }, (_, index) => historyFixture(index + 1));
+  const indexById = new Map(entries.map((entry, index) => [entry.id, index]));
+  let currentCounts: Record<string, number> = { [entries[0]!.id]: 1 };
+  const attachmentCounts = jest.fn(async (_vehicle: unknown, ids: readonly string[]) =>
+    repositorySuccess(
+      Object.fromEntries(ids.flatMap((id) => (currentCounts[id] ? [[id, currentCounts[id]]] : []))),
+    ),
+  );
+  api.historyEntries.listPage.mockImplementation(async (_vehicle, cursor, limit = 50) => {
+    const start = cursor ? indexById.get(cursor.id as (typeof entries)[number]["id"])! + 1 : 0;
+    const page = entries.slice(start, start + limit);
+    return repositorySuccess({
+      entries: page,
+      nextCursor: start + limit < entries.length ? page.at(-1)! : null,
+    });
+  });
+  const source = new WorkspaceDataSource({
+    ...api,
+    documents: { ...api.documents, attachmentCounts },
+  } as unknown as ApplicationServices);
+  await source.load("history");
+  for (let page = 1; page < 100; page++) {
+    await source.loadMore();
+    await source.load("history");
+  }
+  expect(source.hasMore()).toBe(false);
+  expect(attachmentCounts).toHaveBeenCalledTimes(100);
+  expect(attachmentCounts.mock.calls.flatMap(([, ids]) => ids)).toEqual(
+    entries.map(({ id }) => id),
+  );
+
+  const from = entries[0]!.id;
+  const to = entries.at(-1)!.id;
+  currentCounts = { [to]: 1 };
+  source.invalidate("documents", [from, to]);
+  const refreshed = await source.load("history");
+  if (refreshed.status !== "ready") throw new Error("Could not reload history");
+  expect(refreshed.data.attachmentCounts).toEqual({ [to]: 1 });
+  expect(attachmentCounts.mock.lastCall?.[1]).toEqual([from, to]);
+});

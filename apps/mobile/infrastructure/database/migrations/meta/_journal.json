@@ -64,6 +64,13 @@
       "when": 1793912399086,
       "tag": "0008_harden_storage_contracts",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1795548262352,
+      "tag": "0009_index_document_attachment_counts",
+      "breakpoints": true
     }
   ]
 }

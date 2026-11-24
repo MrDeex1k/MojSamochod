@@ -147,6 +147,11 @@ it("counts only requested associations and supports an empty selection", async (
     ok: true,
     value: { [id(1)]: 2 },
   });
+  const [sql, params] = logQuery.mock.lastCall!;
+  const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + sql).all(...(params as SQLInputValue[]));
+  expect(plan[0]?.detail).toMatch(
+    /SEARCH .*COVERING INDEX vehicle_documents_vehicle_history_entry_index.*vehicle_id=\? AND history_entry_id=\?/,
+  );
   expect(await documents.attachmentCounts(vehicleId, [])).toEqual({ ok: true, value: {} });
 });
 
@@ -336,4 +341,63 @@ it("uses the partial hash index for the bound document lookup and respects reser
   });
   sqlite.prepare("UPDATE managed_files SET status='deleting' WHERE id=?").run(fileId);
   expect(await files.findDocumentBySha256(digest.value)).toEqual({ ok: true, value: null });
+});
+
+it("seeks into the timeline index and pages across both timestamp ties without gaps", async () => {
+  const insertEntry = sqlite.prepare(
+    "INSERT INTO history_entries (id,vehicle_id,type,occurred_at,created_at,updated_at) VALUES (?,?,'repair',?,?,?)",
+  );
+  const insertRepair = sqlite.prepare(
+    "INSERT INTO repair_details (history_entry_id,subject) VALUES (?,'Repair')",
+  );
+  const date = (index: number) => new Date(Date.parse(stamp) - index * 1000).toISOString();
+  const expected = Array.from({ length: 10000 }, (_, index) => id(index + 1));
+  sqlite.exec("BEGIN");
+  for (let index = 0; index < expected.length; index++) {
+    insertEntry.run(
+      expected[index]!,
+      vehicleId,
+      date(Math.floor(index / 120)),
+      date(Math.floor(index / 60)),
+      stamp,
+    );
+    insertRepair.run(expected[index]!);
+  }
+  sqlite.exec("COMMIT");
+
+  const first = await history.listPage(vehicleId);
+  if (!first.ok) throw first.error;
+  const seen = first.value.entries.map(({ id }) => id);
+  let cursor = first.value.nextCursor;
+  while (cursor) {
+    logQuery.mockClear();
+    const page = await history.listPage(vehicleId, cursor);
+    if (!page.ok) throw page.error;
+    for (const [query, params] of logQuery.mock.calls) {
+      const plan = sqlite
+        .prepare("EXPLAIN QUERY PLAN " + query)
+        .all(...(params as SQLInputValue[]));
+      expect(plan[0]?.detail).toMatch(
+        /SEARCH .*history_entries_vehicle_timeline_index.*vehicle_id=\? AND occurred_at[=<]\?/,
+      );
+      expect(plan.some(({ detail }) => String(detail).includes("TEMP B-TREE"))).toBe(false);
+    }
+    seen.push(...page.value.entries.map(({ id }) => id));
+    cursor = page.value.nextCursor;
+  }
+  expect(seen).toEqual(expected);
+});
+
+it("stops an obsolete reference search before reading the next database batch", async () => {
+  for (let index = 1; index <= 201; index++) addHistory(index, "Old invoice");
+  const controller = new AbortController();
+  const matcher = jest.fn(() => {
+    controller.abort();
+    return false;
+  });
+  logQuery.mockClear();
+  const result = await history.searchReferences(vehicleId, matcher, undefined, controller.signal);
+  expect(result).toEqual({ ok: true, value: { entries: [], nextCursor: null } });
+  expect(logQuery).toHaveBeenCalledTimes(1);
+  expect(matcher).toHaveBeenCalledTimes(100);
 });

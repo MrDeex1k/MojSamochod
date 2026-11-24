@@ -1,3 +1,5 @@
+import { editPhotoOwner } from "@/application/storage/vehicle-photo-picker";
+import { useRecoveredVehiclePhoto } from "@/screens/use-recovered-vehicle-photo";
 import { useFormExitGuard } from "@/components/layout/navigation-guard";
 import { useRef, useState } from "react";
 
@@ -82,6 +84,7 @@ export function useVehicleEditForm({
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const pendingSave = useRef(false);
+  const photoOwner = editPhotoOwner(vehicle.id);
   const cancel = useFormExitGuard(
     {
       make,
@@ -98,7 +101,10 @@ export function useVehicleEditForm({
       photoChange,
     },
     saving,
-    onCancel,
+    () => {
+      void photoPicker.abandonRecovery?.(photoOwner).catch(() => undefined);
+      onCancel();
+    },
   );
   const photoUri =
     photoChange.kind === "new"
@@ -107,11 +113,15 @@ export function useVehicleEditForm({
         ? existingPhotoUri
         : null;
 
-  const selectPhoto = async () => {
-    const result = await photoPicker.select();
+  const receivePhoto = (result: VehiclePhotoSelectionResult) => {
     if (result.kind === "selected") setPhotoChange({ kind: "new", photo: result });
     if (result.kind === "denied") setFormError(t("firstVehicle.photoDenied"));
     if (result.kind === "unavailable") setFormError(t("firstVehicle.photoError"));
+  };
+  useRecoveredVehiclePhoto(photoPicker, photoOwner, receivePhoto);
+  const selectPhoto = async () => {
+    setFormError(null);
+    receivePhoto(await photoPicker.select(photoOwner));
   };
 
   const changeDistanceUnit = (nextUnit: DistanceUnit) => {
@@ -188,6 +198,7 @@ export function useVehicleEditForm({
       setFormError(t("vehicleEdit.error"));
       return;
     }
+    void photoPicker.abandonRecovery?.(photoOwner).catch(() => undefined);
     onSaved();
   };
 

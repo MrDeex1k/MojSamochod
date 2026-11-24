@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -27,6 +28,18 @@ class DocumentPreviewModule : Module() {
         PdfRenderer(descriptor).use { renderer ->
           require(pageIndex >= 0 && pageIndex < renderer.pageCount)
           renderer.openPage(pageIndex).use { page ->
+            val text = if (Build.VERSION.SDK_INT >= 35) {
+              // Text extraction is optional so scans and malformed text layers still render.
+              runCatching {
+                val content = StringBuilder()
+                for (block in page.textContents) {
+                  if (content.length >= 16000) break
+                  if (content.isNotEmpty()) content.append(' ')
+                  content.append(block.text.take(16000 - content.length))
+                }
+                content.toString().trim()
+              }.getOrDefault("")
+            } else ""
             require(page.width > 0 && page.height > 0)
             val scale = min(1600.0 / page.width, 1600.0 / page.height)
             val bitmap = Bitmap.createBitmap(max(1, (page.width * scale).toInt()), max(1, (page.height * scale).toInt()), Bitmap.Config.ARGB_8888)
@@ -42,7 +55,7 @@ class DocumentPreviewModule : Module() {
                 output.delete()
                 throw error
               }
-              mapOf("uri" to Uri.fromFile(output).toString(), "pageCount" to renderer.pageCount, "text" to "")
+              mapOf("uri" to Uri.fromFile(output).toString(), "pageCount" to renderer.pageCount, "text" to text)
             } finally {
               bitmap.recycle()
             }

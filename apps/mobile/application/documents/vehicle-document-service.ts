@@ -24,13 +24,17 @@ import type { PickedDocument } from "./document-file-picker";
 
 export type DocumentMetadataInput = Omit<VehicleDocumentInput, "fileReference" | "vehicleId">;
 
+type DocumentWriteResult<T> =
+  | Extract<RepositoryResult<T>, { ok: false }>
+  | { ok: true; value: T; affectedHistoryEntryIds: readonly HistoryEntryId[] };
+
 export class VehicleDocumentService {
   private tail: Promise<unknown> = Promise.resolve();
 
-  private enqueue<T>(
+  private enqueue<T extends RepositoryResult<unknown>>(
     operation: string,
-    work: () => Promise<RepositoryResult<T>>,
-  ): Promise<RepositoryResult<T>> {
+    work: () => Promise<T>,
+  ): Promise<T | Extract<RepositoryResult<never>, { ok: false }>> {
     const result = this.tail
       .then(work)
       .catch((cause: unknown) => repositoryFailure("unavailable", operation, cause));
@@ -57,7 +61,7 @@ export class VehicleDocumentService {
     vehicleId: VehicleId,
     file: PickedDocument,
     metadata: DocumentMetadataInput,
-  ): Promise<RepositoryResult<VehicleDocument>> {
+  ): Promise<DocumentWriteResult<VehicleDocument>> {
     return this.enqueue("vehicleDocument.create", () => this.createNow(vehicleId, file, metadata));
   }
 
@@ -66,7 +70,7 @@ export class VehicleDocumentService {
     vehicleId: VehicleId,
     file: PickedDocument,
     metadata: DocumentMetadataInput,
-  ): Promise<RepositoryResult<VehicleDocument>> {
+  ): Promise<DocumentWriteResult<VehicleDocument>> {
     const fileReference = managedFileIdFromUuidV7(this.idGenerator.generate());
     const document = createVehicleDocument(
       { ...metadata, fileReference, vehicleId },
@@ -82,10 +86,10 @@ export class VehicleDocumentService {
       await this.removeUnreferenced(imported.value.id);
       return created;
     }
-    return repositorySuccess(document.value);
+    return documentWriteSuccess(document.value, undefined, document.value.historyEntryId);
   }
 
-  async delete(vehicleId: VehicleId, documentId: DocumentId): Promise<RepositoryResult<void>> {
+  async delete(vehicleId: VehicleId, documentId: DocumentId): Promise<DocumentWriteResult<void>> {
     return this.enqueue("vehicleDocument.delete", () => this.deleteNow(vehicleId, documentId));
   }
 
@@ -93,13 +97,13 @@ export class VehicleDocumentService {
   private async deleteNow(
     vehicleId: VehicleId,
     documentId: DocumentId,
-  ): Promise<RepositoryResult<void>> {
+  ): Promise<DocumentWriteResult<void>> {
     const deleted = await this.repository.delete(vehicleId, documentId);
     if (!deleted.ok) return deleted;
     // Metadata deletion is the user-visible operation. If binary cleanup is interrupted,
     // reconciliation removes the now-unreferenced managed file on the next application start.
     await this.removeUnreferenced(deleted.value.fileReference);
-    return repositorySuccess(undefined);
+    return documentWriteSuccess(undefined, deleted.value.historyEntryId, undefined);
   }
 
   get(vehicleId: VehicleId, documentId: DocumentId) {
@@ -187,7 +191,7 @@ export class VehicleDocumentService {
   async update(
     existing: VehicleDocument,
     metadata: DocumentMetadataInput,
-  ): Promise<RepositoryResult<VehicleDocument>> {
+  ): Promise<DocumentWriteResult<VehicleDocument>> {
     return this.enqueue("vehicleDocument.update", () => this.updateNow(existing, metadata));
   }
 
@@ -195,7 +199,7 @@ export class VehicleDocumentService {
   private async updateNow(
     existing: VehicleDocument,
     metadata: DocumentMetadataInput,
-  ): Promise<RepositoryResult<VehicleDocument>> {
+  ): Promise<DocumentWriteResult<VehicleDocument>> {
     const stored = await this.repository.get(existing.vehicleId, existing.id);
     if (!stored.ok) return stored;
     if (!stored.value) return repositoryFailure("not-found", "vehicleDocument.update");
@@ -209,7 +213,9 @@ export class VehicleDocumentService {
       return repositoryFailure("unsupported", "vehicleDocument.update", updated.issues);
     }
     const saved = await this.repository.update(updated.value);
-    return saved.ok ? repositorySuccess(updated.value) : saved;
+    return saved.ok
+      ? documentWriteSuccess(updated.value, existing.historyEntryId, updated.value.historyEntryId)
+      : saved;
   }
 
   private async importFile(
@@ -226,4 +232,17 @@ export class VehicleDocumentService {
       sourceUri: file.uri,
     });
   }
+}
+
+function documentWriteSuccess<T>(
+  value: T,
+  before: HistoryEntryId | undefined,
+  after: HistoryEntryId | undefined,
+): DocumentWriteResult<T> {
+  return {
+    ok: true,
+    value,
+    affectedHistoryEntryIds:
+      before === after ? [] : [before, after].filter((id) => id !== undefined),
+  };
 }

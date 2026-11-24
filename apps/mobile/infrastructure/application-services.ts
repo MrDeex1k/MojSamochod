@@ -86,12 +86,15 @@ export function createApplicationServices(database: AppDatabase) {
     new DrizzleManagedFileRepository(database),
     new LocalObjectStorage(),
   );
+  const refuellings = new RefuellingService(clock, idGenerator, refuellingRepository);
+  const photoPicker = new GalleryVehiclePhotoPicker();
   const runtime: ApplicationRuntime = new ApplicationRuntime({
     resume: () => services.eraseData.resume(),
-    recover: (ready) => {
-      cleanTransientDocumentFiles();
-      return runtime.operations.track(() => managedFiles.reconcile(ready));
-    },
+    recover: (ready) =>
+      runtime.operations.track(async () => {
+        cleanTransientDocumentFiles(await photoPicker.recoverBeforeCleanup());
+        return managedFiles.reconcile(ready);
+      }),
     startSchedule: () => startReminderScheduleLifecycle(reminderSchedule, appI18n),
     stopSchedule: () => reminderSchedule.stop(),
   });
@@ -107,7 +110,11 @@ export function createApplicationServices(database: AppDatabase) {
         runtime.operations.reset(async () => {
           await reminderSchedule.stop();
           const result = await work();
-          if (result.ok) reminderSchedule.resume();
+          if (result.ok) {
+            photoPicker.forgetRecovered();
+            refuellings.clearConsumptionCache();
+            reminderSchedule.resume();
+          }
           return result;
         }),
     ),
@@ -122,8 +129,8 @@ export function createApplicationServices(database: AppDatabase) {
     historyEntries: vehicleHistory,
     idGenerator,
     managedFiles,
-    photoPicker: new GalleryVehiclePhotoPicker(),
-    refuellings: new RefuellingService(clock, idGenerator, refuellingRepository),
+    photoPicker,
+    refuellings,
     reminders: new ReminderService(
       clock,
       idGenerator,

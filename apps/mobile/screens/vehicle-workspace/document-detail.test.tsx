@@ -211,7 +211,11 @@ describe("DocumentDetail", () => {
 
 function service(): jest.Mocked<VehicleDocumentService> {
   return {
-    delete: jest.fn(async () => repositorySuccess(undefined)),
+    delete: jest.fn(async () => ({
+      ok: true as const,
+      value: undefined,
+      affectedHistoryEntryIds: [],
+    })),
     getFile: jest.fn(async () =>
       repositorySuccess({ mimeType: "image/png", name: "invoice.png", uri: "file:///invoice.png" }),
     ),

@@ -167,17 +167,20 @@ function useReferenceSearch(
     search?.attempt === attempt;
   const generation = useRef(0);
   const pending = useRef(false);
+  const abort = useRef<AbortController | null>(null);
   useEffect(() => {
     const current = ++generation.current;
     pending.current = false;
     if (!open || !vehicleId || !repository?.searchReferences) return;
+    const controller = new AbortController();
+    abort.current = controller;
     const timer = setTimeout(() => {
       setSearch({ matches, vehicleId, repository, attempt });
       setEntries([]);
       setCursor(null);
       setError(false);
       setLoading(true);
-      void repository.searchReferences!(vehicleId, matches)
+      void repository.searchReferences!(vehicleId, matches, undefined, controller.signal)
         .then((result) => {
           if (current !== generation.current) return;
           if (!result.ok) {
@@ -195,6 +198,7 @@ function useReferenceSearch(
         });
     }, 150);
     return () => {
+      controller.abort();
       clearTimeout(timer);
       generation.current = current + 1;
     };
@@ -214,7 +218,7 @@ function useReferenceSearch(
     setLoading(true);
     const current = generation.current;
     void repository
-      .searchReferences(vehicleId, matches, cursor)
+      .searchReferences(vehicleId, matches, cursor, abort.current?.signal)
       .then((result) => {
         if (current !== generation.current) return;
         if (!result.ok) {

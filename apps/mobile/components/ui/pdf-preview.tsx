@@ -112,10 +112,8 @@ function PdfPreviewSession({ uri, name }: Readonly<{ uri: string; name: string }
       ) : current ? (
         <>
           <Image
-            accessibilityLabel={
-              current.text ||
-              `${name}, ${t("documents.page", { page: page + 1, count: current.count })}`
-            }
+            accessible
+            accessibilityLabel={`${name}, ${t("documents.page", { page: page + 1, count: current.count })}${current.text ? `. ${current.text}` : ""}`}
             source={{ uri: current.uri }}
             contentFit="contain"
             onLoad={({ source }) => {

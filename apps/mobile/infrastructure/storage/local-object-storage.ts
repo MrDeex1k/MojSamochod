@@ -242,8 +242,9 @@ async function safelyDelete(driver: ObjectStorageDriver, key: string): Promise<v
   }
 }
 
-export function cleanTransientDocumentFiles(): void {
+export function cleanTransientDocumentFiles(preservePicker = false): void {
   for (const name of transientFileDirectories) {
+    if (preservePicker && (name === "ImagePicker" || name === "ImageManipulator")) continue;
     try {
       const directory = new Directory(Paths.cache, name);
       if (directory.exists) directory.delete();

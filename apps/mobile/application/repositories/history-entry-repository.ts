@@ -28,6 +28,7 @@ export interface HistoryEntryRepository {
     vehicleId: VehicleId,
     matches: HistoryReferenceMatcher,
     cursor?: HistoryCursor,
+    signal?: AbortSignal,
   ): Promise<RepositoryResult<HistoryReferencePage>>;
 
   listPage?(

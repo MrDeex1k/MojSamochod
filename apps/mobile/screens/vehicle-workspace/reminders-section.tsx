@@ -57,7 +57,6 @@ export function RemindersSection({
     };
   }, [attempt, reminders, vehicle.id]);
   useEffect(() => {
-    void reminderSchedule.reconcile();
     const refresh = () => setNow(clock.now());
     // Deadline states must not stay stale when this screen remains open across midnight.
     const interval = setInterval(refresh, 30_000);
@@ -68,7 +67,7 @@ export function RemindersSection({
       clearInterval(interval);
       subscription.remove();
     };
-  }, [clock, reminderSchedule]);
+  }, [clock]);
   const returnFromSection = useEffectEvent(onBack);
   const hasNativeEditor = Boolean(onEditReminder);
   useEffect(() => {

@@ -109,6 +109,7 @@ async function setup(records: readonly Reminder[] = [], canSchedule = false, emb
     identity,
     scheduleAwareReminderRepository(repository, schedule),
   );
+  await schedule.reconcile(); // Simulate application startup before rendering the screen.
   const onBack = jest.fn();
   await render(
     <RemindersSection
