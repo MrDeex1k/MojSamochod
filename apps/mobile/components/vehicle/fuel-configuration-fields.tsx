@@ -36,6 +36,7 @@ export function FuelConfigurationFields({
         keyboardType="number-pad"
         label={t("firstVehicle.fuelTankCapacityLabel")}
         onChangeText={onCapacityChange}
+        testID="vehicle-fuel-tank-capacity"
         value={capacity}
       />
       <FieldPair

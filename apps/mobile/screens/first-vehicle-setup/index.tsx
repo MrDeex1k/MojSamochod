@@ -180,6 +180,7 @@ export function CreateFirstVehicleForm({
             onChangeText={setMake}
             placeholder={t("firstVehicle.makePlaceholder")}
             returnKeyType="next"
+            testID="first-vehicle-make"
             value={make}
           />
           <TextField
@@ -189,6 +190,7 @@ export function CreateFirstVehicleForm({
             onChangeText={setModel}
             placeholder={t("firstVehicle.modelPlaceholder")}
             returnKeyType="next"
+            testID="first-vehicle-model"
             value={model}
           />
         </View>
@@ -299,7 +301,12 @@ export function CreateFirstVehicleForm({
             {formError}
           </Text>
         ) : null}
-        <Button busy={saving} label={t("firstVehicle.addAction")} onPress={() => void save()} />
+        <Button
+          busy={saving}
+          label={t("firstVehicle.addAction")}
+          onPress={() => void save()}
+          testID="first-vehicle-save"
+        />
       </FormSection>
     </Screen>
   );
