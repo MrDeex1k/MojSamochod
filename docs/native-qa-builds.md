@@ -65,6 +65,23 @@ signing for this release-configuration QA APK; it is not a signed store release.
 target the Apple Silicon simulator/ARM64 emulator environment used in Phase 6. Adapt architectures
 deliberately for other targets. Native directories and build artifacts remain untracked.
 
+## Automated native smoke test
+
+Build and install the QA `.app` or `.apk` above on the selected local simulator or emulator. From
+the repository root, select the iOS simulator UDID or the running Android emulator serial:
+
+```sh
+MOJE_AUTO_E2E_DEVICE="$QA_IOS_UDID" nub run test:native:ios
+MOJE_AUTO_E2E_DEVICE="$QA_ANDROID_SERIAL" nub run test:native:android
+```
+
+Set the corresponding `QA_IOS_UDID` or `QA_ANDROID_SERIAL` before running. The test clears the
+data of `dev.mojeauto.qa` on the selected device, creates a vehicle through the form, and checks
+that it is visible after a cold restart. The scripts run with telemetry disabled and the suite
+uses deterministic selectors and assertions. The runner keeps its agent-device daemon state in
+`.cache/e2e/agent-device` so it can coexist with a different version of agent-device installed on
+the host. Find the report and failure traces in `.cache/e2e/ios` or `.cache/e2e/android`.
+
 ## Verification boundaries
 
 Install the binaries on iPhone, iPad, Android phone and Android tablet. Record exact OS versions,

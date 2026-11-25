@@ -85,6 +85,9 @@ nub run test:web
 These tests check the initial HTML and browser bundle on the home and documents routes.
 Verify application flows that use native storage, pickers, or notifications on iOS and Android.
 
+Run the [native e2e smoke test](./docs/native-qa-builds.md#automated-native-smoke-test) on a local
+QA build to verify that a vehicle created through the app survives a cold restart.
+
 Automatyczne poprawki i formatowanie:
 
 ```sh

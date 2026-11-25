@@ -6,7 +6,12 @@ import {
   TextButton,
   Text,
 } from "@expo/ui/jetpack-compose";
-import { defaultMinSize, fillMaxWidth, semantics } from "@expo/ui/jetpack-compose/modifiers";
+import {
+  defaultMinSize,
+  fillMaxWidth,
+  semantics,
+  testID as testId,
+} from "@expo/ui/jetpack-compose/modifiers";
 import { View } from "react-native";
 import { materialSeed, nativeTheme } from "@/styles/native-theme";
 import { useAppTranslation } from "@/localization/use-app-translation";
@@ -47,7 +52,6 @@ export function Button({
         compact && { alignSelf: "flex-start", maxWidth: "100%" },
         typeof style === "function" ? style(idleButtonState) : style,
       ]}
-      testID={testID}
     >
       <Host
         colorScheme="dark"
@@ -61,6 +65,7 @@ export function Button({
           modifiers={[
             ...(compact ? [] : [fillMaxWidth()]),
             defaultMinSize({ minHeight: 48 }),
+            ...(testID ? [testId(testID)] : []),
             semantics({
               contentDescription: accessibilityLabel ?? text,
             }),

@@ -12,7 +12,7 @@ screen.
 
 Phases 0 through 7 deliver the MVP: the complete local-first free application for one vehicle.
 Phase 8 stabilizes that release from structured user feedback. Phase 9 introduces local automated
-native end-to-end coverage with Maestro before paid scope expands. Phases 10 and 11 extend the
+native end-to-end coverage with e2e before paid scope expands. Phases 10 and 11 extend the
 stable MVP into the target product with monthly or annual Premium, additional vehicles, and
 user-initiated QR synchronization. The detailed feature boundary and screen inventory are defined
 in [Product Scope and Screen Map](./product-scope.md).
@@ -291,12 +291,12 @@ telemetry are outside the FREE release scope.
   the release.
 - A refreshed FREE release candidate is ready for the automated E2E foundation in Phase 9.
 
-## Phase 9 - Automated native E2E testing with Maestro
+## Phase 9 - Automated native E2E testing
 
-**Status:** Planned. Use the open-source Maestro CLI locally on the publisher's MacBook. Do not use
-Maestro Cloud, EAS Build, EAS Submit, EAS Update, or EAS Workflows. Tests must exercise locally
-generated native QA binaries rather than treating Expo Web or Expo Go as release-equivalent
-surfaces.
+**Status:** Pilot. Use [e2e](https://github.com/e2e-inc/e2e) with `@e2e-dev/mobile` against locally
+generated native QA binaries. Use deterministic steps and assertions without a model or hosted
+devices. Flashwright covers the Expo Web development shell. See the
+[local QA instructions](./native-qa-builds.md#automated-native-smoke-test) for the native commands.
 
 ### Test boundary
 
@@ -313,16 +313,11 @@ surfaces.
 
 ### Steps
 
-1. Record and pin the verified Maestro CLI version and local prerequisites. Add a `.maestro`
-   workspace with configuration, shared subflows, smoke flows, extended flows, and ignored output
-   artifacts. Expose repeatable project commands without routing builds or test results through a
-   hosted service.
-2. Define deterministic starting-state rules. Each independent flow must either clear the isolated
-   QA application state or deliberately build on a named setup subflow; no flow may depend on the
-   accidental state left by a previous test.
+1. Validate the pinned runner and mobile engine with the first-vehicle persistence test and local
+   QA builds on iOS and Android. Confirm that test failures leave a report and a trace.
+2. Give each independent scenario a clean QA application state and set up its data through the UI.
 3. Audit the core native component tree and add the minimum stable `testID` coverage needed by
-   Maestro. Prefer identifiers based on user intent, and verify that they resolve correctly through
-   the iOS accessibility hierarchy and Android view hierarchy.
+   each scenario. Verify that the identifiers resolve through both native accessibility hierarchies.
 4. Implement the first cross-platform smoke suite:
    - launch an empty application and create the first vehicle;
    - terminate or relaunch the application and confirm persisted vehicle data;
@@ -343,27 +338,8 @@ surfaces.
 9. Document which behaviors remain manual because they depend on physical-device delivery,
    operating-system policy, store signing, timing, or external applications.
 
-### Initial suite layout
-
-```text
-.maestro/
-├── config.yaml
-├── smoke/
-│   ├── first-vehicle.yaml
-│   ├── history-entry.yaml
-│   └── refuelling.yaml
-├── extended/
-│   ├── documents.yaml
-│   ├── reminders.yaml
-│   ├── unit-preferences.yaml
-│   └── data-reset.yaml
-└── subflows/
-    ├── create-vehicle.yaml
-    └── platform/
-```
-
-The names are an initial organization target, not files to create before implementation demands
-them. Begin with the three smoke flows and expand only after they run reliably on both platforms.
+The native scenarios live in `tests/native`, with targets in `e2e.config.ts`. Expand into extended
+coverage after the smoke flows run reliably on both platforms.
 
 ### Exit criteria
 
@@ -374,8 +350,8 @@ them. Begin with the three smoke flows and expand only after they run reliably o
   erase-all workflows, with documented manual exceptions.
 - A failed run leaves sufficient artifacts to reproduce the problem, and the suite contains no
   unexplained fixed-duration waits or blanket retries.
-- Maestro complements rather than replaces Jest, React Native Testing Library, database checks,
-  and final manual native acceptance.
+- The release checklist includes the native smoke tests, Jest, React Native Testing Library,
+  database checks, and final manual native acceptance.
 
 ## Phase 10 - Premium subscriptions and additional vehicles
 
